@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
+import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 import { marcarVendida, duplicarCotizacion } from "../actions"
 
@@ -161,6 +162,19 @@ export function CotizacionDetail({
           </button>
         </div>
       </div>
+
+      <section className="mb-6 space-y-2">
+        <header className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+            Análisis de items
+          </h2>
+          <span className="text-xs text-gray-400">
+            {preview.items.length} línea
+            {preview.items.length === 1 ? "" : "s"}
+          </span>
+        </header>
+        <SpreadsheetItems items={preview.items} />
+      </section>
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
