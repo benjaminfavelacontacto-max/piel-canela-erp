@@ -393,29 +393,47 @@ export function VentasDashboard({
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}
         icon={<ShoppingBag className="size-5" />}
-        kpis={[
-          {
-            label: "Total histórico",
-            value: mxn.format(kpis.totalVentas),
-            sub: `${kpis.activosCount} órdenes`,
-          },
-          {
-            label: "Utilidad neta",
-            value: mxn.format(kpis.utilidadNeta),
-            sub: `${kpis.margenNeto.toFixed(1)}% margen`,
-            color: "text-emerald-300",
-          },
-          {
-            label: "Sandra",
-            value: formatMXNshort(kpis.sandra),
-            sub: "acumulado",
-          },
-          {
-            label: "Benjamin",
-            value: formatMXNshort(kpis.benjamin),
-            sub: "acumulado",
-          },
-        ]}
+        kpis={(() => {
+          const len = monthly.length
+          const cur = monthly[len - 1]
+          const prev = monthly[len - 2]
+          const pct = (a: number, b: number) =>
+            b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
+          const dTotal = cur && prev ? pct(cur.total, prev.total) : 0
+          const dGanancia = cur && prev ? pct(cur.ganancia, prev.ganancia) : 0
+          return [
+            {
+              label: "Total histórico",
+              value: mxn.format(kpis.totalVentas),
+              sub: `${kpis.activosCount} órdenes · vs mes anterior`,
+              trend: {
+                value: `${dTotal >= 0 ? "+" : ""}${dTotal.toFixed(1)}%`,
+                positive: dTotal >= 0,
+              },
+              sparkline: monthly.map((m) => m.total),
+            },
+            {
+              label: "Utilidad neta",
+              value: mxn.format(kpis.utilidadNeta),
+              sub: `${kpis.margenNeto.toFixed(1)}% margen · vs mes anterior`,
+              trend: {
+                value: `${dGanancia >= 0 ? "+" : ""}${dGanancia.toFixed(1)}%`,
+                positive: dGanancia >= 0,
+              },
+              sparkline: monthly.map((m) => m.ganancia),
+            },
+            {
+              label: "Sandra",
+              value: formatMXNshort(kpis.sandra),
+              sub: "acumulado",
+            },
+            {
+              label: "Benjamin",
+              value: formatMXNshort(kpis.benjamin),
+              sub: "acumulado",
+            },
+          ]
+        })()}
         actions={
           <>
             <Link

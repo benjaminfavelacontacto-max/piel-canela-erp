@@ -870,6 +870,18 @@ export function CotizacionesList({
   const totalPages = table.getPageCount()
   const filteredCount = table.getFilteredRowModel().rows.length
 
+  // Trends mes actual vs mes anterior (último vs penúltimo mes de monthlySeries)
+  const len = monthlySeries.length
+  const cur = monthlySeries[len - 1]
+  const prev = monthlySeries[len - 2]
+  const pct = (a: number, b: number) =>
+    b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
+  const dValor = cur && prev ? pct(cur.valorConvertido, prev.valorConvertido) : 0
+  const dConv = cur && prev ? pct(cur.conversiones, prev.conversiones) : 0
+  const ticketCurr = cur && cur.conversiones > 0 ? cur.valorConvertido / cur.conversiones : 0
+  const ticketPrev = prev && prev.conversiones > 0 ? prev.valorConvertido / prev.conversiones : 0
+  const dTicket = pct(ticketCurr, ticketPrev)
+
   return (
     <div className="space-y-8 p-8">
       <PageHeader
@@ -880,11 +892,21 @@ export function CotizacionesList({
             label: "Valor convertido",
             value: mxn.format(kpis.valorConvertido),
             sub: `Cobrado en ${kpis.convertidas} ventas`,
+            trend: {
+              value: `${dValor >= 0 ? "+" : ""}${dValor.toFixed(1)}%`,
+              positive: dValor >= 0,
+            },
+            sparkline: monthlySeries.map((m) => m.valorConvertido),
           },
           {
             label: "Tasa conversión",
             value: `${kpis.tasaConversion.toFixed(1)}%`,
             sub: "del total enviado",
+            trend: {
+              value: `${dConv >= 0 ? "+" : ""}${dConv.toFixed(1)}%`,
+              positive: dConv >= 0,
+            },
+            sparkline: monthlySeries.map((m) => m.conversiones),
           },
           {
             label: "Tiempo cierre",
@@ -895,6 +917,13 @@ export function CotizacionesList({
             label: "Ticket promedio",
             value: mxn.format(kpis.ticketProm),
             sub: "por cotización convertida",
+            trend: {
+              value: `${dTicket >= 0 ? "+" : ""}${dTicket.toFixed(1)}%`,
+              positive: dTicket >= 0,
+            },
+            sparkline: monthlySeries.map((m) =>
+              m.conversiones > 0 ? m.valorConvertido / m.conversiones : 0,
+            ),
           },
         ]}
         actions={

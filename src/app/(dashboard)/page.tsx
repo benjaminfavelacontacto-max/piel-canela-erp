@@ -143,7 +143,7 @@ export default async function DashboardPage() {
       .gte("fecha", monthStart),
     supabase
       .from("ventas")
-      .select("total, cliente_id")
+      .select("total, ganancia, cliente_id")
       .gte("fecha", lastMonthStart)
       .lte("fecha", lastMonthEnd),
     supabase
@@ -230,6 +230,7 @@ export default async function DashboardPage() {
   const ventasMesAnt = (
     (ventasMesAntRes.data ?? []) as {
       total: number | null
+      ganancia: number | null
       cliente_id: string | null
     }[]
   ).filter((v) => !isInternalCli(v.cliente_id))
@@ -296,6 +297,11 @@ export default async function DashboardPage() {
     0,
   )
   const cambioVentas = pctChange(totalVentasMes, totalVentasMesAnt)
+  const gananciaMesAnt = ventasMesAnt.reduce(
+    (s, v) => s + Number(v.ganancia ?? 0),
+    0,
+  )
+  const cambioGanancia = pctChange(gananciaMes, gananciaMesAnt)
   const ticketMes =
     ventasMes.length > 0 ? totalVentasMes / ventasMes.length : 0
   const ticketMesAnt =
@@ -445,7 +451,12 @@ export default async function DashboardPage() {
           {
             label: "Ventas del mes",
             value: mxn.format(totalVentasMes),
-            sub: `${ventasMes.length} órdenes`,
+            sub: `${ventasMes.length} órdenes · vs mes anterior`,
+            trend: {
+              value: `${cambioVentas >= 0 ? "+" : ""}${cambioVentas.toFixed(1)}%`,
+              positive: cambioVentas >= 0,
+            },
+            sparkline: chartData.map((d) => d.total),
           },
           {
             label: "Ganancia neta",
@@ -454,16 +465,27 @@ export default async function DashboardPage() {
               totalVentasMes > 0
                 ? `${((gananciaMes / totalVentasMes) * 100).toFixed(1)}% margen`
                 : "Sin ventas",
+            trend: {
+              value: `${cambioGanancia >= 0 ? "+" : ""}${cambioGanancia.toFixed(1)}%`,
+              positive: cambioGanancia >= 0,
+            },
+            sparkline: chartData.map((d) => d.ganancia),
           },
           {
             label: "Sandra / Benjamin",
             value: `${formatMXNshort(sandra.recuperado)} / ${formatMXNshort(benjamin.recuperado)}`,
-            sub: "recuperado",
+            sub: "recuperado · ROI total",
           },
           {
             label: "Ticket promedio",
             value: mxn.format(ticketMes),
-            sub: "este mes",
+            sub: `${ventasMes.length} órdenes · vs mes anterior`,
+            trend: {
+              value: `${cambioTicket >= 0 ? "+" : ""}${cambioTicket.toFixed(1)}%`,
+              positive: cambioTicket >= 0,
+            },
+            sparkline: chartData
+              .map((d) => (d.count > 0 ? d.total / d.count : 0)),
           },
         ]}
         actions={
