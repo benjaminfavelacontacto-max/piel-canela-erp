@@ -111,19 +111,43 @@ export function NotificationBell() {
       playBeep()
     }
 
-    // Carga inicial de no-leídas
+    /** True si el error es por schema cache desactualizado de PostgREST. */
+    function isSchemaCacheError(msg: string | undefined): boolean {
+      if (!msg) return false
+      const m = msg.toLowerCase()
+      return (
+        m.includes("schema cache") ||
+        m.includes("not find the table") ||
+        m.includes("pgrst205")
+      )
+    }
+
+    // Carga inicial de no-leídas — reintenta si la tabla no está en cache
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
     async function cargarNotificaciones() {
-      const { data, error } = await supabase
-        .from("notificaciones")
-        .select("*")
-        .eq("leida", false)
-        .order("created_at", { ascending: false })
-        .limit(20)
-      if (error) {
-        console.error("[NotificationBell] error cargando:", error.message)
-        return
+      try {
+        const { data, error } = await supabase
+          .from("notificaciones")
+          .select("*")
+          .eq("leida", false)
+          .order("created_at", { ascending: false })
+          .limit(20)
+
+        if (error) {
+          if (isSchemaCacheError(error.message)) {
+            console.warn(
+              "[NotificationBell] tabla aún no en cache PostgREST, reintentando en 5s…",
+            )
+            retryTimer = setTimeout(() => void cargarNotificaciones(), 5000)
+            return
+          }
+          console.error("[NotificationBell] error cargando:", error.message)
+          return
+        }
+        if (data) setNotifs(data as Notificacion[])
+      } catch (e) {
+        console.error("[NotificationBell] excepción cargando:", e)
       }
-      if (data) setNotifs(data as Notificacion[])
     }
     void cargarNotificaciones()
 
@@ -158,25 +182,35 @@ export function NotificationBell() {
     // FALLBACK: polling cada 15s — cubre si Realtime se cae o si la
     // tabla no está en la publication supabase_realtime
     const polling = setInterval(async () => {
-      const { data, error } = await supabase
-        .from("notificaciones")
-        .select("*")
-        .eq("leida", false)
-        .order("created_at", { ascending: false })
-        .limit(20)
-      if (error || !data) return
-      setNotifs((prev) => {
-        const idsActuales = new Set(prev.map((n) => n.id))
-        const nuevasNotifs = (data as Notificacion[]).filter(
-          (n) => !idsActuales.has(n.id),
-        )
-        if (nuevasNotifs.length === 0) return prev
-        console.log(
-          `[NotificationBell] 📊 polling detectó ${nuevasNotifs.length} nuevas`,
-        )
-        if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
-        return data as Notificacion[]
-      })
+      try {
+        const { data, error } = await supabase
+          .from("notificaciones")
+          .select("*")
+          .eq("leida", false)
+          .order("created_at", { ascending: false })
+          .limit(20)
+        if (error) {
+          if (!isSchemaCacheError(error.message)) {
+            console.error("[NotificationBell] polling error:", error.message)
+          }
+          return
+        }
+        if (!data) return
+        setNotifs((prev) => {
+          const idsActuales = new Set(prev.map((n) => n.id))
+          const nuevasNotifs = (data as Notificacion[]).filter(
+            (n) => !idsActuales.has(n.id),
+          )
+          if (nuevasNotifs.length === 0) return prev
+          console.log(
+            `[NotificationBell] 📊 polling detectó ${nuevasNotifs.length} nuevas`,
+          )
+          if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
+          return data as Notificacion[]
+        })
+      } catch (e) {
+        console.error("[NotificationBell] excepción polling:", e)
+      }
     }, 15000)
 
     // Cerrar panel al click fuera
@@ -191,6 +225,7 @@ export function NotificationBell() {
       console.log("[NotificationBell] desconectando")
       supabase.removeChannel(channel)
       clearInterval(polling)
+      if (retryTimer) clearTimeout(retryTimer)
       document.removeEventListener("mousedown", handleClick)
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
