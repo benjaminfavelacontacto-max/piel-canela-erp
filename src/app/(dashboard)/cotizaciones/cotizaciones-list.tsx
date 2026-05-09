@@ -32,6 +32,7 @@ import {
   Search,
   Sparkles,
   Target,
+  Trash2,
   Wallet,
   XCircle,
   Zap,
@@ -49,7 +50,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { cambiarEstatusCotizacion } from "./actions"
+import { cambiarEstatusCotizacion, eliminarCotizacion } from "./actions"
 import { PageHeader } from "@/components/page-header"
 import {
   calcularProbabilidad,
@@ -309,6 +310,7 @@ function StatusCell({
 function ActionsCell({ cot }: { cot: EnrichedCot }) {
   const router = useRouter()
   const [pending, setPending] = useState<string | null>(null)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false)
 
   async function cambiar(nuevo: Estatus) {
     setPending(nuevo)
@@ -324,61 +326,166 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
     router.refresh()
   }
 
+  async function handleEliminar() {
+    setPending("eliminar")
+    const result = await eliminarCotizacion(cot.id)
+    setPending(null)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo eliminar")
+      return
+    }
+    toast.success("Cotización eliminada")
+    setConfirmarEliminar(false)
+    router.refresh()
+  }
+
   return (
-    <div className="flex items-center justify-end gap-1">
-      <Link
-        href={`/cotizaciones/${cot.id}`}
-        onClick={(e) => e.stopPropagation()}
-        className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
-        title="Ver detalle"
-      >
-        <ExternalLink className="size-3.5" />
-      </Link>
-      <Link
-        href={`/cotizaciones/${cot.id}/editar`}
-        onClick={(e) => e.stopPropagation()}
-        className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
-        title="Editar"
-      >
-        <Pencil className="size-3.5" />
-      </Link>
-      {cot.estatus === "borrador" && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            void cambiar("enviada")
-          }}
-          disabled={pending === "enviada"}
-          className="whitespace-nowrap rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
-          title="Marcar como enviada al cliente"
+    <>
+      <div className="flex items-center justify-end gap-1">
+        <Link
+          href={`/cotizaciones/${cot.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+          title="Ver detalle"
         >
-          {pending === "enviada" ? "…" : "Enviada"}
-        </button>
-      )}
-      {(cot.estatus === "enviada" || cot.estatus === "borrador") &&
-        !cot.esConvertida && (
+          <ExternalLink className="size-3.5" />
+        </Link>
+        <Link
+          href={`/cotizaciones/${cot.id}/editar`}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+          title="Editar"
+        >
+          <Pencil className="size-3.5" />
+        </Link>
+        {cot.estatus === "borrador" && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              void cambiar("aceptada")
+              void cambiar("enviada")
             }}
-            disabled={pending === "aceptada"}
-            className="whitespace-nowrap rounded-md bg-[#DFF7F4] px-2 py-1 text-[10px] font-semibold text-[#0F766E] transition hover:bg-emerald-100 disabled:opacity-50"
-            title="Marcar como aceptada / vendida"
+            disabled={pending === "enviada"}
+            className="whitespace-nowrap rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+            title="Marcar como enviada al cliente"
           >
-            {pending === "aceptada" ? "…" : "Vendida"}
+            {pending === "enviada" ? "…" : "Enviada"}
           </button>
         )}
-      {cot.esConvertida && (
-        <span
-          className="whitespace-nowrap rounded-md bg-[#F3F5F7] px-2 py-1 text-[10px] font-medium text-gray-500"
-          title="Ya tiene venta vinculada"
-        >
-          ✓ Con venta
-        </span>
+        {(cot.estatus === "enviada" || cot.estatus === "borrador") &&
+          !cot.esConvertida && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void cambiar("aceptada")
+              }}
+              disabled={pending === "aceptada"}
+              className="whitespace-nowrap rounded-md bg-[#DFF7F4] px-2 py-1 text-[10px] font-semibold text-[#0F766E] transition hover:bg-emerald-100 disabled:opacity-50"
+              title="Marcar como aceptada / vendida"
+            >
+              {pending === "aceptada" ? "…" : "Vendida"}
+            </button>
+          )}
+        {cot.esConvertida && (
+          <span
+            className="whitespace-nowrap rounded-md bg-[#F3F5F7] px-2 py-1 text-[10px] font-medium text-gray-500"
+            title="Ya tiene venta vinculada"
+          >
+            ✓ Con venta
+          </span>
+        )}
+        {!cot.esConvertida && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setConfirmarEliminar(true)
+            }}
+            className="rounded-md p-1 text-gray-300 transition hover:bg-rose-50 hover:text-rose-500"
+            title="Eliminar cotización"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      {confirmarEliminar && (
+        <ConfirmDeleteModal
+          numero={cot.numero}
+          loading={pending === "eliminar"}
+          onCancel={() => setConfirmarEliminar(false)}
+          onConfirm={handleEliminar}
+        />
       )}
+    </>
+  )
+}
+
+function ConfirmDeleteModal({
+  numero,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  numero: string
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-rose-50">
+          <Trash2 className="size-6 text-rose-500" />
+        </div>
+        <h3 className="mb-1 text-center text-base font-bold text-gray-900">
+          ¿Eliminar cotización?
+        </h3>
+        <p className="mb-1 text-center font-mono text-sm font-semibold text-gray-700">
+          {numero}
+        </p>
+        <p className="mb-5 text-center text-xs text-gray-400">
+          Esta acción no se puede deshacer. Se eliminarán también todos sus
+          productos.
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? (
+              <>
+                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Eliminando…
+              </>
+            ) : (
+              <>
+                <Trash2 className="size-3.5" />
+                Eliminar
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

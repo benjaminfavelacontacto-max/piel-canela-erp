@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   FileDown,
@@ -9,13 +10,18 @@ import {
   Pencil,
   Copy,
   ShoppingBag,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { downloadCotizacionPdf } from "@/lib/pdf"
-import { marcarVendida, duplicarCotizacion } from "../actions"
+import {
+  marcarVendida,
+  duplicarCotizacion,
+  eliminarCotizacion,
+} from "../actions"
 
 const estatusBadge: Record<Estatus, string> = {
   borrador: "bg-gray-100 text-gray-700",
@@ -44,9 +50,25 @@ export function CotizacionDetail({
   estatus: Estatus
   preview: CotizacionData
 }) {
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [currentEstatus, setCurrentEstatus] = useState<Estatus>(estatus)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
+
+  async function handleEliminar() {
+    setDeleting(true)
+    const result = await eliminarCotizacion(cotizacionId)
+    setDeleting(false)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo eliminar")
+      return
+    }
+    toast.success("Cotización eliminada")
+    setConfirmarEliminar(false)
+    router.push("/cotizaciones")
+  }
 
   function handleMarkSold() {
     if (currentEstatus === "aceptada") {
@@ -160,8 +182,28 @@ export function CotizacionDetail({
             <FileDown className="size-4" />
             PDF
           </button>
+          {currentEstatus !== "aceptada" && (
+            <button
+              type="button"
+              onClick={() => setConfirmarEliminar(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+              title="Eliminar cotización"
+            >
+              <Trash2 className="size-4" />
+              Eliminar
+            </button>
+          )}
         </div>
       </div>
+
+      {confirmarEliminar && (
+        <DeleteCotModal
+          numero={numero}
+          loading={deleting}
+          onCancel={() => setConfirmarEliminar(false)}
+          onConfirm={handleEliminar}
+        />
+      )}
 
       <section className="mb-6 space-y-2">
         <header className="flex items-center justify-between">
@@ -187,6 +229,74 @@ export function CotizacionDetail({
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
+      </div>
+    </div>
+  )
+}
+
+function DeleteCotModal({
+  numero,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  numero: string
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-rose-50">
+          <Trash2 className="size-6 text-rose-500" />
+        </div>
+        <h3 className="mb-1 text-center text-base font-bold text-gray-900">
+          ¿Eliminar cotización?
+        </h3>
+        <p className="mb-1 text-center font-mono text-sm font-semibold text-gray-700">
+          {numero}
+        </p>
+        <p className="mb-5 text-center text-xs text-gray-400">
+          Esta acción no se puede deshacer. Se eliminarán también todos sus
+          productos.
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? (
+              <>
+                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Eliminando…
+              </>
+            ) : (
+              <>
+                <Trash2 className="size-3.5" />
+                Eliminar
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -403,3 +403,45 @@ export async function updateCotizacion(
   revalidatePath(`/cotizaciones/${id}`)
   return { ok: true as const, id }
 }
+
+
+// ─── Eliminar cotización ──────────────────────────────────────────
+// Protegido: si tiene venta vinculada, regresa error y no borra nada.
+
+export async function eliminarCotizacion(id: string) {
+  const supabase = createAdminClient()
+
+  // Verificar que no tenga venta vinculada
+  const { data: venta } = await supabase
+    .from("ventas")
+    .select("id, numero")
+    .eq("cotizacion_id", id)
+    .maybeSingle()
+
+  if (venta) {
+    return {
+      ok: false as const,
+      error: `No se puede eliminar: tiene la venta ${venta.numero} vinculada. Elimina primero la venta.`,
+    }
+  }
+
+  // Eliminar items primero (FK constraint)
+  const { error: errItems } = await supabase
+    .from("cotizacion_items")
+    .delete()
+    .eq("cotizacion_id", id)
+  if (errItems) {
+    return { ok: false as const, error: errItems.message }
+  }
+
+  const { error } = await supabase
+    .from("cotizaciones")
+    .delete()
+    .eq("id", id)
+  if (error) {
+    return { ok: false as const, error: error.message }
+  }
+
+  revalidatePath("/cotizaciones")
+  return { ok: true as const }
+}
