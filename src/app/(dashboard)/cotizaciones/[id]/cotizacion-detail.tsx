@@ -2,12 +2,19 @@
 
 import { useRef, useState, useTransition } from "react"
 import Link from "next/link"
-import { ArrowLeft, FileDown, CheckCircle2 } from "lucide-react"
+import {
+  ArrowLeft,
+  FileDown,
+  CheckCircle2,
+  Pencil,
+  Copy,
+  ShoppingBag,
+} from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { downloadCotizacionPdf } from "@/lib/pdf"
-import { marcarVendida } from "../actions"
+import { marcarVendida, duplicarCotizacion } from "../actions"
 
 const estatusBadge: Record<Estatus, string> = {
   borrador: "bg-gray-100 text-gray-700",
@@ -105,12 +112,21 @@ export function CotizacionDetail({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {currentEstatus === "aceptada" && (
+            <Link
+              href={`/ventas/nueva?cotizacion=${cotizacionId}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-700"
+            >
+              <ShoppingBag className="size-4" />
+              Convertir a Venta
+            </Link>
+          )}
           <button
             type="button"
             onClick={handleMarkSold}
             disabled={pending || currentEstatus === "aceptada"}
-            className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
           >
             <CheckCircle2 className="size-4" />
             {currentEstatus === "aceptada"
@@ -119,13 +135,29 @@ export function CotizacionDetail({
                 ? "Procesando…"
                 : "Marcar como Vendida"}
           </button>
+          <Link
+            href={`/cotizaciones/${cotizacionId}/editar`}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            <Pencil className="size-4" />
+            Editar
+          </Link>
+          <form action={duplicarCotizacion.bind(null, cotizacionId)}>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <Copy className="size-4" />
+              Duplicar
+            </button>
+          </form>
           <button
             type="button"
             onClick={handlePdf}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
             <FileDown className="size-4" />
-            Descargar PDF
+            PDF
           </button>
         </div>
       </div>

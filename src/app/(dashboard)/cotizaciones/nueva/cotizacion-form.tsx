@@ -11,7 +11,7 @@ import type {
   Producto,
 } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
-import { saveCotizacion } from "../actions"
+import { saveCotizacion, updateCotizacion } from "../actions"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 
 const mxn = new Intl.NumberFormat("es-MX", {
@@ -29,26 +29,43 @@ function plus30() {
   return d.toISOString().slice(0, 10)
 }
 
+export type CotizacionFormInitial = {
+  numero: string
+  cliente_id: string
+  fecha: string
+  valida_hasta: string | null
+  ivaActivo: boolean
+  notas: string | null
+  items: CotizacionItem[]
+}
+
 export function CotizacionForm({
   clientes,
   productos,
   productosError,
+  editId,
+  initial,
 }: {
   clientes: Cliente[]
   productos: Producto[]
   productosError: string | null
+  editId?: string
+  initial?: CotizacionFormInitial
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const previewRef = useRef<HTMLDivElement>(null)
+  const isEdit = !!editId
 
-  const [clienteId, setClienteId] = useState<string>("")
-  const [numero, setNumero] = useState<string>("")
-  const [fecha, setFecha] = useState<string>(todayISO())
-  const [validaHasta, setValidaHasta] = useState<string>(plus30())
-  const [ivaActivo, setIvaActivo] = useState<boolean>(true)
-  const [notas, setNotas] = useState<string>("")
-  const [items, setItems] = useState<CotizacionItem[]>([])
+  const [clienteId, setClienteId] = useState<string>(initial?.cliente_id ?? "")
+  const [numero, setNumero] = useState<string>(initial?.numero ?? "")
+  const [fecha, setFecha] = useState<string>(initial?.fecha ?? todayISO())
+  const [validaHasta, setValidaHasta] = useState<string>(
+    initial?.valida_hasta ?? plus30(),
+  )
+  const [ivaActivo, setIvaActivo] = useState<boolean>(initial?.ivaActivo ?? true)
+  const [notas, setNotas] = useState<string>(initial?.notas ?? "")
+  const [items, setItems] = useState<CotizacionItem[]>(initial?.items ?? [])
 
   const [search, setSearch] = useState<string>("")
   const [selectedProductId, setSelectedProductId] = useState<string>("")
@@ -153,7 +170,7 @@ export function CotizacionForm({
     }
     startTransition(async () => {
       try {
-        const result = await saveCotizacion({
+        const payload = {
           numero: numero.trim(),
           cliente_id: clienteId,
           fecha,
@@ -175,14 +192,18 @@ export function CotizacionForm({
             costo_unitario: it.costo_unitario,
             subtotal: it.subtotal,
           })),
-        })
+        }
+        const result = isEdit
+          ? await updateCotizacion(editId!, payload)
+          : await saveCotizacion(payload)
         if (!result.ok) {
-          console.error("[handleSave] saveCotizacion returned error:", result.error)
+          console.error("[handleSave] action error:", result.error)
           toast.error(result.error, { duration: 8000 })
           return
         }
-        toast.success("Cotización guardada.")
-        router.push(`/cotizaciones/${result.id}`)
+        toast.success(isEdit ? "Cambios guardados." : "Cotización guardada.")
+        const targetId = "id" in result ? result.id : editId!
+        router.push(`/cotizaciones/${targetId}`)
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
         console.error("[handleSave] threw:", e)

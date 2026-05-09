@@ -201,3 +201,206 @@ export async function marcarVendida(cotizacionId: string) {
 
   return { ok: true as const, ventaId: venta.id as string }
 }
+
+// ───────────────────────────────────────────────────────────────────
+// cambiarEstatusCotizacion — cambio inline desde la lista
+// ───────────────────────────────────────────────────────────────────
+
+const ESTATUS_VALIDOS = [
+  "borrador",
+  "enviada",
+  "aceptada",
+  "rechazada",
+  "vencida",
+] as const
+type EstatusCotizacion = (typeof ESTATUS_VALIDOS)[number]
+
+export async function cambiarEstatusCotizacion(
+  id: string,
+  estatus: string,
+) {
+  if (!ESTATUS_VALIDOS.includes(estatus as EstatusCotizacion)) {
+    return { ok: false as const, error: `Estatus inválido: ${estatus}` }
+  }
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("cotizaciones")
+    .update({ estatus })
+    .eq("id", id)
+  if (error) {
+    console.error(
+      "[cambiarEstatusCotizacion] error:",
+      JSON.stringify(error, null, 2),
+    )
+    return { ok: false as const, error: error.message }
+  }
+  revalidatePath("/cotizaciones")
+  revalidatePath(`/cotizaciones/${id}`)
+  return { ok: true as const }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// duplicarCotizacion — clona como nueva en estatus 'borrador'
+// ───────────────────────────────────────────────────────────────────
+
+export async function duplicarCotizacion(id: string) {
+  const supabase = createAdminClient()
+  const { data: orig, error: fetchErr } = await supabase
+    .from("cotizaciones")
+    .select(
+      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, notas",
+    )
+    .eq("id", id)
+    .single()
+  if (fetchErr || !orig) {
+    console.error(
+      "[duplicarCotizacion] fetch error:",
+      JSON.stringify(fetchErr, null, 2),
+    )
+    return {
+      ok: false as const,
+      error: fetchErr?.message ?? "Cotización no encontrada",
+    }
+  }
+
+  const newNumero = `${orig.numero}-COPIA-${Date.now().toString().slice(-6)}`
+  const today = new Date().toISOString().slice(0, 10)
+  const validaHasta = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 30)
+    return d.toISOString().slice(0, 10)
+  })()
+
+  const { data: cot, error: insErr } = await supabase
+    .from("cotizaciones")
+    .insert({
+      numero: newNumero,
+      cliente_id: orig.cliente_id,
+      fecha: today,
+      valida_hasta: validaHasta,
+      moneda: orig.moneda,
+      subtotal: orig.subtotal,
+      iva: orig.iva,
+      descuento: orig.descuento,
+      costo_productos: orig.costo_productos,
+      estatus: "borrador",
+      notas: orig.notas,
+    })
+    .select("id")
+    .single()
+  if (insErr || !cot) {
+    console.error(
+      "[duplicarCotizacion] insert error:",
+      JSON.stringify(insErr, null, 2),
+    )
+    return {
+      ok: false as const,
+      error: insErr?.message ?? "No se pudo duplicar",
+    }
+  }
+
+  const { data: items, error: itemsErr } = await supabase
+    .from("cotizacion_items")
+    .select("producto_id, cantidad, precio_unitario, costo_unitario, sort_order")
+    .eq("cotizacion_id", id)
+  if (itemsErr) {
+    console.error(
+      "[duplicarCotizacion] items fetch error:",
+      JSON.stringify(itemsErr, null, 2),
+    )
+  }
+  if (items && items.length > 0) {
+    const newItems = items.map((it) => ({
+      cotizacion_id: cot.id,
+      producto_id: it.producto_id,
+      cantidad: it.cantidad,
+      precio_unitario: it.precio_unitario,
+      costo_unitario: it.costo_unitario,
+      sort_order: it.sort_order,
+    }))
+    const { error: insItemsErr } = await supabase
+      .from("cotizacion_items")
+      .insert(newItems)
+    if (insItemsErr) {
+      console.error(
+        "[duplicarCotizacion] insert items error:",
+        JSON.stringify(insItemsErr, null, 2),
+      )
+    }
+  }
+
+  revalidatePath("/cotizaciones")
+  redirect(`/cotizaciones/${cot.id}/editar`)
+}
+
+// ───────────────────────────────────────────────────────────────────
+// updateCotizacion — usado por la página de editar
+// ───────────────────────────────────────────────────────────────────
+
+export async function updateCotizacion(
+  id: string,
+  input: SaveCotizacionInput,
+) {
+  const supabase = createAdminClient()
+
+  // total es GENERATED — Postgres lo recalcula
+  const { error: updErr } = await supabase
+    .from("cotizaciones")
+    .update({
+      numero: input.numero,
+      cliente_id: input.cliente_id,
+      fecha: input.fecha,
+      valida_hasta: input.valida_hasta,
+      moneda: input.moneda,
+      subtotal: input.subtotal,
+      iva: input.iva,
+      descuento: input.descuento,
+      costo_productos: input.costo_productos,
+      notas: input.notas,
+    })
+    .eq("id", id)
+  if (updErr) {
+    console.error(
+      "[updateCotizacion] update error:",
+      JSON.stringify(updErr, null, 2),
+    )
+    return { ok: false as const, error: updErr.message }
+  }
+
+  // Reemplaza items: DELETE old, INSERT new (subtotal es GENERATED — no se envía)
+  const { error: delErr } = await supabase
+    .from("cotizacion_items")
+    .delete()
+    .eq("cotizacion_id", id)
+  if (delErr) {
+    console.error(
+      "[updateCotizacion] delete items error:",
+      JSON.stringify(delErr, null, 2),
+    )
+    return { ok: false as const, error: delErr.message }
+  }
+  if (input.items.length > 0) {
+    const rows = input.items.map((it, i) => ({
+      cotizacion_id: id,
+      producto_id: it.producto_id,
+      cantidad: it.cantidad,
+      precio_unitario: it.precio_unitario,
+      costo_unitario: it.costo_unitario,
+      sort_order: i,
+    }))
+    const { error: insErr } = await supabase
+      .from("cotizacion_items")
+      .insert(rows)
+    if (insErr) {
+      console.error(
+        "[updateCotizacion] insert items error:",
+        JSON.stringify(insErr, null, 2),
+      )
+      return { ok: false as const, error: insErr.message }
+    }
+  }
+
+  revalidatePath("/cotizaciones")
+  revalidatePath(`/cotizaciones/${id}`)
+  return { ok: true as const, id }
+}
