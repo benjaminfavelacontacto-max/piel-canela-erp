@@ -9,8 +9,13 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[#F6F7F9]">
       <aside
-        className="flex w-60 shrink-0 flex-col bg-[#FBFCFD]"
-        style={{ borderRight: "1px solid rgba(15,23,42,.06)" }}
+        className="flex w-[224px] shrink-0 flex-col"
+        style={{
+          borderRight: "1px solid rgba(15,23,42,.06)",
+          background: "rgba(255,255,255,0.72)",
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+        }}
       >
         <div
           className="px-5 py-5"

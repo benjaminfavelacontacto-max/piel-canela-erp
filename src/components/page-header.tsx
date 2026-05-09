@@ -165,14 +165,14 @@ function Sparkline({ points }: { points: number[] }) {
       height={h}
       viewBox={`0 0 ${w} ${h}`}
       fill="none"
-      className="shrink-0 transition-opacity"
-      style={{ opacity: 0.65 }}
+      className="shrink-0 transition-opacity duration-180 group-hover:opacity-100"
+      style={{ opacity: 0.45, transform: "scale(0.92)", transformOrigin: "right center" }}
       aria-hidden
     >
       <path
         d={`${path} L ${w} ${h} L 0 ${h} Z`}
         fill={stroke}
-        fillOpacity="0.06"
+        fillOpacity="0.05"
       />
       <path
         d={path}

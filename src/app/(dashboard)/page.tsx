@@ -508,25 +508,26 @@ export default async function DashboardPage() {
         }
       />
 
-      {/* ─── KPIs secundarios ─── */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* ─── KPIs secundarios — strips horizontales compactos ─── */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Kpi
-          icon={<Users className="size-5 text-[#0F766E]" />}
-          iconBg="bg-[#F9FAFB]"
+          icon={<Users className="size-4 text-gray-500" strokeWidth={1.75} />}
           label="Clientes activos"
           value={totalClientes.toLocaleString("es-MX")}
           sub="En la base de datos"
         />
         <Kpi
-          icon={<FileText className="size-5 text-amber-600" />}
-          iconBg="bg-amber-50"
+          icon={
+            <FileText className="size-4 text-amber-600" strokeWidth={1.75} />
+          }
           label="Cotizaciones pendientes"
           value={cotPendCount.toLocaleString("es-MX")}
           sub="Estatus: enviada"
         />
         <Kpi
-          icon={<Package className="size-5 text-red-600" />}
-          iconBg="bg-red-50"
+          icon={
+            <Package className="size-4 text-rose-500" strokeWidth={1.75} />
+          }
           label="Stock bajo"
           value={stockBajoCount.toLocaleString("es-MX")}
           sub="Productos en alerta"
@@ -534,44 +535,46 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* ─── Chart full-width con summary inline ─── */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md">
-        <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      {/* ─── Chart full-width con summary inline (compacto) ─── */}
+      <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 transition-shadow hover:shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
+        style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
+      >
+        <header className="mb-3 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-[#0F172A]">
               Ventas mensuales
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="mt-0.5 text-[11px] text-[#94A3B8]">
               Últimos 12 meses · Total vendido y ganancia
             </p>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-5">
             <ChartSummary
               label="Este mes"
               value={mxn.format(totalVentasMes)}
-              tone="text-gray-900"
+              tone="text-[#0F172A]"
             />
             <ChartSummary
               label="Mes anterior"
               value={mxn.format(totalVentasMesAnt)}
-              tone="text-gray-500"
+              tone="text-[#64748B]"
             />
             <ChartSummary
               label="Cambio"
               value={`${cambioVentas >= 0 ? "+" : ""}${cambioVentas.toFixed(1)}%`}
               tone={
-                cambioVentas >= 0 ? "text-emerald-700" : "text-red-700"
+                cambioVentas >= 0 ? "text-emerald-600" : "text-rose-600"
               }
             />
             <Link
               href="/ventas/estadisticas"
-              className="inline-flex items-center gap-1 text-xs text-teal-600 hover:underline"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#0F766E] hover:underline"
             >
               Ver detalle <ArrowRight className="size-3" />
             </Link>
           </div>
         </header>
-        <MonthlyChart data={chartData} height={360} />
+        <MonthlyChart data={chartData} height={320} />
       </section>
 
       {/* ─── 3 panels lado a lado, alturas balanceadas ─── */}
@@ -805,7 +808,6 @@ export default async function DashboardPage() {
 
 function Kpi({
   icon,
-  iconBg,
   label,
   value,
   sub,
@@ -813,7 +815,7 @@ function Kpi({
   urgent,
 }: {
   icon: React.ReactNode
-  iconBg: string
+  iconBg?: string // deprecado, ignorado
   label: string
   value: string
   sub?: string
@@ -822,25 +824,50 @@ function Kpi({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default ${urgent ? "border-red-100" : "border-gray-100"}`}
+      className={`flex items-center gap-3 rounded-[14px] border bg-white px-4 py-3.5 transition-all duration-180 hover:-translate-y-0.5 ${
+        urgent
+          ? "border-[rgba(220,38,38,0.12)]"
+          : "border-[rgba(15,23,42,0.06)]"
+      }`}
+      style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
     >
-      <div className="mb-4 flex items-center justify-between">
-        <div className={`p-2 rounded-xl ${iconBg}`}>{icon}</div>
-        {change !== undefined && (
-          <span
-            className={`inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-xs font-medium ${
-              change >= 0
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-red-50 text-red-700"
-            }`}
-          >
-            {change >= 0 ? "↑" : "↓"} {Math.abs(change).toFixed(1)}%
-          </span>
+      {/* Icono pequeño en columna izquierda */}
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#F3F5F7]">
+        {icon}
+      </div>
+
+      {/* Información en columna derecha */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+            {label}
+          </p>
+          {change !== undefined && (
+            <span
+              className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
+                change >= 0 ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              <span aria-hidden className="text-[8px]">
+                {change >= 0 ? "▲" : "▼"}
+              </span>
+              {Math.abs(change).toFixed(1)}%
+            </span>
+          )}
+        </div>
+        <p
+          className={`mt-0.5 text-[22px] font-bold leading-none tracking-[-0.025em] tabular-nums ${
+            urgent ? "text-[#DC2626]" : "text-[#0F172A]"
+          }`}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p className="mt-1 text-[11px] leading-tight text-[#94A3B8]">
+            {sub}
+          </p>
         )}
       </div>
-      <p className="text-3xl font-bold tabular-nums text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500 mt-1">{label}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
   )
 }
