@@ -80,6 +80,14 @@ export type CotItemRow = {
   productos: { id: string; sku: string | null; nombre: string } | null
 }
 
+export type KpisGlobales = {
+  totalCotizaciones: number
+  convertidas: number
+  enProceso: number
+  totalValor: number
+  porVencer: number
+}
+
 export type EnrichedCot = CotizacionRow & {
   itemsCount: number
   piezasTotal: number
@@ -251,11 +259,13 @@ export function CotizacionesList({
   cotizaciones,
   clientes,
   items,
+  kpis,
   error,
 }: {
   cotizaciones: CotizacionRow[]
   clientes: ClienteOption[]
   items: CotItemRow[]
+  kpis: KpisGlobales
   error: string | null
 }) {
   const router = useRouter()
@@ -652,27 +662,6 @@ export function CotizacionesList({
   const totalPages = table.getPageCount()
   const filteredCount = table.getFilteredRowModel().rows.length
 
-  // KPIs
-  const kpis = useMemo(() => {
-    const totalMonto = filtered.reduce(
-      (s, c) => s + Number(c.total ?? 0),
-      0,
-    )
-    const aceptadas = filtered.filter((c) => c.estatus === "aceptada").length
-    const pendientes = filtered.filter(
-      (c) => c.estatus === "borrador" || c.estatus === "enviada",
-    ).length
-    const porVencer = filtered.filter((c) => {
-      if (!c.valida_hasta) return false
-      const dias = Math.round(
-        (new Date(c.valida_hasta).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
-      return dias >= 0 && dias < 7
-    }).length
-    return { totalMonto, aceptadas, pendientes, porVencer }
-  }, [filtered])
-
   return (
     <div className="space-y-5 p-8">
       {/* Header */}
@@ -684,8 +673,8 @@ export function CotizacionesList({
               Cotizaciones
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {cotizaciones.length} cotizaciones · {kpis.aceptadas} aceptadas ·{" "}
-              {kpis.pendientes} en proceso
+              {kpis.totalCotizaciones} cotizaciones · {kpis.convertidas}{" "}
+              convertidas · {kpis.enProceso} en proceso
             </p>
           </div>
         </div>
@@ -704,27 +693,28 @@ export function CotizacionesList({
         </div>
       )}
 
-      {/* KPIs */}
+      {/* KPIs globales (queries reales, NO filtrados) */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
-          label="Total filtrado"
-          value={mxn.format(kpis.totalMonto)}
+          label="Total valor"
+          value={mxn.format(kpis.totalValor)}
+          sub={`${kpis.totalCotizaciones} cotizaciones`}
           accent="text-teal-700"
           gradient="from-teal-50 via-white to-cyan-50/50"
           ring="ring-teal-100"
         />
         <Kpi
-          label="Aceptadas"
-          value={kpis.aceptadas.toString()}
-          sub="Convertidas en venta"
+          label="Convertidas"
+          value={kpis.convertidas.toString()}
+          sub="Con venta registrada"
           accent="text-emerald-700"
           gradient="from-emerald-50 via-white to-teal-50/50"
           ring="ring-emerald-100"
         />
         <Kpi
           label="En proceso"
-          value={kpis.pendientes.toString()}
-          sub="Borrador / Enviada"
+          value={kpis.enProceso.toString()}
+          sub="Sin venta aún"
           accent="text-blue-700"
           gradient="from-blue-50 via-white to-indigo-50/50"
           ring="ring-blue-100"
