@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -28,7 +28,7 @@ export type SaveCotizacionInput = {
 }
 
 export async function saveCotizacion(input: SaveCotizacionInput) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // total es GENERATED — no se inserta. Postgres lo calcula desde subtotal + iva − descuento.
   const { data: cot, error: cotErr } = await supabase
@@ -50,7 +50,7 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
     .single()
 
   if (cotErr || !cot) {
-    console.error("[saveCotizacion] insert cotización falló:", cotErr)
+    console.error("[saveCotizacion] insert cotización falló:", JSON.stringify(cotErr, null, 2))
     return {
       ok: false as const,
       error: cotErr?.message ?? "Error al crear cotización",
@@ -73,7 +73,7 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
       .insert(itemsRows)
 
     if (itemsErr) {
-      console.error("[saveCotizacion] insert items falló:", itemsErr)
+      console.error("[saveCotizacion] insert items falló:", JSON.stringify(itemsErr, null, 2))
       return {
         ok: false as const,
         error: `Cotización creada pero items fallaron: ${itemsErr.message}`,
@@ -102,7 +102,7 @@ export async function saveCotizacionAndRedirect(input: SaveCotizacionInput) {
  * Si tu schema difiere, este insert va a fallar y debes ajustar los campos.
  */
 export async function marcarVendida(cotizacionId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")

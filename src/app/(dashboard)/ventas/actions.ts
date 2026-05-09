@@ -40,7 +40,8 @@ function estatusFor(
 }
 
 export async function saveVenta(input: SaveVentaInput) {
-  const supabase = await createClient()
+  // Admin client: bypassa RLS para que los INSERTs no bloqueen.
+  const supabase = createAdminClient()
 
   // total, ganancia y saldo_pendiente son columnas GENERATED — Postgres las calcula.
   const estatus = estatusFor(input.total, input.cantidad_pagada)
@@ -359,7 +360,8 @@ function ventaEstatus(
 }
 
 export async function updateVenta(input: UpdateVentaInput) {
-  const supabase = await createClient()
+  // Admin client para bypassar RLS en UPDATEs
+  const supabase = createAdminClient()
 
   const { data: current, error: fetchErr } = await supabase
     .from("ventas")
