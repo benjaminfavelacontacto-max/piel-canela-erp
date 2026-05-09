@@ -24,16 +24,44 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Columns3,
+  DollarSign,
   ExternalLink,
   FileText,
   Loader2,
   Pencil,
+  Percent,
   Plus,
   Search,
   Sparkles,
+  Target,
+  TrendingUp,
+  Wallet,
+  XCircle,
+  Zap,
 } from "lucide-react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 import { cambiarEstatusCotizacion } from "./actions"
+import { AnimatedNumber } from "../ventas/estadisticas/animated-number"
+import {
+  calcularProbabilidad,
+  classifyEstadoComercial,
+  type ClienteHist,
+  type ProbResult,
+} from "./lib-cotizacion-prob"
 
 export type Estatus =
   | "borrador"
@@ -57,6 +85,8 @@ export type CotizacionRow = {
   estatus: Estatus
   cliente_id: string | null
   notas: string | null
+  created_at: string | null
+  updated_at: string | null
   clientes: {
     id: string
     nombre: string
@@ -65,6 +95,14 @@ export type CotizacionRow = {
     ciudad: string | null
     vendedor_socio_id: string | null
   } | null
+}
+
+export type VentaSummary = {
+  id: string
+  fecha: string
+  total: number
+  cotizacion_id: string | null
+  cliente_id: string | null
 }
 
 export type ClienteOption = {
@@ -83,9 +121,15 @@ export type CotItemRow = {
 export type KpisGlobales = {
   totalCotizaciones: number
   convertidas: number
-  enProceso: number
-  totalValor: number
-  porVencer: number
+  activas: number
+  perdidas: number
+  valorConvertido: number
+  pipelinePotencial: number
+  pendienteConvertir: number
+  tasaConversion: number
+  tiempoPromCierreDias: number
+  ticketProm: number
+  utilidadEstimada: number
 }
 
 export type EnrichedCot = CotizacionRow & {
@@ -93,6 +137,10 @@ export type EnrichedCot = CotizacionRow & {
   piezasTotal: number
   margenNetoPct: number
   productNames: string
+  esConvertida: boolean
+  estadoComercial: ReturnType<typeof classifyEstadoComercial>
+  prob: ProbResult
+  ultimaActividadISO: string
 }
 
 const ESTATUS_OPTIONS: { value: Estatus; label: string }[] = [
@@ -259,18 +307,60 @@ export function CotizacionesList({
   cotizaciones,
   clientes,
   items,
+  ventas,
   kpis,
   error,
 }: {
   cotizaciones: CotizacionRow[]
   clientes: ClienteOption[]
   items: CotItemRow[]
+  ventas: VentaSummary[]
   kpis: KpisGlobales
   error: string | null
 }) {
   const router = useRouter()
+  const today = useMemo(() => new Date(), [])
 
-  // Enrichment con conteos por cotización
+  // ─── Historiales por cliente para probabilidad ────────────────
+  const clienteHistMap = useMemo(() => {
+    const map = new Map<string, ClienteHist>()
+    const cotIdsConVenta = new Set(
+      ventas.map((v) => v.cotizacion_id).filter((x): x is string => !!x),
+    )
+    // Inicializar
+    for (const c of cotizaciones) {
+      if (!c.cliente_id) continue
+      const cur = map.get(c.cliente_id) ?? {
+        ventasCount: 0,
+        cotsCount: 0,
+        cotsConvertidasCount: 0,
+      }
+      cur.cotsCount += 1
+      if (cotIdsConVenta.has(c.id)) cur.cotsConvertidasCount += 1
+      map.set(c.cliente_id, cur)
+    }
+    for (const v of ventas) {
+      if (!v.cliente_id) continue
+      const cur = map.get(v.cliente_id) ?? {
+        ventasCount: 0,
+        cotsCount: 0,
+        cotsConvertidasCount: 0,
+      }
+      cur.ventasCount += 1
+      map.set(v.cliente_id, cur)
+    }
+    return map
+  }, [cotizaciones, ventas])
+
+  const cotIdsConVenta = useMemo(
+    () =>
+      new Set(
+        ventas.map((v) => v.cotizacion_id).filter((x): x is string => !!x),
+      ),
+    [ventas],
+  )
+
+  // ─── Enrichment con conteos + probabilidad + estado comercial ───
   const data: EnrichedCot[] = useMemo(() => {
     const itemsByCotId = new Map<string, CotItemRow[]>()
     for (const it of items) {
@@ -288,15 +378,72 @@ export function CotizacionesList({
       const total = Number(c.total ?? 0)
       const utilNeta = Number(c.utilidad_neta ?? 0)
       const margen = total > 0 ? (utilNeta / total) * 100 : 0
+      const esConvertida = cotIdsConVenta.has(c.id)
+      const cliHist = c.cliente_id
+        ? (clienteHistMap.get(c.cliente_id) ?? null)
+        : null
+      const prob = calcularProbabilidad(c, today, cliHist, esConvertida)
+      const estadoComercial = classifyEstadoComercial(
+        c.estatus,
+        esConvertida,
+        prob.diasParaVencer,
+      )
+      const ultimaActividadISO = c.updated_at ?? c.created_at ?? c.fecha
       return {
         ...c,
         itemsCount: its.length,
         piezasTotal: piezas,
         margenNetoPct: margen,
         productNames,
+        esConvertida,
+        estadoComercial,
+        prob,
+        ultimaActividadISO,
       }
     })
-  }, [cotizaciones, items])
+  }, [cotizaciones, items, cotIdsConVenta, clienteHistMap, today])
+
+  // ─── Series mensuales para charts ────────────────────────────────
+  const monthlySeries = useMemo(() => {
+    const months: {
+      key: string
+      label: string
+      conversiones: number
+      valorConvertido: number
+      cotsCreadas: number
+      pipelineCreado: number
+    }[] = []
+    const now = new Date()
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+      const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+      months.push({
+        key,
+        label: `${meses[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
+        conversiones: 0,
+        valorConvertido: 0,
+        cotsCreadas: 0,
+        pipelineCreado: 0,
+      })
+    }
+    const idx = new Map(months.map((m, i) => [m.key, i]))
+    for (const v of ventas) {
+      const k = v.fecha.slice(0, 7)
+      const i = idx.get(k)
+      if (i === undefined) continue
+      months[i].conversiones += 1
+      months[i].valorConvertido += v.total
+    }
+    for (const c of cotizaciones) {
+      const k = c.fecha.slice(0, 7)
+      const i = idx.get(k)
+      if (i === undefined) continue
+      months[i].cotsCreadas += 1
+      months[i].pipelineCreado += Number(c.total ?? 0)
+    }
+    return months
+  }, [ventas, cotizaciones])
 
   // Filtros
   const [globalFilter, setGlobalFilter] = useState("")
@@ -365,6 +512,7 @@ export function CotizacionesList({
     margenNetoPct: false,
     rfc: false,
     ciudad: false,
+    ultimaActividad: false,
   })
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
   const [showColumnMenu, setShowColumnMenu] = useState(false)
@@ -581,8 +729,57 @@ export function CotizacionesList({
         size: 110,
       },
       {
+        id: "estadoComercial",
+        accessorFn: (c) => c.estadoComercial,
+        header: (ctx) => <HeaderCell label="Estado" ctx={ctx} />,
+        cell: ({ row }) => (
+          <EstadoComercialPill estado={row.original.estadoComercial} />
+        ),
+        size: 110,
+      },
+      {
+        id: "probabilidad",
+        accessorFn: (c) => c.prob.score,
+        header: (ctx) => <HeaderCell label="Probabilidad" ctx={ctx} align="right" />,
+        cell: ({ row }) => <ProbabilidadCell prob={row.original.prob} />,
+        size: 130,
+      },
+      {
+        id: "diasAbierta",
+        accessorFn: (c) => c.prob.diasAbierta,
+        header: (ctx) => <HeaderCell label="Días abierta" ctx={ctx} align="right" />,
+        cell: ({ row }) => {
+          const d = row.original.prob.diasAbierta
+          const tone =
+            d < 7
+              ? "text-emerald-700"
+              : d < 21
+                ? "text-amber-700"
+                : "text-rose-700"
+          return (
+            <span className={`text-xs font-medium tabular-nums ${tone}`}>
+              {d}d
+            </span>
+          )
+        },
+        size: 100,
+      },
+      {
+        id: "ultimaActividad",
+        accessorFn: (c) => c.ultimaActividadISO,
+        header: (ctx) => (
+          <HeaderCell label="Última actividad" ctx={ctx} align="right" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-[10.5px] text-gray-500 tabular-nums">
+            {fechaFmt.format(new Date(row.original.ultimaActividadISO))}
+          </span>
+        ),
+        size: 130,
+      },
+      {
         accessorKey: "estatus",
-        header: (ctx) => <HeaderCell label="Estatus" ctx={ctx} />,
+        header: (ctx) => <HeaderCell label="Estatus BD" ctx={ctx} />,
         cell: ({ getValue, row }) => (
           <StatusCell
             cotId={row.original.id}
@@ -674,7 +871,7 @@ export function CotizacionesList({
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               {kpis.totalCotizaciones} cotizaciones · {kpis.convertidas}{" "}
-              convertidas · {kpis.enProceso} en proceso
+              convertidas · {kpis.activas} activas · {kpis.perdidas} perdidas
             </p>
           </div>
         </div>
@@ -693,40 +890,172 @@ export function CotizacionesList({
         </div>
       )}
 
-      {/* KPIs globales (queries reales, NO filtrados) */}
+      {/* HERO KPI: Valor Convertido — el más importante */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-700 p-6 shadow-lg ring-1 ring-emerald-700/30">
+        <div className="pointer-events-none absolute -right-12 -top-12 size-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-8 size-48 rounded-full bg-emerald-300/20 blur-3xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner backdrop-blur">
+                <DollarSign className="size-5" />
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/85">
+                Valor convertido
+              </span>
+            </div>
+            <div className="mt-3 text-[42px] font-black leading-none tracking-tight text-white tabular-nums">
+              <AnimatedNumber
+                value={kpis.valorConvertido}
+                prefix="$"
+                decimals={0}
+                duration={1200}
+              />
+            </div>
+            <p className="mt-2 text-sm text-white/85">
+              Total real cobrado en {kpis.convertidas} ventas registradas
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-right">
+            <HeroSecondary
+              label="Tasa conversión"
+              value={`${kpis.tasaConversion.toFixed(1)}%`}
+              icon={<Percent className="size-3.5" />}
+            />
+            <HeroSecondary
+              label="Tiempo cierre"
+              value={`${Math.round(kpis.tiempoPromCierreDias)}d`}
+              icon={<Clock className="size-3.5" />}
+            />
+            <HeroSecondary
+              label="Ticket prom."
+              value={mxn.format(kpis.ticketProm)}
+              icon={<TrendingUp className="size-3.5" />}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* KPIs secundarios — pipeline, oportunidades, perdidas */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
-          label="Total valor"
-          value={mxn.format(kpis.totalValor)}
-          sub={`${kpis.totalCotizaciones} cotizaciones`}
+          label="Pipeline potencial"
+          value={mxn.format(kpis.pipelinePotencial)}
+          sub={`${kpis.activas} cotizaciones activas`}
           accent="text-teal-700"
           gradient="from-teal-50 via-white to-cyan-50/50"
           ring="ring-teal-100"
+          icon={<Target className="size-4" />}
+        />
+        <Kpi
+          label="Pendiente de convertir"
+          value={mxn.format(kpis.pendienteConvertir)}
+          sub="Enviadas vigentes en seguimiento"
+          accent="text-violet-700"
+          gradient="from-violet-50 via-white to-purple-50/50"
+          ring="ring-violet-100"
+          icon={<Wallet className="size-4" />}
         />
         <Kpi
           label="Convertidas"
           value={kpis.convertidas.toString()}
-          sub="Con venta registrada"
+          sub={`${kpis.totalCotizaciones} cotizaciones totales`}
           accent="text-emerald-700"
           gradient="from-emerald-50 via-white to-teal-50/50"
           ring="ring-emerald-100"
+          icon={<Zap className="size-4" />}
         />
         <Kpi
-          label="En proceso"
-          value={kpis.enProceso.toString()}
-          sub="Sin venta aún"
-          accent="text-blue-700"
-          gradient="from-blue-50 via-white to-indigo-50/50"
-          ring="ring-blue-100"
+          label="Perdidas"
+          value={kpis.perdidas.toString()}
+          sub="Rechazadas o vencidas"
+          accent="text-rose-700"
+          gradient="from-rose-50 via-white to-pink-50/50"
+          ring="ring-rose-100"
+          icon={<XCircle className="size-4" />}
         />
-        <Kpi
-          label="Por vencer (<7d)"
-          value={kpis.porVencer.toString()}
-          sub="Requieren follow-up"
-          accent="text-amber-700"
-          gradient="from-amber-50 via-white to-orange-50/50"
-          ring="ring-amber-100"
-        />
+      </section>
+
+      {/* Charts: conversiones por mes + valor convertido vs pipeline */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <header className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Conversiones por mes
+            </h3>
+            <p className="mt-0.5 text-[11px] text-gray-500">
+              # de ventas cerradas vs cotizaciones creadas
+            </p>
+          </header>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart
+              data={monthlySeries}
+              margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+              <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+              <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="conversiones" name="Convertidas en venta" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </article>
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <header className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Valor convertido vs Pipeline
+            </h3>
+            <p className="mt-0.5 text-[11px] text-gray-500">
+              MXN cobrado real (verde) y en cotizaciones (línea)
+            </p>
+          </header>
+          <ResponsiveContainer width="100%" height={220}>
+            <ComposedChart
+              data={monthlySeries}
+              margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="gradValorConvertido" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#6ee7b7" stopOpacity={0.5} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) =>
+                  v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`
+                }
+                width={50}
+              />
+              <Tooltip
+                contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }}
+                formatter={(v) =>
+                  typeof v === "number" ? mxn.format(v) : String(v)
+                }
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+              <Bar
+                dataKey="valorConvertido"
+                name="Valor convertido"
+                fill="url(#gradValorConvertido)"
+                radius={[6, 6, 0, 0]}
+              />
+              <Line
+                dataKey="pipelineCreado"
+                name="Pipeline creado"
+                stroke="#0d9488"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#0d9488" }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </article>
       </section>
 
       {/* Filtros */}
@@ -1065,6 +1394,7 @@ function Kpi({
   accent,
   gradient,
   ring,
+  icon,
 }: {
   label: string
   value: string
@@ -1072,18 +1402,147 @@ function Kpi({
   accent: string
   gradient: string
   ring: string
+  icon?: React.ReactNode
 }) {
   return (
     <article
       className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
     >
-      <div className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
-        {label}
+      <div className={`flex items-center gap-1.5 ${accent}`}>
+        {icon}
+        <span className="text-[10.5px] font-semibold uppercase tracking-wider">
+          {label}
+        </span>
       </div>
       <div className={`mt-2 text-xl font-bold tabular-nums ${accent}`}>
         {value}
       </div>
       {sub && <div className="mt-0.5 text-[11px] text-gray-600">{sub}</div>}
     </article>
+  )
+}
+
+function HeroSecondary({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string
+  icon?: React.ReactNode
+}) {
+  return (
+    <div className="rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/30 backdrop-blur">
+      <div className="flex items-center justify-end gap-1 text-[9.5px] font-semibold uppercase tracking-wider text-white/80">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-0.5 text-base font-bold tabular-nums text-white">
+        {value}
+      </div>
+    </div>
+  )
+}
+
+const ESTADO_COMERCIAL_CONF: Record<
+  ReturnType<typeof classifyEstadoComercial>,
+  { label: string; bg: string; text: string; ring: string; dot: string }
+> = {
+  convertida: {
+    label: "Convertida",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    ring: "ring-emerald-200/60",
+    dot: "bg-emerald-500",
+  },
+  activa: {
+    label: "Activa",
+    bg: "bg-teal-50",
+    text: "text-teal-700",
+    ring: "ring-teal-200/60",
+    dot: "bg-teal-500",
+  },
+  seguimiento: {
+    label: "Seguimiento",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    ring: "ring-amber-200/60",
+    dot: "bg-amber-500",
+  },
+  vencida: {
+    label: "Vencida",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    ring: "ring-orange-200/60",
+    dot: "bg-orange-500",
+  },
+  perdida: {
+    label: "Perdida",
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    ring: "ring-rose-200/60",
+    dot: "bg-rose-500",
+  },
+}
+
+function EstadoComercialPill({
+  estado,
+}: {
+  estado: ReturnType<typeof classifyEstadoComercial>
+}) {
+  const c = ESTADO_COMERCIAL_CONF[estado]
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full ${c.bg} ${c.text} px-2 py-0.5 text-xs font-medium ring-1 ${c.ring}`}
+    >
+      <span className={`size-1.5 rounded-full ${c.dot}`} />
+      {c.label}
+    </span>
+  )
+}
+
+function ProbabilidadCell({ prob }: { prob: ProbResult }) {
+  const { score, label } = prob
+  if (label === "convertida")
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+        ✓ 100%
+      </span>
+    )
+  if (label === "perdida")
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+        Perdida
+      </span>
+    )
+  const tone =
+    label === "alta"
+      ? "bg-emerald-100 text-emerald-700"
+      : label === "media"
+        ? "bg-amber-100 text-amber-700"
+        : "bg-gray-100 text-gray-600"
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${tone}`}
+      >
+        {label}
+      </span>
+      <div className="h-1.5 w-12 overflow-hidden rounded-full bg-gray-100">
+        <div
+          className={`h-full rounded-full ${
+            label === "alta"
+              ? "bg-emerald-500"
+              : label === "media"
+                ? "bg-amber-500"
+                : "bg-gray-400"
+          }`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <span className="w-7 text-right text-[10.5px] font-semibold tabular-nums text-gray-700">
+        {score}
+      </span>
+    </div>
   )
 }
