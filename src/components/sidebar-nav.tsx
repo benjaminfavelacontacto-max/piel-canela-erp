@@ -8,7 +8,7 @@ import {
   FileText,
   ShoppingBag,
   Users,
-  Wallet,
+  TrendingUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -18,7 +18,7 @@ const items = [
   { href: "/cotizaciones", label: "Cotizaciones", icon: FileText },
   { href: "/ventas", label: "Ventas", icon: ShoppingBag },
   { href: "/clientes", label: "Clientes", icon: Users },
-  { href: "/finanzas", label: "Finanzas", icon: Wallet },
+  { href: "/finanzas", label: "Finanzas", icon: TrendingUp },
 ]
 
 export function SidebarNav() {
