@@ -24,19 +24,14 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Columns3,
-  DollarSign,
   ExternalLink,
-  FileText,
   Loader2,
   Pencil,
-  Percent,
   Plus,
   Search,
   Sparkles,
   Target,
-  TrendingUp,
   Wallet,
   XCircle,
   Zap,
@@ -55,7 +50,7 @@ import {
   YAxis,
 } from "recharts"
 import { cambiarEstatusCotizacion } from "./actions"
-import { AnimatedNumber } from "../ventas/estadisticas/animated-number"
+import { PageHeader } from "@/components/page-header"
 import {
   calcularProbabilidad,
   classifyEstadoComercial,
@@ -876,29 +871,42 @@ export function CotizacionesList({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Header */}
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileText className="size-7 text-teal-700" />
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Cotizaciones
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {kpis.totalCotizaciones} cotizaciones · {kpis.convertidas}{" "}
-              convertidas · {kpis.activas} activas · {kpis.perdidas} perdidas
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/cotizaciones/nueva"
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700"
-        >
-          <Plus className="size-4" />
-          Nueva cotización
-        </Link>
-      </header>
+    <div className="space-y-8 p-8">
+      <PageHeader
+        title="Cotizaciones"
+        subtitle={`${kpis.totalCotizaciones} cotizaciones · ${kpis.convertidas} convertidas · ${kpis.activas} activas · ${kpis.perdidas} perdidas`}
+        kpis={[
+          {
+            label: "Valor convertido",
+            value: mxn.format(kpis.valorConvertido),
+            sub: `Cobrado en ${kpis.convertidas} ventas`,
+          },
+          {
+            label: "Tasa conversión",
+            value: `${kpis.tasaConversion.toFixed(1)}%`,
+            sub: "del total enviado",
+          },
+          {
+            label: "Tiempo cierre",
+            value: `${Math.round(kpis.tiempoPromCierreDias)}d`,
+            sub: "promedio",
+          },
+          {
+            label: "Ticket promedio",
+            value: mxn.format(kpis.ticketProm),
+            sub: "por cotización convertida",
+          },
+        ]}
+        actions={
+          <Link
+            href="/cotizaciones/nueva"
+            className="inline-flex items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#115E59]"
+          >
+            <Plus className="size-4" />
+            Nueva cotización
+          </Link>
+        }
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -906,88 +914,31 @@ export function CotizacionesList({
         </div>
       )}
 
-      {/* HERO KPI: Valor Convertido — el más importante */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-700 p-6 shadow-lg ring-1 ring-emerald-700/30">
-        <div className="pointer-events-none absolute -right-12 -top-12 size-56 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-8 size-48 rounded-full bg-emerald-300/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner backdrop-blur">
-                <DollarSign className="size-5" />
-              </span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/85">
-                Valor convertido
-              </span>
-            </div>
-            <div className="mt-3 text-[42px] font-black leading-none tracking-tight text-white tabular-nums">
-              <AnimatedNumber
-                value={kpis.valorConvertido}
-                prefix="$"
-                decimals={0}
-                duration={1200}
-              />
-            </div>
-            <p className="mt-2 text-sm text-white/85">
-              Total real cobrado en {kpis.convertidas} ventas registradas
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-right">
-            <HeroSecondary
-              label="Tasa conversión"
-              value={`${kpis.tasaConversion.toFixed(1)}%`}
-              icon={<Percent className="size-3.5" />}
-            />
-            <HeroSecondary
-              label="Tiempo cierre"
-              value={`${Math.round(kpis.tiempoPromCierreDias)}d`}
-              icon={<Clock className="size-3.5" />}
-            />
-            <HeroSecondary
-              label="Ticket prom."
-              value={mxn.format(kpis.ticketProm)}
-              icon={<TrendingUp className="size-3.5" />}
-            />
-          </div>
-        </div>
-      </section>
-
       {/* KPIs secundarios — pipeline, oportunidades, perdidas */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi
           label="Pipeline potencial"
           value={mxn.format(kpis.pipelinePotencial)}
           sub={`${kpis.activas} cotizaciones activas`}
-          accent="text-teal-700"
-          gradient="from-teal-50 via-white to-cyan-50/50"
-          ring="ring-teal-100"
           icon={<Target className="size-4" />}
         />
         <Kpi
           label="Pendiente de convertir"
           value={mxn.format(kpis.pendienteConvertir)}
           sub="Enviadas vigentes en seguimiento"
-          accent="text-violet-700"
-          gradient="from-violet-50 via-white to-purple-50/50"
-          ring="ring-violet-100"
           icon={<Wallet className="size-4" />}
         />
         <Kpi
           label="Convertidas"
           value={kpis.convertidas.toString()}
           sub={`${kpis.totalCotizaciones} cotizaciones totales`}
-          accent="text-emerald-700"
-          gradient="from-emerald-50 via-white to-teal-50/50"
-          ring="ring-emerald-100"
           icon={<Zap className="size-4" />}
         />
         <Kpi
           label="Perdidas"
           value={kpis.perdidas.toString()}
           sub="Rechazadas o vencidas"
-          accent="text-[#DC2626]"
-          gradient="from-rose-50 via-white to-pink-50/50"
-          ring="ring-rose-100"
+          accent="danger"
           icon={<XCircle className="size-4" />}
         />
       </section>
@@ -1407,56 +1358,30 @@ function Kpi({
   label,
   value,
   sub,
-  accent,
-  gradient,
-  ring,
+  accent = "neutral",
   icon,
 }: {
   label: string
   value: string
   sub?: string
-  accent: string
-  gradient: string
-  ring: string
+  accent?: "neutral" | "danger"
   icon?: React.ReactNode
 }) {
+  const valueColor = accent === "danger" ? "text-[#DC2626]" : "text-gray-900"
+  const iconColor = accent === "danger" ? "text-[#DC2626]" : "text-gray-400"
   return (
-    <article
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
-    >
-      <div className={`flex items-center gap-1.5 ${accent}`}>
-        {icon}
-        <span className="text-[10.5px] font-semibold uppercase tracking-wider">
+    <article className="rounded-2xl border border-[#E7EAF0] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center gap-1.5 text-gray-500">
+        <span className={iconColor}>{icon}</span>
+        <span className="text-[11px] font-medium uppercase tracking-wider">
           {label}
         </span>
       </div>
-      <div className={`mt-2 text-xl font-bold tabular-nums ${accent}`}>
+      <div className={`mt-2 text-2xl font-bold tabular-nums tracking-[-0.02em] ${valueColor}`}>
         {value}
       </div>
-      {sub && <div className="mt-0.5 text-[11px] text-gray-600">{sub}</div>}
+      {sub && <div className="mt-1 text-[11px] text-gray-500">{sub}</div>}
     </article>
-  )
-}
-
-function HeroSecondary({
-  label,
-  value,
-  icon,
-}: {
-  label: string
-  value: string
-  icon?: React.ReactNode
-}) {
-  return (
-    <div className="rounded-xl bg-white/15 px-3 py-2 ring-1 ring-white/30 backdrop-blur">
-      <div className="flex items-center justify-end gap-1 text-[9.5px] font-semibold uppercase tracking-wider text-white/80">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-0.5 text-base font-bold tabular-nums text-white">
-        {value}
-      </div>
-    </div>
   )
 }
 
