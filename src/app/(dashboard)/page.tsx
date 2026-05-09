@@ -483,159 +483,171 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* ─── Chart + Side panels ─── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md lg:col-span-2">
-          <header className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900">
-                Ventas mensuales
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Últimos 12 meses · Total y ganancia
-              </p>
-            </div>
+      {/* ─── Chart full-width con summary inline ─── */}
+      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              Ventas mensuales
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Últimos 12 meses · Total vendido y ganancia
+            </p>
+          </div>
+          <div className="flex items-center gap-6">
+            <ChartSummary
+              label="Este mes"
+              value={mxn.format(totalVentasMes)}
+              tone="text-gray-900"
+            />
+            <ChartSummary
+              label="Mes anterior"
+              value={mxn.format(totalVentasMesAnt)}
+              tone="text-gray-500"
+            />
+            <ChartSummary
+              label="Cambio"
+              value={`${cambioVentas >= 0 ? "+" : ""}${cambioVentas.toFixed(1)}%`}
+              tone={
+                cambioVentas >= 0 ? "text-emerald-700" : "text-red-700"
+              }
+            />
             <Link
               href="/ventas/estadisticas"
-              className="text-xs text-teal-600 hover:underline inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-xs text-teal-600 hover:underline"
             >
               Ver detalle <ArrowRight className="size-3" />
             </Link>
-          </header>
-          <MonthlyChart data={chartData} />
-        </section>
+          </div>
+        </header>
+        <MonthlyChart data={chartData} height={360} />
+      </section>
 
-        <aside className="space-y-4">
-          {/* Últimas ventas */}
-          <PanelCard
-            title="Últimas ventas"
-            href="/ventas"
-            hrefLabel="Ver todas"
-          >
-            {recentVentas.length === 0 ? (
-              <Empty>Sin ventas todavía.</Empty>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {recentVentas.map((v) => {
-                  const cliente =
-                    v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "—"
-                  return (
-                    <li key={v.id}>
-                      <Link
-                        href={`/ventas/${v.id}`}
-                        className="flex items-center justify-between gap-2 px-1 py-2.5 hover:bg-gray-50 -mx-1 px-2 rounded-md transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="font-mono text-xs text-pink-700 truncate">
-                            {v.numero}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {cliente}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold tabular-nums text-gray-900">
-                            {mxn.format(Number(v.total ?? 0))}
-                          </div>
-                          <div className="text-[10px] text-gray-400">
-                            {v.fecha
-                              ? tiempoRelativo(v.fecha)
-                              : ""}
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </PanelCard>
-
-          {/* Stock bajo */}
-          <PanelCard
-            title="Alertas de stock"
-            href="/inventario"
-            hrefLabel="Ver inventario"
-            badge={
-              stockBajoCount > 0 ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
-                  <AlertTriangle className="size-2.5" />
-                  {stockBajoCount}
-                </span>
-              ) : null
-            }
-          >
-            {inventarioBajo.length === 0 ? (
-              <Empty>Sin alertas. Todo en orden ✓</Empty>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {inventarioBajo.slice(0, 5).map((p) => (
-                  <li
-                    key={p.sku ?? p.nombre}
-                    className="flex items-center justify-between gap-2 py-2.5"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-gray-900 truncate">
-                        {p.nombre}
-                      </div>
-                      <div className="font-mono text-[10px] text-gray-400">
-                        {p.sku ?? "—"}
-                      </div>
-                    </div>
-                    <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${p.estatus === "agotado" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}
-                    >
-                      {p.stock_actual ?? 0}/{p.stock_minimo ?? 0}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </PanelCard>
-
-          {/* Cotizaciones pendientes */}
-          <PanelCard
-            title="Cotizaciones pendientes"
-            href="/cotizaciones"
-            hrefLabel="Ver todas"
-            badge={
-              cotPendCount > 0 ? (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                  {cotPendCount}
-                </span>
-              ) : null
-            }
-          >
-            {cotPendList.length === 0 ? (
-              <Empty>Sin pendientes ✓</Empty>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {cotPendList.map((c) => (
-                  <li key={c.id}>
+      {/* ─── 3 panels lado a lado, alturas balanceadas ─── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Últimas ventas */}
+        <PanelCard title="Últimas ventas" href="/ventas" hrefLabel="Ver todas">
+          {recentVentas.length === 0 ? (
+            <Empty>Sin ventas todavía.</Empty>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {recentVentas.map((v) => {
+                const cliente =
+                  v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "—"
+                return (
+                  <li key={v.id}>
                     <Link
-                      href={`/cotizaciones/${c.id}`}
-                      className="flex items-center justify-between gap-2 py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-md transition-colors"
+                      href={`/ventas/${v.id}`}
+                      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="font-mono text-xs text-pink-700 truncate">
-                          {c.numero}
+                        <div className="truncate font-mono text-xs text-pink-700">
+                          {v.numero}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {c.clientes?.nombre_negocio ??
-                            c.clientes?.nombre ??
-                            "—"}
+                        <div className="truncate text-xs text-gray-500">
+                          {cliente}
                         </div>
                       </div>
-                      <div className="text-sm font-semibold tabular-nums text-gray-900">
-                        {mxn.format(Number(c.total ?? 0))}
+                      <div className="text-right">
+                        <div className="text-sm font-semibold tabular-nums text-gray-900">
+                          {mxn.format(Number(v.total ?? 0))}
+                        </div>
+                        <div className="text-[10px] text-gray-400">
+                          {v.fecha ? tiempoRelativo(v.fecha) : ""}
+                        </div>
                       </div>
                     </Link>
                   </li>
-                ))}
-              </ul>
-            )}
-          </PanelCard>
-        </aside>
+                )
+              })}
+            </ul>
+          )}
+        </PanelCard>
+
+        {/* Stock bajo */}
+        <PanelCard
+          title="Alertas de stock"
+          href="/inventario"
+          hrefLabel="Ver inventario"
+          badge={
+            stockBajoCount > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                <AlertTriangle className="size-2.5" />
+                {stockBajoCount}
+              </span>
+            ) : null
+          }
+        >
+          {inventarioBajo.length === 0 ? (
+            <Empty>Sin alertas. Todo en orden ✓</Empty>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {inventarioBajo.slice(0, 5).map((p) => (
+                <li
+                  key={p.sku ?? p.nombre}
+                  className="flex items-center justify-between gap-2 py-2.5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-xs font-medium text-gray-900">
+                      {p.nombre}
+                    </div>
+                    <div className="font-mono text-[10px] text-gray-400">
+                      {p.sku ?? "—"}
+                    </div>
+                  </div>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${p.estatus === "agotado" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}
+                  >
+                    {p.stock_actual ?? 0}/{p.stock_minimo ?? 0}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </PanelCard>
+
+        {/* Cotizaciones pendientes */}
+        <PanelCard
+          title="Cotizaciones pendientes"
+          href="/cotizaciones"
+          hrefLabel="Ver todas"
+          badge={
+            cotPendCount > 0 ? (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                {cotPendCount}
+              </span>
+            ) : null
+          }
+        >
+          {cotPendList.length === 0 ? (
+            <Empty>Sin pendientes ✓</Empty>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {cotPendList.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    href={`/cotizaciones/${c.id}`}
+                    className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-mono text-xs text-pink-700">
+                        {c.numero}
+                      </div>
+                      <div className="truncate text-xs text-gray-500">
+                        {c.clientes?.nombre_negocio ??
+                          c.clientes?.nombre ??
+                          "—"}
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold tabular-nums text-gray-900">
+                      {mxn.format(Number(c.total ?? 0))}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </PanelCard>
       </div>
 
       {/* ─── Socios ─── */}
@@ -785,6 +797,27 @@ function Kpi({
       <p className="text-3xl font-bold tabular-nums text-gray-900">{value}</p>
       <p className="text-sm text-gray-500 mt-1">{label}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    </div>
+  )
+}
+
+function ChartSummary({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: string
+}) {
+  return (
+    <div className="flex flex-col items-end leading-tight">
+      <span className="text-[10px] uppercase tracking-wide text-gray-400">
+        {label}
+      </span>
+      <span className={`text-sm font-semibold tabular-nums ${tone}`}>
+        {value}
+      </span>
     </div>
   )
 }
