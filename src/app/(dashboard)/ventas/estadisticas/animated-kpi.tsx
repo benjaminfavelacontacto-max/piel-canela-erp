@@ -2,20 +2,29 @@
 
 import { useEffect, useState } from "react"
 
-type Formatter = (n: number) => string
+const mxn0 = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+})
+
+function formatValue(n: number, style: "integer" | "currency"): string {
+  if (style === "currency") return mxn0.format(n)
+  return Math.floor(n).toLocaleString("es-MX")
+}
 
 export function AnimatedKpi({
-  icon: Icon,
+  icon,
   label,
   value,
-  formatter,
+  formatStyle,
   subtitle,
   tone,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ReactNode
   label: string
   value: number
-  formatter: Formatter
+  formatStyle: "integer" | "currency"
   subtitle?: string
   tone: string
 }) {
@@ -44,10 +53,10 @@ export function AnimatedKpi({
         <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
           {label}
         </span>
-        <Icon className={`size-4 ${tone}`} />
+        {icon}
       </div>
       <div className={`mt-2 text-2xl font-semibold tabular-nums ${tone}`}>
-        {formatter(display)}
+        {formatValue(display, formatStyle)}
       </div>
       {subtitle && <div className="mt-1 text-xs text-gray-500">{subtitle}</div>}
     </div>
@@ -55,13 +64,13 @@ export function AnimatedKpi({
 }
 
 export function StaticKpi({
-  icon: Icon,
+  icon,
   label,
   value,
   subtitle,
   tone,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ReactNode
   label: string
   value: string
   subtitle?: string
@@ -73,7 +82,7 @@ export function StaticKpi({
         <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
           {label}
         </span>
-        <Icon className={`size-4 ${tone}`} />
+        {icon}
       </div>
       <div className={`mt-2 text-2xl font-semibold tabular-nums ${tone}`}>
         {value}
