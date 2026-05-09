@@ -1,4 +1,5 @@
 import { SidebarNav } from "@/components/sidebar-nav"
+import { NotificationBell } from "@/components/notifications"
 
 export default function DashboardLayout({
   children,
@@ -8,7 +9,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[#F6F7F9]">
       <aside
-        className="w-60 shrink-0 bg-[#FBFCFD]"
+        className="flex w-60 shrink-0 flex-col bg-[#FBFCFD]"
         style={{ borderRight: "1px solid rgba(15,23,42,.06)" }}
       >
         <div
@@ -34,7 +35,24 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>
-        <SidebarNav />
+        <div className="flex-1 overflow-y-auto">
+          <SidebarNav />
+        </div>
+        {/* Footer con avatar + campana de notificaciones */}
+        <div
+          className="flex items-center justify-between gap-2 px-3 py-3"
+          style={{ borderTop: "1px solid rgba(15,23,42,.04)" }}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#0F766E] text-[11px] font-semibold text-white">
+              B
+            </div>
+            <span className="truncate text-xs font-medium text-gray-700">
+              Benjamín
+            </span>
+          </div>
+          <NotificationBell />
+        </div>
       </aside>
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
         {children}

@@ -431,3 +431,13 @@
       0 6px 16px rgba(15, 23, 42, 0.04);
   }
 }
+
+/* ─── Notification toast progress bar ─── */
+@keyframes pc-shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
