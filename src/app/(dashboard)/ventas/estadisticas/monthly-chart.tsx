@@ -88,22 +88,30 @@ export function MonthlyChart({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ComposedChart data={formatted} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <ComposedChart
+        data={formatted}
+        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+        barCategoryGap="32%"
+      >
         <defs>
           <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0F766E" stopOpacity={1} />
-            <stop offset="100%" stopColor="#0F766E" stopOpacity={0.3} />
+            <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
+            <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
+        <CartesianGrid
+          stroke="rgba(148,163,184,0.12)"
+          strokeDasharray="0"
+          vertical={false}
+        />
         <XAxis
           dataKey="label"
-          tick={{ fill: "#9CA3AF", fontSize: 11 }}
+          tick={{ fill: "#94A3B8", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#9CA3AF", fontSize: 11 }}
+          tick={{ fill: "#94A3B8", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) =>
@@ -111,13 +119,18 @@ export function MonthlyChart({
           }
           width={60}
         />
-        <Tooltip cursor={{ fill: "#F3F5F7" }} content={<CustomTooltip />} />
+        <Tooltip
+          cursor={{ fill: "rgba(15,118,110,0.04)" }}
+          content={<CustomTooltip />}
+        />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar
           dataKey="total"
           name="Total vendido"
           fill="url(#colorTotal)"
-          radius={[6, 6, 0, 0]}
+          radius={[12, 12, 4, 4]}
+          barSize={22}
+          opacity={0.92}
           animationDuration={800}
           animationEasing="ease-out"
         />
@@ -126,8 +139,8 @@ export function MonthlyChart({
           dataKey="ganancia"
           name="Ganancia"
           stroke="#94A3B8"
-          strokeWidth={2.5}
-          dot={{ r: 3, fill: "#94A3B8", strokeWidth: 2, stroke: "#fff" }}
+          strokeWidth={2.2}
+          dot={false}
           animationDuration={1200}
           animationEasing="ease-in-out"
         />

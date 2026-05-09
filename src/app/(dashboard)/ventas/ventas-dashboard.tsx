@@ -591,21 +591,32 @@ export function VentasDashboard({
             </h2>
             <span className="text-xs text-gray-500">Total · Ganancia</span>
           </header>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <ComposedChart
               data={monthly}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              barCategoryGap="32%"
             >
-              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" />
+              <defs>
+                <linearGradient id="ventasBarGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
+                  <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                stroke="rgba(148,163,184,0.12)"
+                strokeDasharray="0"
+                vertical={false}
+              />
               <XAxis
                 dataKey="label"
-                tick={{ fill: "#6b7280", fontSize: 12 }}
-                axisLine={{ stroke: "#e5e7eb" }}
+                tick={{ fill: "#94A3B8", fontSize: 11 }}
+                axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#6b7280", fontSize: 12 }}
-                axisLine={{ stroke: "#e5e7eb" }}
+                tick={{ fill: "#94A3B8", fontSize: 11 }}
+                axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) =>
                   v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`
@@ -613,11 +624,12 @@ export function VentasDashboard({
                 width={60}
               />
               <Tooltip
-                cursor={{ fill: "#F3F5F7" }}
+                cursor={{ fill: "rgba(15,118,110,0.04)" }}
                 contentStyle={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 8,
+                  border: "1px solid rgba(15,23,42,0.06)",
+                  borderRadius: 12,
                   fontSize: 12,
+                  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
                 }}
                 formatter={(v) => mxn2.format(Number(v ?? 0))}
                 labelFormatter={(l, p) => {
@@ -625,20 +637,22 @@ export function VentasDashboard({
                   return item?.date ? monthLong.format(item.date) : l
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
               <Bar
                 dataKey="total"
                 name="Total vendido"
-                fill="#0F766E"
-                radius={[4, 4, 0, 0]}
+                fill="url(#ventasBarGradient)"
+                radius={[12, 12, 4, 4]}
+                barSize={22}
+                opacity={0.92}
               />
               <Line
                 type="monotone"
                 dataKey="ganancia"
                 name="Ganancia"
                 stroke="#94A3B8"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#94A3B8" }}
+                strokeWidth={2.2}
+                dot={false}
               />
             </ComposedChart>
           </ResponsiveContainer>

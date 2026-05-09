@@ -139,10 +139,10 @@
   --pc-border-soft: rgba(15, 23, 42, 0.04);
   --pc-border-strong: rgba(15, 23, 42, 0.10);
 
-  /* ─── Text ─── */
-  --pc-text: #111827;
-  --pc-text-secondary: #6B7280;
-  --pc-text-muted: #94A3B8;
+  /* ─── Text (paleta editorial premium) ─── */
+  --pc-text: #0F172A;             /* slate-900 — más contraste, menos gris */
+  --pc-text-secondary: #64748B;   /* slate-500 — secundario sofisticado */
+  --pc-text-muted: #94A3B8;       /* slate-400 — labels y metadata */
 
   /* ─── Accent (Emerald premium) ─── */
   --pc-accent: #0F766E;
@@ -190,14 +190,32 @@
     @apply border-border outline-ring/50;
   }
   body {
+    /* Atmósfera ambiental ultra sutil — tinte emerald en top-left */
     background-color: var(--pc-bg-app);
+    background-image: radial-gradient(
+        circle at top left,
+        rgba(15, 118, 110, 0.03),
+        transparent 30%
+      ),
+      radial-gradient(
+        circle at bottom right,
+        rgba(148, 163, 184, 0.04),
+        transparent 40%
+      );
+    background-attachment: fixed;
     color: var(--pc-text);
   }
   html {
     @apply font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "ss01", "cv11", "tnum";
+    letter-spacing: -0.005em;
+  }
+  /* Tabular numbers en métricas (mejor alineación financiera) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
@@ -314,7 +332,7 @@
     color: var(--pc-text-muted);
   }
 
-  /* ─── Tabla premium (Linear / Stripe / Attio) ─── */
+  /* ─── Tabla premium (Linear / Stripe / Attio v2) ─── */
   .pc-table {
     width: 100%;
     border-collapse: collapse;
@@ -326,32 +344,57 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--pc-text-muted);
-    padding: 14px 16px;
+    padding: 16px 18px;
     text-align: left;
     border-bottom: 1px solid var(--pc-border-soft);
     background-color: transparent;
+    height: 48px;
   }
+  /* Filas más altas y respiradas (target 72px de alto) */
   .pc-table tbody tr {
     transition: background-color 120ms var(--pc-ease);
     border-bottom: 1px solid var(--pc-border-soft);
+    height: 72px;
   }
   .pc-table tbody tr:hover {
     background-color: rgba(15, 118, 110, 0.03);
   }
   .pc-table tbody td {
-    padding: 18px 16px;
+    padding: 0 18px;
     color: var(--pc-text);
     vertical-align: middle;
   }
 
-  /* ─── Sidebar item activo con gradiente sutil ─── */
+  /* ─── Sidebar item activo (refinado v3 — más sutil, glass) ─── */
   .pc-sidebar-active {
-    background: linear-gradient(
-      90deg,
-      rgba(15, 118, 110, 0.12),
-      rgba(15, 118, 110, 0.04)
-    );
+    background: rgba(15, 118, 110, 0.08);
+    border: 1px solid rgba(15, 118, 110, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--pc-accent);
+  }
+
+  /* ─── Botón secundario glass (premium silencioso) ─── */
+  .pc-btn-glass {
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    color: var(--pc-text);
+    border-radius: 14px;
+    height: 42px;
+    padding: 0 18px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: var(--pc-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pc-btn-glass:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
   }
 
   /* ─── Trend indicator (KPI deltas) ─── */

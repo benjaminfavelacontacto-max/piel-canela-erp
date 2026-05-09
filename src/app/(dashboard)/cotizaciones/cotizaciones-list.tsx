@@ -983,18 +983,33 @@ export function CotizacionesList({
               # de ventas cerradas vs cotizaciones creadas
             </p>
           </header>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart
               data={monthlySeries}
               margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
+              barCategoryGap="32%"
             >
-              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
-              <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }} />
+              <defs>
+                <linearGradient id="cotsBarGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
+                  <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(148,163,184,0.12)" strokeDasharray="0" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+              <Tooltip
+                cursor={{ fill: "rgba(15,118,110,0.04)" }}
+                contentStyle={{
+                  border: "1px solid rgba(15,23,42,0.06)",
+                  borderRadius: 12,
+                  fontSize: 12,
+                  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+                }}
+              />
               <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-              <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="conversiones" name="Convertidas en venta" fill="#0F766E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="#CBD5E1" radius={[12, 12, 4, 4]} barSize={22} opacity={0.92} />
+              <Bar dataKey="conversiones" name="Convertidas en venta" fill="url(#cotsBarGradient)" radius={[12, 12, 4, 4]} barSize={22} opacity={0.92} />
             </BarChart>
           </ResponsiveContainer>
         </article>
@@ -1014,14 +1029,14 @@ export function CotizacionesList({
             >
               <defs>
                 <linearGradient id="gradValorConvertido" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#6ee7b7" stopOpacity={0.5} />
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
+                  <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="rgba(148,163,184,0.12)" strokeDasharray="0" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                tick={{ fontSize: 11, fill: "#94A3B8" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) =>
@@ -1030,7 +1045,13 @@ export function CotizacionesList({
                 width={50}
               />
               <Tooltip
-                contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }}
+                cursor={{ fill: "rgba(15,118,110,0.04)" }}
+                contentStyle={{
+                  border: "1px solid rgba(15,23,42,0.06)",
+                  borderRadius: 12,
+                  fontSize: 12,
+                  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+                }}
                 formatter={(v) =>
                   typeof v === "number" ? mxn.format(v) : String(v)
                 }
@@ -1040,14 +1061,17 @@ export function CotizacionesList({
                 dataKey="valorConvertido"
                 name="Valor convertido"
                 fill="url(#gradValorConvertido)"
-                radius={[6, 6, 0, 0]}
+                radius={[12, 12, 4, 4]}
+                barSize={22}
+                opacity={0.92}
               />
               <Line
+                type="monotone"
                 dataKey="pipelineCreado"
                 name="Pipeline creado"
-                stroke="#0F766E"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#0F766E" }}
+                stroke="#94A3B8"
+                strokeWidth={2.2}
+                dot={false}
               />
             </ComposedChart>
           </ResponsiveContainer>

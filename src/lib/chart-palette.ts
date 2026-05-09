@@ -43,12 +43,35 @@ export const CHART = {
   // ─── Series categóricas (pie charts, multi-bar) ───
   series: ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280", "#D1D5DB"],
 
-  // ─── Defaults de geometría (barras delgadas y refinadas) ───
+  // ─── Defaults de geometría (Linear/Stripe Analytics v2) ───
   bar: {
-    radius: [3, 3, 0, 0] as [number, number, number, number],
-    barCategoryGap: "30%",
+    /** Cap redondeado top + esquinas inferiores sutiles, estilo Linear */
+    radius: [12, 12, 4, 4] as [number, number, number, number],
+    /** 22px = barra delgada premium */
+    size: 22,
+    /** Aire entre barras para sensación editorial */
+    categoryGap: "32%",
+    opacity: 0.92,
+    /** ID del gradient SVG a usar en <Bar fill={`url(#${gradientId})`}> */
+    gradientId: "pc-bar-gradient",
   },
   line: {
-    strokeWidth: 2,
+    strokeWidth: 2.2,
+    color: "#94A3B8",
+    /** Sin dots por default — más limpio */
+    showDot: false,
+    curve: "monotone" as const,
   },
+
+  /**
+   * Gradient definition para barras (paste dentro de <defs>):
+   *
+   *   <linearGradient id={CHART.bar.gradientId} x1="0" y1="0" x2="0" y2="1">
+   *     <stop offset="0%"  stopColor="#0F766E" stopOpacity="0.92" />
+   *     <stop offset="100%" stopColor="#0F766E" stopOpacity="0.35" />
+   *   </linearGradient>
+   *
+   * Y luego: <Bar fill={`url(#${CHART.bar.gradientId})`} barSize={CHART.bar.size}
+   *               radius={CHART.bar.radius} opacity={CHART.bar.opacity} />
+   */
 } as const
