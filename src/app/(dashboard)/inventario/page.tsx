@@ -3,10 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 export default async function InventarioPage() {
   const supabase = await createClient()
 
-  const { data: items, error } = await supabase
-    .from('vista_inventario')
-    .select('sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at')
-    .order('categoria')
+  const [vistaRes, prodPesoRes] = await Promise.all([
+    supabase
+      .from('vista_inventario')
+      .select('sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at')
+      .order('categoria'),
+    supabase.from('productos').select('sku, peso'),
+  ])
+  const { data: items, error } = vistaRes
+  const pesoBySku = new Map<string, string>(
+    (prodPesoRes.data ?? [])
+      .filter((p): p is { sku: string; peso: string } => !!p.sku && !!p.peso)
+      .map((p) => [p.sku, p.peso]),
+  )
 
   const agotados = items?.filter(i => i.estatus === 'agotado').length ?? 0
   const bajos    = items?.filter(i => i.estatus === 'bajo').length ?? 0
@@ -58,27 +67,40 @@ export default async function InventarioPage() {
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-5 py-2 text-xs text-gray-400">SKU</th>
                   <th className="text-left px-5 py-2 text-xs text-gray-400">Producto</th>
+                  <th className="text-center px-5 py-2 text-xs text-gray-400">Peso</th>
                   <th className="text-center px-5 py-2 text-xs text-gray-400">Stock</th>
                   <th className="text-center px-5 py-2 text-xs text-gray-400">Mínimo</th>
                   <th className="text-center px-5 py-2 text-xs text-gray-400">Estatus</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {productos?.map(item => (
-                  <tr key={item.sku} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 text-xs font-mono text-gray-400">{item.sku}</td>
-                    <td className="px-5 py-3 text-sm text-gray-900">{item.nombre}</td>
-                    <td className="px-5 py-3 text-center text-sm font-semibold">{item.stock_actual}</td>
-                    <td className="px-5 py-3 text-center text-sm text-gray-400">{item.stock_minimo}</td>
-                    <td className="px-5 py-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        item.estatus === 'ok'      ? 'bg-green-100 text-green-700' :
-                        item.estatus === 'bajo'    ? 'bg-amber-100 text-amber-700' :
-                                                     'bg-red-100 text-red-700'
-                      }`}>{item.estatus}</span>
-                    </td>
-                  </tr>
-                ))}
+                {productos?.map(item => {
+                  const peso = item.sku ? pesoBySku.get(item.sku) : null
+                  return (
+                    <tr key={item.sku} className="hover:bg-gray-50">
+                      <td className="px-5 py-3 text-xs font-mono text-gray-400">{item.sku}</td>
+                      <td className="px-5 py-3 text-sm text-gray-900">{item.nombre}</td>
+                      <td className="px-5 py-3 text-center">
+                        {peso ? (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            {peso}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-center text-sm font-semibold">{item.stock_actual}</td>
+                      <td className="px-5 py-3 text-center text-sm text-gray-400">{item.stock_minimo}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          item.estatus === 'ok'      ? 'bg-green-100 text-green-700' :
+                          item.estatus === 'bajo'    ? 'bg-amber-100 text-amber-700' :
+                                                       'bg-red-100 text-red-700'
+                        }`}>{item.estatus}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

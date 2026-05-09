@@ -16,6 +16,7 @@ export type Producto = {
   nombre: string
   nombre_display: string | null
   imagen_url: string | null
+  peso: string | null
   precio: number
 }
 
@@ -24,6 +25,7 @@ export type CotizacionItem = {
   sku: string | null
   nombre: string
   imagen_url: string | null
+  peso: string | null
   cantidad: number
   precio_unitario: number
   costo_unitario: number

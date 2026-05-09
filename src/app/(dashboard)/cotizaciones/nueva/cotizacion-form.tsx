@@ -101,6 +101,7 @@ export function CotizacionForm({
       sku: selectedProduct.sku,
       nombre: selectedProduct.nombre,
       imagen_url: selectedProduct.imagen_url,
+      peso: selectedProduct.peso,
       cantidad,
       precio_unitario: selectedProduct.precio,
       costo_unitario: 0,
@@ -284,9 +285,14 @@ export function CotizacionForm({
                       <div className="truncate font-medium text-gray-900">
                         {p.nombre}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
                         {p.sku && (
                           <span className="font-mono">{p.sku}</span>
+                        )}
+                        {p.peso && (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
+                            {p.peso}
+                          </span>
                         )}
                         <span className="font-semibold text-pink-600">
                           {mxn.format(p.precio)}

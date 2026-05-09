@@ -33,7 +33,7 @@ export default async function NuevaCotizacionPage() {
   const { data: prodRows, error: prodErr } = await supabase
     .from("productos")
     .select(
-      `id, sku, nombre, nombre_display, imagen_url,
+      `id, sku, nombre, nombre_display, imagen_url, peso,
        precios_producto!inner(precio, lista_id)`,
     )
     .eq("precios_producto.lista_id", listaId ?? "00000000-0000-0000-0000-000000000000")
@@ -48,6 +48,7 @@ export default async function NuevaCotizacionPage() {
       nombre: string
       nombre_display: string | null
       imagen_url: string | null
+      peso: string | null
       precios_producto: { precio: number }[] | { precio: number } | null
     }
     productos = (prodRows as Row[]).map((r) => {
@@ -61,6 +62,7 @@ export default async function NuevaCotizacionPage() {
         nombre: display,
         nombre_display: r.nombre_display,
         imagen_url: findImageFor(display, r.imagen_url, imageMap),
+        peso: r.peso,
         precio: Number(pp?.precio ?? 0),
       }
     })

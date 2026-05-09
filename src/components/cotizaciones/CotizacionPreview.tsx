@@ -172,7 +172,7 @@ export function CotizacionPreview({
                       {it.nombre}
                     </div>
                   </Td>
-                  <Td>{extractPesoMl(it.nombre)}</Td>
+                  <Td>{it.peso ?? extractPesoMl(it.nombre)}</Td>
                   <Td>
                     <span className="font-mono text-xs text-[#374151]">
                       {it.sku ?? "—"}
