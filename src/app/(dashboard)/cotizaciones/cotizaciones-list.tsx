@@ -299,6 +299,90 @@ function StatusCell({
   )
 }
 
+/**
+ * Botones de acción rápida por fila.
+ * - Ver / Editar: siempre visibles
+ * - "Marcar Enviada": solo si estatus = borrador
+ * - "Marcar Vendida" (= aceptada): si está enviada y NO tiene venta
+ * - Pill "Con venta": cuando esConvertida (ya tiene venta vinculada)
+ */
+function ActionsCell({ cot }: { cot: EnrichedCot }) {
+  const router = useRouter()
+  const [pending, setPending] = useState<string | null>(null)
+
+  async function cambiar(nuevo: Estatus) {
+    setPending(nuevo)
+    const result = await cambiarEstatusCotizacion(cot.id, nuevo)
+    setPending(null)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo cambiar")
+      return
+    }
+    toast.success(
+      nuevo === "enviada" ? "Marcada como enviada" : "Marcada como vendida",
+    )
+    router.refresh()
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Link
+        href={`/cotizaciones/${cot.id}`}
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+        title="Ver detalle"
+      >
+        <ExternalLink className="size-3.5" />
+      </Link>
+      <Link
+        href={`/cotizaciones/${cot.id}/editar`}
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+        title="Editar"
+      >
+        <Pencil className="size-3.5" />
+      </Link>
+      {cot.estatus === "borrador" && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            void cambiar("enviada")
+          }}
+          disabled={pending === "enviada"}
+          className="whitespace-nowrap rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+          title="Marcar como enviada al cliente"
+        >
+          {pending === "enviada" ? "…" : "Enviada"}
+        </button>
+      )}
+      {(cot.estatus === "enviada" || cot.estatus === "borrador") &&
+        !cot.esConvertida && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              void cambiar("aceptada")
+            }}
+            disabled={pending === "aceptada"}
+            className="whitespace-nowrap rounded-md bg-[#DFF7F4] px-2 py-1 text-[10px] font-semibold text-[#0F766E] transition hover:bg-emerald-100 disabled:opacity-50"
+            title="Marcar como aceptada / vendida"
+          >
+            {pending === "aceptada" ? "…" : "Vendida"}
+          </button>
+        )}
+      {cot.esConvertida && (
+        <span
+          className="whitespace-nowrap rounded-md bg-[#F3F5F7] px-2 py-1 text-[10px] font-medium text-gray-500"
+          title="Ya tiene venta vinculada"
+        >
+          ✓ Con venta
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function CotizacionesList({
   cotizaciones,
   clientes,
@@ -821,28 +905,11 @@ export function CotizacionesList({
           </div>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Link
-              href={`/cotizaciones/${row.original.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
-              title="Ver"
-            >
-              <ExternalLink className="size-3.5" />
-            </Link>
-            <Link
-              href={`/cotizaciones/${row.original.id}/editar`}
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-              title="Editar"
-            >
-              <Pencil className="size-3.5" />
-            </Link>
-          </div>
+          <ActionsCell cot={row.original} />
         ),
         enableSorting: false,
         enableResizing: false,
-        size: 80,
+        size: 220,
       },
     ],
     [],

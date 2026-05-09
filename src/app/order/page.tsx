@@ -50,6 +50,18 @@ export default function OrderPage() {
     notas: "",
   })
 
+  // Match cliente por teléfono (anti-duplicados + auto-fill)
+  type ClienteMatch = {
+    id: string
+    nombre: string
+    nombre_negocio: string | null
+    email: string | null
+    ciudad: string | null
+    telefono: string | null
+  }
+  const [buscandoCliente, setBuscandoCliente] = useState(false)
+  const [clienteMatch, setClienteMatch] = useState<ClienteMatch | null>(null)
+
   useEffect(() => {
     const supabase = createClient()
 
@@ -146,6 +158,49 @@ export default function OrderPage() {
   )
   const totalUnidades = cart.reduce((s, i) => s + i.cantidad, 0)
 
+  async function buscarPorTelefono(tel: string) {
+    setClienteData((p) => ({ ...p, telefono: tel }))
+    const digits = tel.replace(/\D/g, "")
+    if (digits.length < 10) {
+      setClienteMatch(null)
+      return
+    }
+    setBuscandoCliente(true)
+    const supabase = createClient()
+    const { data } = await supabase
+      .from("clientes")
+      .select("id, nombre, nombre_negocio, email, ciudad, telefono")
+      .ilike("telefono", `%${digits}%`)
+      .limit(1)
+      .maybeSingle()
+    setBuscandoCliente(false)
+    if (data) {
+      const m = data as ClienteMatch
+      setClienteMatch(m)
+      // Auto-fill solo campos vacíos del form (no pisamos lo que ya escribió)
+      setClienteData((p) => ({
+        ...p,
+        nombre: p.nombre || m.nombre || "",
+        negocio: p.negocio || m.nombre_negocio || "",
+        email: p.email || m.email || "",
+        ciudad: p.ciudad || m.ciudad || "",
+      }))
+    } else {
+      setClienteMatch(null)
+    }
+  }
+
+  function clearMatch() {
+    setClienteMatch(null)
+    setClienteData((p) => ({
+      ...p,
+      nombre: "",
+      negocio: "",
+      email: "",
+      ciudad: "",
+    }))
+  }
+
   async function handleSubmit() {
     setSubmitError(null)
     if (!clienteData.nombre.trim() || !clienteData.telefono.trim()) {
@@ -162,6 +217,7 @@ export default function OrderPage() {
         cantidad: i.cantidad,
         precio: i.producto.precio,
       })),
+      clienteExistenteId: clienteMatch?.id,
     })
     if (result.success) {
       window.location.href = `/order/success?numero=${encodeURIComponent(result.numero)}`
@@ -379,62 +435,147 @@ export default function OrderPage() {
           <div className="mb-4 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <h2 className="mb-4 font-semibold text-gray-900">Tus datos</h2>
             <div className="space-y-3">
-              <input
-                placeholder="Nombre completo *"
-                required
-                value={clienteData.nombre}
-                onChange={(e) =>
-                  setClienteData((p) => ({ ...p, nombre: e.target.value }))
-                }
-                className="w-full rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-              />
-              <input
-                placeholder="Nombre de tu spa o negocio"
-                value={clienteData.negocio}
-                onChange={(e) =>
-                  setClienteData((p) => ({ ...p, negocio: e.target.value }))
-                }
-                className="w-full rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  placeholder="Teléfono / WhatsApp *"
-                  required
-                  value={clienteData.telefono}
-                  onChange={(e) =>
-                    setClienteData((p) => ({
-                      ...p,
-                      telefono: e.target.value,
-                    }))
-                  }
-                  className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-                />
-                <input
-                  placeholder="Email (opcional)"
-                  value={clienteData.email}
-                  onChange={(e) =>
-                    setClienteData((p) => ({ ...p, email: e.target.value }))
-                  }
-                  className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-                />
+              {/* Teléfono — primer campo, busca cliente existente al teclear */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-700">
+                  Teléfono / WhatsApp <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    placeholder="10 dígitos"
+                    value={clienteData.telefono}
+                    onChange={(e) => buscarPorTelefono(e.target.value)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm transition-all focus:outline-none focus:ring-4 ${
+                      clienteMatch
+                        ? "border-emerald-300 bg-[#DFF7F4]/30 focus:border-[#0F766E] focus:ring-[rgba(15,118,110,0.12)]"
+                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E] focus:ring-[rgba(15,118,110,0.12)]"
+                    }`}
+                  />
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                    {buscandoCliente ? (
+                      <div className="size-4 animate-spin rounded-full border-2 border-[#0F766E] border-t-transparent" />
+                    ) : clienteMatch ? (
+                      <span
+                        className="text-base text-[#0F766E]"
+                        aria-hidden
+                      >
+                        ✓
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {clienteMatch && (
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-[#DFF7F4]/60 px-3 py-2">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#0F766E] text-xs font-semibold text-white">
+                      {clienteMatch.nombre?.[0] ?? "?"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-[#115E59]">
+                        ¡Te reconocemos!
+                      </p>
+                      <p className="truncate text-xs text-[#0F766E]">
+                        {clienteMatch.nombre}
+                        {clienteMatch.nombre_negocio
+                          ? ` · ${clienteMatch.nombre_negocio}`
+                          : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearMatch}
+                      className="text-[#94A3B8] transition-colors hover:text-gray-700"
+                      aria-label="No soy yo"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {!buscandoCliente &&
+                  !clienteMatch &&
+                  clienteData.telefono.replace(/\D/g, "").length >= 10 && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
+                      <p className="text-xs text-blue-700">
+                        ✨ Cliente nuevo — completa tus datos para continuar
+                      </p>
+                    </div>
+                  )}
               </div>
-              <input
-                placeholder="Ciudad"
-                value={clienteData.ciudad}
-                onChange={(e) =>
-                  setClienteData((p) => ({ ...p, ciudad: e.target.value }))
-                }
-                className="w-full rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-              />
-              <textarea
-                placeholder="Notas o comentarios del pedido…"
-                value={clienteData.notas}
-                onChange={(e) =>
-                  setClienteData((p) => ({ ...p, notas: e.target.value }))
-                }
-                rows={3}
-                className="w-full resize-none rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-              />
+
+              {/* Resto del formulario solo si ya hay teléfono válido */}
+              {clienteData.telefono.replace(/\D/g, "").length >= 10 && (
+                <div className="space-y-3">
+                  <input
+                    placeholder="Nombre completo *"
+                    required
+                    value={clienteData.nombre}
+                    onChange={(e) =>
+                      setClienteData((p) => ({
+                        ...p,
+                        nombre: e.target.value,
+                      }))
+                    }
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
+                      clienteMatch
+                        ? "border-emerald-200 bg-[#DFF7F4]/30 focus:border-[#0F766E]"
+                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E]"
+                    }`}
+                  />
+                  <input
+                    placeholder="Nombre de tu spa o negocio"
+                    value={clienteData.negocio}
+                    onChange={(e) =>
+                      setClienteData((p) => ({
+                        ...p,
+                        negocio: e.target.value,
+                      }))
+                    }
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
+                      clienteMatch
+                        ? "border-emerald-200 bg-[#DFF7F4]/30 focus:border-[#0F766E]"
+                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E]"
+                    }`}
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      placeholder="Email (opcional)"
+                      value={clienteData.email}
+                      onChange={(e) =>
+                        setClienteData((p) => ({
+                          ...p,
+                          email: e.target.value,
+                        }))
+                      }
+                      className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                    />
+                    <input
+                      placeholder="Ciudad"
+                      value={clienteData.ciudad}
+                      onChange={(e) =>
+                        setClienteData((p) => ({
+                          ...p,
+                          ciudad: e.target.value,
+                        }))
+                      }
+                      className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                    />
+                  </div>
+                  <textarea
+                    placeholder="Notas o comentarios del pedido…"
+                    value={clienteData.notas}
+                    onChange={(e) =>
+                      setClienteData((p) => ({
+                        ...p,
+                        notas: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

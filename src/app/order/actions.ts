@@ -17,6 +17,9 @@ type OrderInput = {
     cantidad: number
     precio: number
   }[]
+  /** Si el cliente fue identificado en el portal por teléfono, se reusa
+   *  ese ID en lugar de crear uno nuevo (anti-duplicados). */
+  clienteExistenteId?: string
 }
 
 type OrderResult =
@@ -52,16 +55,25 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   // Buscar o crear cliente (match por telefono)
   let clienteId: string | null = null
   const tel = input.cliente.telefono.trim()
+  const telDigits = tel.replace(/\D/g, "")
 
-  const { data: existente } = await supabase
-    .from("clientes")
-    .select("id")
-    .eq("telefono", tel)
-    .maybeSingle()
+  // 1) Si el portal ya identificó al cliente, reusamos su ID directo
+  if (input.clienteExistenteId) {
+    clienteId = input.clienteExistenteId
+  }
 
-  if (existente?.id) {
-    clienteId = existente.id as string
-  } else {
+  // 2) Sino, buscamos por telefono (match flexible — solo dígitos)
+  if (!clienteId && telDigits.length >= 10) {
+    const { data: existente } = await supabase
+      .from("clientes")
+      .select("id")
+      .ilike("telefono", `%${telDigits}%`)
+      .limit(1)
+      .maybeSingle()
+    if (existente?.id) clienteId = existente.id as string
+  }
+
+  if (!clienteId) {
     const { data: nuevo, error: errCli } = await supabase
       .from("clientes")
       .insert({
