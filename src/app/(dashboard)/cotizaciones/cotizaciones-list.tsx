@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -22,14 +22,17 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Columns3,
   ExternalLink,
   Loader2,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
+  Send,
   Sparkles,
   Target,
   Trash2,
@@ -307,10 +310,33 @@ function StatusCell({
  * - "Marcar Vendida" (= aceptada): si está enviada y NO tiene venta
  * - Pill "Con venta": cuando esConvertida (ya tiene venta vinculada)
  */
+/**
+ * Cluster minimalista de acciones por fila (Linear / Attio / Notion-style).
+ * - Default: invisible (opacity-0)
+ * - Aparece on row-hover (group-hover) y on focus-within (a11y)
+ * - 3 íconos compactos: ↗ Ver · ✎ Editar · ⋯ Menu
+ * - El menú tiene: Marcar enviada / vendida / Eliminar (condicionales)
+ * - Si la cotización ya tiene venta (esConvertida), reemplaza todo
+ *   el cluster por un indicador "Vendida" sutil (siempre visible).
+ */
 function ActionsCell({ cot }: { cot: EnrichedCot }) {
   const router = useRouter()
   const [pending, setPending] = useState<string | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Cerrar menú al click fuera
+  useEffect(() => {
+    if (!menuOpen) return
+    function handle(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [menuOpen])
 
   async function cambiar(nuevo: Estatus) {
     setPending(nuevo)
@@ -339,75 +365,113 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
     router.refresh()
   }
 
+  // Si ya tiene venta — indicador sutil siempre visible, sin acciones
+  if (cot.esConvertida) {
+    return (
+      <div className="flex items-center justify-end">
+        <span
+          className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium tabular-nums"
+          style={{
+            backgroundColor: "rgba(15,118,110,0.06)",
+            color: "#0F766E",
+          }}
+          title="Cotización con venta vinculada"
+        >
+          <CheckCircle2 className="size-3" strokeWidth={2.25} />
+          Vendida
+        </span>
+      </div>
+    )
+  }
+
+  const canSend = cot.estatus === "borrador"
+  const canSell = cot.estatus === "borrador" || cot.estatus === "enviada"
+
   return (
     <>
-      <div className="flex items-center justify-end gap-1">
+      <div
+        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100 [data-state=open]:opacity-100"
+        data-state={menuOpen ? "open" : "closed"}
+      >
         <Link
           href={`/cotizaciones/${cot.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
           title="Ver detalle"
+          aria-label="Ver detalle"
         >
-          <ExternalLink className="size-3.5" />
+          <ExternalLink className="size-4" strokeWidth={1.8} />
         </Link>
         <Link
           href={`/cotizaciones/${cot.id}/editar`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
           title="Editar"
+          aria-label="Editar"
         >
-          <Pencil className="size-3.5" />
+          <Pencil className="size-4" strokeWidth={1.8} />
         </Link>
-        {cot.estatus === "borrador" && (
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              void cambiar("enviada")
+              setMenuOpen((o) => !o)
             }}
-            disabled={pending === "enviada"}
-            className="whitespace-nowrap rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
-            title="Marcar como enviada al cliente"
+            className={`rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
+            title="Más acciones"
+            aria-label="Más acciones"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
           >
-            {pending === "enviada" ? "…" : "Enviada"}
+            <MoreHorizontal className="size-4" strokeWidth={1.8} />
           </button>
-        )}
-        {(cot.estatus === "enviada" || cot.estatus === "borrador") &&
-          !cot.esConvertida && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void cambiar("aceptada")
-              }}
-              disabled={pending === "aceptada"}
-              className="whitespace-nowrap rounded-md bg-[#DFF7F4] px-2 py-1 text-[10px] font-semibold text-[#0F766E] transition hover:bg-emerald-100 disabled:opacity-50"
-              title="Marcar como aceptada / vendida"
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
+              onClick={(e) => e.stopPropagation()}
             >
-              {pending === "aceptada" ? "…" : "Vendida"}
-            </button>
+              {canSend && (
+                <ActionMenuItem
+                  icon={<Send className="size-3.5" strokeWidth={1.8} />}
+                  loading={pending === "enviada"}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    void cambiar("enviada")
+                  }}
+                >
+                  Marcar enviada
+                </ActionMenuItem>
+              )}
+              {canSell && (
+                <ActionMenuItem
+                  icon={<CheckCircle2 className="size-3.5" strokeWidth={1.8} />}
+                  loading={pending === "aceptada"}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    void cambiar("aceptada")
+                  }}
+                >
+                  Marcar vendida
+                </ActionMenuItem>
+              )}
+              {(canSend || canSell) && (
+                <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
+              )}
+              <ActionMenuItem
+                icon={<Trash2 className="size-3.5" strokeWidth={1.8} />}
+                tone="danger"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setConfirmarEliminar(true)
+                }}
+              >
+                Eliminar
+              </ActionMenuItem>
+            </div>
           )}
-        {cot.esConvertida && (
-          <span
-            className="whitespace-nowrap rounded-md bg-[#F3F5F7] px-2 py-1 text-[10px] font-medium text-gray-500"
-            title="Ya tiene venta vinculada"
-          >
-            ✓ Con venta
-          </span>
-        )}
-        {!cot.esConvertida && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setConfirmarEliminar(true)
-            }}
-            className="rounded-md p-1 text-gray-300 transition hover:bg-rose-50 hover:text-rose-500"
-            title="Eliminar cotización"
-          >
-            <Trash2 className="size-3.5" />
-          </button>
-        )}
+        </div>
       </div>
 
       {confirmarEliminar && (
@@ -419,6 +483,38 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
         />
       )}
     </>
+  )
+}
+
+function ActionMenuItem({
+  icon,
+  children,
+  loading,
+  tone = "default",
+  onClick,
+}: {
+  icon: React.ReactNode
+  children: React.ReactNode
+  loading?: boolean
+  tone?: "default" | "danger"
+  onClick: () => void
+}) {
+  const toneClass =
+    tone === "danger"
+      ? "text-rose-600 hover:bg-rose-50"
+      : "text-gray-700 hover:bg-[#F3F5F7]"
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      disabled={loading}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
+    >
+      <span className="text-gray-400">{icon}</span>
+      <span className="flex-1">{children}</span>
+      {loading && <Loader2 className="size-3 animate-spin text-gray-400" />}
+    </button>
   )
 }
 
@@ -1016,7 +1112,7 @@ export function CotizacionesList({
         ),
         enableSorting: false,
         enableResizing: false,
-        size: 220,
+        size: 100,
       },
     ],
     [],
