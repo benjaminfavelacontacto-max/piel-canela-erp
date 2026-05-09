@@ -45,6 +45,11 @@ export type SocioRow = {
   pagado: boolean
 }
 
+export type Periodicidad = {
+  cliente_id: string
+  dias_promedio: number | null
+}
+
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -73,13 +78,25 @@ const estatusLabel: Record<Estatus, string> = {
 type EstatusFilter = "todos" | Estatus
 type ClienteFilter = "todos" | string
 
+function formatDias(d: number | null): string {
+  if (d == null) return "Una sola compra"
+  return `Cada ${d} días`
+}
+
+function formatMeses(d: number | null): string {
+  if (d == null) return "Una sola compra"
+  return `Cada ${(d / 30.4).toFixed(1)} meses`
+}
+
 export function VentasDashboard({
   ventas,
   socios,
+  periodicidad,
   error,
 }: {
   ventas: VentaRow[]
   socios: SocioRow[]
+  periodicidad: Periodicidad[]
   error: string | null
 }) {
   const [estatusFilter, setEstatusFilter] = useState<EstatusFilter>("todos")
@@ -170,6 +187,11 @@ export function VentasDashboard({
       avgDays: Math.round(avgDays),
     }
   }, [clientesRanking])
+
+  const periodicidadByCliente = useMemo(
+    () => new Map(periodicidad.map((p) => [p.cliente_id, p.dias_promedio])),
+    [periodicidad],
+  )
 
   const clienteOptions = useMemo(() => {
     const map = new Map<string, string>()
@@ -263,58 +285,81 @@ export function VentasDashboard({
               Top clientes
             </h2>
           </header>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <Th>Cliente</Th>
-                <Th align="right">Total</Th>
-                <Th align="right">Órdenes</Th>
-                <Th align="right">Ticket prom.</Th>
-                <Th align="right">Última compra</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {clientesRanking.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-5 py-8 text-center text-sm text-gray-500"
-                  >
-                    Sin datos.
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <Th>Cliente</Th>
+                  <Th align="right">Total</Th>
+                  <Th align="right">Órdenes</Th>
+                  <Th align="right">Ticket prom.</Th>
+                  <Th align="right">Última compra</Th>
+                  <Th align="right">Periodicidad (Días)</Th>
+                  <Th align="right">Periodicidad (Mensual)</Th>
                 </tr>
-              ) : (
-                clientesRanking.slice(0, 10).map((c) => (
-                  <tr key={c.id ?? "__sin__"} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 text-gray-900">
-                      {c.id ? (
-                        <Link
-                          href={`/clientes/${c.id}`}
-                          className="hover:text-pink-700 hover:underline"
-                        >
-                          {c.nombre}
-                        </Link>
-                      ) : (
-                        c.nombre
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                      {mxn.format(c.total)}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-                      {c.ordenes}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-                      {mxn.format(c.ticketPromedio)}
-                    </td>
-                    <td className="px-5 py-3 text-right text-xs text-gray-500">
-                      {fechaFmt.format(new Date(c.ultimaCompra))}
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {clientesRanking.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-5 py-8 text-center text-sm text-gray-500"
+                    >
+                      Sin datos.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  clientesRanking.slice(0, 10).map((c) => {
+                    const dias = c.id
+                      ? (periodicidadByCliente.get(c.id) ?? null)
+                      : null
+                    return (
+                      <tr key={c.id ?? "__sin__"} className="hover:bg-gray-50">
+                        <td className="px-5 py-3 text-gray-900">
+                          {c.id ? (
+                            <Link
+                              href={`/clientes/${c.id}`}
+                              className="hover:text-pink-700 hover:underline"
+                            >
+                              {c.nombre}
+                            </Link>
+                          ) : (
+                            c.nombre
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
+                          {mxn.format(c.total)}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums text-gray-500">
+                          {c.ordenes}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums text-gray-700">
+                          {mxn.format(c.ticketPromedio)}
+                        </td>
+                        <td className="px-5 py-3 text-right text-xs text-gray-500">
+                          {fechaFmt.format(new Date(c.ultimaCompra))}
+                        </td>
+                        <td
+                          className={`px-5 py-3 text-right tabular-nums ${
+                            dias == null ? "text-gray-400" : "text-gray-700"
+                          }`}
+                        >
+                          {formatDias(dias)}
+                        </td>
+                        <td
+                          className={`px-5 py-3 text-right tabular-nums ${
+                            dias == null ? "text-gray-400" : "text-gray-700"
+                          }`}
+                        >
+                          {formatMeses(dias)}
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5">
