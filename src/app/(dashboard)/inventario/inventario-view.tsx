@@ -395,55 +395,76 @@ export function InventarioView({
       {/* Table */}
       <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse" style={{ minWidth: "1200px" }}>
+          <table
+            className="border-collapse"
+            style={{ minWidth: "1400px", width: "max-content" }}
+          >
+            <colgroup>
+              <col style={{ width: "50px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "55px" }} />
+              <col style={{ width: "160px" }} />
+              <col style={{ width: "110px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "75px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "70px" }} />
+              <col style={{ width: "85px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "55px" }} />
+              <col style={{ width: "75px" }} />
+            </colgroup>
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[50px]">
+              <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Foto
                 </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[90px]">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Cat.
                 </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[60px]">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Peso
                 </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Producto
                 </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[100px]">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   SKU
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[90px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   P. Público
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   USD
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   MXN calc.
                 </th>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[60px]">
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Stock
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Costo USD
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Costo MXN
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   +Env USD
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   +Env MXN
                 </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Profit
                 </th>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[55px]">
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Vend.
                 </th>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Estatus
                 </th>
               </tr>
@@ -547,9 +568,9 @@ function ProductRow({
       </td>
 
       {/* Producto */}
-      <td className="py-2 px-2">
+      <td className="py-2 px-2" style={{ maxWidth: "160px" }}>
         <p
-          className="text-xs font-medium text-gray-900 truncate max-w-[160px]"
+          className="text-xs font-medium text-gray-900 truncate"
           title={p.nombre_display ?? p.nombre}
         >
           {p.nombre_display ?? p.nombre}
@@ -557,8 +578,8 @@ function ProductRow({
       </td>
 
       {/* SKU */}
-      <td className="py-2 px-2">
-        <code className="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">
+      <td className="py-2 px-2" style={{ whiteSpace: "nowrap" }}>
+        <code className="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded whitespace-nowrap">
           {p.sku}
         </code>
       </td>
