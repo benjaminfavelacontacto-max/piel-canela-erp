@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  BarChart3,
 } from "lucide-react"
 import {
   Bar,
@@ -247,12 +248,21 @@ export function VentasDashboard({
             </p>
           </div>
         </div>
-        <Link
-          href="/ventas/nueva"
-          className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
-        >
-          Nueva Venta
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/ventas/estadisticas"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <BarChart3 className="size-4" />
+            Ver estadísticas →
+          </Link>
+          <Link
+            href="/ventas/nueva"
+            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
+          >
+            Nueva Venta
+          </Link>
+        </div>
       </header>
 
       {error && (

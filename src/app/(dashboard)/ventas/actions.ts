@@ -98,35 +98,33 @@ export async function saveVenta(input: SaveVentaInput) {
     }
   }
 
-  // Refetch socios at save time so the client cannot tamper with porcentajes
-  const { data: socios, error: sociosErr } = await supabase
-    .from("socios")
-    .select("id, porcentaje")
-    .eq("activo", true)
-
-  if (sociosErr) {
-    return {
-      ok: false as const,
-      error: `Venta creada pero socios fallaron: ${sociosErr.message}`,
-    }
-  }
-
-  if (socios && socios.length > 0) {
-    const ventaSocios = socios.map((s) => ({
+  // División hardcodeada Sandra/Benjamin al 50% (no depende de RLS sobre `socios`).
+  const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
+  const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
+  const half = Number((input.total / 2).toFixed(2))
+  const ventaSocios = [
+    {
       venta_id: venta.id,
-      socio_id: s.id,
-      monto: Number(((input.total * Number(s.porcentaje)) / 100).toFixed(2)),
+      socio_id: SANDRA_ID,
+      monto: half,
       concepto: `Comisión venta ${input.numero}`,
       pagado: false,
       fecha_pago: null,
-    }))
-
-    const { error: vsErr } = await supabase.from("venta_socios").insert(ventaSocios)
-    if (vsErr) {
-      return {
-        ok: false as const,
-        error: `Venta creada pero distribución de socios falló: ${vsErr.message}`,
-      }
+    },
+    {
+      venta_id: venta.id,
+      socio_id: BENJAMIN_ID,
+      monto: half,
+      concepto: `Comisión venta ${input.numero}`,
+      pagado: false,
+      fecha_pago: null,
+    },
+  ]
+  const { error: vsErr } = await supabase.from("venta_socios").insert(ventaSocios)
+  if (vsErr) {
+    return {
+      ok: false as const,
+      error: `Venta creada pero distribución de socios falló: ${vsErr.message}`,
     }
   }
 
@@ -142,5 +140,125 @@ export async function saveVenta(input: SaveVentaInput) {
   revalidatePath("/cotizaciones")
 
   return { ok: true as const, id: venta.id as string }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// getVentasStats — agregaciones para la página /ventas/estadisticas
+// ───────────────────────────────────────────────────────────────────
+
+export type MesStats = {
+  mes: string
+  total: number
+  ganancia: number
+  count: number
+}
+export type ClienteStats = {
+  nombre: string
+  totalCompras: number
+  numOrdenes: number
+}
+export type ProductoStats = {
+  nombre: string
+  cantidadVendida: number
+  totalGenerado: number
+}
+export type VentasStats = {
+  ventasPorMes: MesStats[]
+  topClientes: ClienteStats[]
+  topProductos: ProductoStats[]
+}
+
+type VentaWithRel = {
+  id: string
+  total: number | null
+  ganancia: number | null
+  fecha: string
+  cliente_id: string | null
+  clientes: { nombre: string; nombre_negocio: string | null } | null
+  venta_items:
+    | {
+        cantidad: number
+        precio_unitario: number
+        producto_id: string
+        productos: { nombre: string } | null
+      }[]
+    | null
+}
+
+export async function getVentasStats(filtros?: {
+  desde?: string
+  hasta?: string
+  socioId?: string
+  clienteId?: string
+}): Promise<VentasStats | null> {
+  const supabase = await createClient()
+
+  let query = supabase.from("ventas").select(
+    `id, total, ganancia, fecha, cliente_id,
+     clientes(nombre, nombre_negocio),
+     venta_items(cantidad, precio_unitario, producto_id, productos(nombre))`,
+  )
+
+  if (filtros?.desde) query = query.gte("fecha", filtros.desde)
+  if (filtros?.hasta) query = query.lte("fecha", filtros.hasta)
+  if (filtros?.clienteId) query = query.eq("cliente_id", filtros.clienteId)
+
+  const { data, error } = await query.order("fecha", { ascending: true })
+  if (error) return null
+  const ventas = (data ?? []) as unknown as VentaWithRel[]
+
+  // Ventas por mes
+  const ventasPorMes = ventas.reduce<Record<string, MesStats>>((acc, v) => {
+    if (!v.fecha) return acc
+    const mes = v.fecha.slice(0, 7)
+    const cur = acc[mes] ?? { mes, total: 0, ganancia: 0, count: 0 }
+    cur.total += Number(v.total ?? 0)
+    cur.ganancia += Number(v.ganancia ?? 0)
+    cur.count += 1
+    acc[mes] = cur
+    return acc
+  }, {})
+
+  // Top clientes
+  const porCliente = ventas.reduce<Record<string, ClienteStats>>((acc, v) => {
+    const nombre =
+      v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente"
+    const cur = acc[nombre] ?? { nombre, totalCompras: 0, numOrdenes: 0 }
+    cur.totalCompras += Number(v.total ?? 0)
+    cur.numOrdenes += 1
+    acc[nombre] = cur
+    return acc
+  }, {})
+
+  // Top productos
+  const items = ventas.flatMap((v) => v.venta_items ?? [])
+  const porProducto = items.reduce<Record<string, ProductoStats>>(
+    (acc, item) => {
+      const nombre = item.productos?.nombre ?? "Desconocido"
+      const cur = acc[nombre] ?? {
+        nombre,
+        cantidadVendida: 0,
+        totalGenerado: 0,
+      }
+      cur.cantidadVendida += Number(item.cantidad ?? 0)
+      cur.totalGenerado +=
+        Number(item.cantidad ?? 0) * Number(item.precio_unitario ?? 0)
+      acc[nombre] = cur
+      return acc
+    },
+    {},
+  )
+
+  return {
+    ventasPorMes: Object.values(ventasPorMes).sort((a, b) =>
+      a.mes.localeCompare(b.mes),
+    ),
+    topClientes: Object.values(porCliente)
+      .sort((a, b) => b.totalCompras - a.totalCompras)
+      .slice(0, 10),
+    topProductos: Object.values(porProducto)
+      .sort((a, b) => b.totalGenerado - a.totalGenerado)
+      .slice(0, 10),
+  }
 }
 
