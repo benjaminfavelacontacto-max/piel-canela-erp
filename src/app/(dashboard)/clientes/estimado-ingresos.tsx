@@ -549,12 +549,12 @@ export function EstimadoIngresos({
                   <stop offset="100%" stopColor="#FEF3C7" stopOpacity={0.6} />
                 </linearGradient>
                 <linearGradient id="gradProy" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(15,118,110,0.25)" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="rgba(15,118,110,0.20)" stopOpacity={0.5} />
+                  <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.55} />
                 </linearGradient>
                 <linearGradient id="gradProyAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(15,118,110,0.50)" stopOpacity={1} />
-                  <stop offset="100%" stopColor="rgba(15,118,110,0.40)" stopOpacity={0.7} />
+                  <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.65} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -599,7 +599,9 @@ export function EstimadoIngresos({
                 dataKey="estimado"
                 name="Proyección"
                 fill="url(#gradProy)"
-                stroke="rgba(15,118,110,0.25)"
+                stroke="#8B5CF6"
+                strokeOpacity={0.4}
+                strokeDasharray="3 3"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
                 legendType="square"
@@ -608,7 +610,9 @@ export function EstimadoIngresos({
                 dataKey="estimadoAlta"
                 name="Proyección temp. alta"
                 fill="url(#gradProyAlta)"
-                stroke="rgba(15,118,110,0.50)"
+                stroke="#7C3AED"
+                strokeOpacity={0.6}
+                strokeDasharray="3 3"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
                 legendType="square"
@@ -715,8 +719,8 @@ function HistVsProyLegend() {
   const items: Array<{ color: string; label: string; shape: "square" | "circle" }> = [
     { color: "#CBD5E1", label: "Ventas reales", shape: "square" },
     { color: "#FEF3C7", label: "Temp. alta histórica 🌞", shape: "square" },
-    { color: "rgba(15,118,110,0.20)", label: "Proyección", shape: "square" },
-    { color: "rgba(15,118,110,0.40)", label: "Proyección temp. alta 🌞", shape: "square" },
+    { color: "#A78BFA", label: "Proyección", shape: "square" },
+    { color: "#7C3AED", label: "Proyección temp. alta 🌞", shape: "square" },
     { color: "#0F766E", label: "Ganancia neta", shape: "circle" },
   ]
   return (
