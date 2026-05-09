@@ -995,20 +995,6 @@ export function VentasTablePremium({
         size: 110,
       },
       {
-        id: "notas_libre",
-        accessorFn: (v) => v.notas_libre,
-        header: (ctx) => <HeaderCell label="Notas" ctx={ctx} />,
-        cell: ({ row }) => (
-          <NotaCell
-            libre={row.original.notas_libre}
-            expanded={row.getIsExpanded()}
-            onExpand={() => row.toggleExpanded()}
-          />
-        ),
-        enableSorting: false,
-        size: 200,
-      },
-      {
         accessorKey: "sandra_monto",
         header: (ctx) => <HeaderCell label="Sandra" ctx={ctx} align="right" />,
         cell: ({ getValue, row }) => (
@@ -1108,6 +1094,20 @@ export function VentasTablePremium({
           )
         },
         size: 120,
+      },
+      {
+        id: "notas_libre",
+        accessorFn: (v) => v.notas_libre,
+        header: (ctx) => <HeaderCell label="Notas" ctx={ctx} />,
+        cell: ({ row }) => (
+          <NotaCell
+            libre={row.original.notas_libre}
+            expanded={row.getIsExpanded()}
+            onExpand={() => row.toggleExpanded()}
+          />
+        ),
+        enableSorting: false,
+        size: 200,
       },
       {
         id: "acciones",
