@@ -904,7 +904,7 @@ export function ClientesDashboard({
       {/* Tabla */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Toolbar */}
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-[#0F766E]" />
             <h2 className="text-sm font-semibold text-gray-900">
@@ -968,7 +968,7 @@ export function ClientesDashboard({
                     onClick={() => setShowColumnMenu(false)}
                   />
                   <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                    <div className="border-b border-gray-100 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+                    <div className="border-b border-[rgba(15,23,42,0.04)] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                       Mostrar columnas
                     </div>
                     <ul className="max-h-72 overflow-y-auto py-1">
@@ -1036,7 +1036,7 @@ export function ClientesDashboard({
                   <Fragment key={row.id}>
                     <tr
                       onClick={() => setSelectedCliente(row.original)}
-                      className={`group border-b border-gray-100 cursor-pointer transition-colors hover:bg-[#F9FAFB]/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                      className={`group border-b border-[rgba(15,23,42,0.04)] cursor-pointer transition-colors hover:bg-[#F9FAFB]/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
                     >
                       {row.getVisibleCells().map((cell, idx) => {
                         const isFirst = idx === 0

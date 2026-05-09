@@ -22,14 +22,15 @@ export const CHART = {
   comparative: "#CBD5E1",
   comparativeSoft: "#E2E8F0",
 
-  // ─── Slate neutro (segundas métricas) ───
+  // ─── Slate neutro (segundas métricas, líneas) ───
   secondary: "#94A3B8",
+  lineColor: "#94A3B8",
 
-  // ─── Estructura del chart ───
-  grid: "#EEF1F4",
-  axisTick: "#9CA3AF",
-  cursor: "#F3F5F7",
-  cursorOpacity: 0.4,
+  // ─── Estructura del chart (refinado v2 — casi invisible) ───
+  grid: "rgba(148, 163, 184, 0.12)",
+  axisTick: "#94A3B8",
+  cursor: "rgba(15, 118, 110, 0.04)",
+  cursorOpacity: 1,
 
   // ─── Estados (cuando un chart muestra warnings/errors) ───
   warning: "#D97706",
@@ -41,4 +42,13 @@ export const CHART = {
 
   // ─── Series categóricas (pie charts, multi-bar) ───
   series: ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280", "#D1D5DB"],
+
+  // ─── Defaults de geometría (barras delgadas y refinadas) ───
+  bar: {
+    radius: [3, 3, 0, 0] as [number, number, number, number],
+    barCategoryGap: "30%",
+  },
+  line: {
+    strokeWidth: 2,
+  },
 } as const

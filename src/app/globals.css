@@ -118,32 +118,39 @@
 }
 
 /* ─────────────────────────────────────────────────────────
- * Premium Enterprise Design System
- * Inspirado en Linear / Stripe / Attio / Mercury / Vercel
+ * Premium Enterprise Design System v2 — Refinado
+ * Inspirado en Linear / Stripe / Attio / Mercury / Arc / Vercel
+ *
+ * Filosofía: tres niveles de superficie + bordes semitransparentes
+ * + microinteracciones sutiles. El color comunica, no decora.
  * ───────────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --pc-bg-app: #F7F8FA;
+  /* ─── Surfaces (3 niveles de profundidad) ─── */
+  --pc-bg-app: #F6F7F9;             /* Nivel 1 — fondo de la app */
   --pc-bg-sidebar: #FBFCFD;
-  --pc-bg-card: #FFFFFF;
+  --pc-bg-card: #FFFFFF;            /* Nivel 2 — cards estándar */
+  --pc-bg-elevated: #FFFFFF;        /* Nivel 3 — superficies elevadas */
   --pc-bg-hover: #F3F5F7;
   --pc-bg-subtle: #F9FAFB;
+  --pc-bg-glass: rgba(255, 255, 255, 0.7);
 
-  /* Borders */
-  --pc-border: #E7EAF0;
-  --pc-border-soft: #EEF1F4;
+  /* ─── Borders (semitransparentes para menos ruido) ─── */
+  --pc-border: rgba(15, 23, 42, 0.06);
+  --pc-border-soft: rgba(15, 23, 42, 0.04);
+  --pc-border-strong: rgba(15, 23, 42, 0.10);
 
-  /* Text */
+  /* ─── Text ─── */
   --pc-text: #111827;
   --pc-text-secondary: #6B7280;
-  --pc-text-muted: #9CA3AF;
+  --pc-text-muted: #94A3B8;
 
-  /* Accent (Emerald premium) */
+  /* ─── Accent (Emerald premium) ─── */
   --pc-accent: #0F766E;
   --pc-accent-hover: #115E59;
   --pc-accent-soft: #DFF7F4;
+  --pc-accent-glow: rgba(15, 118, 110, 0.12);
 
-  /* Estados */
+  /* ─── Estados ─── */
   --pc-success: #059669;
   --pc-success-soft: #D1FAE5;
   --pc-warning: #D97706;
@@ -153,18 +160,29 @@
   --pc-info: #2563EB;
   --pc-info-soft: #DBEAFE;
 
-  /* Charts (paleta limitada) */
+  /* ─── Charts (paleta limitada + grid casi invisible) ─── */
   --pc-chart-real: #0F766E;
   --pc-chart-projection: rgba(15, 118, 110, 0.35);
   --pc-chart-comparative: #CBD5E1;
+  --pc-chart-line: #94A3B8;
+  --pc-chart-grid: rgba(148, 163, 184, 0.12);
 
-  /* Sombras suaves enterprise */
+  /* ─── Sombras enterprise (3 niveles) ─── */
   --pc-shadow-card:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.04);
+    0 1px 2px rgba(15, 23, 42, 0.03);
   --pc-shadow-card-hover:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 12px 32px rgba(0, 0, 0, 0.06);
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 16px rgba(15, 23, 42, 0.04);
+  --pc-shadow-elevated:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 12px 32px rgba(15, 23, 42, 0.06);
+  --pc-shadow-popover:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 24px 48px rgba(15, 23, 42, 0.10);
+
+  /* ─── Microinteracciones ─── */
+  --pc-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --pc-transition: all 180ms var(--pc-ease);
 }
 
 @layer base {
@@ -184,17 +202,27 @@
 }
 
 @layer components {
-  /* ─── Card premium reutilizable ─── */
+  /* ─── Card nivel 2 (estándar) ─── */
   .pc-card {
     background-color: var(--pc-bg-card);
     border: 1px solid var(--pc-border);
     border-radius: 20px;
     padding: 24px;
     box-shadow: var(--pc-shadow-card);
-    transition: box-shadow 150ms ease;
+    transition: var(--pc-transition);
   }
   .pc-card:hover {
     box-shadow: var(--pc-shadow-card-hover);
+    transform: translateY(-1px);
+  }
+
+  /* ─── Card nivel 3 (elevada — charts principales, modals) ─── */
+  .pc-card-elevated {
+    background-color: var(--pc-bg-elevated);
+    border: 1px solid var(--pc-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--pc-shadow-elevated);
   }
 
   /* ─── Botón primario ─── */
@@ -206,13 +234,16 @@
     padding: 0 18px;
     font-weight: 500;
     font-size: 14px;
-    transition: background-color 150ms ease;
+    transition: var(--pc-transition);
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 1px 2px rgba(15, 118, 110, 0.16);
   }
   .pc-btn-primary:hover {
     background-color: var(--pc-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.18);
   }
 
   /* ─── Botón secundario ─── */
@@ -225,39 +256,119 @@
     padding: 0 18px;
     font-weight: 500;
     font-size: 14px;
-    transition: background-color 150ms ease, border-color 150ms ease;
+    transition: var(--pc-transition);
     display: inline-flex;
     align-items: center;
     gap: 8px;
   }
   .pc-btn-secondary:hover {
     background-color: var(--pc-bg-hover);
+    transform: translateY(-1px);
   }
 
-  /* ─── Input premium ─── */
+  /* ─── Input premium (sólido) ─── */
   .pc-input {
     background-color: white;
     border: 1px solid var(--pc-border);
     border-radius: 14px;
-    height: 44px;
+    height: 42px;
     padding: 0 16px;
     font-size: 14px;
     color: var(--pc-text);
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition: var(--pc-transition);
     width: 100%;
   }
   .pc-input:focus {
     outline: none;
     border-color: var(--pc-accent);
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    box-shadow: 0 0 0 4px var(--pc-accent-glow);
   }
 
-  /* ─── Label estilo enterprise (uppercase) ─── */
+  /* ─── Input glass (filtros con backdrop blur) ─── */
+  .pc-input-glass {
+    background-color: var(--pc-bg-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--pc-border);
+    border-radius: 14px;
+    height: 42px;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--pc-text);
+    transition: var(--pc-transition);
+    width: 100%;
+  }
+  .pc-input-glass:focus {
+    outline: none;
+    border-color: var(--pc-accent);
+    box-shadow: 0 0 0 4px var(--pc-accent-glow);
+    background-color: white;
+  }
+
+  /* ─── Label estilo enterprise ─── */
   .pc-label {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--pc-text-secondary);
+    letter-spacing: 0.08em;
+    color: var(--pc-text-muted);
+  }
+
+  /* ─── Tabla premium (Linear / Stripe / Attio) ─── */
+  .pc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .pc-table thead th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pc-text-muted);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--pc-border-soft);
+    background-color: transparent;
+  }
+  .pc-table tbody tr {
+    transition: background-color 120ms var(--pc-ease);
+    border-bottom: 1px solid var(--pc-border-soft);
+  }
+  .pc-table tbody tr:hover {
+    background-color: rgba(15, 118, 110, 0.03);
+  }
+  .pc-table tbody td {
+    padding: 18px 16px;
+    color: var(--pc-text);
+    vertical-align: middle;
+  }
+
+  /* ─── Sidebar item activo con gradiente sutil ─── */
+  .pc-sidebar-active {
+    background: linear-gradient(
+      90deg,
+      rgba(15, 118, 110, 0.12),
+      rgba(15, 118, 110, 0.04)
+    );
+    color: var(--pc-accent);
+  }
+
+  /* ─── Trend indicator (KPI deltas) ─── */
+  .pc-trend-up {
+    color: var(--pc-success);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .pc-trend-down {
+    color: var(--pc-danger);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
   }
 }

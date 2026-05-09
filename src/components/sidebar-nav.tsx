@@ -34,15 +34,24 @@ export function SidebarNav() {
             key={href}
             href={href}
             className={cn(
-              "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors duration-150",
+              "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium",
+              "transition-all duration-180 ease-[cubic-bezier(.4,0,.2,1)]",
               active
-                ? "bg-[#DFF7F4] text-[#0F766E]"
-                : "text-gray-600 hover:bg-[#F3F5F7] hover:text-gray-900",
+                ? "text-[#0F766E]"
+                : "text-gray-600 hover:bg-[rgba(15,23,42,.04)] hover:text-gray-900",
             )}
+            style={
+              active
+                ? {
+                    background:
+                      "linear-gradient(90deg, rgba(15,118,110,.12), rgba(15,118,110,.04))",
+                  }
+                : undefined
+            }
           >
             <Icon
               className={cn(
-                "size-[18px] shrink-0 transition-colors",
+                "size-[18px] shrink-0 transition-colors duration-180",
                 active
                   ? "text-[#0F766E]"
                   : "text-gray-400 group-hover:text-gray-700",

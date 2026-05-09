@@ -6,9 +6,15 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F7F8FA]">
-      <aside className="w-60 shrink-0 border-r border-[#E7EAF0] bg-[#FBFCFD]">
-        <div className="border-b border-[#EEF1F4] px-5 py-5">
+    <div className="flex h-screen overflow-hidden bg-[#F6F7F9]">
+      <aside
+        className="w-60 shrink-0 bg-[#FBFCFD]"
+        style={{ borderRight: "1px solid rgba(15,23,42,.06)" }}
+      >
+        <div
+          className="px-5 py-5"
+          style={{ borderBottom: "1px solid rgba(15,23,42,.04)" }}
+        >
           <div className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

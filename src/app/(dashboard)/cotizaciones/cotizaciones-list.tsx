@@ -1027,7 +1027,7 @@ export function CotizacionesList({
 
       {/* Filtros */}
       <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex size-6 items-center justify-center rounded-md bg-teal-50 text-teal-700">
               <Sparkles className="size-3.5" />
@@ -1176,7 +1176,7 @@ export function CotizacionesList({
 
       {/* Tabla */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <header className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
+        <header className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-teal-600" />
             <h2 className="text-sm font-semibold text-gray-900">
@@ -1202,7 +1202,7 @@ export function CotizacionesList({
                   onClick={() => setShowColumnMenu(false)}
                 />
                 <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                  <div className="border-b border-gray-100 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+                  <div className="border-b border-[rgba(15,23,42,0.04)] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                     Mostrar columnas
                   </div>
                   <ul className="max-h-72 overflow-y-auto py-1">
@@ -1276,7 +1276,7 @@ export function CotizacionesList({
                     onClick={() =>
                       router.push(`/cotizaciones/${row.original.id}`)
                     }
-                    className={`group cursor-pointer border-b border-gray-100 transition-colors hover:bg-[#F3F5F7] ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                    className={`group cursor-pointer border-b border-[rgba(15,23,42,0.04)] transition-colors hover:bg-[rgba(15,118,110,0.03)]`}
                   >
                     {row.getVisibleCells().map((cell, idx) => {
                       const isFirst = idx === 0
@@ -1284,7 +1284,7 @@ export function CotizacionesList({
                         <td
                           key={cell.id}
                           style={{ width: cell.column.getSize() }}
-                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F3F5F7] shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
+                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[rgba(15,118,110,0.03)] shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
