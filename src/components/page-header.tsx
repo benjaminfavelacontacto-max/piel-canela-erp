@@ -99,23 +99,7 @@ export function PageHeader({
 
 function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
   return (
-    <div
-      className="group rounded-2xl border bg-white p-5 transition-all duration-180"
-      style={{
-        borderColor: "rgba(15,23,42,0.06)",
-        boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
-        transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 1px 2px rgba(15,23,42,0.04), 0 6px 16px rgba(15,23,42,0.04)"
-        e.currentTarget.style.transform = "translateY(-1px)"
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 1px 2px rgba(15,23,42,0.03)"
-        e.currentTarget.style.transform = ""
-      }}
-    >
+    <div className="pc-kpi-card group">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
           {kpi.label}
