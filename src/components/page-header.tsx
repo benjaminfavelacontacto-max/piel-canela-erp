@@ -52,10 +52,10 @@ export function PageHeader({
       : ""
 
   return (
-    <header className="mb-8">
+    <header className="mb-6">
       {/* Breadcrumb */}
       {breadcrumb && breadcrumb.length > 0 && (
-        <nav className="mb-3 flex items-center gap-1.5 text-xs text-gray-400">
+        <nav className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
           {breadcrumb.map((b, i) => (
             <span key={`${b.href}-${i}`} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-gray-300">/</span>}
@@ -73,11 +73,11 @@ export function PageHeader({
       {/* Title row */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[32px] font-bold leading-tight tracking-[-0.03em] text-gray-900">
+          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-gray-900">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+            <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>
           )}
         </div>
         {actions && (
@@ -85,9 +85,9 @@ export function PageHeader({
         )}
       </div>
 
-      {/* KPIs (cards blancas, color solo en trends) */}
+      {/* KPIs (cards blancas, denso premium) */}
       {kpis && kpis.length > 0 && (
-        <div className={`mt-6 grid gap-4 ${kpisGrid}`}>
+        <div className={`mt-4 grid gap-3 ${kpisGrid}`}>
           {kpis.map((kpi, i) => (
             <KpiCard key={`${kpi.label}-${i}`} kpi={kpi} />
           ))}
@@ -100,26 +100,29 @@ export function PageHeader({
 function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
   return (
     <div className="pc-kpi-card group">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+      {/* Top row — label + trend pill */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
           {kpi.label}
         </p>
         {kpi.trend && (
           <span
-            className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold ${
-              kpi.trend.positive
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-rose-50 text-rose-700"
+            className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
+              kpi.trend.positive ? "text-emerald-600" : "text-rose-600"
             }`}
           >
-            <span aria-hidden>{kpi.trend.positive ? "▲" : "▼"}</span>
+            <span aria-hidden className="text-[8px]">
+              {kpi.trend.positive ? "▲" : "▼"}
+            </span>
             {kpi.trend.value}
           </span>
         )}
       </div>
-      <div className="mt-2 flex items-end justify-between gap-3">
+
+      {/* Middle row — big number + sparkline al lado */}
+      <div className="flex items-end justify-between gap-3">
         <p
-          className={`text-[28px] font-bold leading-none tracking-[-0.025em] tabular-nums ${kpi.color ?? "text-gray-900"}`}
+          className={`text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
         >
           {kpi.value}
         </p>
@@ -127,15 +130,19 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
           <Sparkline points={kpi.sparkline} />
         )}
       </div>
+
+      {/* Sub — metadata secundaria, compacta */}
       {kpi.sub && (
-        <p className="mt-1.5 text-xs text-gray-400">{kpi.sub}</p>
+        <p className="mt-auto text-[11px] leading-tight text-[#94A3B8]">
+          {kpi.sub}
+        </p>
       )}
     </div>
   )
 }
 
 function Sparkline({ points }: { points: number[] }) {
-  const w = 64
+  const w = 80
   const h = 24
   const min = Math.min(...points)
   const max = Math.max(...points)
@@ -148,7 +155,6 @@ function Sparkline({ points }: { points: number[] }) {
       return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`
     })
     .join(" ")
-  // Línea con sutil área bajo la curva
   const last = points[points.length - 1]
   const first = points[0]
   const positive = last >= first
@@ -159,18 +165,19 @@ function Sparkline({ points }: { points: number[] }) {
       height={h}
       viewBox={`0 0 ${w} ${h}`}
       fill="none"
-      className="shrink-0 opacity-90 transition-opacity group-hover:opacity-100"
+      className="shrink-0 transition-opacity"
+      style={{ opacity: 0.65 }}
       aria-hidden
     >
       <path
         d={`${path} L ${w} ${h} L 0 ${h} Z`}
         fill={stroke}
-        fillOpacity="0.08"
+        fillOpacity="0.06"
       />
       <path
         d={path}
         stroke={stroke}
-        strokeWidth="1.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

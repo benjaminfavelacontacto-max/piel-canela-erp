@@ -267,7 +267,7 @@ export default async function FinanzasPage() {
       : 0
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-6 space-y-6">
       <PageHeader
         title="Finanzas"
         subtitle="Control de inversiones y capital · ROI por socio"

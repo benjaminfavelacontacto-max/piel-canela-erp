@@ -388,7 +388,7 @@ export function VentasDashboard({
   ].filter(Boolean).length
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-6 space-y-6">
       <PageHeader
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}

@@ -442,7 +442,7 @@ export default async function DashboardPage() {
     .slice(0, 8)
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-6 space-y-6">
       {/* ─── Header premium con KPIs inline ─── */}
       <PageHeader
         title={`${greeting(today)}, Benjamín`}

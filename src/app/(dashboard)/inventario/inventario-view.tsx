@@ -263,7 +263,7 @@ export function InventarioView({
   }, [])
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-6 space-y-6">
       <PageHeader
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
