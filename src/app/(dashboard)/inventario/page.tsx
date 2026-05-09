@@ -1,111 +1,176 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { buildProductoImageUrl } from "@/lib/storage-images"
+import { InventarioView } from "./inventario-view"
+import type { ProductoEnriquecido } from "./inventario-view"
 
 export default async function InventarioPage() {
   const supabase = await createClient()
+  const admin = createAdminClient()
 
-  const [vistaRes, prodPesoRes] = await Promise.all([
-    supabase
-      .from('vista_inventario')
-      .select('sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at')
-      .order('categoria'),
-    supabase.from('productos').select('sku, peso'),
-  ])
-  const { data: items, error } = vistaRes
-  const pesoBySku = new Map<string, string>(
-    (prodPesoRes.data ?? [])
-      .filter((p): p is { sku: string; peso: string } => !!p.sku && !!p.peso)
-      .map((p) => [p.sku, p.peso]),
-  )
+  const [vistaRes, prodRes, categoriasRes, proveedoresRes, listaRes, ventaItemsRes] =
+    await Promise.all([
+      supabase
+        .from("vista_inventario")
+        .select(
+          "sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at",
+        ),
+      supabase
+        .from("productos")
+        .select(
+          "id, sku, nombre, nombre_display, peso, imagen_url, categoria_id, proveedor_id, activo, categorias(nombre), proveedores(nombre)",
+        ),
+      supabase.from("categorias").select("id, nombre").order("nombre"),
+      supabase.from("proveedores").select("id, nombre").order("nombre"),
+      supabase
+        .from("listas_precios")
+        .select("id")
+        .eq("nombre", "Pública MXN")
+        .maybeSingle(),
+      // venta_items para top sellers — admin (RLS)
+      admin
+        .from("venta_items")
+        .select("producto_id, cantidad, costo_unitario, precio_unitario"),
+    ])
 
-  const agotados = items?.filter(i => i.estatus === 'agotado').length ?? 0
-  const bajos    = items?.filter(i => i.estatus === 'bajo').length ?? 0
-  const oks      = items?.filter(i => i.estatus === 'ok').length ?? 0
+  type ProdRow = {
+    id: string
+    sku: string | null
+    nombre: string
+    nombre_display: string | null
+    peso: string | null
+    imagen_url: string | null
+    categoria_id: string | null
+    proveedor_id: string | null
+    activo: boolean | null
+    categorias: { nombre: string } | null
+    proveedores: { nombre: string } | null
+  }
+  const prodRows = (prodRes.data ?? []) as unknown as ProdRow[]
+  const listaId = listaRes.data?.id as string | undefined
 
-  const porCategoria: Record<string, typeof items> = {}
-  items?.forEach(item => {
-    if (!porCategoria[item.categoria]) porCategoria[item.categoria] = []
-    porCategoria[item.categoria]!.push(item)
-  })
+  // Precios públicos — query separada
+  let preciosBySku = new Map<string, number>()
+  if (listaId) {
+    const { data: prc } = await supabase
+      .from("precios_producto")
+      .select("producto_id, precio")
+      .eq("lista_id", listaId)
+    const idToPrice = new Map<string, number>()
+    for (const p of prc ?? []) {
+      idToPrice.set(p.producto_id as string, Number(p.precio))
+    }
+    for (const r of prodRows) {
+      if (!r.sku) continue
+      const v = idToPrice.get(r.id)
+      if (v != null) preciosBySku.set(r.sku, v)
+    }
+    void preciosBySku
+  }
+  // Map producto_id → sku (para los items)
+  const idToSku = new Map(prodRows.map((p) => [p.id, p.sku ?? ""]))
+  const idToPriceMap = new Map<string, number>()
+  if (listaId) {
+    const { data: prc } = await supabase
+      .from("precios_producto")
+      .select("producto_id, precio")
+      .eq("lista_id", listaId)
+    for (const p of prc ?? []) {
+      idToPriceMap.set(p.producto_id as string, Number(p.precio))
+    }
+  }
+
+  // Aggregate venta_items por producto: unidades_vendidas + costo_promedio
+  type VI = { producto_id: string; cantidad: number; costo_unitario: number; precio_unitario: number }
+  const items = (ventaItemsRes.data ?? []) as VI[]
+  const aggBySku = new Map<
+    string,
+    { unidades: number; costo_sum: number; costo_n: number }
+  >()
+  for (const it of items) {
+    const sku = idToSku.get(it.producto_id) ?? ""
+    if (!sku) continue
+    const cur = aggBySku.get(sku) ?? { unidades: 0, costo_sum: 0, costo_n: 0 }
+    cur.unidades += Number(it.cantidad ?? 0)
+    if (Number(it.costo_unitario ?? 0) > 0) {
+      cur.costo_sum += Number(it.costo_unitario)
+      cur.costo_n += 1
+    }
+    aggBySku.set(sku, cur)
+  }
+
+  // Vista (stock) por sku
+  type Vista = {
+    sku: string | null
+    nombre: string
+    categoria: string
+    stock_actual: number | null
+    stock_minimo: number | null
+    estatus: string
+    updated_at: string | null
+  }
+  const vistas = (vistaRes.data ?? []) as Vista[]
+
+  // Indexado por SKU para hacer un solo merge
+  const prodBySku = new Map<string, ProdRow>()
+  for (const p of prodRows) {
+    if (p.sku) prodBySku.set(p.sku, p)
+  }
+
+  const productos: ProductoEnriquecido[] = vistas
+    .filter((v): v is Vista & { sku: string } => !!v.sku)
+    .map((v) => {
+      const p = prodBySku.get(v.sku)
+      const agg = aggBySku.get(v.sku) ?? { unidades: 0, costo_sum: 0, costo_n: 0 }
+      const costoProm = agg.costo_n > 0 ? agg.costo_sum / agg.costo_n : 0
+      const precio = p ? idToPriceMap.get(p.id) ?? null : null
+      const stock = Number(v.stock_actual ?? 0)
+      const minimo = Number(v.stock_minimo ?? 0)
+      const valor = precio != null ? stock * precio : null
+      const capital = stock * costoProm
+      const margen =
+        precio != null && precio > 0 && costoProm > 0
+          ? ((precio - costoProm) / precio) * 100
+          : null
+      return {
+        id: p?.id ?? v.sku,
+        sku: v.sku,
+        nombre: v.nombre,
+        nombre_display: p?.nombre_display ?? null,
+        peso: p?.peso ?? null,
+        imagen_url: buildProductoImageUrl(p?.imagen_url ?? null),
+        categoria: v.categoria ?? p?.categorias?.nombre ?? "Sin categoría",
+        proveedor: p?.proveedores?.nombre ?? null,
+        precio_publico: precio,
+        costo_unitario_prom: costoProm > 0 ? costoProm : null,
+        stock_actual: stock,
+        stock_minimo: minimo,
+        estatus: (v.estatus as "ok" | "bajo" | "agotado") ?? "ok",
+        unidades_vendidas: agg.unidades,
+        valor_inventario: valor,
+        capital_invertido: capital > 0 ? capital : null,
+        margen_pct: margen,
+        updated_at: v.updated_at,
+        activo: p?.activo ?? true,
+      }
+    })
+
+  const categorias = (categoriasRes.data ?? []).map((c) => c.nombre as string)
+  const proveedores = ((proveedoresRes.data ?? []) as { nombre: string }[])
+    .map((p) => p.nombre)
+    .filter(Boolean)
+
+  const error =
+    vistaRes.error?.message ??
+    prodRes.error?.message ??
+    null
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Inventario</h1>
-        <p className="text-gray-500 text-sm mt-1">{items?.length ?? 0} productos</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-green-50 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-green-700">{oks}</p>
-          <p className="text-xs text-green-600">Con stock</p>
-        </div>
-        <div className="bg-amber-50 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-amber-700">{bajos}</p>
-          <p className="text-xs text-amber-600">Stock bajo</p>
-        </div>
-        <div className="bg-red-50 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-red-700">{agotados}</p>
-          <p className="text-xs text-red-600">Agotados</p>
-        </div>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-          <p className="text-red-600 text-sm">{error.message}</p>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {Object.entries(porCategoria).map(([categoria, productos]) => (
-          <div key={categoria} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{categoria}</span>
-              <span className="text-xs text-gray-400">{productos?.length}</span>
-            </div>
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left px-5 py-2 text-xs text-gray-400">SKU</th>
-                  <th className="text-left px-5 py-2 text-xs text-gray-400">Producto</th>
-                  <th className="text-center px-5 py-2 text-xs text-gray-400">Peso</th>
-                  <th className="text-center px-5 py-2 text-xs text-gray-400">Stock</th>
-                  <th className="text-center px-5 py-2 text-xs text-gray-400">Mínimo</th>
-                  <th className="text-center px-5 py-2 text-xs text-gray-400">Estatus</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {productos?.map(item => {
-                  const peso = item.sku ? pesoBySku.get(item.sku) : null
-                  return (
-                    <tr key={item.sku} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 text-xs font-mono text-gray-400">{item.sku}</td>
-                      <td className="px-5 py-3 text-sm text-gray-900">{item.nombre}</td>
-                      <td className="px-5 py-3 text-center">
-                        {peso ? (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                            {peso}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-center text-sm font-semibold">{item.stock_actual}</td>
-                      <td className="px-5 py-3 text-center text-sm text-gray-400">{item.stock_minimo}</td>
-                      <td className="px-5 py-3 text-center">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.estatus === 'ok'      ? 'bg-green-100 text-green-700' :
-                          item.estatus === 'bajo'    ? 'bg-amber-100 text-amber-700' :
-                                                       'bg-red-100 text-red-700'
-                        }`}>{item.estatus}</span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    </div>
+    <InventarioView
+      productos={productos}
+      categorias={categorias}
+      proveedores={proveedores}
+      error={error}
+    />
   )
 }
