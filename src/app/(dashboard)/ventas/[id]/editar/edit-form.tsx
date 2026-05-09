@@ -113,28 +113,44 @@ export function EditVentaForm({
             />
           </label>
 
-          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-            <div>
-              <p className="text-sm font-medium text-gray-900">IVA 16%</p>
-              <p className="text-xs text-gray-500">
-                Aplica impuesto al subtotal
-                {ivaActivo ? ` (${mxn.format(computed.iva)})` : ""}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIvaActivo((v) => !v)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                ivaActivo ? "bg-pink-600" : "bg-gray-300"
-              }`}
-              aria-pressed={ivaActivo}
-            >
-              <span
-                className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${
-                  ivaActivo ? "translate-x-5" : "translate-x-0.5"
+          {/* IVA real cobrado — afecta total y reportes financieros */}
+          <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-amber-900">
+                  IVA cobrado
+                </p>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  ¿Esta venta se cobró con IVA incluido? Afecta el total real y
+                  los reportes financieros.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIvaActivo((v) => !v)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
+                  ivaActivo ? "bg-amber-600" : "bg-gray-300"
                 }`}
-              />
-            </button>
+                role="switch"
+                aria-checked={ivaActivo}
+              >
+                <span className="sr-only">
+                  {ivaActivo ? "Desactivar IVA" : "Activar IVA"}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+                    ivaActivo ? "translate-x-[22px]" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            {ivaActivo && (
+              <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-xs tabular-nums text-amber-900">
+                IVA 16%: <strong>{mxn.format(computed.iva)}</strong> · Total:{" "}
+                <strong>{mxn.format(subtotal + computed.iva - descuento)}</strong>
+              </p>
+            )}
           </div>
         </div>
 

@@ -176,6 +176,15 @@ export function CotizacionDetail({
         <SpreadsheetItems items={preview.items} />
       </section>
 
+      {/* Nota IVA referencial: cotizaciones.iva es solo presentación al
+          cliente. El IVA real cobrado se confirma al registrar la venta. */}
+      {preview.iva > 0 && (
+        <p className="text-xs italic text-gray-400">
+          * IVA incluido en cotización para referencia del cliente. El cobro
+          real se confirma al registrar la venta y puede diferir.
+        </p>
+      )}
+
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
       </div>

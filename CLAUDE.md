@@ -60,6 +60,14 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - Siempre usar ON CONFLICT DO NOTHING en inserts masivos
 - Formato moneda: toLocaleString('es-MX', {style:'currency', currency:'MXN'})
 
+## Regla IVA — referencial vs real
+- `cotizaciones.iva` = REFERENCIAL, solo para presentar al cliente en el PDF
+- `ventas.iva` = REAL, lo que efectivamente se cobró
+- Todos los reportes financieros, ganancias y totales usan SIEMPRE `ventas.iva`, nunca `cotizaciones.iva`
+- Al crear venta desde una cotización: pre-cargar `ivaActivo` como sugerencia (basado en si la cot tenía IVA), pero permitir al usuario cambiar antes de guardar
+- Fórmula ganancia: `ventas.total - ventas.costo_productos - ventas.costo_envio` (donde `total = subtotal + iva − descuento`)
+- Banner ámbar en formularios deja claro que el toggle define el IVA real cobrado
+
 ## Regla: Cotizaciones/Ventas Internas Piel Canela
 - El cliente "Piel Canela" (UUID `08449791-0fab-4bfb-818f-b9dbf077c879`) es INTERNO (`is_internal = true` en BD)
 - Sus cotizaciones sirven SOLO para descontar inventario (la socia se lleva producto a su propio spa)

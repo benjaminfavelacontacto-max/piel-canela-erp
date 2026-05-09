@@ -108,6 +108,31 @@ export default async function EstadisticasPage({
     }
   }
 
+  // ─── IVA recaudado en el periodo (real cobrado, NO referencial) ──
+  let ventasConIva = 0
+  let ventasSinIva = 0
+  let ivaRecaudado = 0
+  {
+    const supabase = await createClient()
+    let q = supabase
+      .from("ventas")
+      .select("iva, cliente_id, clientes!left(is_internal)")
+    if (desde) q = q.gte("fecha", desde)
+    if (hasta) q = q.lte("fecha", hasta)
+    const { data } = await q
+    for (const v of data ?? []) {
+      const cli = v.clientes as { is_internal?: boolean } | null
+      if (cli?.is_internal === true) continue
+      const ivaVal = Number(v.iva ?? 0)
+      if (ivaVal > 0) {
+        ventasConIva += 1
+        ivaRecaudado += ivaVal
+      } else {
+        ventasSinIva += 1
+      }
+    }
+  }
+
   const margen =
     stats && stats.totalVentas > 0
       ? ((stats.totalVentas - prevGanancia) /* placeholder */, 0) // unused
@@ -171,6 +196,19 @@ export default async function EstadisticasPage({
       texto: enRiesgo
         ? `${enRiesgo.nombre} sin comprar hace +${diasDesde(enRiesgo.ultimaCompra)} días`
         : "Todos los clientes activos",
+    })
+  }
+
+  // Insight de IVA real recaudado
+  if (ventasConIva + ventasSinIva > 0) {
+    const mxn0 = new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 0,
+    })
+    insights.push({
+      emoji: "🧾",
+      texto: `${ventasConIva} ventas con IVA · ${ventasSinIva} sin IVA · IVA recaudado real: ${mxn0.format(ivaRecaudado)}`,
     })
   }
 

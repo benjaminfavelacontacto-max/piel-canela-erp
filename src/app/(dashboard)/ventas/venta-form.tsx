@@ -81,19 +81,27 @@ export function VentaForm({
 
   // Manual totals (only used when no cotizacion is loaded)
   const [manualSubtotal, setManualSubtotal] = useState<number>(0)
-  const [ivaActivo, setIvaActivo] = useState<boolean>(false)
+  // ivaActivo: pre-cargado de la cotización si existe, pero EDITABLE.
+  // Regla: cotizaciones.iva = referencial, ventas.iva = real cobrado.
+  const [ivaActivo, setIvaActivo] = useState<boolean>(
+    cotizacion ? Number(cotizacion.iva ?? 0) > 0 : false,
+  )
   const [manualDescuento, setManualDescuento] = useState<number>(0)
   const [manualCostoProductos, setManualCostoProductos] = useState<number>(0)
   const [manualCostoEnvio, setManualCostoEnvio] = useState<number>(0)
 
   const totals = useMemo(() => {
     if (cotizacion) {
+      const subtotal = Number(cotizacion.subtotal ?? 0)
+      const descuento = Number(cotizacion.descuento ?? 0)
+      // IVA real = subtotal × 16% si user activa toggle, NO el de la cotización
+      const iva = ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
       return {
-        subtotal: cotizacion.subtotal,
-        iva: cotizacion.iva,
-        descuento: cotizacion.descuento,
-        total: cotizacion.total,
-        costo_productos: cotizacion.costo_productos,
+        subtotal,
+        iva,
+        descuento,
+        total: Math.max(0, subtotal + iva - descuento),
+        costo_productos: Number(cotizacion.costo_productos ?? 0),
         costo_envio: 0,
       }
     }
@@ -266,23 +274,81 @@ export function VentaForm({
               Totales
             </h2>
             {lockedFromCotizacion ? (
-              <div className="space-y-1 text-sm">
-                <Row label="Subtotal" value={mxn.format(totals.subtotal)} />
-                {totals.descuento > 0 && (
+              <div className="space-y-3 text-sm">
+                <div className="space-y-1">
+                  <Row label="Subtotal" value={mxn.format(totals.subtotal)} />
+                  {totals.descuento > 0 && (
+                    <Row
+                      label="Descuento"
+                      value={`-${mxn.format(totals.descuento)}`}
+                      valueClass="text-emerald-700"
+                    />
+                  )}
+                  {totals.iva > 0 && (
+                    <Row label="IVA real cobrado" value={mxn.format(totals.iva)} />
+                  )}
                   <Row
-                    label="Descuento"
-                    value={`-${mxn.format(totals.descuento)}`}
-                    valueClass="text-emerald-700"
+                    label="Costo de productos"
+                    value={mxn.format(totals.costo_productos)}
+                    valueClass="text-gray-500"
                   />
-                )}
-                {totals.iva > 0 && <Row label="IVA" value={mxn.format(totals.iva)} />}
-                <Row
-                  label="Costo de productos"
-                  value={mxn.format(totals.costo_productos)}
-                  valueClass="text-gray-500"
-                />
-                <div className="my-2 border-t border-gray-100" />
-                <Row label="Total" value={mxn.format(totals.total)} valueClass="font-bold text-base" />
+                  <div className="my-2 border-t border-gray-100" />
+                  <Row
+                    label="Total"
+                    value={mxn.format(totals.total)}
+                    valueClass="font-bold text-base"
+                  />
+                </div>
+
+                {/* Toggle IVA real — independiente del IVA referencial de la cot */}
+                <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-amber-900">
+                        IVA real cobrado
+                      </p>
+                      <p className="mt-0.5 text-[11px] leading-snug text-amber-700">
+                        ¿Esta venta se cobró con IVA incluido? El IVA de la
+                        cotización origen es referencial — el cobro real puede
+                        diferir.
+                      </p>
+                      {Number(cotizacion?.iva ?? 0) > 0 ? (
+                        <p className="mt-1 text-[10px] italic text-amber-600">
+                          📋 La cotización se presentó CON IVA — pre-seleccionado.
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[10px] italic text-amber-600">
+                          📋 La cotización se presentó SIN IVA.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIvaActivo((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
+                        ivaActivo ? "bg-amber-600" : "bg-gray-300"
+                      }`}
+                      role="switch"
+                      aria-checked={ivaActivo}
+                    >
+                      <span className="sr-only">
+                        {ivaActivo ? "Desactivar IVA" : "Activar IVA"}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+                          ivaActivo ? "translate-x-[22px]" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {ivaActivo && (
+                    <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-[11px] tabular-nums text-amber-900">
+                      IVA 16%: <strong>{mxn.format(totals.iva)}</strong> · Total:{" "}
+                      <strong>{mxn.format(totals.total)}</strong>
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="space-y-3">

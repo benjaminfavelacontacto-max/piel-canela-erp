@@ -295,16 +295,21 @@ export default async function VentaDetailPage({
                   </tr>
                 )}
                 <tr>
-                  <td colSpan={5} className="px-3 py-1 text-right text-xs uppercase tracking-wide text-gray-500">
-                    IVA{Number(venta.iva ?? 0) > 0 ? " 16%" : ""}
+                  <td
+                    colSpan={5}
+                    className="px-3 py-1 text-right text-xs uppercase tracking-wide text-gray-500"
+                  >
+                    IVA real cobrado
                   </td>
                   <td className="px-3 py-1 text-right tabular-nums">
                     {Number(venta.iva ?? 0) > 0 ? (
-                      <span className="text-teal-700 font-medium">
-                        {mxn.format(Number(venta.iva))}
+                      <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-teal-200/60">
+                        ✓ Con IVA · {mxn.format(Number(venta.iva))}
                       </span>
                     ) : (
-                      <span className="text-gray-300">—</span>
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                        Sin IVA
+                      </span>
                     )}
                   </td>
                 </tr>
