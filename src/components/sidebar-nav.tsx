@@ -33,13 +33,13 @@ export function SidebarNav() {
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors duration-150",
               active
-                ? "bg-teal-100 text-teal-700"
-                : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+                ? "bg-teal-50 text-teal-700 border-l-2 border-teal-600 pl-[calc(0.75rem-2px)] pr-3"
+                : "border-l-2 border-transparent text-zinc-600 hover:bg-gray-50 hover:text-zinc-900 px-3",
             )}
           >
-            <Icon className="size-4" />
+            <Icon className="w-5 h-5" />
             {label}
           </Link>
         )
