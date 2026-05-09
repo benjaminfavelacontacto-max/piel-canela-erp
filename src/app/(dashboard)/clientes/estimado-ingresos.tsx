@@ -13,7 +13,6 @@ import {
 import {
   Bar,
   CartesianGrid,
-  Cell,
   ComposedChart,
   Legend,
   Line,
@@ -279,6 +278,8 @@ export function EstimadoIngresos({
   }, [today, indiceEstacional, promedioPorMes])
 
   // ─── Combinar histórico + proyección para Recharts ──────────────
+  // Splitting en 4 series mutuamente exclusivas para que el Legend pueda
+  // tomar colores explícitos (no se ven negros).
   const dataGrafica = useMemo(() => {
     return [
       ...historico.map((m) => {
@@ -287,8 +288,10 @@ export function EstimadoIngresos({
         return {
           mes: m.mes,
           label: esAlta ? `${formatMesLabel(m.mes)} 🌞` : formatMesLabel(m.mes),
-          real: m.real,
+          real: esAlta ? null : m.real,
+          realAlta: esAlta ? m.real : null,
           estimado: null as number | null,
+          estimadoAlta: null as number | null,
           ganancia: m.ganancia,
           esProyeccion: false,
           esTemporadaAlta: esAlta,
@@ -300,7 +303,9 @@ export function EstimadoIngresos({
           ? `${formatMesLabel(p.mes)} 🌞 (est.)`
           : `${formatMesLabel(p.mes)} (est.)`,
         real: null as number | null,
-        estimado: p.estimado,
+        realAlta: null as number | null,
+        estimado: p.esTemporadaAlta ? null : p.estimado,
+        estimadoAlta: p.esTemporadaAlta ? p.estimado : null,
         ganancia: p.ganancia,
         esProyeccion: true,
         esTemporadaAlta: p.esTemporadaAlta,
@@ -486,21 +491,21 @@ export function EstimadoIngresos({
               margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
             >
               <defs>
-                <linearGradient id="gradReal" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="gradHistReal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f9a8d4" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#fbcfe8" stopOpacity={0.6} />
+                  <stop offset="100%" stopColor="#fbcfe8" stopOpacity={0.7} />
                 </linearGradient>
-                <linearGradient id="gradRealAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#fcd34d" stopOpacity={0.7} />
+                <linearGradient id="gradHistAlta" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#fb923c" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#fed7aa" stopOpacity={0.6} />
                 </linearGradient>
-                <linearGradient id="gradEst" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="gradProy" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#c4b5fd" stopOpacity={0.9} />
                   <stop offset="100%" stopColor="#ddd6fe" stopOpacity={0.5} />
                 </linearGradient>
-                <linearGradient id="gradEstAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.7} />
+                <linearGradient id="gradProyAlta" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.7} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -522,88 +527,61 @@ export function EstimadoIngresos({
                 width={50}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend
-                wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                iconType="circle"
-                formatter={(value) =>
-                  value === "real"
-                    ? "Ventas reales"
-                    : value === "estimado"
-                      ? "Proyección"
-                      : value === "ganancia"
-                        ? "Ganancia neta"
-                        : value
-                }
-              />
+              <Legend content={<HistVsProyLegend />} />
               <Bar
                 dataKey="real"
-                name="real"
+                name="Ventas reales"
+                fill="url(#gradHistReal)"
+                stroke="#f9a8d4"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
-              >
-                {dataGrafica.map((d, i) => (
-                  <Cell
-                    key={`real-${i}`}
-                    fill={
-                      d.esTemporadaAlta
-                        ? "url(#gradRealAlta)"
-                        : "url(#gradReal)"
-                    }
-                  />
-                ))}
-              </Bar>
+                legendType="square"
+              />
+              <Bar
+                dataKey="realAlta"
+                name="Temp. alta histórica"
+                fill="url(#gradHistAlta)"
+                stroke="#fb923c"
+                radius={[6, 6, 0, 0]}
+                animationDuration={800}
+                legendType="square"
+              />
               <Bar
                 dataKey="estimado"
-                name="estimado"
+                name="Proyección"
+                fill="url(#gradProy)"
+                stroke="#c4b5fd"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
-              >
-                {dataGrafica.map((d, i) => (
-                  <Cell
-                    key={`est-${i}`}
-                    fill={
-                      d.esTemporadaAlta ? "url(#gradEstAlta)" : "url(#gradEst)"
-                    }
-                  />
-                ))}
-              </Bar>
+                legendType="square"
+              />
+              <Bar
+                dataKey="estimadoAlta"
+                name="Proyección temp. alta"
+                fill="url(#gradProyAlta)"
+                stroke="#8b5cf6"
+                radius={[6, 6, 0, 0]}
+                animationDuration={1000}
+                legendType="square"
+              />
               <Line
                 dataKey="ganancia"
-                name="ganancia"
+                name="Ganancia neta"
                 stroke="#0d9488"
-                strokeWidth={2}
-                dot={{ r: 4, fill: "#0d9488", strokeWidth: 2, stroke: "#fff" }}
+                strokeWidth={2.5}
+                dot={{ r: 5, fill: "#0d9488", stroke: "white", strokeWidth: 2 }}
+                activeDot={{ r: 7, fill: "#0d9488" }}
                 connectNulls
                 animationDuration={1200}
+                legendType="circle"
               />
             </ComposedChart>
           </ResponsiveContainer>
-          {/* Leyenda + nota explicativa con estacionalidad */}
-          <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-gray-50 pt-4 text-[10.5px] text-gray-400">
-            <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm bg-pink-300" />
-              Ventas reales
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm bg-amber-400" />
-              🌞 Temp. alta histórica
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm bg-violet-300" />
-              Proyección
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm bg-violet-400" />
-              🌞 Proyección temp. alta
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-full bg-teal-500" />
-              Ganancia neta
-            </span>
-            <span className="ml-auto italic">
-              estimado = prom. 3m × índice estacional × confianza · 6 meses
-            </span>
-          </div>
+          {/* Nota explicativa de la fórmula (la leyenda visual va dentro del chart) */}
+          <p className="mt-3 border-t border-gray-50 pt-3 text-[10.5px] italic text-gray-400">
+            estimado = prom. últ. 3 meses × índice estacional × confianza ·
+            proyección 6 meses · 🌞 = temporada alta histórica
+          </p>
         </article>
 
         {/* Lista de clientes probable recompra */}
@@ -678,6 +656,38 @@ export function EstimadoIngresos({
         </article>
       </div>
     </section>
+  )
+}
+
+// Leyenda custom: garantiza colores correctos (Recharts pinta dots negros
+// cuando se usa <Cell> con fill por defecto undefined en el Bar padre).
+function HistVsProyLegend() {
+  const items: Array<{ color: string; label: string; shape: "square" | "circle" }> = [
+    { color: "#fbcfe8", label: "Ventas reales", shape: "square" },
+    { color: "#fed7aa", label: "Temp. alta histórica 🌞", shape: "square" },
+    { color: "#ddd6fe", label: "Proyección", shape: "square" },
+    { color: "#a78bfa", label: "Proyección temp. alta 🌞", shape: "square" },
+    { color: "#0d9488", label: "Ganancia neta", shape: "circle" },
+  ]
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-gray-600">
+      {items.map((it) => (
+        <div key={it.label} className="flex items-center gap-1.5">
+          {it.shape === "circle" ? (
+            <span
+              className="inline-block size-3 shrink-0 rounded-full ring-2 ring-white"
+              style={{ backgroundColor: it.color }}
+            />
+          ) : (
+            <span
+              className="inline-block size-3 shrink-0 rounded-sm"
+              style={{ backgroundColor: it.color }}
+            />
+          )}
+          <span>{it.label}</span>
+        </div>
+      ))}
+    </div>
   )
 }
 
