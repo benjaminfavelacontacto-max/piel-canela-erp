@@ -14,6 +14,20 @@ import {
   ArrowUpDown,
   X,
 } from "lucide-react"
+import { ProductDrawer } from "./product-drawer"
+
+export type ProductoSales = {
+  ventas: Array<{
+    venta_id: string
+    venta_numero: string
+    fecha: string
+    cliente: string | null
+    cantidad: number
+    precio_unitario: number
+    subtotal: number
+  }>
+  monthly: Array<{ mes: string; cantidad: number; revenue: number }>
+}
 
 export type ProductoEnriquecido = {
   id: string
@@ -114,13 +128,20 @@ export function InventarioView({
   productos,
   categorias,
   proveedores,
+  sales,
   error,
 }: {
   productos: ProductoEnriquecido[]
   categorias: string[]
   proveedores: string[]
+  sales: Record<string, ProductoSales>
   error: string | null
 }) {
+  const [selectedSku, setSelectedSku] = useState<string | null>(null)
+  const selected = useMemo(
+    () => productos.find((p) => p.sku === selectedSku) ?? null,
+    [productos, selectedSku],
+  )
   const [search, setSearch] = useState("")
   const [estatusF, setEstatusF] = useState("")
   const [categoriaF, setCategoriaF] = useState("")
@@ -370,6 +391,12 @@ export function InventarioView({
         </div>
       </section>
 
+      <ProductDrawer
+        producto={selected}
+        sales={selected ? sales[selected.sku] : undefined}
+        onClose={() => setSelectedSku(null)}
+      />
+
       {/* Table */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
@@ -444,6 +471,7 @@ export function InventarioView({
                     key={p.sku}
                     p={p}
                     isTop={topSellersSet.has(p.sku)}
+                    onClick={() => setSelectedSku(p.sku)}
                   />
                 ))
               )}
@@ -458,9 +486,11 @@ export function InventarioView({
 function ProductRow({
   p,
   isTop,
+  onClick,
 }: {
   p: ProductoEnriquecido
   isTop: boolean
+  onClick: () => void
 }) {
   // Stock bar: ratio current/min*2 capped 100%
   const ratio =
@@ -483,7 +513,10 @@ function ProductRow({
       .join("") || "?"
 
   return (
-    <tr className="group transition-colors hover:bg-gray-50">
+    <tr
+      onClick={onClick}
+      className="group cursor-pointer transition-colors hover:bg-teal-50/40"
+    >
       <td className="px-3 py-2">
         <div className="flex items-center gap-3">
           {p.imagen_url ? (
