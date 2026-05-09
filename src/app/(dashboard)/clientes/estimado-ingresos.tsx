@@ -16,6 +16,8 @@ import {
   ComposedChart,
   Legend,
   Line,
+  ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -440,17 +442,47 @@ export function EstimadoIngresos({
                   "0 1px 2px rgba(245,158,11,0.25), 0 6px 20px rgba(245,158,11,0.20)",
               }}
             >
-              <Sun className="size-5" strokeWidth={1.75} />
+              {/* Pulse ring sutil */}
+              <span
+                aria-hidden
+                className="absolute inset-0 animate-ping rounded-xl bg-amber-400/40"
+                style={{ animationDuration: "2.4s" }}
+              />
+              <Sun className="relative size-5" strokeWidth={1.75} />
             </span>
             <div className="relative flex-1 min-w-0">
-              <p
-                className="text-[15px] font-semibold tracking-[-0.015em] text-[#78350F]"
-              >
-                {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
-                  seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
-                es temporada alta
-              </p>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-amber-800/80">
+              <div className="flex items-center gap-2">
+                <p className="text-[15px] font-semibold tracking-[-0.015em] text-[#78350F]">
+                  {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
+                    seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
+                  es temporada alta
+                </p>
+                {/* Heat intensity indicator */}
+                <span
+                  className="inline-flex items-center gap-0.5 rounded-full bg-white/60 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.1em] text-amber-700 ring-1 ring-amber-200/50 backdrop-blur-sm"
+                  title={`Intensidad: ×${seasonalInsights.proxTempAlta.factor.toFixed(2)}`}
+                >
+                  {(() => {
+                    const f = seasonalInsights.proxTempAlta.factor
+                    const bars = Math.min(5, Math.max(1, Math.round((f - 1) * 5)))
+                    return Array.from({ length: 5 }).map((_, i) => (
+                      <span
+                        key={i}
+                        aria-hidden
+                        className="block h-2 w-[3px] rounded-sm"
+                        style={{
+                          background:
+                            i < bars
+                              ? `linear-gradient(180deg, #F59E0B, #EA580C)`
+                              : "rgba(245,158,11,0.18)",
+                        }}
+                      />
+                    ))
+                  })()}
+                  <span className="ml-1">Heat</span>
+                </span>
+              </div>
+              <p className="mt-1 text-[12px] leading-relaxed text-amber-800/80">
                 Históricamente{" "}
                 <span className="font-semibold tabular-nums text-amber-900">
                   +
@@ -559,9 +591,36 @@ export function EstimadoIngresos({
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#EEF1F4"
+                stroke="rgba(148,163,184,0.12)"
                 vertical={false}
               />
+              {/* Forecast zone — área shaded violet sobre los meses proyectados */}
+              {dataGrafica.length > historico.length && (
+                <ReferenceArea
+                  x1={dataGrafica[historico.length]?.label}
+                  x2={dataGrafica[dataGrafica.length - 1]?.label}
+                  fill="#8B5CF6"
+                  fillOpacity={0.04}
+                  stroke="none"
+                  ifOverflow="extendDomain"
+                />
+              )}
+              {/* Línea vertical "Hoy" entre histórico y proyección */}
+              {historico.length > 0 && proyecciones.length > 0 && (
+                <ReferenceLine
+                  x={dataGrafica[historico.length - 1]?.label}
+                  stroke="#8B5CF6"
+                  strokeOpacity={0.35}
+                  strokeDasharray="2 4"
+                  label={{
+                    value: "Hoy",
+                    position: "insideTopRight",
+                    fill: "#8B5CF6",
+                    fontSize: 9,
+                    offset: 6,
+                  }}
+                />
+              )}
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 11, fill: "#9CA3AF" }}
@@ -772,14 +831,31 @@ function AiTile({
         : tone === "rose"
           ? "text-rose-600"
           : "text-[#0F766E]"
+  // Glow rgb por tono — para hover halo
+  const glowRgb =
+    tone === "violet"
+      ? "139,92,246"
+      : tone === "amber"
+        ? "245,158,11"
+        : tone === "rose"
+          ? "220,38,38"
+          : "15,118,110"
   return (
     <div
-      className="group relative px-4 py-3 transition-all duration-180 hover:bg-white/50"
+      className="group relative px-4 py-3 transition-all duration-180 hover:bg-white/55"
       style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `inset 1px 0 0 0 rgba(15,23,42,0.04), inset 0 -2px 0 0 rgba(${glowRgb},0.4), 0 4px 16px rgba(${glowRgb},0.06)`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "inset 1px 0 0 0 rgba(15,23,42,0.04)"
+      }}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <span className={iconColor}>{icon}</span>
+          <span className={`${iconColor} transition-transform duration-180 group-hover:scale-110`}>
+            {icon}
+          </span>
           <p
             className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
             style={{ letterSpacing: "0.12em" }}
