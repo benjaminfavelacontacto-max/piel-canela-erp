@@ -2,23 +2,10 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import {
-  ShoppingBag,
-  TrendingUp,
-  Users,
-  Receipt,
-  BarChart3,
-  Crown,
-  Trophy,
-  ArrowUpRight,
-  PiggyBank,
-  Sparkles,
-} from "lucide-react"
+import { BarChart3, Sparkles } from "lucide-react"
 import { VentasTablePremium, type EnrichedVenta } from "./ventas-table-premium"
 import { VentaDrawer } from "./venta-drawer"
-import { AnimatedNumber } from "./estadisticas/animated-number"
 import { PageHeader } from "@/components/page-header"
-import { formatMXNshort } from "@/lib/utils"
 import {
   Bar,
   CartesianGrid,
@@ -392,7 +379,6 @@ export function VentasDashboard({
       <PageHeader
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}
-        icon={<ShoppingBag className="size-5" />}
         kpis={(() => {
           const len = monthly.length
           const cur = monthly[len - 1]
@@ -403,7 +389,7 @@ export function VentasDashboard({
           const dGanancia = cur && prev ? pct(cur.ganancia, prev.ganancia) : 0
           return [
             {
-              label: "Total histórico",
+              label: "Total vendido",
               value: mxn.format(kpis.totalVentas),
               sub: `${kpis.activosCount} órdenes · vs mes anterior`,
               trend: {
@@ -415,7 +401,7 @@ export function VentasDashboard({
             {
               label: "Utilidad neta",
               value: mxn.format(kpis.utilidadNeta),
-              sub: `${kpis.margenNeto.toFixed(1)}% margen · vs mes anterior`,
+              sub: `${kpis.margenNeto.toFixed(1)}% margen`,
               trend: {
                 value: `${dGanancia >= 0 ? "+" : ""}${dGanancia.toFixed(1)}%`,
                 positive: dGanancia >= 0,
@@ -423,14 +409,17 @@ export function VentasDashboard({
               sparkline: monthly.map((m) => m.ganancia),
             },
             {
-              label: "Sandra",
-              value: formatMXNshort(kpis.sandra),
-              sub: "acumulado",
+              label: "Cobrado",
+              value: mxn.format(kpis.cobrado),
+              sub: `${kpis.pctCobrado.toFixed(0)}% del total · ${kpis.pendientes} pend.`,
             },
             {
-              label: "Benjamin",
-              value: formatMXNshort(kpis.benjamin),
-              sub: "acumulado",
+              label: "Ticket promedio",
+              value: mxn.format(kpis.ticket),
+              sub:
+                kpis.saldo > 0
+                  ? `Saldo ${mxn.format(kpis.saldo)}`
+                  : "Todo cobrado",
             },
           ]
         })()}
@@ -438,14 +427,14 @@ export function VentasDashboard({
           <>
             <Link
               href="/ventas/estadisticas"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30"
+              className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-[#F9FAFB]"
             >
-              <BarChart3 className="size-4" />
+              <BarChart3 className="size-4" strokeWidth={1.75} />
               Estadísticas
             </Link>
             <Link
               href="/ventas/nueva"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0f2d0f] transition-all hover:bg-white/90"
+              className="inline-flex h-[42px] items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
             >
               + Nueva Venta
             </Link>
@@ -459,139 +448,16 @@ export function VentasDashboard({
         </div>
       )}
 
-      {/* ─── Hero KPIs ─── */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <HeroKpi
-          icon={<ShoppingBag className="size-4" />}
-          label="Total vendido"
-          value={kpis.totalVentas}
-          gradient="from-pink-50 via-white to-rose-50/50"
-          accent="text-[#0F766E]"
-          ring="ring-pink-100"
-          subtitle={`${kpis.activosCount} órdenes activas`}
-        />
-        <HeroKpi
-          icon={<TrendingUp className="size-4" />}
-          label="Utilidad neta"
-          value={kpis.utilidadNeta}
-          gradient="from-emerald-50 via-white to-teal-50/50"
-          accent="text-emerald-700"
-          ring="ring-emerald-100"
-          subtitle={`${kpis.margenNeto.toFixed(1)}% margen neto · sin envío ${mxn.format(kpis.totalCostoEnvio)}`}
-          badge={
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700">
-              <ArrowUpRight className="size-2.5" />
-              {kpis.margenNeto.toFixed(0)}%
-            </span>
-          }
-        />
-        <HeroKpi
-          icon={<PiggyBank className="size-4" />}
-          label="Cobrado"
-          value={kpis.cobrado}
-          gradient="from-teal-50 via-white to-cyan-50/50"
-          accent="text-teal-700"
-          ring="ring-teal-100"
-          subtitle={`${kpis.pctCobrado.toFixed(0)}% del total`}
-          progress={kpis.pctCobrado}
-        />
-        <HeroKpi
-          icon={<Receipt className="size-4" />}
-          label="Ticket promedio"
-          value={kpis.ticket}
-          gradient="from-violet-50 via-white to-fuchsia-50/50"
-          accent="text-violet-700"
-          ring="ring-violet-100"
-          subtitle={
-            kpis.saldo > 0
-              ? `${kpis.pendientes} pendientes · ${mxn.format(kpis.saldo)}`
-              : "Todo cobrado"
-          }
-        />
-      </section>
-
-      {/* ─── Insights ─── */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <InsightCard
-          icon={<Trophy className="size-3.5" />}
-          tone="pink"
-          label="ROI Sandra"
-          big={`${kpis.sandraROI.toFixed(0)}%`}
-          line1={`Recuperó ${mxn.format(kpis.sandra)}`}
-          line2={`Invirtió ${mxn.format(kpis.sandraInvertido)}`}
-          progress={Math.min(100, kpis.sandraROI)}
-        />
-        <InsightCard
-          icon={<Trophy className="size-3.5" />}
-          tone="teal"
-          label="ROI Benjamin"
-          big={`${kpis.benjaminROI.toFixed(0)}%`}
-          line1={`Recuperó ${mxn.format(kpis.benjamin)}`}
-          line2={`Invirtió ${mxn.format(kpis.benjaminInvertido)}`}
-          progress={Math.min(100, kpis.benjaminROI)}
-        />
-        <InsightCard
-          icon={<Crown className="size-3.5" />}
-          tone="amber"
-          label="Mejor cliente"
-          big={kpis.mejorCliente?.nombre ?? "—"}
-          line1={
-            kpis.mejorCliente
-              ? mxn.format(kpis.mejorCliente.monto)
-              : "Sin ventas"
-          }
-          line2={
-            kpis.mejorCliente
-              ? `${kpis.mejorCliente.n} ${kpis.mejorCliente.n === 1 ? "venta" : "ventas"}`
-              : ""
-          }
-          truncateBig
-        />
-        <InsightCard
-          icon={<Sparkles className="size-3.5" />}
-          tone="blue"
-          label="Bruta vs Neta"
-          big={mxn.format(kpis.ganancia)}
-          line1={`Bruta (Sheet) · margen ${kpis.margen.toFixed(1)}%`}
-          line2={`Neta ${mxn.format(kpis.utilidadNeta)} · ${kpis.margenNeto.toFixed(1)}%`}
-        />
-      </section>
-
-      {/* ─── Insights extra: descuento + envío + sin IVA ─── */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <InsightCard
-          icon={<Sparkles className="size-3.5" />}
-          tone="violet"
-          label="Sin IVA"
-          big={`${kpis.sinIVA} ventas`}
-          line1={`${mxn.format(kpis.sinIVAMonto)} facturadas sin IVA`}
-        />
-        <InsightCard
-          icon={<Sparkles className="size-3.5" />}
-          tone="amber"
-          label="Costo envío total"
-          big={mxn.format(kpis.totalCostoEnvio)}
-          line1="Restado de la utilidad neta"
-        />
-        <InsightCard
-          icon={<Sparkles className="size-3.5" />}
-          tone="emerald"
-          label="Descuentos otorgados"
-          big={mxn.format(kpis.totalDescuento)}
-          line1={`${kpis.totalDescuento > 0 ? "Aplicados a clientes" : "Sin descuentos en periodo"}`}
-        />
-      </section>
-
-      {/* ─── Chart + Socios panel ─── */}
+      {/* ─── Chart principal + Socios panel (dominante) ─── */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
+        <div className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] lg:col-span-2">
           <header className="mb-3 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
               Ventas mensuales (últimos 12 meses)
             </h2>
             <span className="text-xs text-gray-500">Total · Ganancia</span>
           </header>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={320}>
             <ComposedChart
               data={monthly}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -658,12 +524,14 @@ export function VentasDashboard({
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <header className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
               Socios
             </h2>
-            <span className="text-xs text-gray-500">{socios.length} activos</span>
+            <span className="text-xs text-gray-500">
+              {socios.length} activos
+            </span>
           </header>
 
           <div className="space-y-3">
@@ -766,6 +634,45 @@ export function VentasDashboard({
             </div>
           )}
         </div>
+      </section>
+
+      {/* ─── KPIs secundarios — strips compactos neutros ─── */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <InsightCard
+          label="ROI Sandra"
+          big={`${kpis.sandraROI.toFixed(0)}%`}
+          line1={`${mxn.format(kpis.sandra)} de ${mxn.format(kpis.sandraInvertido)}`}
+        />
+        <InsightCard
+          label="ROI Benjamin"
+          big={`${kpis.benjaminROI.toFixed(0)}%`}
+          line1={`${mxn.format(kpis.benjamin)} de ${mxn.format(kpis.benjaminInvertido)}`}
+        />
+        <InsightCard
+          label="Mejor cliente"
+          big={kpis.mejorCliente?.nombre ?? "—"}
+          line1={
+            kpis.mejorCliente
+              ? `${mxn.format(kpis.mejorCliente.monto)} · ${kpis.mejorCliente.n} ${kpis.mejorCliente.n === 1 ? "venta" : "ventas"}`
+              : "Sin ventas"
+          }
+          truncateBig
+        />
+        <InsightCard
+          label="Ganancia bruta"
+          big={mxn.format(kpis.ganancia)}
+          line1={`${kpis.margen.toFixed(1)}% margen bruto`}
+        />
+        <InsightCard
+          label="Costo envío"
+          big={mxn.format(kpis.totalCostoEnvio)}
+          line1="Restado de utilidad neta"
+        />
+        <InsightCard
+          label="Sin IVA"
+          big={`${kpis.sinIVA}`}
+          line1={`${mxn.format(kpis.sinIVAMonto)} sin IVA`}
+        />
       </section>
 
       {/* ─── Filtros globales ─── */}
@@ -909,115 +816,43 @@ export function VentasDashboard({
   )
 }
 
-function HeroKpi({
-  icon,
-  label,
-  value,
-  gradient,
-  accent,
-  ring,
-  subtitle,
-  badge,
-  progress,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  gradient: string
-  accent: string
-  ring: string
-  subtitle?: string
-  badge?: React.ReactNode
-  progress?: number
-}) {
-  return (
-    <article
-      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-5 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
-    >
-      <header className="flex items-center justify-between">
-        <div className={`flex items-center gap-1.5 ${accent}`}>
-          {icon}
-          <span className="text-[10.5px] font-semibold uppercase tracking-wider">
-            {label}
-          </span>
-        </div>
-        {badge}
-      </header>
-      <div className={`mt-3 text-3xl font-bold tabular-nums ${accent}`}>
-        <AnimatedNumber value={value} prefix="$" decimals={0} duration={1000} />
-      </div>
-      {subtitle && (
-        <p className="mt-1 text-xs text-gray-600">{subtitle}</p>
-      )}
-      {progress !== undefined && (
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/60">
-          <div
-            className={`h-full rounded-full bg-gradient-to-r from-current to-current opacity-80 ${accent}`}
-            style={{ width: `${Math.min(100, progress)}%` }}
-          />
-        </div>
-      )}
-    </article>
-  )
-}
-
+/**
+ * KPI strip neutro y compacto — sin tonos coloridos, sin iconos, sin
+ * progress bars decorativos. Solo: LABEL · BIG · 1 línea contextual.
+ * Estilo Linear/Stripe/Mercury.
+ */
 function InsightCard({
-  icon,
-  tone,
   label,
   big,
   line1,
-  line2,
-  progress,
   truncateBig,
 }: {
-  icon: React.ReactNode
-  tone: "pink" | "teal" | "amber" | "blue" | "violet" | "emerald"
   label: string
   big: string
   line1?: string
-  line2?: string
-  progress?: number
   truncateBig?: boolean
 }) {
-  const tones: Record<typeof tone, { ring: string; text: string; bar: string; icon: string }> = {
-    pink:    { ring: "ring-pink-100",    text: "text-[#0F766E]",    bar: "bg-[#0F766E]",    icon: "bg-[#F9FAFB] text-[#0F766E]" },
-    teal:    { ring: "ring-teal-100",    text: "text-teal-700",    bar: "bg-teal-500",    icon: "bg-teal-50 text-teal-700" },
-    amber:   { ring: "ring-amber-100",   text: "text-amber-700",   bar: "bg-amber-500",   icon: "bg-amber-50 text-amber-700" },
-    blue:    { ring: "ring-blue-100",    text: "text-blue-700",    bar: "bg-blue-500",    icon: "bg-blue-50 text-blue-700" },
-    violet:  { ring: "ring-violet-100",  text: "text-violet-700",  bar: "bg-violet-500",  icon: "bg-violet-50 text-violet-700" },
-    emerald: { ring: "ring-emerald-100", text: "text-emerald-700", bar: "bg-emerald-500", icon: "bg-emerald-50 text-emerald-700" },
-  }
-  const c = tones[tone]
   return (
-    <article className={`group rounded-2xl border border-gray-100 bg-white p-4 ring-1 ${c.ring} shadow-sm transition hover:shadow-md`}>
-      <header className="flex items-center justify-between">
-        <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
-          {label}
-        </span>
-        <span className={`flex size-6 items-center justify-center rounded-md ${c.icon}`}>
-          {icon}
-        </span>
-      </header>
+    <article
+      className="rounded-2xl border bg-white p-4 transition-all duration-180 hover:-translate-y-0.5"
+      style={{
+        borderColor: "rgba(15,23,42,0.05)",
+        boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
+      }}
+    >
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+        {label}
+      </p>
       <div
-        className={`mt-2 text-lg font-bold ${c.text} ${truncateBig ? "truncate" : "tabular-nums"}`}
+        className={`mt-1.5 text-[20px] font-bold leading-tight tracking-[-0.02em] text-[#0F172A] ${truncateBig ? "truncate" : "tabular-nums"}`}
         title={truncateBig ? big : undefined}
       >
         {big}
       </div>
       {line1 && (
-        <p className="mt-0.5 text-[11px] text-gray-700 tabular-nums">{line1}</p>
-      )}
-      {line2 && (
-        <p className="text-[10px] text-gray-500 tabular-nums">{line2}</p>
-      )}
-      {progress !== undefined && (
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-gray-100">
-          <div
-            className={`h-full rounded-full ${c.bar} transition-all`}
-            style={{ width: `${Math.min(100, progress)}%` }}
-          />
-        </div>
+        <p className="mt-1 text-[11px] leading-tight text-[#94A3B8] tabular-nums">
+          {line1}
+        </p>
       )}
     </article>
   )
