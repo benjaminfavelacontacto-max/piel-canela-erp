@@ -12,7 +12,7 @@ export default async function CotizacionesPage() {
   const supabase = await createClient()
   const admin = createAdminClient()
 
-  const [cotsRes, clientesRes, itemsRes, ventasConCotRes] = await Promise.all([
+  const [cotsRes, clientesRes, itemsRes, ventasCountRes] = await Promise.all([
     supabase
       .from("cotizaciones")
       .select(
@@ -33,34 +33,28 @@ export default async function CotizacionesPage() {
         `cotizacion_id, cantidad, precio_unitario,
          productos(id, sku, nombre)`,
       ),
-    // Ventas con cotizacion_id no-null → para contar conversiones reales
+    // Total de ventas registradas → métrica "convertidas"
+    // Cada venta representa una conversión (independiente de si su cotización
+    // origen sigue existiendo en BD; algunas ventas históricas se importaron
+    // del Sheet sin cotización espejo).
     admin
       .from("ventas")
-      .select("cotizacion_id")
-      .not("cotizacion_id", "is", null),
+      .select("id", { count: "exact", head: true }),
   ])
 
   const cotizaciones = (cotsRes.data ?? []) as unknown as CotizacionRow[]
   const clientes = (clientesRes.data ?? []) as ClienteOption[]
   const items = (itemsRes.data ?? []) as unknown as CotItemRow[]
-  const ventasConCot = (ventasConCotRes.data ?? []) as {
-    cotizacion_id: string | null
-  }[]
   const error =
     cotsRes.error?.message ??
     clientesRes.error?.message ??
     itemsRes.error?.message ??
     null
 
-  // ─── KPIs globales (queries reales, NO filtrados ni hardcoded) ────
+  // ─── KPIs globales ────────────────────────────────────────────────
   const totalCotizaciones = cotizaciones.length
-  const cotIdsConVenta = new Set(
-    ventasConCot.map((v) => v.cotizacion_id).filter((x): x is string => !!x),
-  )
-  const convertidas = cotizaciones.filter((c) =>
-    cotIdsConVenta.has(c.id),
-  ).length
-  const enProceso = totalCotizaciones - convertidas
+  const convertidas = ventasCountRes.count ?? 0
+  const enProceso = Math.max(0, totalCotizaciones - convertidas)
   const totalValor = cotizaciones.reduce(
     (s, c) => s + Number(c.total ?? 0),
     0,
