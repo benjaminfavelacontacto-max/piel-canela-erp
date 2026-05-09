@@ -820,7 +820,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-8 space-y-8">
       <PageHeader
         title="Clientes"
         subtitle={`Base de ${kpis.total} clientes · ${kpis.activos} activos`}

@@ -117,14 +117,147 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ─────────────────────────────────────────────────────────
+ * Premium Enterprise Design System
+ * Inspirado en Linear / Stripe / Attio / Mercury / Vercel
+ * ───────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --pc-bg-app: #F7F8FA;
+  --pc-bg-sidebar: #FBFCFD;
+  --pc-bg-card: #FFFFFF;
+  --pc-bg-hover: #F3F5F7;
+  --pc-bg-subtle: #F9FAFB;
+
+  /* Borders */
+  --pc-border: #E7EAF0;
+  --pc-border-soft: #EEF1F4;
+
+  /* Text */
+  --pc-text: #111827;
+  --pc-text-secondary: #6B7280;
+  --pc-text-muted: #9CA3AF;
+
+  /* Accent (Emerald premium) */
+  --pc-accent: #0F766E;
+  --pc-accent-hover: #115E59;
+  --pc-accent-soft: #DFF7F4;
+
+  /* Estados */
+  --pc-success: #059669;
+  --pc-success-soft: #D1FAE5;
+  --pc-warning: #D97706;
+  --pc-warning-soft: #FEF3C7;
+  --pc-danger: #DC2626;
+  --pc-danger-soft: #FEE2E2;
+  --pc-info: #2563EB;
+  --pc-info-soft: #DBEAFE;
+
+  /* Charts (paleta limitada) */
+  --pc-chart-real: #0F766E;
+  --pc-chart-projection: rgba(15, 118, 110, 0.35);
+  --pc-chart-comparative: #CBD5E1;
+
+  /* Sombras suaves enterprise */
+  --pc-shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  --pc-shadow-card-hover:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--pc-bg-app);
+    color: var(--pc-text);
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv11";
+  }
+}
+
+@layer components {
+  /* ─── Card premium reutilizable ─── */
+  .pc-card {
+    background-color: var(--pc-bg-card);
+    border: 1px solid var(--pc-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--pc-shadow-card);
+    transition: box-shadow 150ms ease;
+  }
+  .pc-card:hover {
+    box-shadow: var(--pc-shadow-card-hover);
+  }
+
+  /* ─── Botón primario ─── */
+  .pc-btn-primary {
+    background-color: var(--pc-accent);
+    color: white;
+    border-radius: 14px;
+    height: 44px;
+    padding: 0 18px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background-color 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pc-btn-primary:hover {
+    background-color: var(--pc-accent-hover);
+  }
+
+  /* ─── Botón secundario ─── */
+  .pc-btn-secondary {
+    background-color: white;
+    border: 1px solid var(--pc-border);
+    color: var(--pc-text);
+    border-radius: 14px;
+    height: 44px;
+    padding: 0 18px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background-color 150ms ease, border-color 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pc-btn-secondary:hover {
+    background-color: var(--pc-bg-hover);
+  }
+
+  /* ─── Input premium ─── */
+  .pc-input {
+    background-color: white;
+    border: 1px solid var(--pc-border);
+    border-radius: 14px;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--pc-text);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    width: 100%;
+  }
+  .pc-input:focus {
+    outline: none;
+    border-color: var(--pc-accent);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+  }
+
+  /* ─── Label estilo enterprise (uppercase) ─── */
+  .pc-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pc-text-secondary);
   }
 }

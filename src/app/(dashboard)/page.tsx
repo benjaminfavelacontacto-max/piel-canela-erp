@@ -436,10 +436,10 @@ export default async function DashboardPage() {
     .slice(0, 8)
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-8 space-y-8">
       {/* ─── Header premium con KPIs inline ─── */}
       <PageHeader
-        title={`${greeting(today)}, Benjamín 👋`}
+        title={`${greeting(today)}, Benjamín`}
         subtitle={fechaLarga.format(today)}
         kpis={[
           {
@@ -454,7 +454,6 @@ export default async function DashboardPage() {
               totalVentasMes > 0
                 ? `${((gananciaMes / totalVentasMes) * 100).toFixed(1)}% margen`
                 : "Sin ventas",
-            color: "text-emerald-300",
           },
           {
             label: "Sandra / Benjamin",
@@ -681,42 +680,35 @@ export default async function DashboardPage() {
       </div>
 
       {/* ─── Socios ─── */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 animate-in fade-in slide-in-from-bottom-3 duration-500">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SocioCard
           inicial="S"
           nombre="Sandra"
           subtitulo="Socia fundadora"
-          color="from-pink-50 to-rose-50"
-          borderColor="border-pink-100"
-          accent="bg-pink-600"
-          progressColor="bg-pink-500"
           stats={sandra}
         />
         <SocioCard
           inicial="B"
           nombre="Benjamin"
           subtitulo="Socio fundador"
-          color="from-teal-50 to-emerald-50"
-          borderColor="border-teal-100"
-          accent="bg-teal-600"
-          progressColor="bg-teal-500"
           stats={benjamin}
         />
       </section>
 
-      {/* ─── Insights premium ─── */}
+      {/* ─── Insights ─── */}
       {insights.length > 0 && (
-        <section className="rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-500 p-6 text-white shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Sparkles className="size-5" /> Insights
-          </h3>
+        <section className="rounded-2xl border border-[#E7EAF0] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <header className="mb-4 flex items-center gap-2">
+            <Sparkles className="size-4 text-[#0F766E]" />
+            <h3 className="text-sm font-semibold text-gray-900">Insights</h3>
+          </header>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {insights.map((i, idx) => (
               <div
                 key={idx}
-                className="rounded-xl bg-white/10 backdrop-blur-sm p-3 transition-all hover:bg-white/20"
+                className="rounded-xl border border-[#EEF1F4] bg-[#F9FAFB] p-3"
               >
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                   <span className="mr-1.5">{i.emoji}</span>
                   {i.texto}
                 </p>
@@ -894,19 +886,11 @@ function SocioCard({
   inicial,
   nombre,
   subtitulo,
-  color,
-  borderColor,
-  accent,
-  progressColor,
   stats,
 }: {
   inicial: string
   nombre: string
   subtitulo: string
-  color: string
-  borderColor: string
-  accent: string
-  progressColor: string
   stats: {
     totalInvertido: number
     recuperado: number
@@ -915,13 +899,9 @@ function SocioCard({
   }
 }) {
   return (
-    <div
-      className={`rounded-2xl border ${borderColor} bg-gradient-to-br ${color} p-6 transition-all hover:shadow-md`}
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <div
-          className={`size-10 rounded-full ${accent} flex items-center justify-center text-white font-bold`}
-        >
+    <div className="rounded-2xl border border-[#E7EAF0] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-full bg-[#F3F5F7] text-sm font-semibold text-gray-700">
           {inicial}
         </div>
         <div>
@@ -931,35 +911,43 @@ function SocioCard({
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <p className="text-xs text-gray-500">Invertido</p>
-          <p className="font-bold tabular-nums text-gray-900">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+            Invertido
+          </p>
+          <p className="mt-1 font-bold tabular-nums text-gray-900">
             {mxn.format(stats.totalInvertido)}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">Recuperado</p>
-          <p className="font-bold tabular-nums text-emerald-600">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+            Recuperado
+          </p>
+          <p className="mt-1 font-bold tabular-nums text-emerald-600">
             {mxn.format(stats.recuperado)}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">ROI</p>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+            ROI
+          </p>
           <p
-            className={`font-bold tabular-nums ${stats.roi >= 0 ? "text-teal-700" : "text-red-700"}`}
+            className={`mt-1 font-bold tabular-nums ${stats.roi >= 0 ? "text-[#0F766E]" : "text-rose-600"}`}
           >
             {stats.roi >= 0 ? "+" : ""}
             {stats.roi.toFixed(1)}%
           </p>
         </div>
       </div>
-      <div className="mt-4">
-        <div className="flex justify-between text-xs text-gray-500 mb-1">
+      <div className="mt-5">
+        <div className="mb-1.5 flex justify-between text-[11px] font-medium text-gray-500">
           <span>Recuperación</span>
-          <span>{stats.pct.toFixed(0)}%</span>
+          <span className="tabular-nums text-gray-700">
+            {stats.pct.toFixed(0)}%
+          </span>
         </div>
-        <div className="h-2 bg-white/70 rounded-full overflow-hidden">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#F3F5F7]">
           <div
-            className={`h-full ${progressColor} rounded-full transition-all duration-500`}
+            className="h-full rounded-full bg-[#0F766E] transition-all duration-500"
             style={{ width: `${Math.min(100, stats.pct)}%` }}
           />
         </div>

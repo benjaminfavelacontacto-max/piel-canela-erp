@@ -25,21 +25,29 @@ export function SidebarNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-col gap-1 p-3">
+    <nav className="flex flex-col gap-0.5 px-3 py-4">
       {items.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname.startsWith(href)
+        const active =
+          href === "/" ? pathname === "/" : pathname.startsWith(href)
         return (
           <Link
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors duration-150",
+              "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors duration-150",
               active
-                ? "bg-teal-50 text-teal-700 border-l-2 border-teal-600 pl-[calc(0.75rem-2px)] pr-3"
-                : "border-l-2 border-transparent text-zinc-600 hover:bg-gray-50 hover:text-zinc-900 px-3",
+                ? "bg-[#DFF7F4] text-[#0F766E]"
+                : "text-gray-600 hover:bg-[#F3F5F7] hover:text-gray-900",
             )}
           >
-            <Icon className="w-5 h-5" />
+            <Icon
+              className={cn(
+                "size-[18px] shrink-0 transition-colors",
+                active
+                  ? "text-[#0F766E]"
+                  : "text-gray-400 group-hover:text-gray-700",
+              )}
+            />
             {label}
           </Link>
         )
