@@ -74,7 +74,7 @@ const categoriaBadgeColor: Record<string, string> = {
   CINTAS: "bg-orange-100 text-orange-700",
   "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
   "POLVO DE BLANQUEAR": "bg-purple-100 text-purple-700",
-  EXFOLIANTS: "bg-pink-100 text-pink-700",
+  EXFOLIANTS: "bg-[#DFF7F4] text-[#0F766E]",
   HUMECTANTES: "bg-indigo-100 text-indigo-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
   AEROGRAFÍA: "bg-red-100 text-red-700",
@@ -316,13 +316,13 @@ export function InventarioView({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por SKU, nombre, categoría…"
-              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
             />
           </div>
           <select
             value={estatusF}
             onChange={(e) => setEstatusF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
           >
             {ESTATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -333,7 +333,7 @@ export function InventarioView({
           <select
             value={categoriaF}
             onChange={(e) => setCategoriaF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
           >
             <option value="">Todas las categorías</option>
             {categorias.map((c) => (
@@ -345,7 +345,7 @@ export function InventarioView({
           <select
             value={proveedorF}
             onChange={(e) => setProveedorF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
             disabled={proveedores.length === 0}
           >
             <option value="">Todos los proveedores</option>

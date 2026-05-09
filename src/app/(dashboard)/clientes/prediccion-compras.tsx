@@ -227,7 +227,7 @@ export function PrediccionCompras({
           label="Ingreso esperado · 60d"
           value={mxn.format(kpis.ingreso60)}
           sub={`30d ${mxn.format(kpis.ingreso30)} · 90d ${mxn.format(kpis.ingreso90)}`}
-          accent="text-pink-700"
+          accent="text-[#0F766E]"
           gradient="from-pink-50 via-white to-rose-50/50"
           ring="ring-pink-100"
         />
@@ -327,7 +327,7 @@ export function PrediccionCompras({
                             <span className="truncate text-gray-700">
                               {c.cliente.slice(0, 26)}
                             </span>
-                            <span className="ml-2 tabular-nums text-pink-700">
+                            <span className="ml-2 tabular-nums text-[#0F766E]">
                               {(c.prob * 100).toFixed(0)}%
                             </span>
                           </div>
@@ -359,7 +359,7 @@ export function PrediccionCompras({
         <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
           <header className="mb-3">
             <h4 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-              <Sparkles className="size-4 text-pink-600" />
+              <Sparkles className="size-4 text-[#0F766E]" />
               Próximas compras esperadas
             </h4>
             <p className="mt-0.5 text-[11px] text-gray-500">
@@ -401,7 +401,7 @@ export function PrediccionCompras({
                       <tr
                         key={c.id}
                         onClick={() => onClienteClick?.(c)}
-                        className={`border-b border-gray-50 transition-colors ${onClienteClick ? "cursor-pointer hover:bg-pink-50/40" : ""}`}
+                        className={`border-b border-gray-50 transition-colors ${onClienteClick ? "cursor-pointer hover:bg-[#F9FAFB]/40" : ""}`}
                       >
                         <td className="py-2 pr-2 font-semibold text-gray-900">
                           <div className="truncate max-w-[200px]">
@@ -429,7 +429,7 @@ export function PrediccionCompras({
                             {(c.pred.probabilidadProx60 * 100).toFixed(0)}%
                           </span>
                         </td>
-                        <td className="py-2 text-right font-semibold text-pink-700 tabular-nums">
+                        <td className="py-2 text-right font-semibold text-[#0F766E] tabular-nums">
                           {mxn.format(c.pred.ingresoEstimadoProx)}
                         </td>
                         <td className="py-2 text-center">

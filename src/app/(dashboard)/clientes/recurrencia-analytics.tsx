@@ -401,9 +401,9 @@ export function RecurrenciaAnalytics({
           label="Tasa de recompra"
           value={`${kpis.recompraPct.toFixed(0)}%`}
           sub={`${clientes.filter((c) => c.ventas_count >= 2).length} de ${clientes.filter((c) => c.ventas_count > 0).length} repiten`}
-          accent="text-pink-700"
-          gradient="from-pink-50 via-white to-rose-50/50"
-          ring="ring-pink-100"
+          accent="text-[#0F766E]"
+          gradient="from-white via-white to-white/50"
+          ring="ring-[#E7EAF0]"
         />
         <AnalyticsCard
           icon={<Crown className="size-4" />}
@@ -441,7 +441,7 @@ export function RecurrenciaAnalytics({
           value={kpis.inactivosCount.toString()}
           sub={`${mxn.format(kpis.inactivosLTV)} en LTV "perdido"`}
           accent="text-rose-700"
-          gradient="from-rose-50 via-white to-pink-50/50"
+          gradient="from-white via-white to-white/50"
           ring="ring-rose-100"
         />
       </div>
@@ -454,7 +454,7 @@ export function RecurrenciaAnalytics({
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
                 Heatmap de compras
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${mode === "predictivo" ? "bg-violet-100 text-violet-700" : "bg-pink-100 text-pink-700"}`}
+                  className={`rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${mode === "predictivo" ? "bg-violet-100 text-violet-700" : "bg-[#DFF7F4] text-[#0F766E]"}`}
                 >
                   {mode === "predictivo" ? "predictivo" : "histórico"}
                 </span>
@@ -471,7 +471,7 @@ export function RecurrenciaAnalytics({
                 <button
                   type="button"
                   onClick={() => setMode("historico")}
-                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "historico" ? "bg-white text-pink-700 shadow-sm" : "text-gray-500"}`}
+                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "historico" ? "bg-white text-[#0F766E] shadow-sm" : "text-gray-500"}`}
                 >
                   Histórico
                 </button>
@@ -503,7 +503,7 @@ export function RecurrenciaAnalytics({
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[10.5px] text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-100"
+                  className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[10.5px] text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#DFF7F4]"
                 >
                   <option value="12m">Últimos 12 meses</option>
                   <option value="all">Todos los años (global)</option>
@@ -531,7 +531,7 @@ export function RecurrenciaAnalytics({
                     {buckets.map((b) => (
                       <th
                         key={b.key}
-                        className={`px-1 pb-1 text-center font-semibold ${b.isCurrent ? "text-pink-700" : "text-gray-400"}`}
+                        className={`px-1 pb-1 text-center font-semibold ${b.isCurrent ? "text-[#0F766E]" : "text-gray-400"}`}
                       >
                         {b.label}
                       </th>
@@ -567,12 +567,12 @@ export function RecurrenciaAnalytics({
                             c.total === 0
                               ? "bg-gray-50 text-gray-300 hover:bg-gray-100"
                               : intensity >= 0.7
-                                ? "bg-pink-600 text-white hover:ring-2 hover:ring-pink-400"
+                                ? "bg-[#0F766E] text-white hover:ring-2 hover:ring-emerald-200"
                                 : intensity >= 0.4
-                                  ? "bg-pink-400 text-white hover:ring-2 hover:ring-pink-300"
+                                  ? "bg-[#0F766E] text-white hover:ring-2 hover:ring-[#DFF7F4]"
                                   : intensity >= 0.15
-                                    ? "bg-pink-200 text-pink-900 hover:ring-2 hover:ring-pink-200"
-                                    : "bg-pink-100 text-pink-700 hover:ring-2 hover:ring-pink-100"
+                                    ? "bg-[#DFF7F4] text-[#0F766E] hover:ring-2 hover:ring-[#DFF7F4]"
+                                    : "bg-[#DFF7F4] text-[#0F766E] hover:ring-2 hover:ring-[#E7EAF0]"
                         }
                         const isPredictivo = mode === "predictivo"
                         const tooltipDetail = isPredictivo
@@ -661,7 +661,7 @@ export function RecurrenciaAnalytics({
                       </div>
                     </div>
                   </div>
-                  <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10.5px] font-bold text-pink-700 tabular-nums">
+                  <span className="rounded-full bg-[#DFF7F4] px-2 py-0.5 text-[10.5px] font-bold text-[#0F766E] tabular-nums">
                     {c.ventas_count}
                   </span>
                 </li>
@@ -889,7 +889,7 @@ function DrilldownModal({
         aria-modal="true"
       >
         {/* Header */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-violet-50/50 px-6 py-4">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-white via-white to-violet-50/50 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -909,7 +909,7 @@ function DrilldownModal({
           <p className="text-xs text-gray-500">{periodLabel}</p>
           {/* Stats */}
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <Stat label="Total" value={mxn2.format(total)} accent="text-pink-700" />
+            <Stat label="Total" value={mxn2.format(total)} accent="text-[#0F766E]" />
             <Stat
               label="Órdenes"
               value={`${ventasInBucket.length} venta${ventasInBucket.length === 1 ? "" : "s"}`}
@@ -941,7 +941,7 @@ function DrilldownModal({
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/ventas/${v.id}`}
-                        className="block truncate font-mono text-xs text-pink-700 hover:underline"
+                        className="block truncate font-mono text-xs text-[#0F766E] hover:underline"
                       >
                         {v.numero}
                       </Link>
@@ -1023,7 +1023,7 @@ function DrilldownModal({
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-bold tabular-nums text-pink-700">
+                      <div className="text-xs font-bold tabular-nums text-[#0F766E]">
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
@@ -1046,7 +1046,7 @@ function DrilldownModal({
         <footer className="border-t border-gray-100 bg-gray-50/50 px-6 py-3">
           <Link
             href={`/ventas?cliente=${clienteId}&desde=${bucket.start.toISOString().slice(0, 10)}&hasta=${bucket.end.toISOString().slice(0, 10)}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-pink-700 hover:text-pink-900 hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#0F766E] hover:text-[#0F766E] hover:underline"
           >
             Ver en /ventas con filtros aplicados
             <ExternalLink className="size-3" />

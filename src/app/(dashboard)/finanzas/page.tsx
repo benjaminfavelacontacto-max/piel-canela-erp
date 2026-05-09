@@ -447,7 +447,7 @@ export default async function FinanzasPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
+              <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
                 <Th>Venta</Th>
                 <Th>Fecha</Th>
                 <Th align="right">Total</Th>
@@ -469,7 +469,7 @@ export default async function FinanzasPage() {
               ) : (
                 ventasFilas.map(({ venta, sandra, benjamin }) => (
                   <tr key={venta.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-2 font-mono text-xs text-pink-700">
+                    <td className="px-5 py-2 font-mono text-xs text-[#0F766E]">
                       {venta.numero}
                     </td>
                     <td className="px-5 py-2 text-gray-600 text-xs">
@@ -478,7 +478,7 @@ export default async function FinanzasPage() {
                     <td className="px-5 py-2 text-right tabular-nums font-semibold">
                       {mxn.format(Number(venta.total ?? 0))}
                     </td>
-                    <td className="px-5 py-2 text-right tabular-nums text-pink-700">
+                    <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
                       {sandra > 0 ? mxn.format(sandra) : "—"}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums text-teal-700">
@@ -503,7 +503,7 @@ export default async function FinanzasPage() {
                   <td className="px-5 py-2 text-right tabular-nums">
                     {mxn.format(totalAsignado)}
                   </td>
-                  <td className="px-5 py-2 text-right tabular-nums text-pink-700">
+                  <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
                     {mxn.format(totalSandra)}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums text-teal-700">

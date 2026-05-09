@@ -22,7 +22,7 @@ export type TipoClienteConf = {
 
 export const TIPOS_CLIENTE: TipoClienteConf[] = [
   { value: "spa",          label: "SPA",          bgText: "bg-blue-100 text-blue-700 ring-blue-200/60" },
-  { value: "salon",        label: "Salón",        bgText: "bg-pink-100 text-pink-700 ring-pink-200/60" },
+  { value: "salon",        label: "Salón",        bgText: "bg-pink-100 text-pink-700 ring-[#DFF7F4]/60" },
   { value: "clinica",      label: "Clínica",      bgText: "bg-teal-100 text-teal-700 ring-teal-200/60" },
   { value: "distribuidor", label: "Distribuidor", bgText: "bg-amber-100 text-amber-700 ring-amber-200/60" },
   { value: "curso",        label: "Curso",        bgText: "bg-purple-100 text-purple-700 ring-purple-200/60" },

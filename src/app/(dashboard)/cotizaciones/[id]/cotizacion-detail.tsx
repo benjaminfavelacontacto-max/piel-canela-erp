@@ -117,7 +117,7 @@ export function CotizacionDetail({
           {currentEstatus === "aceptada" && (
             <Link
               href={`/ventas/nueva?cotizacion=${cotizacionId}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
             >
               <ShoppingBag className="size-4" />
               Convertir a Venta

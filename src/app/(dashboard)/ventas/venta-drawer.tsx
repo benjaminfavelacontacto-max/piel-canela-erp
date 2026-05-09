@@ -236,7 +236,7 @@ export function VentaDrawer({
               <Stat
                 label="Cobrado"
                 value={mxn.format(cantPagada)}
-                accent="text-pink-700"
+                accent="text-[#0F766E]"
                 sub={`${progresoPago.toFixed(0)}%`}
               />
             </div>
@@ -260,7 +260,7 @@ export function VentaDrawer({
             {venta.cotizacion_id && (
               <Link
                 href={`/cotizaciones/${venta.cotizacion_id}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-2.5 py-1.5 text-xs font-medium text-pink-700 transition hover:bg-pink-100"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-200 bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#0F766E] transition hover:bg-[#DFF7F4]"
               >
                 <FileText className="size-3" />
                 Cotización origen
@@ -284,8 +284,8 @@ export function VentaDrawer({
                     pagado={!!sandraVS.pagado}
                     total={total}
                     color="from-pink-500 to-pink-600"
-                    bg="bg-pink-50"
-                    text="text-pink-700"
+                    bg="bg-[#F9FAFB]"
+                    text="text-[#0F766E]"
                   />
                 )}
                 {benjaminVS && (
@@ -526,7 +526,7 @@ export function VentaDrawer({
                 className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 transition hover:border-pink-300 hover:shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-md bg-pink-50 text-pink-700">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
                     <FileText className="size-4" />
                   </div>
                   <div>
@@ -538,7 +538,7 @@ export function VentaDrawer({
                     </div>
                   </div>
                 </div>
-                <ExternalLink className="size-3.5 text-gray-400 transition group-hover:text-pink-600" />
+                <ExternalLink className="size-3.5 text-gray-400 transition group-hover:text-[#0F766E]" />
               </Link>
             </Section>
           )}

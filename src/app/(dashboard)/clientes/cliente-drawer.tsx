@@ -275,7 +275,7 @@ export function ClienteDrawer({
             <Stat
               label="LTV"
               value={mxn.format(cliente.ltv)}
-              accent="text-pink-700"
+              accent="text-[#0F766E]"
             />
             <Stat
               label="Utilidad"
@@ -299,7 +299,7 @@ export function ClienteDrawer({
             </Link>
             <Link
               href={`/cotizaciones/nueva?cliente=${cliente.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-pink-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-pink-700"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F766E] px-2.5 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-[#115E59]"
             >
               <FileText className="size-3" />
               Nueva cotización
@@ -376,7 +376,7 @@ export function ClienteDrawer({
               <RecurMini
                 label="# Compras"
                 value={cliente.ventas_count.toString()}
-                accent="text-pink-700"
+                accent="text-[#0F766E]"
               />
               <RecurMini
                 label="Frec."
@@ -471,7 +471,7 @@ export function ClienteDrawer({
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-bold tabular-nums text-pink-700">
+                      <div className="text-xs font-bold tabular-nums text-[#0F766E]">
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
@@ -505,7 +505,7 @@ export function ClienteDrawer({
                       <div className="min-w-0 flex-1">
                         <Link
                           href={`/ventas/${v.id}`}
-                          className="block truncate font-mono text-xs text-pink-700 hover:underline"
+                          className="block truncate font-mono text-xs text-[#0F766E] hover:underline"
                         >
                           {v.numero}
                         </Link>
@@ -676,13 +676,13 @@ export function ClienteDrawer({
                     icon={<Target className="size-3.5" />}
                     label="Prob. 30d"
                     value={`${(prediccion.probabilidadProx30 * 100).toFixed(0)}%`}
-                    accent="text-pink-700"
+                    accent="text-[#0F766E]"
                   />
                   <PredCard
                     icon={<Target className="size-3.5" />}
                     label="Prob. 60d"
                     value={`${(prediccion.probabilidadProx60 * 100).toFixed(0)}%`}
-                    accent="text-pink-700"
+                    accent="text-[#0F766E]"
                   />
                   <PredCard
                     icon={<TrendingUp className="size-3.5" />}

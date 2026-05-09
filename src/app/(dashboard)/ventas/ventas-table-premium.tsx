@@ -916,7 +916,7 @@ export function VentasTablePremium({
           className="w-full text-sm"
           style={{ width: table.getTotalSize(), minWidth: "100%" }}
         >
-          <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm">
+          <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="border-b border-gray-200">
                 {hg.headers.map((h, idx) => {

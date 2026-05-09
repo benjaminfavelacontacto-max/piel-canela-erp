@@ -128,7 +128,7 @@ export function CotizacionForm({
       { label: string; cantidad: number; piezas: number; monto: number; tone: string }
     >()
     const SKU_LABELS: Array<[RegExp, { label: string; tone: string }]> = [
-      [/^CN-/i, { label: "Cintas", tone: "text-pink-700 bg-pink-50" }],
+      [/^CN-/i, { label: "Cintas", tone: "text-[#0F766E] bg-[#F9FAFB]" }],
       [/^AC-/i, { label: "Activadores", tone: "text-emerald-700 bg-emerald-50" }],
       [/^OX/i, { label: "Emulsión", tone: "text-teal-700 bg-teal-50" }],
       [/^PB-/i, { label: "Polvo blanquear", tone: "text-violet-700 bg-violet-50" }],
@@ -341,7 +341,7 @@ export function CotizacionForm({
               <button
                 type="button"
                 onClick={() => setClienteId("")}
-                className="mt-2 text-[10.5px] text-pink-600 hover:text-pink-800 hover:underline"
+                className="mt-2 text-[10.5px] text-[#0F766E] hover:text-[#115E59] hover:underline"
               >
                 Cambiar cliente
               </button>
@@ -363,7 +363,7 @@ export function CotizacionForm({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre o SKU…"
-              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </div>
           <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-gray-100">
@@ -379,8 +379,8 @@ export function CotizacionForm({
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedProductId(p.id)}
-                    className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-pink-50 ${
-                      active ? "bg-pink-50" : "bg-white"
+                    className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-[#F9FAFB] ${
+                      active ? "bg-[#F9FAFB]" : "bg-white"
                     }`}
                   >
                     {p.imagen_url ? (
@@ -406,7 +406,7 @@ export function CotizacionForm({
                             {p.peso}
                           </span>
                         )}
-                        <span className="font-semibold text-pink-600">
+                        <span className="font-semibold text-[#0F766E]">
                           {mxn.format(p.precio)}
                         </span>
                       </div>
@@ -426,7 +426,7 @@ export function CotizacionForm({
               onChange={(e) =>
                 setCantidad(Math.max(1, parseInt(e.target.value) || 1))
               }
-              className="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
             <button
               type="button"
@@ -488,7 +488,7 @@ export function CotizacionForm({
               value={numero}
               onChange={(e) => setNumero(e.target.value)}
               placeholder="PC-210526001-V-NombreCliente"
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </label>
 
@@ -499,7 +499,7 @@ export function CotizacionForm({
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </label>
             <label className="block text-xs">
@@ -508,7 +508,7 @@ export function CotizacionForm({
                 type="date"
                 value={validaHasta}
                 onChange={(e) => setValidaHasta(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </label>
           </div>
@@ -523,8 +523,8 @@ export function CotizacionForm({
             <button
               type="button"
               onClick={() => setIvaActivo((v) => !v)}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 ${
-                ivaActivo ? "bg-pink-600" : "bg-gray-300"
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 ${
+                ivaActivo ? "bg-[#0F766E]" : "bg-gray-300"
               }`}
               role="switch"
               aria-checked={ivaActivo}
@@ -546,14 +546,14 @@ export function CotizacionForm({
             <div className="rounded-xl border border-pink-200/60 bg-gradient-to-br from-pink-50/70 via-white to-teal-50/40 p-3 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span className="flex size-5 items-center justify-center rounded-md bg-pink-100 text-pink-700">
+                  <span className="flex size-5 items-center justify-center rounded-md bg-[#DFF7F4] text-[#0F766E]">
                     <FileText className="size-3" />
                   </span>
-                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-pink-700">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#0F766E]">
                     Resumen del pedido
                   </span>
                 </div>
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-pink-700 ring-1 ring-pink-200/60">
+                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#0F766E] ring-1 ring-[#DFF7F4]/60">
                   {itemsCount} ítems · {piezasTotal} pzs
                 </span>
               </div>
@@ -620,7 +620,7 @@ export function CotizacionForm({
                   setDescuentoValor(Number(e.target.value) || 0)
                 }
                 placeholder="0"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pr-8 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pr-8 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500">
                 {descuentoTipo === "pct" ? "%" : "$"}
@@ -657,7 +657,7 @@ export function CotizacionForm({
                 value={costoEnvio || ""}
                 onChange={(e) => setCostoEnvio(Number(e.target.value) || 0)}
                 placeholder="0.00"
-                className="w-full rounded-lg border border-gray-200 bg-white pl-6 pr-3 py-2 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white pl-6 pr-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </div>
           </div>
@@ -697,7 +697,7 @@ export function CotizacionForm({
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </label>
         </div>
@@ -707,7 +707,7 @@ export function CotizacionForm({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="flex items-center justify-center gap-2 rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-pink-300"
+            className="flex items-center justify-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="size-4" />
             {pending ? "Guardando…" : "Guardar Cotización"}
@@ -794,7 +794,7 @@ function ClientePicker({
           onFocus={() => setOpen(true)}
           placeholder="Buscar por nombre, negocio, RFC, ciudad…"
           autoComplete="off"
-          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
         />
       </div>
       {open && (
@@ -818,7 +818,7 @@ function ClientePicker({
                     setOpen(false)
                     setQuery("")
                   }}
-                  className="flex w-full items-start gap-2 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 hover:bg-pink-50/60"
+                  className="flex w-full items-start gap-2 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 hover:bg-[#F9FAFB]/60"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -847,7 +847,7 @@ function ClientePicker({
                 href="/clientes/nuevo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 rounded-md bg-pink-50 px-2 py-1.5 text-[11px] font-medium text-pink-700 transition hover:bg-pink-100"
+                className="flex items-center justify-center gap-1.5 rounded-md bg-[#F9FAFB] px-2 py-1.5 text-[11px] font-medium text-[#0F766E] transition hover:bg-[#DFF7F4]"
               >
                 + Crear nuevo cliente
               </a>

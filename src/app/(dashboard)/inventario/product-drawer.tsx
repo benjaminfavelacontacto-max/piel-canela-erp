@@ -53,7 +53,7 @@ const categoriaBadge: Record<string, string> = {
   "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
   AEROGRAFÍA: "bg-purple-100 text-purple-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
-  "POLVO DE BLANQUEAR": "bg-pink-100 text-pink-700",
+  "POLVO DE BLANQUEAR": "bg-[#DFF7F4] text-[#0F766E]",
   HUMECTANTES: "bg-cyan-100 text-cyan-700",
   EXFOLIANTS: "bg-indigo-100 text-indigo-700",
   "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
@@ -249,7 +249,7 @@ export function ProductDrawer({
               }
             />
             <Stat
-              icon={<Layers className="size-4 text-pink-600" />}
+              icon={<Layers className="size-4 text-[#0F766E]" />}
               label="Valor inventario"
               value={
                 producto.valor_inventario != null
@@ -340,7 +340,7 @@ export function ProductDrawer({
               <div className="overflow-hidden rounded-xl border border-gray-100">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
+                    <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
                       <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-gray-500">
                         Venta
                       </th>
@@ -364,7 +364,7 @@ export function ProductDrawer({
                         <td className="px-3 py-2">
                           <Link
                             href={`/ventas/${v.venta_id}`}
-                            className="font-mono text-pink-700 hover:underline"
+                            className="font-mono text-[#0F766E] hover:underline"
                             onClick={onClose}
                           >
                             {v.venta_numero}

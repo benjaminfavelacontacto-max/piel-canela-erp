@@ -418,7 +418,7 @@ export function EstimadoIngresos({
           accent={
             seasonalInsights.proximaTemporadaAlta
               ? "text-amber-700"
-              : "text-pink-700"
+              : "text-[#0F766E]"
           }
           gradient={
             seasonalInsights.proximaTemporadaAlta
@@ -631,7 +631,7 @@ export function EstimadoIngresos({
                         >
                           {c.score.toFixed(0)}%
                         </span>
-                        <div className="mt-0.5 text-[10px] tabular-nums text-pink-700">
+                        <div className="mt-0.5 text-[10px] tabular-nums text-[#0F766E]">
                           {mxn2.format(c.estimado)}
                         </div>
                       </div>

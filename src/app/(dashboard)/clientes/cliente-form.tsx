@@ -185,7 +185,7 @@ export function ClienteForm({
               type="button"
               onClick={handleDelete}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-white px-3 py-1.5 text-sm font-medium text-[#DC2626] transition hover:bg-[#FEE2E2] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Trash2 className="size-3.5" />
               Eliminar
@@ -195,7 +195,7 @@ export function ClienteForm({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="size-4" />
             {pending ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear cliente"}
@@ -256,7 +256,7 @@ export function ClienteForm({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Juan Pérez"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <Field label="Empresa / Negocio">
@@ -265,7 +265,7 @@ export function ClienteForm({
               value={nombreNegocio}
               onChange={(e) => setNombreNegocio(e.target.value)}
               placeholder="Spa Belleza Total"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <Field
@@ -275,7 +275,7 @@ export function ClienteForm({
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             >
               {TIPOS_CLIENTE.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -293,7 +293,7 @@ export function ClienteForm({
                 onChange={(e) => setRfc(e.target.value.toUpperCase())}
                 placeholder="XAXX010101000"
                 maxLength={13}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 font-mono text-sm uppercase focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 font-mono text-sm uppercase focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </div>
           </Field>
@@ -321,7 +321,7 @@ export function ClienteForm({
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="55 1234 5678"
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </div>
           </Field>
@@ -333,7 +333,7 @@ export function ClienteForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="cliente@email.com"
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </div>
           </Field>
@@ -343,7 +343,7 @@ export function ClienteForm({
               <select
                 value={metodoPago}
                 onChange={(e) => setMetodoPago(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               >
                 <option value="">Sin preferencia</option>
                 {METODOS_PAGO.map((m) => (
@@ -360,7 +360,7 @@ export function ClienteForm({
               <select
                 value={vendedorSocioId}
                 onChange={(e) => setVendedorSocioId(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               >
                 <option value="">Sin asignar</option>
                 {socios.map((s) => (
@@ -381,7 +381,7 @@ export function ClienteForm({
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
               placeholder="Calle Falsa 123"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -391,7 +391,7 @@ export function ClienteForm({
                 value={colonia}
                 onChange={(e) => setColonia(e.target.value)}
                 placeholder="Roma Norte"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </Field>
             <Field label="Código Postal">
@@ -401,7 +401,7 @@ export function ClienteForm({
                 onChange={(e) => setCodigoPostal(e.target.value)}
                 placeholder="06700"
                 maxLength={10}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </Field>
           </div>
@@ -412,7 +412,7 @@ export function ClienteForm({
                 value={ciudad}
                 onChange={(e) => setCiudad(e.target.value)}
                 placeholder="Ciudad de México"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </Field>
             <Field label="Estado">
@@ -421,7 +421,7 @@ export function ClienteForm({
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
                 placeholder="CDMX"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
               />
             </Field>
           </div>
@@ -431,7 +431,7 @@ export function ClienteForm({
               value={pais}
               onChange={(e) => setPais(e.target.value)}
               placeholder="México"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
         </Card>
@@ -444,7 +444,7 @@ export function ClienteForm({
               value={redes.instagram ?? ""}
               onChange={(e) => setRed("instagram", e.target.value)}
               placeholder="@usuario"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <Field label="Facebook">
@@ -453,7 +453,7 @@ export function ClienteForm({
               value={redes.facebook ?? ""}
               onChange={(e) => setRed("facebook", e.target.value)}
               placeholder="usuario / página"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <Field label="Sitio web">
@@ -462,7 +462,7 @@ export function ClienteForm({
               value={redes.web ?? ""}
               onChange={(e) => setRed("web", e.target.value)}
               placeholder="https://"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
           <Field label="Notas">
@@ -471,7 +471,7 @@ export function ClienteForm({
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
               placeholder="Información extra sobre el cliente…"
-              className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </Field>
         </Card>
@@ -492,7 +492,7 @@ function Card({
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <header className="mb-3 flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-md bg-pink-50 text-pink-700">
+        <span className="flex size-7 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
           <Icon className="size-3.5" />
         </span>
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
@@ -518,7 +518,7 @@ function Field({
       <div className="mb-1 flex items-center justify-between">
         <span className="text-xs font-medium text-gray-700">
           {label}
-          {required && <span className="ml-0.5 text-rose-600">*</span>}
+          {required && <span className="ml-0.5 text-[#DC2626]">*</span>}
         </span>
         {hint && <span className="text-[10px] text-gray-500">{hint}</span>}
       </div>

@@ -36,7 +36,7 @@ const categoriaBadge: Record<string, string> = {
   OXIGENANTES: "bg-blue-100 text-blue-700",
   AEROGRAFÍA: "bg-purple-100 text-purple-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
-  "POLVO DE BLANQUEAR": "bg-pink-100 text-pink-700",
+  "POLVO DE BLANQUEAR": "bg-[#DFF7F4] text-[#0F766E]",
   HUMECTANTES: "bg-cyan-100 text-cyan-700",
   EXFOLIANTS: "bg-indigo-100 text-indigo-700",
   "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
@@ -294,8 +294,8 @@ export default async function EstadisticasPage({
               change={cambioGanancia}
             />
             <Kpi
-              icon={<ShoppingCart className="size-5 text-pink-600" />}
-              iconBg="bg-pink-50 group-hover:bg-pink-100"
+              icon={<ShoppingCart className="size-5 text-[#0F766E]" />}
+              iconBg="bg-[#F9FAFB] group-hover:bg-[#DFF7F4]"
               label="Órdenes"
               value={<AnimatedNumber value={totalOrdenes} />}
               sub={

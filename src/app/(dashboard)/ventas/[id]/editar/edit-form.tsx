@@ -109,7 +109,7 @@ export function EditVentaForm({
                 const v = parseFloat(e.target.value)
                 setCantidadPagada(Number.isNaN(v) ? 0 : v)
               }}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </label>
 
@@ -163,7 +163,7 @@ export function EditVentaForm({
             onChange={(e) => setNotas(e.target.value)}
             rows={4}
             placeholder="Notas internas, referencia de pago, etc."
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
           />
         </div>
 
@@ -171,7 +171,7 @@ export function EditVentaForm({
           type="button"
           onClick={handleSave}
           disabled={pending}
-          className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-pink-300"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Save className="size-4" />
           {pending ? "Guardando…" : "Guardar cambios"}

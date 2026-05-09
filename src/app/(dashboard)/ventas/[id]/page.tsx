@@ -150,7 +150,7 @@ export default async function VentaDetailPage({
                   {" · "}
                   <Link
                     href={`/cotizaciones/${venta.cotizacion_id}`}
-                    className="text-pink-600 hover:underline"
+                    className="text-[#0F766E] hover:underline"
                   >
                     Ver cotización
                   </Link>
@@ -162,7 +162,7 @@ export default async function VentaDetailPage({
         <div className="flex items-center gap-2">
           <Link
             href={`/ventas/${id}/editar`}
-            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
           >
             <Pencil className="size-4" />
             Editar venta
@@ -216,7 +216,7 @@ export default async function VentaDetailPage({
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
+                <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
                   <th className="w-14 px-3 py-2"></th>
                   <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                     Producto

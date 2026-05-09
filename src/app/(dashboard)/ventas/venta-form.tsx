@@ -201,21 +201,21 @@ export function VentaForm({
       )}
 
       {cotizacion && (
-        <div className="mb-4 flex items-center justify-between rounded-xl border border-pink-200 bg-pink-50 p-4 text-sm">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-pink-200 bg-[#F9FAFB] p-4 text-sm">
           <div className="flex items-center gap-3">
-            <FileText className="size-4 text-pink-700" />
+            <FileText className="size-4 text-[#0F766E]" />
             <div>
-              <div className="font-medium text-pink-900">
+              <div className="font-medium text-[#115E59]">
                 Cotización <span className="font-mono">{cotizacion.numero}</span>
               </div>
-              <div className="text-xs text-pink-700">
+              <div className="text-xs text-[#0F766E]">
                 {cotizacion.itemsCount} producto(s) — totales bloqueados
               </div>
             </div>
           </div>
           <Link
             href={`/cotizaciones/${cotizacion.id}`}
-            className="text-xs text-pink-700 hover:underline"
+            className="text-xs text-[#0F766E] hover:underline"
           >
             Ver cotización
           </Link>
@@ -235,7 +235,7 @@ export function VentaForm({
                   value={numero}
                   onChange={(e) => setNumero(e.target.value)}
                   placeholder="PC-210526001-V-Cliente"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                 />
               </Field>
               <Field label="Fecha">
@@ -243,14 +243,14 @@ export function VentaForm({
                   type="date"
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                 />
               </Field>
               <Field label="Cliente" className="md:col-span-2">
                 <select
                   value={clienteId}
                   onChange={(e) => setClienteId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                 >
                   <option value="">Selecciona un cliente…</option>
                   {clientes.map((c) => (
@@ -381,7 +381,7 @@ export function VentaForm({
                     type="button"
                     onClick={() => setIvaActivo((v) => !v)}
                     className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                      ivaActivo ? "bg-pink-600" : "bg-gray-300"
+                      ivaActivo ? "bg-[#0F766E]" : "bg-gray-300"
                     }`}
                     aria-pressed={ivaActivo}
                   >
@@ -414,7 +414,7 @@ export function VentaForm({
                 <select
                   value={metodoPago}
                   onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                 >
                   <option value="transferencia">Transferencia</option>
                   <option value="efectivo">Efectivo</option>
@@ -458,7 +458,7 @@ export function VentaForm({
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
               placeholder="Notas internas, referencia de pago, etc."
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </div>
 
@@ -466,7 +466,7 @@ export function VentaForm({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-700 disabled:cursor-not-allowed disabled:bg-pink-300"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="size-4" />
             {pending ? "Guardando…" : "Guardar Venta"}
@@ -567,7 +567,7 @@ function NumberInput({
         const v = parseFloat(e.target.value)
         onChange(Number.isNaN(v) ? 0 : v)
       }}
-      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
     />
   )
 }

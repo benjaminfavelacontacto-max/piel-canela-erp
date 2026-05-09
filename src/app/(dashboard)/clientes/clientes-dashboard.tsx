@@ -590,7 +590,7 @@ export function ClientesDashboard({
                   : v >= 2
                     ? "bg-teal-50 text-teal-700"
                     : v === 1
-                      ? "bg-pink-50 text-pink-700"
+                      ? "bg-[#F9FAFB] text-[#0F766E]"
                       : "bg-gray-50 text-gray-400"
               }`}
             >
@@ -825,7 +825,7 @@ export function ClientesDashboard({
             label: "Recurrentes",
             value: kpis.recurrentes.toString(),
             sub: "≥3 compras",
-            color: "text-pink-300",
+            color: "text-emerald-300",
           },
           {
             label: "LTV total",
@@ -878,7 +878,7 @@ export function ClientesDashboard({
           value={mxn.format(kpis.saldoTotal)}
           sub={`${kpis.inactivos} inactivos`}
           accent={kpis.saldoTotal > 0 ? "text-rose-700" : "text-gray-700"}
-          gradient="from-rose-50 via-white to-pink-50/50"
+          gradient="from-white via-white to-white/50"
           ring="ring-rose-100"
         />
       </section>
@@ -906,7 +906,7 @@ export function ClientesDashboard({
         {/* Toolbar */}
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-pink-600" />
+            <Sparkles className="size-4 text-[#0F766E]" />
             <h2 className="text-sm font-semibold text-gray-900">
               Base de clientes
             </h2>
@@ -922,7 +922,7 @@ export function ClientesDashboard({
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar nombre, negocio, RFC, email, ciudad…"
-                className="h-8 w-72 rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+                className="h-8 w-72 rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
               />
             </div>
             <select
@@ -930,7 +930,7 @@ export function ClientesDashboard({
               onChange={(e) =>
                 setStatusFilter(e.target.value as "todos" | ClienteStatus)
               }
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los estatus</option>
               <option value="activo">Activos</option>
@@ -943,7 +943,7 @@ export function ClientesDashboard({
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los tipos</option>
               {TIPOS_CLIENTE.map((t) => (
@@ -981,7 +981,7 @@ export function ClientesDashboard({
                                 type="checkbox"
                                 checked={col.getIsVisible()}
                                 onChange={col.getToggleVisibilityHandler()}
-                                className="size-3.5 accent-pink-600"
+                                className="size-3.5 accent-[#0F766E]"
                               />
                               <span className="capitalize">
                                 {col.id.replace(/_/g, " ")}
@@ -1001,7 +1001,7 @@ export function ClientesDashboard({
         {/* Body */}
         <div className="relative max-w-full overflow-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm">
+            <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} className="border-b border-gray-200">
                   {hg.headers.map((h, idx) => {
@@ -1036,7 +1036,7 @@ export function ClientesDashboard({
                   <Fragment key={row.id}>
                     <tr
                       onClick={() => setSelectedCliente(row.original)}
-                      className={`group border-b border-gray-100 cursor-pointer transition-colors hover:bg-pink-50/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                      className={`group border-b border-gray-100 cursor-pointer transition-colors hover:bg-[#F9FAFB]/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
                     >
                       {row.getVisibleCells().map((cell, idx) => {
                         const isFirst = idx === 0
@@ -1044,7 +1044,7 @@ export function ClientesDashboard({
                           <td
                             key={cell.id}
                             style={{ width: cell.column.getSize() }}
-                            className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-pink-50/60" : ""}`}
+                            className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F9FAFB]/60" : ""}`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
@@ -1052,7 +1052,7 @@ export function ClientesDashboard({
                       })}
                     </tr>
                     {row.getIsExpanded() && (
-                      <tr className="border-b border-gray-200 bg-gradient-to-r from-pink-50/30 via-white to-teal-50/30">
+                      <tr className="border-b border-gray-200 bg-gradient-to-r from-white/30 via-white to-white">
                         <td
                           colSpan={row.getVisibleCells().length}
                           className="px-6 py-4"
@@ -1214,7 +1214,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
           <Mini
             label="Total compras"
             value={mxn2.format(cliente.ltv)}
-            tone="text-pink-700"
+            tone="text-[#0F766E]"
           />
           <Mini
             label="Utilidad"

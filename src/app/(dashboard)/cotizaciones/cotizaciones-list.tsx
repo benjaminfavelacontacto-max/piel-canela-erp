@@ -177,7 +177,7 @@ const ESTATUS_CONF: Record<
   rechazada: {
     label: "Rechazada",
     bg: "bg-rose-50",
-    text: "text-rose-700",
+    text: "text-[#DC2626]",
     ring: "ring-rose-200/60",
   },
   vencida: {
@@ -548,7 +548,7 @@ export function CotizacionesList({
           )
           const tone =
             dias < 0
-              ? "text-rose-700"
+              ? "text-[#DC2626]"
               : dias < 7
                 ? "text-amber-700"
                 : "text-gray-700"
@@ -680,7 +680,7 @@ export function CotizacionesList({
         cell: ({ getValue }) => {
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
-            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 tabular-nums">
+            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-[#DC2626] tabular-nums">
               − {mxn.format(v)}
             </span>
           ) : (
@@ -733,7 +733,7 @@ export function CotizacionesList({
               ? "text-emerald-700 bg-emerald-50 ring-emerald-200/60"
               : v >= 20
                 ? "text-amber-700 bg-amber-50 ring-amber-200/60"
-                : "text-rose-700 bg-rose-50 ring-rose-200/60"
+                : "text-[#DC2626] bg-rose-50 ring-rose-200/60"
           return (
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 tabular-nums ${tone}`}
@@ -771,7 +771,7 @@ export function CotizacionesList({
               ? "text-emerald-700"
               : d < 21
                 ? "text-amber-700"
-                : "text-rose-700"
+                : "text-[#DC2626]"
           return (
             <span className={`text-xs font-medium tabular-nums ${tone}`}>
               {d}d
@@ -985,7 +985,7 @@ export function CotizacionesList({
           label="Perdidas"
           value={kpis.perdidas.toString()}
           sub="Rechazadas o vencidas"
-          accent="text-rose-700"
+          accent="text-[#DC2626]"
           gradient="from-rose-50 via-white to-pink-50/50"
           ring="ring-rose-100"
           icon={<XCircle className="size-4" />}
@@ -1114,7 +1114,7 @@ export function CotizacionesList({
                   setMontoMin("")
                   setMontoMax("")
                 }}
-                className="text-[11px] font-medium text-rose-600 hover:text-rose-800"
+                className="text-[11px] font-medium text-[#DC2626] hover:text-rose-800"
               >
                 Limpiar
               </button>
@@ -1130,7 +1130,7 @@ export function CotizacionesList({
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar número, cliente, RFC, ciudad, producto…"
-                className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
               />
             </div>
             <select
@@ -1138,7 +1138,7 @@ export function CotizacionesList({
               onChange={(e) =>
                 setEstatusFiltro(e.target.value as "todos" | Estatus)
               }
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los estatus</option>
               {ESTATUS_OPTIONS.map((o) => (
@@ -1150,7 +1150,7 @@ export function CotizacionesList({
             <select
               value={clienteFiltro}
               onChange={(e) => setClienteFiltro(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los clientes</option>
               {clientes.map((c) => (
@@ -1172,7 +1172,7 @@ export function CotizacionesList({
                   value={productoQuery}
                   onChange={(e) => setProductoQuery(e.target.value)}
                   placeholder="ej. Activador, CN-FUC…"
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1183,7 +1183,7 @@ export function CotizacionesList({
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1194,7 +1194,7 @@ export function CotizacionesList({
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1207,14 +1207,14 @@ export function CotizacionesList({
                     placeholder="min"
                     value={montoMin}
                     onChange={(e) => setMontoMin(e.target.value)}
-                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                   />
                   <input
                     type="number"
                     placeholder="max"
                     value={montoMax}
                     onChange={(e) => setMontoMax(e.target.value)}
-                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                   />
                 </div>
               </div>
@@ -1285,7 +1285,7 @@ export function CotizacionesList({
             className="w-full text-sm"
             style={{ width: table.getTotalSize(), minWidth: "100%" }}
           >
-            <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm">
+            <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} className="border-b border-gray-200">
                   {hg.headers.map((h, idx) => {
@@ -1495,7 +1495,7 @@ const ESTADO_COMERCIAL_CONF: Record<
   perdida: {
     label: "Perdida",
     bg: "bg-rose-50",
-    text: "text-rose-700",
+    text: "text-[#DC2626]",
     ring: "ring-rose-200/60",
     dot: "bg-rose-500",
   },
@@ -1527,7 +1527,7 @@ function ProbabilidadCell({ prob }: { prob: ProbResult }) {
     )
   if (label === "perdida")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-[#DC2626]">
         Perdida
       </span>
     )

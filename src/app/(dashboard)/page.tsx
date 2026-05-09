@@ -489,8 +489,8 @@ export default async function DashboardPage() {
       {/* ─── KPIs secundarios ─── */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Kpi
-          icon={<Users className="size-5 text-pink-600" />}
-          iconBg="bg-pink-50"
+          icon={<Users className="size-5 text-[#0F766E]" />}
+          iconBg="bg-[#F9FAFB]"
           label="Clientes activos"
           value={totalClientes.toLocaleString("es-MX")}
           sub="En la base de datos"
@@ -570,7 +570,7 @@ export default async function DashboardPage() {
                       className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-mono text-xs text-pink-700">
+                        <div className="truncate font-mono text-xs text-[#0F766E]">
                           {v.numero}
                         </div>
                         <div className="truncate text-xs text-gray-500">
@@ -659,7 +659,7 @@ export default async function DashboardPage() {
                     className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-mono text-xs text-pink-700">
+                      <div className="truncate font-mono text-xs text-[#0F766E]">
                         {c.numero}
                       </div>
                       <div className="truncate text-xs text-gray-500">
@@ -735,7 +735,7 @@ export default async function DashboardPage() {
               const iconColor =
                 a.tipo === "venta"
                   ? "bg-teal-50 text-teal-600"
-                  : "bg-pink-50 text-pink-600"
+                  : "bg-[#F9FAFB] text-[#0F766E]"
               const tipoLabel = a.tipo === "venta" ? "Venta" : "Cotización"
               const href =
                 a.tipo === "venta"
@@ -756,7 +756,7 @@ export default async function DashboardPage() {
                       {tipoLabel}{" "}
                       <Link
                         href={href}
-                        className="font-mono text-pink-700 hover:underline"
+                        className="font-mono text-[#0F766E] hover:underline"
                       >
                         {a.numero}
                       </Link>

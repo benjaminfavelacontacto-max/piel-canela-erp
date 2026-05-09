@@ -448,7 +448,7 @@ export function VentasDashboard({
           label="Total vendido"
           value={kpis.totalVentas}
           gradient="from-pink-50 via-white to-rose-50/50"
-          accent="text-pink-700"
+          accent="text-[#0F766E]"
           ring="ring-pink-100"
           subtitle={`${kpis.activosCount} órdenes activas`}
         />
@@ -740,12 +740,12 @@ export function VentasDashboard({
       <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded-md bg-pink-50 text-pink-700">
+            <span className="inline-flex size-6 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
               <Sparkles className="size-3.5" />
             </span>
             <h2 className="text-sm font-semibold text-gray-900">Filtros</h2>
             {activeFilters > 0 && (
-              <span className="rounded-full bg-pink-500/10 px-2 py-0.5 text-[10.5px] font-semibold text-pink-700">
+              <span className="rounded-full bg-[#DFF7F4] px-2 py-0.5 text-[10.5px] font-semibold text-[#0F766E]">
                 {activeFilters} activos
               </span>
             )}
@@ -762,7 +762,7 @@ export function VentasDashboard({
                   setEstatusFilter("todos"); setSocioFilter("todos")
                   setProductoFilter("todos"); setIvaFilter("todos")
                 }}
-                className="text-[11px] font-medium text-pink-700 hover:text-pink-900"
+                className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59]"
               >
                 Limpiar
               </button>
@@ -949,7 +949,7 @@ function InsightCard({
   truncateBig?: boolean
 }) {
   const tones: Record<typeof tone, { ring: string; text: string; bar: string; icon: string }> = {
-    pink:    { ring: "ring-pink-100",    text: "text-pink-700",    bar: "bg-pink-500",    icon: "bg-pink-50 text-pink-700" },
+    pink:    { ring: "ring-pink-100",    text: "text-[#0F766E]",    bar: "bg-[#0F766E]",    icon: "bg-[#F9FAFB] text-[#0F766E]" },
     teal:    { ring: "ring-teal-100",    text: "text-teal-700",    bar: "bg-teal-500",    icon: "bg-teal-50 text-teal-700" },
     amber:   { ring: "ring-amber-100",   text: "text-amber-700",   bar: "bg-amber-500",   icon: "bg-amber-50 text-amber-700" },
     blue:    { ring: "ring-blue-100",    text: "text-blue-700",    bar: "bg-blue-500",    icon: "bg-blue-50 text-blue-700" },
