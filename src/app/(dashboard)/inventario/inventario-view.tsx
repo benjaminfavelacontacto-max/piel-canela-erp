@@ -243,7 +243,7 @@ export function InventarioView({
     const valores = productos
       .map((p) => p.tipo_cambio)
       .filter((v): v is number => v != null && v > 0)
-    if (valores.length === 0) return 17.5
+    if (valores.length === 0) return 20.7
     // mediana para resistir outliers
     const sorted = [...valores].sort((a, b) => a - b)
     return sorted[Math.floor(sorted.length / 2)]
@@ -487,7 +487,7 @@ function ProductRow({
   onClick: () => void
 }) {
   void _isTop
-  const tc = p.tipo_cambio ?? 17.5
+  const tc = p.tipo_cambio ?? 20.7
   const precioUsd = p.precio_usd ?? 0
   const costoMxnCalc = precioUsd * tc
   const catShort =

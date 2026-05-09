@@ -73,7 +73,7 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
   - `precio_usd` — precio público referencial en USD por SKU
   - `costo_envio_usd` — costo unitario + envío en USD (lo que pagamos importando)
   - `costo_envio_mxn` — costo unitario + envío en MXN (snapshot al tipo de cambio del momento)
-  - `tipo_cambio` — MXN/USD vigente, default `17.50`
+  - `tipo_cambio` — MXN/USD vigente, default `17.50` en BD pero TC actual sincronizado con el Sheet es **$20.70** (segundo pedido)
 - `vista_inventario` recalcula campos derivados:
   - `precio_mxn_calculado = precio_usd × tipo_cambio`
   - `costo_total_usd = costo_envio_usd × stock_actual`
