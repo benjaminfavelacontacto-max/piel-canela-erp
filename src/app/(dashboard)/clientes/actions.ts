@@ -10,6 +10,8 @@ export type ClienteInput = {
   telefono: string | null
   email: string | null
   direccion: string | null
+  colonia: string | null
+  codigo_postal: string | null
   ciudad: string | null
   estado: string | null
   pais: string | null
@@ -35,6 +37,8 @@ export async function saveCliente(input: ClienteInput) {
       telefono: input.telefono?.trim() || null,
       email: input.email?.trim() || null,
       direccion: input.direccion?.trim() || null,
+      colonia: input.colonia?.trim() || null,
+      codigo_postal: input.codigo_postal?.trim() || null,
       ciudad: input.ciudad?.trim() || null,
       estado: input.estado?.trim() || null,
       pais: input.pais?.trim() || "México",
@@ -68,6 +72,8 @@ export async function updateCliente(id: string, input: ClienteInput) {
       telefono: input.telefono?.trim() || null,
       email: input.email?.trim() || null,
       direccion: input.direccion?.trim() || null,
+      colonia: input.colonia?.trim() || null,
+      codigo_postal: input.codigo_postal?.trim() || null,
       ciudad: input.ciudad?.trim() || null,
       estado: input.estado?.trim() || null,
       pais: input.pais?.trim() || "México",

@@ -10,7 +10,7 @@ export default async function NuevaCotizacionPage() {
   const [clientesRes, listaRes] = await Promise.all([
     supabase
       .from("clientes")
-      .select("id, nombre, nombre_negocio, telefono, email, direccion, ciudad, estado, rfc, metodo_pago_pref")
+      .select("id, nombre, nombre_negocio, telefono, email, direccion, colonia, codigo_postal, ciudad, estado, rfc, metodo_pago_pref")
       .order("nombre", { ascending: true }),
     supabase
       .from("listas_precios")

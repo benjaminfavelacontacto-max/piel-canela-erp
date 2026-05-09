@@ -55,6 +55,8 @@ export function ClienteForm({
   const [telefono, setTelefono] = useState(initial?.telefono ?? "")
   const [email, setEmail] = useState(initial?.email ?? "")
   const [direccion, setDireccion] = useState(initial?.direccion ?? "")
+  const [colonia, setColonia] = useState(initial?.colonia ?? "")
+  const [codigoPostal, setCodigoPostal] = useState(initial?.codigo_postal ?? "")
   const [ciudad, setCiudad] = useState(initial?.ciudad ?? "")
   const [estado, setEstado] = useState(initial?.estado ?? "")
   const [pais, setPais] = useState(initial?.pais ?? "México")
@@ -101,6 +103,8 @@ export function ClienteForm({
       telefono: telefono || null,
       email: email || null,
       direccion: direccion || null,
+      colonia: colonia || null,
+      codigo_postal: codigoPostal || null,
       ciudad: ciudad || null,
       estado: estado || null,
       pais: pais || "México",
@@ -376,10 +380,31 @@ export function ClienteForm({
               type="text"
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
-              placeholder="Calle Falsa 123, Col. Centro"
+              placeholder="Calle Falsa 123"
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
             />
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Colonia">
+              <input
+                type="text"
+                value={colonia}
+                onChange={(e) => setColonia(e.target.value)}
+                placeholder="Roma Norte"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              />
+            </Field>
+            <Field label="Código Postal">
+              <input
+                type="text"
+                value={codigoPostal}
+                onChange={(e) => setCodigoPostal(e.target.value)}
+                placeholder="06700"
+                maxLength={10}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+              />
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ciudad">
               <input

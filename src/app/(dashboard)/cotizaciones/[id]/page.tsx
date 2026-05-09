@@ -22,7 +22,7 @@ export default async function CotizacionDetailPage({
     .select(
       `id, numero, fecha, valida_hasta, moneda, subtotal, iva, descuento, total,
        costo_productos, estatus, notas,
-       clientes(id, nombre, nombre_negocio, telefono, email, direccion, ciudad)`,
+       clientes(id, nombre, nombre_negocio, telefono, email, direccion, colonia, codigo_postal, ciudad, estado)`,
     )
     .eq("id", id)
     .maybeSingle()

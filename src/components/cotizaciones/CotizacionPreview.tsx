@@ -50,7 +50,15 @@ export function CotizacionPreview({
   const clienteNombre = c?.nombre_negocio ?? c?.nombre ?? "—"
   const clienteSecundario = c?.nombre_negocio ? c.nombre : null
   const clienteDireccion = c
-    ? [c.direccion, c.ciudad].filter(Boolean).join(", ") || "—"
+    ? [
+        c.direccion,
+        c.colonia,
+        c.codigo_postal ? `C.P. ${c.codigo_postal}` : null,
+        c.ciudad,
+        c.estado,
+      ]
+        .filter(Boolean)
+        .join(", ") || "—"
     : "—"
 
   return (

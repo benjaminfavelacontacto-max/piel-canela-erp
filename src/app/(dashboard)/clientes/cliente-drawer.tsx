@@ -340,7 +340,17 @@ export function ClienteDrawer({
                 <DLine
                   icon={MapPin}
                   label="Dirección"
-                  value={`${cliente.direccion}${cliente.ciudad ? `, ${cliente.ciudad}` : ""}${cliente.estado ? `, ${cliente.estado}` : ""}`}
+                  value={[
+                    cliente.direccion,
+                    cliente.colonia,
+                    cliente.codigo_postal
+                      ? `C.P. ${cliente.codigo_postal}`
+                      : null,
+                    cliente.ciudad,
+                    cliente.estado,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 />
               )}
               {cliente.metodo_pago_pref && (

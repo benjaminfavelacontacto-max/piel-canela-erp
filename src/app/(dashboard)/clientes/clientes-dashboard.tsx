@@ -56,6 +56,8 @@ export type ClienteRow = {
   telefono: string | null
   email: string | null
   direccion: string | null
+  colonia: string | null
+  codigo_postal: string | null
   ciudad: string | null
   estado: string | null
   pais: string | null
@@ -1192,6 +1194,17 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
         <dl className="space-y-1.5 text-xs">
           {cliente.direccion && (
             <Row label="Dirección" value={cliente.direccion} />
+          )}
+          {(cliente.colonia || cliente.codigo_postal) && (
+            <Row
+              label="Col / CP"
+              value={[
+                cliente.colonia,
+                cliente.codigo_postal ? `C.P. ${cliente.codigo_postal}` : null,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            />
           )}
           {cliente.rfc && <Row label="RFC" value={cliente.rfc} mono />}
           {cliente.notas && (

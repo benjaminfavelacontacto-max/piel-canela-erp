@@ -18,7 +18,7 @@ export default async function EditarClientePage({
       .from("clientes")
       .select(
         `id, nombre, nombre_negocio, tipo, telefono, email,
-         direccion, ciudad, estado, pais, rfc, redes_sociales,
+         direccion, colonia, codigo_postal, ciudad, estado, pais, rfc, redes_sociales,
          vendedor_socio_id, metodo_pago_pref, notas, activo,
          created_at, updated_at`,
       )

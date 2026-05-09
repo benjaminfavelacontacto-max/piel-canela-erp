@@ -319,9 +319,18 @@ export function CotizacionForm({
               )}
               {cliente.direccion && (
                 <div className="text-gray-600">
-                  📍 {cliente.direccion}
-                  {cliente.ciudad ? `, ${cliente.ciudad}` : ""}
-                  {cliente.estado ? `, ${cliente.estado}` : ""}
+                  📍{" "}
+                  {[
+                    cliente.direccion,
+                    cliente.colonia,
+                    cliente.codigo_postal
+                      ? `C.P. ${cliente.codigo_postal}`
+                      : null,
+                    cliente.ciudad,
+                    cliente.estado,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </div>
               )}
               {cliente.metodo_pago_pref && (

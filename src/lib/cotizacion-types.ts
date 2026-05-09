@@ -7,6 +7,8 @@ export type Cliente = {
   telefono: string | null
   email: string | null
   direccion: string | null
+  colonia?: string | null
+  codigo_postal?: string | null
   ciudad: string | null
   estado?: string | null
   rfc?: string | null
