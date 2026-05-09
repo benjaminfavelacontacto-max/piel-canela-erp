@@ -12,9 +12,6 @@ import {
   FileText,
 } from "lucide-react"
 
-const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
-const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
-
 export type Estatus = "pendiente" | "pagada_parcial" | "pagada_total" | "cancelada"
 
 export type VentaRow = {
@@ -48,6 +45,14 @@ export type SocioRow = {
 export type Periodicidad = {
   cliente_id: string
   dias_promedio: number | null
+}
+
+export type RecuperacionSocio = {
+  id: string
+  nombre: string
+  asignado: number
+  cobrado: number
+  pendiente: number
 }
 
 const mxn = new Intl.NumberFormat("es-MX", {
@@ -91,11 +96,13 @@ function formatMeses(d: number | null): string {
 export function VentasDashboard({
   ventas,
   socios,
+  recuperacion,
   periodicidad,
   error,
 }: {
   ventas: VentaRow[]
   socios: SocioRow[]
+  recuperacion: RecuperacionSocio[]
   periodicidad: Periodicidad[]
   error: string | null
 }) {
@@ -110,16 +117,25 @@ export function VentasDashboard({
     return { total, ganancia, porCobrar, margen }
   }, [ventas])
 
-  const inversionistas = useMemo(() => {
-    const tally = (id: string) => {
-      const rows = socios.filter((s) => s.socio_id === id)
-      const asignado = rows.reduce((s, x) => s + Number(x.monto ?? 0), 0)
-      const cobrado = rows
-        .filter((x) => x.pagado)
-        .reduce((s, x) => s + Number(x.monto ?? 0), 0)
-      return { asignado, cobrado, pendiente: asignado - cobrado }
+  const socioInfo = useMemo(() => {
+    const m = new Map<string, { nombre: string; initial: string }>()
+    for (const r of recuperacion) {
+      m.set(r.id, {
+        nombre: r.nombre,
+        initial: (r.nombre[0] ?? "?").toUpperCase(),
+      })
     }
-    return { sandra: tally(SANDRA_ID), benjamin: tally(BENJAMIN_ID) }
+    return m
+  }, [recuperacion])
+
+  const sociosByVenta = useMemo(() => {
+    const m = new Map<string, SocioRow[]>()
+    for (const s of socios) {
+      const arr = m.get(s.venta_id) ?? []
+      arr.push(s)
+      m.set(s.venta_id, arr)
+    }
+    return m
   }, [socios])
 
   const clientesRanking = useMemo(() => {
@@ -273,8 +289,23 @@ export function VentasDashboard({
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <InversionistaCard nombre="Sandra" stats={inversionistas.sandra} />
-        <InversionistaCard nombre="Benjamin" stats={inversionistas.benjamin} />
+        {recuperacion.length === 0 ? (
+          <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500">
+            No hay socios activos.
+          </div>
+        ) : (
+          recuperacion.map((s) => (
+            <InversionistaCard
+              key={s.id}
+              nombre={s.nombre}
+              stats={{
+                asignado: s.asignado,
+                cobrado: s.cobrado,
+                pendiente: s.pendiente,
+              }}
+            />
+          ))
+        )}
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
@@ -443,6 +474,7 @@ export function VentasDashboard({
                 <Th align="right">Ganancia</Th>
                 <Th>Estatus</Th>
                 <Th align="right">Saldo</Th>
+                <Th>Socios</Th>
                 <Th align="right">Cot.</Th>
               </tr>
             </thead>
@@ -450,7 +482,7 @@ export function VentasDashboard({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
@@ -503,6 +535,12 @@ export function VentasDashboard({
                       }`}
                     >
                       {mxn.format(Number(v.saldo_pendiente ?? 0))}
+                    </td>
+                    <td className="px-5 py-3">
+                      <SociosCell
+                        items={sociosByVenta.get(v.id) ?? []}
+                        info={socioInfo}
+                      />
                     </td>
                     <td className="px-5 py-3 text-right">
                       {v.cotizacion_id ? (
@@ -636,6 +674,49 @@ function SubStat({
         {value}
       </div>
     </div>
+  )
+}
+
+function SociosCell({
+  items,
+  info,
+}: {
+  items: SocioRow[]
+  info: Map<string, { nombre: string; initial: string }>
+}) {
+  if (items.length === 0) {
+    return <span className="text-xs text-gray-400">—</span>
+  }
+  const sorted = [...items].sort((a, b) => {
+    const na = info.get(a.socio_id)?.nombre ?? a.socio_id
+    const nb = info.get(b.socio_id)?.nombre ?? b.socio_id
+    return na.localeCompare(nb, "es")
+  })
+  const cobrados = sorted.filter((x) => x.pagado)
+  const label =
+    cobrados.length > 0
+      ? cobrados
+          .map((x) => info.get(x.socio_id)?.initial ?? "?")
+          .join("+")
+      : "—"
+  const tooltip = sorted
+    .map((x) => {
+      const meta = info.get(x.socio_id)
+      const status = x.pagado ? "cobrado" : "pendiente"
+      return `${meta?.nombre ?? x.socio_id}: ${mxn.format(Number(x.monto ?? 0))} (${status})`
+    })
+    .join(" · ")
+  return (
+    <span
+      title={tooltip}
+      className={`inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-xs ${
+        cobrados.length > 0
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800 cursor-help"
+          : "border-amber-200 bg-amber-50 text-amber-800 cursor-help"
+      }`}
+    >
+      {label}
+    </span>
   )
 }
 
