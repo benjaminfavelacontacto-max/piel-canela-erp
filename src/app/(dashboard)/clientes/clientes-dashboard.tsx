@@ -22,21 +22,16 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  Building2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Columns3,
-  Crown,
   Mail,
   MapPin,
   Phone,
-  Plus,
   Search,
   Sparkles,
-  TrendingUp,
   UserPlus,
-  Users,
 } from "lucide-react"
 import { ClienteDrawer } from "./cliente-drawer"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
@@ -44,7 +39,6 @@ import { EstimadoIngresos } from "./estimado-ingresos"
 import { PrediccionCompras } from "./prediccion-compras"
 import { TIPOS_CLIENTE, getTipoConf } from "./tipos-cliente"
 import { actualizarTipoCliente } from "./actions"
-import { PageHeader } from "@/components/page-header"
 
 // ─── Types compartidos ──────────────────────────────────────────────
 
@@ -859,100 +853,199 @@ export function ClientesDashboard({
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Clientes"
-        subtitle={`Base de ${kpis.total} clientes · ${kpis.activos} activos`}
-        icon={<Users className="size-5" />}
-        kpis={(() => {
-          const len = monthlyKpi.length
-          const cur = monthlyKpi[len - 1]
-          const prev = monthlyKpi[len - 2]
-          const pct = (a: number, b: number) =>
-            b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
-          const dNuevos = cur && prev ? pct(cur.nuevos, prev.nuevos) : 0
-          const dLtv = cur && prev ? pct(cur.ltvGanado, prev.ltvGanado) : 0
-          const dActivos = cur && prev ? pct(cur.activosCum, prev.activosCum) : 0
-          return [
-            {
-              label: "Total clientes",
-              value: kpis.total.toString(),
-              sub: `${cur?.nuevos ?? 0} nuevos este mes`,
-              trend: {
-                value: `${dActivos >= 0 ? "+" : ""}${dActivos.toFixed(1)}%`,
-                positive: dActivos >= 0,
-              },
-              sparkline: monthlyKpi.map((m) => m.activosCum),
-            },
-            {
-              label: "Recurrentes",
-              value: kpis.recurrentes.toString(),
-              sub: "≥3 compras",
-              trend: {
-                value: `${dNuevos >= 0 ? "+" : ""}${dNuevos.toFixed(1)}%`,
-                positive: dNuevos >= 0,
-              },
-              sparkline: monthlyKpi.map((m) => m.nuevos),
-            },
-            {
-              label: "LTV total",
-              value: mxn.format(kpis.ltvTotal),
-              sub: `${mxn.format(cur?.ltvGanado ?? 0)} este mes`,
-              trend: {
-                value: `${dLtv >= 0 ? "+" : ""}${dLtv.toFixed(1)}%`,
-                positive: dLtv >= 0,
-              },
-              sparkline: monthlyKpi.map((m) => m.ltvGanado),
-            },
-            {
-              label: "Mejor cliente",
-              value:
-                (
+      {/* ─── Header ejecutivo (custom) ─── */}
+      {(() => {
+        const len = monthlyKpi.length
+        const cur = monthlyKpi[len - 1]
+        const prev = monthlyKpi[len - 2]
+        const pct = (a: number, b: number) =>
+          b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
+        const dActivos = cur && prev ? pct(cur.activosCum, prev.activosCum) : 0
+        const dNuevos = cur && prev ? pct(cur.nuevos, prev.nuevos) : 0
+        const dLtv = cur && prev ? pct(cur.ltvGanado, prev.ltvGanado) : 0
+        // % revenue concentrado en mejor cliente
+        const concentrado =
+          kpis.ltvTotal > 0 && kpis.mejor
+            ? (kpis.mejor.ltv / kpis.ltvTotal) * 100
+            : 0
+        const mejorMes = monthlyKpi.reduce(
+          (best, m) =>
+            m.ltvGanado > (best?.ltvGanado ?? 0) ? m : best,
+          monthlyKpi[0],
+        )
+        const mejorMesLabel = mejorMes
+          ? new Date(mejorMes.key + "-01").toLocaleDateString("es-MX", {
+              month: "short",
+              year: "2-digit",
+            })
+          : "—"
+        const trimChange = dLtv
+
+        return (
+          <>
+            {/* Title row */}
+            <header className="flex flex-wrap items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-[#0F172A]">
+                  Clientes
+                </h1>
+                <p
+                  className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-[#64748B] tabular-nums"
+                  style={{ letterSpacing: "-0.005em" }}
+                >
+                  <span>
+                    <span className="font-semibold text-[#0F172A]">
+                      {kpis.total}
+                    </span>{" "}
+                    clientes
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span>
+                    <span className="font-semibold text-[#0F172A]">
+                      {kpis.activos}
+                    </span>{" "}
+                    activos
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span>
+                    <span className="font-semibold text-[#0F172A]">
+                      {mxn.format(kpis.ltvTotal)}
+                    </span>{" "}
+                    LTV
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span
+                    className={
+                      trimChange >= 0
+                        ? "font-semibold text-emerald-600"
+                        : "font-semibold text-rose-600"
+                    }
+                  >
+                    {trimChange >= 0 ? "+" : ""}
+                    {trimChange.toFixed(1)}% este mes
+                  </span>
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.06)] bg-white/70 px-2.5 py-1 text-[11px] font-medium text-[#64748B] backdrop-blur">
+                  Últimos 12 meses
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.06)] bg-white/70 px-2.5 py-1 text-[11px] font-medium text-[#64748B] backdrop-blur">
+                  <span className="relative flex size-1.5">
+                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative size-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                  Live
+                </span>
+                <Link
+                  href="/clientes/nuevo"
+                  className="inline-flex h-[36px] items-center gap-2 rounded-[12px] bg-[#0F766E] px-4 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
+                >
+                  <UserPlus className="size-4" strokeWidth={1.75} />
+                  Nuevo cliente
+                </Link>
+              </div>
+            </header>
+
+            {/* Hero strip — 4 métricas en banda horizontal sin cards */}
+            <section
+              className="grid grid-cols-2 divide-x divide-[rgba(15,23,42,0.06)] overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 backdrop-blur lg:grid-cols-4"
+              style={{
+                boxShadow:
+                  "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+              }}
+            >
+              <HeroMetric
+                label="Total clientes"
+                value={kpis.total.toString()}
+                trend={dActivos}
+                sub={`${cur?.nuevos ?? 0} nuevos este mes`}
+              />
+              <HeroMetric
+                label="Recurrentes"
+                value={kpis.recurrentes.toString()}
+                trend={dNuevos}
+                sub="≥3 compras"
+              />
+              <HeroMetric
+                label="LTV total"
+                value={mxn.format(kpis.ltvTotal)}
+                trend={dLtv}
+                sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
+              />
+              <HeroMetric
+                label="Mejor cliente"
+                value={(
                   kpis.mejor?.nombre_negocio ??
                   kpis.mejor?.nombre ??
                   "—"
-                ).slice(0, 18),
-              sub: kpis.mejor ? mxn.format(kpis.mejor.ltv) : "",
-            },
-          ]
-        })()}
-        actions={
-          <Link
-            href="/clientes/nuevo"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#4a1a3a] transition-all hover:bg-white/90"
-          >
-            <UserPlus className="size-4" />
-            Nuevo cliente
-          </Link>
-        }
-      />
+                ).slice(0, 18)}
+                sub={kpis.mejor ? mxn.format(kpis.mejor.ltv) : ""}
+                truncate
+              />
+            </section>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
-      {/* KPIs secundarios — saldo + inactivos */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-2">
-        <Kpi
-          icon={<Sparkles className="size-4" />}
-          label="Activos"
-          value={kpis.activos.toString()}
-          sub={`${kpis.recurrentes} recurrentes`}
-          accent="text-emerald-700"
-          gradient="from-emerald-50 via-white to-teal-50/50"
-          ring="ring-emerald-100"
-        />
-        <Kpi
-          icon={<Building2 className="size-4" />}
-          label="Saldo pendiente"
-          value={mxn.format(kpis.saldoTotal)}
-          sub={`${kpis.inactivos} inactivos`}
-          accent={kpis.saldoTotal > 0 ? "text-rose-700" : "text-gray-700"}
-          gradient="from-white via-white to-white/50"
-          ring="ring-rose-100"
-        />
-      </section>
+            {/* Split panel — Activos / Saldo */}
+            <section
+              className="grid grid-cols-1 divide-y divide-[rgba(15,23,42,0.06)] overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+              style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
+            >
+              <SplitMetric
+                label="Activos"
+                value={kpis.activos.toString()}
+                sub={`${kpis.recurrentes} recurrentes`}
+                accent="emerald"
+              />
+              <SplitMetric
+                label="Saldo pendiente"
+                value={mxn.format(kpis.saldoTotal)}
+                sub={`${kpis.inactivos} inactivos`}
+                accent={kpis.saldoTotal > 0 ? "rose" : "neutral"}
+              />
+            </section>
+
+            {/* Insights pills — mini-badges editoriales */}
+            <section className="flex flex-wrap gap-2">
+              {kpis.mejor && concentrado > 30 && (
+                <InsightPill tone="amber">
+                  <span className="font-semibold">{kpis.mejor.nombre_negocio ?? kpis.mejor.nombre}</span>{" "}
+                  genera {concentrado.toFixed(0)}% del revenue
+                </InsightPill>
+              )}
+              {kpis.inactivos > 0 && (
+                <InsightPill tone="rose">
+                  {kpis.inactivos}{" "}
+                  {kpis.inactivos === 1
+                    ? "cliente podría abandonar"
+                    : "clientes podrían abandonar"}
+                </InsightPill>
+              )}
+              {mejorMes && mejorMes.ltvGanado > 0 && (
+                <InsightPill tone="violet">
+                  Mejor mes histórico: <span className="font-semibold">{mejorMesLabel}</span>{" "}
+                  · {mxn.format(mejorMes.ltvGanado)}
+                </InsightPill>
+              )}
+              {dLtv >= 8 && (
+                <InsightPill tone="emerald">
+                  LTV creció {dLtv.toFixed(1)}% vs mes anterior
+                </InsightPill>
+              )}
+              {(cur?.nuevos ?? 0) > 0 && (
+                <InsightPill tone="emerald">
+                  {cur?.nuevos} {cur?.nuevos === 1 ? "cliente nuevo" : "clientes nuevos"} este mes
+                </InsightPill>
+              )}
+            </section>
+          </>
+        )
+      })()}
 
       {/* Estimado de ingresos predictivo */}
       <EstimadoIngresos clientes={enriched} ventas={ventas} />
@@ -1204,43 +1297,120 @@ export function ClientesDashboard({
   )
 }
 
-function Kpi({
-  icon,
+/** Métrica del hero strip — sin card, divisor vertical entre métricas */
+function HeroMetric({
+  label,
+  value,
+  trend,
+  sub,
+  truncate,
+}: {
+  label: string
+  value: string
+  trend?: number
+  sub?: string
+  truncate?: boolean
+}) {
+  return (
+    <div className="px-5 py-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+          {label}
+        </p>
+        {trend !== undefined && (
+          <span
+            className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
+              trend >= 0 ? "text-emerald-600" : "text-rose-600"
+            }`}
+          >
+            <span aria-hidden className="text-[8px]">
+              {trend >= 0 ? "▲" : "▼"}
+            </span>
+            {Math.abs(trend).toFixed(1)}%
+          </span>
+        )}
+      </div>
+      <p
+        className={`mt-1 text-[24px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
+        title={truncate ? value : undefined}
+        style={{ fontFeatureSettings: '"tnum" 1' }}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p className="mt-1 text-[11px] leading-tight text-[#64748B]">{sub}</p>
+      )}
+    </div>
+  )
+}
+
+/** Split panel — 2 métricas en una banda con divisor vertical */
+function SplitMetric({
   label,
   value,
   sub,
   accent,
-  gradient,
-  ring,
-  truncate,
 }: {
-  icon: React.ReactNode
   label: string
   value: string
   sub?: string
-  accent: string
-  gradient: string
-  ring: string
-  truncate?: boolean
+  accent: "emerald" | "rose" | "neutral"
 }) {
+  const valueColor =
+    accent === "emerald"
+      ? "text-emerald-700"
+      : accent === "rose"
+        ? "text-rose-600"
+        : "text-[#0F172A]"
+  const tintBg =
+    accent === "emerald"
+      ? "bg-gradient-to-br from-emerald-50/40 to-transparent"
+      : accent === "rose"
+        ? "bg-gradient-to-br from-rose-50/40 to-transparent"
+        : ""
   return (
-    <article
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
-    >
-      <header className={`flex items-center gap-1.5 ${accent}`}>
-        {icon}
-        <span className="text-[10.5px] font-semibold uppercase tracking-wider">
-          {label}
-        </span>
-      </header>
-      <div
-        className={`mt-2 text-xl font-bold tabular-nums ${accent} ${truncate ? "truncate" : ""}`}
-        title={truncate ? value : undefined}
+    <div className={`px-5 py-3.5 ${tintBg}`}>
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+        {label}
+      </p>
+      <p
+        className={`mt-1 text-[22px] font-bold leading-none tracking-[-0.03em] tabular-nums ${valueColor}`}
+        style={{ fontFeatureSettings: '"tnum" 1' }}
       >
         {value}
-      </div>
-      {sub && <div className="mt-0.5 text-[11px] text-gray-600">{sub}</div>}
-    </article>
+      </p>
+      {sub && (
+        <p className="mt-1 text-[11px] leading-tight text-[#64748B]">{sub}</p>
+      )}
+    </div>
+  )
+}
+
+/** Mini insight pill — editorial badge, no card */
+function InsightPill({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode
+  tone?: "emerald" | "amber" | "rose" | "violet" | "neutral"
+}) {
+  const toneClass =
+    tone === "emerald"
+      ? "bg-[rgba(15,118,110,0.06)] text-[#0F766E] ring-emerald-200/40"
+      : tone === "amber"
+        ? "bg-[rgba(217,119,6,0.06)] text-[#B45309] ring-amber-200/40"
+        : tone === "rose"
+          ? "bg-[rgba(220,38,38,0.06)] text-[#B91C1C] ring-rose-200/40"
+          : tone === "violet"
+            ? "bg-[rgba(139,92,246,0.06)] text-[#7C3AED] ring-violet-200/40"
+            : "bg-[#F3F5F7] text-[#64748B] ring-gray-200"
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tabular-nums ring-1 ${toneClass}`}
+    >
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current opacity-60" />
+      {children}
+    </span>
   )
 }
 
