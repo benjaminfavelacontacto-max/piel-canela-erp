@@ -162,7 +162,10 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   }
 
   // ─── Notificar al dashboard (Realtime) ───
-  // No bloqueamos el flujo si falla — el pedido ya está creado.
+  // No bloqueamos el flujo si falla — el pedido ya está creado. Pero
+  // logueamos para que el problema no quede silenciado (el más común
+  // es que la tabla `notificaciones` no exista o no esté en la
+  // publication supabase_realtime).
   const formatMXN = (v: number) =>
     v.toLocaleString("es-MX", {
       style: "currency",
@@ -172,24 +175,34 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   const negocio = input.cliente.negocio.trim()
   const nombre = input.cliente.nombre.trim()
   const cliLabel = negocio ? `${nombre} · ${negocio}` : nombre
-  await supabase.from("notificaciones").insert({
-    tipo: "pedido_portal",
-    titulo: "Nuevo pedido del portal",
-    mensaje: `${cliLabel} solicitó ${input.items.length} producto${input.items.length === 1 ? "" : "s"} por ${formatMXN(subtotal)}`,
-    datos: {
-      cotizacion_numero: numero,
-      cotizacion_id: cotizacion.id,
-      cliente_nombre: nombre,
-      cliente_negocio: negocio || null,
-      cliente_telefono: tel,
-      cliente_email: input.cliente.email.trim() || null,
-      cliente_ciudad: input.cliente.ciudad.trim() || null,
-      items_count: input.items.length,
-      subtotal,
-      notas: input.cliente.notas.trim() || null,
-      url: `/cotizaciones/${cotizacion.id}/confirmar`,
-    },
-  })
+  const { error: notifError } = await supabase
+    .from("notificaciones")
+    .insert({
+      tipo: "pedido_portal",
+      titulo: "Nuevo pedido del portal",
+      mensaje: `${cliLabel} solicitó ${input.items.length} producto${input.items.length === 1 ? "" : "s"} por ${formatMXN(subtotal)}`,
+      datos: {
+        cotizacion_numero: numero,
+        cotizacion_id: cotizacion.id,
+        cliente_nombre: nombre,
+        cliente_negocio: negocio || null,
+        cliente_telefono: tel,
+        cliente_email: input.cliente.email.trim() || null,
+        cliente_ciudad: input.cliente.ciudad.trim() || null,
+        items_count: input.items.length,
+        subtotal,
+        notas: input.cliente.notas.trim() || null,
+        url: `/cotizaciones/${cotizacion.id}/confirmar`,
+      },
+    })
+  if (notifError) {
+    console.error(
+      "[submitOrder] notificación NO insertada:",
+      JSON.stringify(notifError, null, 2),
+    )
+  } else {
+    console.log("[submitOrder] notificación insertada OK")
+  }
 
   return {
     success: true,

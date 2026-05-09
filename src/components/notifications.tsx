@@ -104,33 +104,80 @@ export function NotificationBell() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Carga inicial de no-leídas
-    supabase
-      .from("notificaciones")
-      .select("*")
-      .eq("leida", false)
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        if (data) setNotifs(data as Notificacion[])
-      })
+    function showToastForNew(nueva: Notificacion) {
+      setToast(nueva)
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = setTimeout(() => setToast(null), 8000)
+      playBeep()
+    }
 
-    // Suscripción Realtime
+    // Carga inicial de no-leídas
+    async function cargarNotificaciones() {
+      const { data, error } = await supabase
+        .from("notificaciones")
+        .select("*")
+        .eq("leida", false)
+        .order("created_at", { ascending: false })
+        .limit(20)
+      if (error) {
+        console.error("[NotificationBell] error cargando:", error.message)
+        return
+      }
+      if (data) setNotifs(data as Notificacion[])
+    }
+    void cargarNotificaciones()
+
+    // Suscripción Realtime — channel name único por tab para evitar
+    // colisiones cuando hay múltiples pestañas abiertas
     const channel = supabase
-      .channel("notificaciones-realtime")
+      .channel(`notificaciones-${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notificaciones" },
         (payload) => {
           const nueva = payload.new as Notificacion
-          setNotifs((prev) => [nueva, ...prev])
-          setToast(nueva)
-          if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-          toastTimerRef.current = setTimeout(() => setToast(null), 8000)
-          playBeep()
+          console.log("[NotificationBell] 🔔 INSERT recibido:", nueva.id)
+          setNotifs((prev) =>
+            prev.some((n) => n.id === nueva.id) ? prev : [nueva, ...prev],
+          )
+          showToastForNew(nueva)
         },
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[NotificationBell] ✅ Realtime conectado")
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("[NotificationBell] ❌ Channel error:", err)
+        } else if (status === "TIMED_OUT") {
+          console.warn("[NotificationBell] ⏱ Realtime timeout")
+        } else if (status === "CLOSED") {
+          console.warn("[NotificationBell] 🔌 Realtime closed")
+        }
+      })
+
+    // FALLBACK: polling cada 15s — cubre si Realtime se cae o si la
+    // tabla no está en la publication supabase_realtime
+    const polling = setInterval(async () => {
+      const { data, error } = await supabase
+        .from("notificaciones")
+        .select("*")
+        .eq("leida", false)
+        .order("created_at", { ascending: false })
+        .limit(20)
+      if (error || !data) return
+      setNotifs((prev) => {
+        const idsActuales = new Set(prev.map((n) => n.id))
+        const nuevasNotifs = (data as Notificacion[]).filter(
+          (n) => !idsActuales.has(n.id),
+        )
+        if (nuevasNotifs.length === 0) return prev
+        console.log(
+          `[NotificationBell] 📊 polling detectó ${nuevasNotifs.length} nuevas`,
+        )
+        if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
+        return data as Notificacion[]
+      })
+    }, 15000)
 
     // Cerrar panel al click fuera
     const handleClick = (e: MouseEvent) => {
@@ -141,7 +188,9 @@ export function NotificationBell() {
     document.addEventListener("mousedown", handleClick)
 
     return () => {
+      console.log("[NotificationBell] desconectando")
       supabase.removeChannel(channel)
+      clearInterval(polling)
       document.removeEventListener("mousedown", handleClick)
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
