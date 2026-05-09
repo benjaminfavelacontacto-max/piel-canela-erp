@@ -492,3 +492,73 @@ export async function updateVentaSocio(
   return { ok: true as const }
 }
 
+
+// ───────────────────────────────────────────────────────────────────
+// cambiarEstatusVenta — cambio inline desde la lista
+// ───────────────────────────────────────────────────────────────────
+
+const ESTATUS_VENTA_VALIDOS = [
+  "pendiente",
+  "pagada_parcial",
+  "pagada_total",
+  "cancelada",
+] as const
+
+export async function cambiarEstatusVenta(id: string, estatus: string) {
+  if (!ESTATUS_VENTA_VALIDOS.includes(estatus as (typeof ESTATUS_VENTA_VALIDOS)[number])) {
+    return { ok: false as const, error: `Estatus inválido: ${estatus}` }
+  }
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("ventas")
+    .update({ estatus })
+    .eq("id", id)
+  if (error) {
+    return { ok: false as const, error: error.message }
+  }
+  revalidatePath("/ventas")
+  revalidatePath(`/ventas/${id}`)
+  revalidatePath("/")
+  return { ok: true as const }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// eliminarVenta — borra venta_items y venta_socios primero (FK)
+// ───────────────────────────────────────────────────────────────────
+
+export async function eliminarVenta(id: string) {
+  const supabase = createAdminClient()
+
+  // Borrar items
+  const { error: errItems } = await supabase
+    .from("venta_items")
+    .delete()
+    .eq("venta_id", id)
+  if (errItems) {
+    return { ok: false as const, error: `venta_items: ${errItems.message}` }
+  }
+
+  // Borrar reparto a socios
+  const { error: errSocios } = await supabase
+    .from("venta_socios")
+    .delete()
+    .eq("venta_id", id)
+  if (errSocios) {
+    return { ok: false as const, error: `venta_socios: ${errSocios.message}` }
+  }
+
+  // Desvincular cotización (poner cotizacion_id de la cotizacion → null si la
+  // venta era la única referencia). El campo está en `ventas.cotizacion_id`,
+  // no en cotizaciones. Si la cotización referencia esta venta vía algún
+  // campo inverso lo manejaríamos aquí — por ahora no aplica.
+
+  const { error } = await supabase.from("ventas").delete().eq("id", id)
+  if (error) {
+    return { ok: false as const, error: error.message }
+  }
+
+  revalidatePath("/ventas")
+  revalidatePath("/")
+  revalidatePath("/inventario")
+  return { ok: true as const }
+}

@@ -1,6 +1,13 @@
 "use client"
 
-import { Fragment, useEffect, useMemo, useState, useTransition } from "react"
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -34,16 +41,23 @@ import {
   FileText,
   Loader2,
   MessageSquare,
+  MoreHorizontal,
   Pencil,
   Search,
   Sparkles,
   StickyNote,
+  Trash2,
   Users,
   Wallet,
+  XCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { parseNotas } from "./notas-util"
-import { updateVentaSocio } from "./actions"
+import {
+  cambiarEstatusVenta,
+  eliminarVenta,
+  updateVentaSocio,
+} from "./actions"
 import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -81,49 +95,120 @@ type EnrichedVenta = VentaRow & {
   sin_iva: boolean
 }
 
+// Paleta diferenciada por estatus — cada uno con su familia de color
+// + dot indicator visible para distinguir incluso en vista lateral.
 const ESTATUS_CONF: Record<
   Estatus,
   { label: string; bg: string; text: string; ring: string; dot: string }
 > = {
   pagada_total: {
     label: "Pagada",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200/60",
-    dot: "bg-emerald-500",
+    bg: "bg-[#D1FAE5]", // emerald-100
+    text: "text-[#047857]", // emerald-700
+    ring: "ring-[#A7F3D0]",
+    dot: "bg-[#10B981]", // emerald-500
   },
   pagada_parcial: {
     label: "Parcial",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    ring: "ring-amber-200/60",
-    dot: "bg-amber-500",
+    bg: "bg-[#FEF3C7]", // amber-100
+    text: "text-[#B45309]", // amber-700
+    ring: "ring-[#FDE68A]",
+    dot: "bg-[#F59E0B]", // amber-500
   },
   pendiente: {
     label: "Pendiente",
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    ring: "ring-rose-200/60",
-    dot: "bg-rose-500",
+    bg: "bg-[#DBEAFE]", // blue-100
+    text: "text-[#1D4ED8]", // blue-700
+    ring: "ring-[#BFDBFE]",
+    dot: "bg-[#3B82F6]", // blue-500
   },
   cancelada: {
     label: "Cancelada",
-    bg: "bg-gray-100",
-    text: "text-gray-600",
-    ring: "ring-gray-200",
-    dot: "bg-gray-400",
+    bg: "bg-[#F1F5F9]", // slate-100
+    text: "text-[#475569]", // slate-600
+    ring: "ring-[#E2E8F0]",
+    dot: "bg-[#94A3B8]", // slate-400
   },
 }
 
-function StatusBadge({ estatus }: { estatus: Estatus }) {
-  const c = ESTATUS_CONF[estatus]
+const ESTATUS_VENTA_OPTIONS: { value: Estatus; label: string }[] = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "pagada_parcial", label: "Parcial" },
+  { value: "pagada_total", label: "Pagada" },
+  { value: "cancelada", label: "Cancelada" },
+]
+
+function StatusCell({
+  ventaId,
+  estatus,
+}: {
+  ventaId: string
+  estatus: Estatus
+}) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+  const [val, setVal] = useState<Estatus>(estatus)
+
+  useEffect(() => setVal(estatus), [estatus])
+
+  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    e.stopPropagation()
+    const nuevo = e.target.value as Estatus
+    if (nuevo === val) return
+    const previo = val
+    setVal(nuevo)
+    startTransition(async () => {
+      const result = await cambiarEstatusVenta(ventaId, nuevo)
+      if (!result.ok) {
+        setVal(previo)
+        toast.error(result.error || "No se pudo cambiar")
+        return
+      }
+      toast.success("Estatus actualizado")
+      router.refresh()
+    })
+  }
+
+  const conf = ESTATUS_CONF[val]
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full ${c.bg} ${c.text} px-2 py-0.5 text-xs font-medium ring-1 ${c.ring}`}
-    >
-      <span className={`size-1.5 rounded-full ${c.dot}`} />
-      {c.label}
-    </span>
+    <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+      <select
+        value={val}
+        onChange={handleChange}
+        disabled={pending}
+        title="Cambiar estatus"
+        aria-label="Cambiar estatus de la venta"
+        className={`cursor-pointer appearance-none rounded-full border-0 py-1 pl-5 pr-7 text-[11px] font-semibold tabular-nums ring-1 transition-all duration-180 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0F766E]/30 ${conf.bg} ${conf.text} ${conf.ring} ${pending ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(15,23,42,0.06)]"}`}
+      >
+        {ESTATUS_VENTA_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <span
+        className={`pointer-events-none absolute left-2 top-1/2 size-1.5 -translate-y-1/2 rounded-full ${conf.dot}`}
+        aria-hidden
+      />
+      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-current opacity-70">
+        {pending ? (
+          <Loader2 className="size-3 animate-spin" />
+        ) : (
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 9 9"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M2 3.5L4.5 6L7 3.5" />
+          </svg>
+        )}
+      </span>
+    </div>
   )
 }
 
@@ -320,6 +405,266 @@ function HeaderCell({
           className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none bg-transparent hover:bg-gray-300"
         />
       )}
+    </div>
+  )
+}
+
+/**
+ * Cluster minimalista de acciones por fila (Linear / Attio / Notion-style).
+ * - Default: invisible (opacity-0) — la tabla en reposo se ve limpia
+ * - Aparece on row-hover (group-hover) y on focus-within (a11y)
+ * - 3 íconos: ↗ Ver · ✎ Editar · ⋯ Menu
+ * - Menu: Cancelar venta · Eliminar
+ */
+function VentaActionsCell({ venta }: { venta: EnrichedVenta }) {
+  const router = useRouter()
+  const [pending, setPending] = useState<string | null>(null)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handle(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [menuOpen])
+
+  async function cambiar(nuevo: Estatus) {
+    setPending(nuevo)
+    const result = await cambiarEstatusVenta(venta.id, nuevo)
+    setPending(null)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo cambiar")
+      return
+    }
+    toast.success(
+      nuevo === "cancelada" ? "Venta cancelada" : "Estatus actualizado",
+    )
+    router.refresh()
+  }
+
+  async function handleEliminar() {
+    setPending("eliminar")
+    const result = await eliminarVenta(venta.id)
+    setPending(null)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo eliminar")
+      return
+    }
+    toast.success("Venta eliminada")
+    setConfirmarEliminar(false)
+    router.refresh()
+  }
+
+  return (
+    <>
+      <div
+        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100"
+        data-state={menuOpen ? "open" : "closed"}
+      >
+        {venta.cotizacion_id && (
+          <Link
+            href={`/cotizaciones/${venta.cotizacion_id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+            title="Ver cotización origen"
+            aria-label="Ver cotización origen"
+          >
+            <FileText className="size-4" strokeWidth={1.8} />
+          </Link>
+        )}
+        <Link
+          href={`/ventas/${venta.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          title="Ver detalle"
+          aria-label="Ver detalle"
+        >
+          <ExternalLink className="size-4" strokeWidth={1.8} />
+        </Link>
+        <Link
+          href={`/ventas/${venta.id}/editar`}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          title="Editar"
+          aria-label="Editar"
+        >
+          <Pencil className="size-4" strokeWidth={1.8} />
+        </Link>
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen((o) => !o)
+            }}
+            className={`rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
+            title="Más acciones"
+            aria-label="Más acciones"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+          >
+            <MoreHorizontal className="size-4" strokeWidth={1.8} />
+          </button>
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {venta.estatus !== "cancelada" && (
+                <VentaMenuItem
+                  icon={<XCircle className="size-3.5" strokeWidth={1.8} />}
+                  loading={pending === "cancelada"}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    void cambiar("cancelada")
+                  }}
+                >
+                  Cancelar venta
+                </VentaMenuItem>
+              )}
+              {venta.estatus === "cancelada" && (
+                <VentaMenuItem
+                  icon={<CheckCircle2 className="size-3.5" strokeWidth={1.8} />}
+                  loading={pending === "pendiente"}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    void cambiar("pendiente")
+                  }}
+                >
+                  Reactivar venta
+                </VentaMenuItem>
+              )}
+              <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
+              <VentaMenuItem
+                icon={<Trash2 className="size-3.5" strokeWidth={1.8} />}
+                tone="danger"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setConfirmarEliminar(true)
+                }}
+              >
+                Eliminar
+              </VentaMenuItem>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {confirmarEliminar && (
+        <ConfirmDeleteVentaModal
+          numero={venta.numero}
+          loading={pending === "eliminar"}
+          onCancel={() => setConfirmarEliminar(false)}
+          onConfirm={handleEliminar}
+        />
+      )}
+    </>
+  )
+}
+
+function VentaMenuItem({
+  icon,
+  children,
+  loading,
+  tone = "default",
+  onClick,
+}: {
+  icon: React.ReactNode
+  children: React.ReactNode
+  loading?: boolean
+  tone?: "default" | "danger"
+  onClick: () => void
+}) {
+  const toneClass =
+    tone === "danger"
+      ? "text-rose-600 hover:bg-rose-50"
+      : "text-gray-700 hover:bg-[#F3F5F7]"
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      disabled={loading}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
+    >
+      <span className="text-gray-400">{icon}</span>
+      <span className="flex-1">{children}</span>
+      {loading && <Loader2 className="size-3 animate-spin text-gray-400" />}
+    </button>
+  )
+}
+
+function ConfirmDeleteVentaModal({
+  numero,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  numero: string
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-rose-50">
+          <Trash2 className="size-6 text-rose-500" />
+        </div>
+        <h3 className="mb-1 text-center text-base font-bold text-gray-900">
+          ¿Eliminar venta?
+        </h3>
+        <p className="mb-1 text-center font-mono text-sm font-semibold text-gray-700">
+          {numero}
+        </p>
+        <p className="mb-5 text-center text-xs text-gray-400">
+          Se eliminarán también sus items y reparto a socios. Esta acción no
+          se puede deshacer.
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? (
+              <>
+                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Eliminando…
+              </>
+            ) : (
+              <>
+                <Trash2 className="size-3.5" />
+                Eliminar
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -641,7 +986,12 @@ export function VentasTablePremium({
       {
         accessorKey: "estatus",
         header: (ctx) => <HeaderCell label="Estado" ctx={ctx} />,
-        cell: ({ getValue }) => <StatusBadge estatus={getValue() as Estatus} />,
+        cell: ({ getValue, row }) => (
+          <StatusCell
+            ventaId={row.original.id}
+            estatus={getValue() as Estatus}
+          />
+        ),
         size: 110,
       },
       {
@@ -761,32 +1111,15 @@ export function VentasTablePremium({
       },
       {
         id: "acciones",
-        header: () => <div className="text-right text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">Ver</div>,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1.5">
-            {row.original.cotizacion_id && (
-              <Link
-                href={`/cotizaciones/${row.original.cotizacion_id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
-                title="Ver cotización"
-              >
-                <FileText className="size-3.5" />
-              </Link>
-            )}
-            <Link
-              href={`/ventas/${row.original.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-              title="Ver detalle"
-            >
-              <ExternalLink className="size-3.5" />
-            </Link>
+        header: () => (
+          <div className="text-right text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+            Acciones
           </div>
         ),
+        cell: ({ row }) => <VentaActionsCell venta={row.original} />,
         enableSorting: false,
         enableResizing: false,
-        size: 80,
+        size: 100,
       },
     ],
     [],
