@@ -11,6 +11,8 @@ export interface PageHeaderKpi {
   trend?: { value: string; positive: boolean }
   /** Sparkline opcional — array de puntos normalizados (cualquier escala) */
   sparkline?: number[]
+  /** Hero KPI dominante — span 2 columnas + número más grande */
+  featured?: boolean
 }
 
 interface PageHeaderProps {
@@ -46,8 +48,10 @@ export function PageHeader({
   actions,
   breadcrumb,
 }: PageHeaderProps) {
-  const kpisGrid =
-    kpis && kpis.length > 0
+  const hasFeatured = kpis?.some((k) => k.featured) ?? false
+  const kpisGrid = hasFeatured
+    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-5"
+    : kpis && kpis.length > 0
       ? COLS_CLASS[kpis.length] ?? "grid-cols-2 md:grid-cols-4"
       : ""
 
@@ -98,11 +102,22 @@ export function PageHeader({
 }
 
 function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
+  const featured = kpi.featured
   return (
-    <div className="pc-kpi-card group">
+    <div
+      className={`pc-kpi-card group ${featured ? "lg:col-span-2" : ""}`}
+      style={
+        featured
+          ? {
+              boxShadow:
+                "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+            }
+          : undefined
+      }
+    >
       {/* Top row — label + trend pill */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
           {kpi.label}
         </p>
         {kpi.trend && (
@@ -122,7 +137,8 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
       {/* Middle row — big number + sparkline al lado */}
       <div className="flex items-end justify-between gap-3">
         <p
-          className={`text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+          className={`${featured ? "text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+          style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
         >
           {kpi.value}
         </p>
@@ -133,7 +149,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
 
       {/* Sub — metadata secundaria, compacta */}
       {kpi.sub && (
-        <p className="mt-auto text-[11px] leading-tight text-[#94A3B8]">
+        <p className="mt-auto text-[11px] leading-tight text-[#64748B]">
           {kpi.sub}
         </p>
       )}

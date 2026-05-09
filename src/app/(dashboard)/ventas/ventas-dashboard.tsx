@@ -397,6 +397,7 @@ export function VentasDashboard({
                 positive: dTotal >= 0,
               },
               sparkline: monthly.map((m) => m.total),
+              featured: true,
             },
             {
               label: "Utilidad neta",
@@ -457,7 +458,7 @@ export function VentasDashboard({
             </h2>
             <span className="text-xs text-gray-500">Total · Ganancia</span>
           </header>
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={260}>
             <ComposedChart
               data={monthly}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -542,95 +543,120 @@ export function VentasDashboard({
                 SOCIO_COLORS[socio.nombre] ??
                 FALLBACK_COLORS[i % FALLBACK_COLORS.length]
               return (
-                <div
-                  key={socio.id}
-                  className="rounded-lg border border-gray-100 p-3"
-                >
+                <div key={socio.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span
-                        className="size-2.5 rounded-full"
+                        className="size-2 rounded-full"
                         style={{ background: color }}
                       />
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-[#0F172A]">
                         {socio.nombre}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {socio.porcentaje}% participación
+                    <span
+                      className="text-[11px] tabular-nums text-[#64748B]"
+                      style={{ letterSpacing: "-0.01em" }}
+                    >
+                      {pct.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
-                    <Mini label="Vendido" value={mxn.format(vendido)} />
-                    <Mini
-                      label="Ganancia"
-                      value={mxn.format(ganancia)}
-                      valueClass="text-emerald-700"
-                    />
-                    <Mini
-                      label="% del total"
-                      value={`${pct.toFixed(1)}%`}
-                    />
+                  <div className="flex items-baseline justify-between text-[11px] text-[#64748B]">
+                    <span>
+                      Vendido{" "}
+                      <span
+                        className="ml-1 font-semibold text-[#0F172A] tabular-nums"
+                        style={{ letterSpacing: "-0.02em" }}
+                      >
+                        {mxn.format(vendido)}
+                      </span>
+                    </span>
+                    <span>
+                      Ganancia{" "}
+                      <span
+                        className="ml-1 font-semibold text-emerald-700 tabular-nums"
+                        style={{ letterSpacing: "-0.02em" }}
+                      >
+                        {mxn.format(ganancia)}
+                      </span>
+                    </span>
                   </div>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-[rgba(15,23,42,0.04)]">
                     <div
-                      className="h-1.5 rounded-full"
-                      style={{
-                        width: `${pct}%`,
-                        background: color,
-                      }}
+                      className="h-1 rounded-full transition-all"
+                      style={{ width: `${pct}%`, background: color }}
                     />
                   </div>
-                  <div className="mt-1 text-[10px] text-gray-500">
-                    Cobrado: {mxn.format(cobrado)} ·{" "}
+                  <p className="text-[10.5px] text-[#94A3B8]">
+                    Cobrado {mxn.format(cobrado)}
                     {vendido > 0
-                      ? `${((cobrado / vendido) * 100).toFixed(0)}%`
-                      : "—"}
-                  </div>
+                      ? ` · ${((cobrado / vendido) * 100).toFixed(0)}%`
+                      : ""}
+                  </p>
                 </div>
               )
             })}
           </div>
 
           {totalAsignado > 0 && (
-            <div className="border-t border-gray-100 pt-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-700 mb-2">
-                Distribución
-              </div>
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie
-                    data={sociosStats.map((s) => ({
-                      name: s.socio.nombre,
-                      value: s.vendido,
-                    }))}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={45}
-                    outerRadius={70}
-                    paddingAngle={2}
-                    stroke="#ffffff"
+            <div className="border-t border-[rgba(15,23,42,0.04)] pt-3">
+              <div className="relative">
+                <ResponsiveContainer width="100%" height={140}>
+                  <PieChart>
+                    <Pie
+                      data={sociosStats.map((s) => ({
+                        name: s.socio.nombre,
+                        value: s.vendido,
+                      }))}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={42}
+                      outerRadius={58}
+                      paddingAngle={3}
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    >
+                      {sociosStats.map((s, i) => (
+                        <Cell
+                          key={s.socio.id}
+                          fill={
+                            SOCIO_COLORS[s.socio.nombre] ??
+                            FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v) => mxn2.format(Number(v ?? 0))}
+                      cursor={{ fill: "rgba(15,118,110,0.04)" }}
+                      contentStyle={{
+                        border: "1px solid rgba(15,23,42,0.06)",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Texto central */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <p
+                    className="text-base font-bold leading-none tabular-nums text-[#0F172A]"
+                    style={{ letterSpacing: "-0.03em" }}
                   >
-                    {sociosStats.map((s, i) => (
-                      <Cell
-                        key={s.socio.id}
-                        fill={
-                          SOCIO_COLORS[s.socio.nombre] ??
-                          FALLBACK_COLORS[i % FALLBACK_COLORS.length]
-                        }
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v) => mxn2.format(Number(v ?? 0))}
-                    contentStyle={{
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                    {sociosStats.length === 2 &&
+                    sociosStats[0].socio.porcentaje ===
+                      sociosStats[1].socio.porcentaje
+                      ? `${sociosStats[0].socio.porcentaje} / ${sociosStats[1].socio.porcentaje}`
+                      : sociosStats
+                          .map((s) => `${s.socio.porcentaje}`)
+                          .join(" / ")}
+                  </p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.08em] text-[#64748B]">
+                    Socios
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -834,23 +860,26 @@ function InsightCard({
 }) {
   return (
     <article
-      className="rounded-2xl border bg-white p-4 transition-all duration-180 hover:-translate-y-0.5"
+      className="flex flex-col rounded-2xl border bg-white px-4 py-3 transition-all duration-180 hover:-translate-y-0.5"
       style={{
         borderColor: "rgba(15,23,42,0.05)",
-        boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
+        boxShadow:
+          "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+        minHeight: 92,
       }}
     >
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
         {label}
       </p>
       <div
-        className={`mt-1.5 text-[20px] font-bold leading-tight tracking-[-0.02em] text-[#0F172A] ${truncateBig ? "truncate" : "tabular-nums"}`}
+        className={`mt-1 text-[20px] font-bold leading-tight tracking-[-0.03em] text-[#0F172A] ${truncateBig ? "truncate" : "tabular-nums"}`}
         title={truncateBig ? big : undefined}
+        style={{ fontFeatureSettings: '"tnum" 1' }}
       >
         {big}
       </div>
       {line1 && (
-        <p className="mt-1 text-[11px] leading-tight text-[#94A3B8] tabular-nums">
+        <p className="mt-auto text-[11px] leading-tight tabular-nums text-[#64748B]">
           {line1}
         </p>
       )}

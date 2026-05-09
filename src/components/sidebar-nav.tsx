@@ -41,6 +41,14 @@ export function SidebarNav() {
                 : "border border-transparent text-gray-600 hover:bg-[rgba(15,23,42,.04)] hover:text-gray-900",
             )}
           >
+            {/* Accent line izquierda — solo en activo (Linear-style) */}
+            {active && (
+              <span
+                aria-hidden
+                className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-[#0F766E]"
+                style={{ boxShadow: "0 0 12px rgba(15,118,110,0.35)" }}
+              />
+            )}
             <Icon
               className={cn(
                 "size-4 shrink-0 transition-colors duration-180",
