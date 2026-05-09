@@ -816,7 +816,7 @@ export function CotizacionesList({
             <Link
               href={`/cotizaciones/${row.original.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 text-gray-400 transition hover:bg-teal-50 hover:text-teal-700"
+              className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
               title="Ver"
             >
               <ExternalLink className="size-3.5" />
@@ -1325,7 +1325,7 @@ export function CotizacionesList({
                     onClick={() =>
                       router.push(`/cotizaciones/${row.original.id}`)
                     }
-                    className={`group cursor-pointer border-b border-gray-100 transition-colors hover:bg-teal-50/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                    className={`group cursor-pointer border-b border-gray-100 transition-colors hover:bg-[#F3F5F7] ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
                   >
                     {row.getVisibleCells().map((cell, idx) => {
                       const isFirst = idx === 0
@@ -1333,7 +1333,7 @@ export function CotizacionesList({
                         <td
                           key={cell.id}
                           style={{ width: cell.column.getSize() }}
-                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-teal-50/60 shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
+                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F3F5F7] shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,

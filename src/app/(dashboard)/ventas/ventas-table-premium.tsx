@@ -130,10 +130,11 @@ function StatusBadge({ estatus }: { estatus: Estatus }) {
 function VendorPill({ v }: { v: EnrichedVenta["vendedor"] }) {
   if (v === "—")
     return <span className="text-xs text-gray-300">—</span>
+  // Pills neutros — el nombre diferencia, no el color
   const styles: Record<"Sandra" | "Benjamin" | "Ambos", string> = {
-    Sandra: "bg-pink-50 text-pink-700 ring-pink-200/70",
-    Benjamin: "bg-teal-50 text-teal-700 ring-teal-200/70",
-    Ambos: "bg-violet-50 text-violet-700 ring-violet-200/70",
+    Sandra: "bg-[#F3F5F7] text-gray-700 ring-[#E7EAF0]",
+    Benjamin: "bg-[#F3F5F7] text-gray-700 ring-[#E7EAF0]",
+    Ambos: "bg-[#DFF7F4] text-[#0F766E] ring-emerald-200/60",
   }
   return (
     <span
@@ -316,7 +317,7 @@ function HeaderCell({
         <div
           onMouseDown={header.getResizeHandler() as React.MouseEventHandler}
           onTouchStart={header.getResizeHandler() as React.TouchEventHandler}
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none bg-transparent hover:bg-pink-300/60"
+          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none bg-transparent hover:bg-gray-300"
         />
       )}
     </div>
@@ -452,7 +453,7 @@ export function VentasTablePremium({
         cell: ({ getValue, row }) => (
           <Link
             href={`/ventas/${row.original.id}`}
-            className="font-mono text-xs text-pink-700 transition hover:underline"
+            className="font-mono text-xs text-[#0F766E] transition hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {getValue() as string}
@@ -554,7 +555,7 @@ export function VentasTablePremium({
               className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm font-bold tabular-nums ${
                 inconsistent
                   ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200/60"
-                  : "text-pink-800"
+                  : "text-gray-900"
               }`}
               title={tooltip}
             >
@@ -666,8 +667,8 @@ export function VentasTablePremium({
               ventaId={row.original.id}
               socioId={SANDRA_ID}
               monto={Number(getValue() ?? 0)}
-              textColor="text-pink-700"
-              bgColor="bg-pink-50"
+              textColor="text-gray-900"
+              bgColor="bg-[#F3F5F7]"
             />
           </div>
         ),
@@ -698,7 +699,7 @@ export function VentasTablePremium({
             <div className="flex items-center justify-end gap-2">
               <span className="text-xs tabular-nums text-gray-700">{v.toFixed(0)}%</span>
               <div className="h-1 w-10 rounded-full bg-gray-100">
-                <div className="h-1 rounded-full bg-violet-500" style={{ width: `${Math.min(100, v)}%` }} />
+                <div className="h-1 rounded-full bg-[#0F766E]" style={{ width: `${Math.min(100, v)}%` }} />
               </div>
             </div>
           )
@@ -767,7 +768,7 @@ export function VentasTablePremium({
               <Link
                 href={`/cotizaciones/${row.original.cotizacion_id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-md p-1 text-gray-400 transition hover:bg-pink-50 hover:text-pink-700"
+                className="rounded-md p-1 text-gray-400 transition hover:bg-[#F3F5F7] hover:text-gray-700"
                 title="Ver cotización"
               >
                 <FileText className="size-3.5" />
@@ -839,9 +840,9 @@ export function VentasTablePremium({
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF1F4] bg-white px-5 py-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-pink-600" />
+          <Sparkles className="size-4 text-[#0F766E]" />
           <h2 className="text-sm font-semibold text-gray-900">
             Registros de venta
           </h2>
@@ -950,7 +951,7 @@ export function VentasTablePremium({
                 <Fragment key={row.id}>
                   <tr
                     onClick={() => onRowClick?.(row.original)}
-                    className={`group border-b border-gray-100 transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-pink-50/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                    className={`group border-b border-gray-100 transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-[#F3F5F7] ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
                   >
                     {row.getVisibleCells().map((cell, idx) => {
                       const isFirst = idx === 0
@@ -958,7 +959,7 @@ export function VentasTablePremium({
                         <td
                           key={cell.id}
                           style={{ width: cell.column.getSize() }}
-                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-pink-50/60 group-[&:nth-child(even)]:bg-gray-50/30 shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
+                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F3F5F7] group-[&:nth-child(even)]:bg-gray-50/30 shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
@@ -1076,13 +1077,13 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
       </div>
 
       {/* Reparto socios detalle */}
-      <div className="rounded-xl border border-violet-200/60 bg-white/80 p-4 shadow-sm backdrop-blur lg:col-span-2">
+      <div className="rounded-xl border border-[#E7EAF0] bg-white p-4 shadow-sm lg:col-span-2">
         <header className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex size-6 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+            <span className="flex size-6 items-center justify-center rounded-md bg-[#F3F5F7] text-gray-600">
               <Users className="size-3.5" />
             </span>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-violet-700">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">
               Reparto socios — editable inline
             </h4>
           </div>
@@ -1180,25 +1181,26 @@ function SocioCard({
   cobrado: number
   color: "pink" | "teal"
 }) {
+  // Paleta neutra — el nombre del socio diferencia, no el color
   const cfg = {
     pink: {
-      ring: "ring-pink-200/60",
-      bg: "from-pink-50 to-white",
-      text: "text-pink-700",
-      bar: "bg-pink-500",
-      bgClass: "bg-pink-50",
+      ring: "ring-[#E7EAF0]",
+      bg: "bg-white",
+      text: "text-gray-900",
+      bar: "bg-[#0F766E]",
+      bgClass: "bg-[#F3F5F7]",
     },
     teal: {
-      ring: "ring-teal-200/60",
-      bg: "from-teal-50 to-white",
-      text: "text-teal-700",
-      bar: "bg-teal-500",
-      bgClass: "bg-teal-50",
+      ring: "ring-[#E7EAF0]",
+      bg: "bg-white",
+      text: "text-gray-900",
+      bar: "bg-[#0F766E]",
+      bgClass: "bg-[#F3F5F7]",
     },
   }[color]
   return (
     <div
-      className={`rounded-lg bg-gradient-to-br ${cfg.bg} p-3 ring-1 ${cfg.ring}`}
+      className={`rounded-lg ${cfg.bg} p-3 ring-1 ${cfg.ring}`}
     >
       <div className="flex items-center justify-between">
         <span className={`text-xs font-bold ${cfg.text}`}>{nombre}</span>

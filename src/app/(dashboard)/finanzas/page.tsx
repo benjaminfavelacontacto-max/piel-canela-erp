@@ -233,7 +233,6 @@ export default async function FinanzasPage() {
         title="Finanzas"
         subtitle="Control de inversiones y capital · ROI por socio"
         icon={<TrendingUp className="size-5" />}
-        gradient="bg-gradient-to-br from-[#1a3a4a] via-[#1e4a5a] to-[#0d2f3c]"
         kpis={[
           {
             label: "Total invertido",

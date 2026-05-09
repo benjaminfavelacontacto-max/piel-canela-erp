@@ -100,11 +100,12 @@ export type VistaStockRow = {
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
+// Paleta enterprise: accent emerald + neutro. Diferencia por label, no por color saturado.
 const SOCIO_COLORS: Record<string, string> = {
-  Sandra: "#db2777",
-  Benjamin: "#0d9488",
+  Sandra: "#0F766E",
+  Benjamin: "#94A3B8",
 }
-const FALLBACK_COLORS = ["#2563eb", "#ea580c", "#0891b2", "#7c3aed"]
+const FALLBACK_COLORS = ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280"]
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -392,7 +393,6 @@ export function VentasDashboard({
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}
         icon={<ShoppingBag className="size-5" />}
-        gradient="bg-gradient-to-br from-[#0f2d0f] via-[#1a4a1a] to-[#134e13]"
         kpis={[
           {
             label: "Total histórico",

@@ -268,7 +268,6 @@ export function InventarioView({
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
         icon={<Package className="size-5" />}
-        gradient="bg-gradient-to-br from-[#1a1a4a] via-[#1e2d5a] to-[#0d1f3c]"
         kpis={[
           {
             label: "Valor inventario",

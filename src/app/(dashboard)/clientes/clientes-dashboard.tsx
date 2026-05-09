@@ -145,51 +145,56 @@ const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   year: "numeric",
 })
 
+// Paleta enterprise reducida: 3 tonos semánticos (success / warning / neutral)
+// El label diferencia los estados, no el color.
 const STATUS_CONF: Record<
   ClienteStatus,
   { label: string; bg: string; text: string; ring: string; dot: string }
 > = {
-  prospecto: {
-    label: "Prospecto",
-    bg: "bg-violet-50",
-    text: "text-violet-700",
-    ring: "ring-violet-200/60",
-    dot: "bg-violet-500",
-  },
+  // ─── Activos / saludables → emerald soft ───
   recurrente: {
     label: "Recurrente",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200/60",
-    dot: "bg-emerald-500",
+    bg: "bg-[#D1FAE5]",
+    text: "text-[#059669]",
+    ring: "ring-emerald-200/50",
+    dot: "bg-[#059669]",
   },
   activo: {
     label: "Activo",
-    bg: "bg-teal-50",
-    text: "text-teal-700",
-    ring: "ring-teal-200/60",
-    dot: "bg-teal-500",
+    bg: "bg-[#DFF7F4]",
+    text: "text-[#0F766E]",
+    ring: "ring-teal-200/50",
+    dot: "bg-[#0F766E]",
   },
   nuevo: {
     label: "Nuevo",
-    bg: "bg-pink-50",
-    text: "text-pink-700",
-    ring: "ring-pink-200/60",
-    dot: "bg-pink-500",
+    bg: "bg-[#DBEAFE]",
+    text: "text-[#2563EB]",
+    ring: "ring-blue-200/50",
+    dot: "bg-[#2563EB]",
   },
+  // ─── Atención → amber soft ───
   inactivo: {
     label: "Inactivo",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    ring: "ring-amber-200/60",
-    dot: "bg-amber-500",
+    bg: "bg-[#FEF3C7]",
+    text: "text-[#D97706]",
+    ring: "ring-amber-200/50",
+    dot: "bg-[#D97706]",
   },
-  sin_actividad: {
-    label: "Sin ventas",
-    bg: "bg-gray-100",
+  // ─── Neutral / sin actividad → gray ───
+  prospecto: {
+    label: "Prospecto",
+    bg: "bg-[#F3F5F7]",
     text: "text-gray-600",
     ring: "ring-gray-200",
     dot: "bg-gray-400",
+  },
+  sin_actividad: {
+    label: "Sin ventas",
+    bg: "bg-[#F3F5F7]",
+    text: "text-gray-500",
+    ring: "ring-gray-200",
+    dot: "bg-gray-300",
   },
 }
 
@@ -212,23 +217,8 @@ function Avatar({ nombre }: { nombre: string }) {
     .slice(0, 2)
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("")
-  // Color determinista por hash del nombre
-  const palette = [
-    "from-pink-500 to-rose-500",
-    "from-teal-500 to-cyan-500",
-    "from-violet-500 to-purple-500",
-    "from-amber-500 to-orange-500",
-    "from-emerald-500 to-teal-500",
-    "from-blue-500 to-indigo-500",
-    "from-rose-500 to-pink-500",
-  ]
-  let hash = 0
-  for (const ch of nombre) hash = (hash * 31 + ch.charCodeAt(0)) | 0
-  const grad = palette[Math.abs(hash) % palette.length]
   return (
-    <div
-      className={`flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${grad} text-[11px] font-bold text-white shadow-sm ring-2 ring-white`}
-    >
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F3F5F7] text-[11px] font-semibold text-gray-700 ring-1 ring-[#E7EAF0]">
       {initials || "?"}
     </div>
   )
@@ -825,7 +815,6 @@ export function ClientesDashboard({
         title="Clientes"
         subtitle={`Base de ${kpis.total} clientes · ${kpis.activos} activos`}
         icon={<Users className="size-5" />}
-        gradient="bg-gradient-to-br from-[#4a1a3a] via-[#5a1f47] to-[#3b0f2d]"
         kpis={[
           {
             label: "Total clientes",
