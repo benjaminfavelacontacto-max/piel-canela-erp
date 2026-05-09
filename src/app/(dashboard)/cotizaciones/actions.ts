@@ -23,6 +23,7 @@ export type SaveCotizacionInput = {
   descuento: number
   total: number
   costo_productos: number
+  costo_envio: number
   notas: string | null
   items: SaveItem[]
 }
@@ -30,7 +31,7 @@ export type SaveCotizacionInput = {
 export async function saveCotizacion(input: SaveCotizacionInput) {
   const supabase = createAdminClient()
 
-  // total es GENERATED — no se inserta. Postgres lo calcula desde subtotal + iva − descuento.
+  // total y utilidad_neta son GENERATED — no se insertan. Postgres las calcula.
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .insert({
@@ -43,6 +44,7 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
       iva: input.iva,
       descuento: input.descuento,
       costo_productos: input.costo_productos,
+      costo_envio: input.costo_envio ?? 0,
       estatus: "borrador",
       notas: input.notas,
     })
@@ -107,7 +109,7 @@ export async function marcarVendida(cotizacionId: string) {
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .select(
-      "numero, cliente_id, fecha, moneda, subtotal, iva, descuento, total, costo_productos, notas",
+      "numero, cliente_id, fecha, moneda, subtotal, iva, descuento, total, costo_productos, costo_envio, notas",
     )
     .eq("id", cotizacionId)
     .single()
@@ -126,7 +128,7 @@ export async function marcarVendida(cotizacionId: string) {
     return { ok: false as const, error: itemsErr.message }
   }
 
-  // total / ganancia / saldo_pendiente son GENERATED — Postgres los calcula.
+  // total / ganancia / saldo_pendiente / utilidad_neta son GENERATED — Postgres los calcula.
   const { data: venta, error: ventaErr } = await supabase
     .from("ventas")
     .insert({
@@ -138,6 +140,7 @@ export async function marcarVendida(cotizacionId: string) {
       iva: cot.iva,
       descuento: cot.descuento,
       costo_productos: cot.costo_productos,
+      costo_envio: cot.costo_envio ?? 0,
       notas: cot.notas,
       cotizacion_id: cotizacionId,
     })
@@ -248,7 +251,7 @@ export async function duplicarCotizacion(id: string) {
   const { data: orig, error: fetchErr } = await supabase
     .from("cotizaciones")
     .select(
-      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, notas",
+      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, costo_envio, notas",
     )
     .eq("id", id)
     .single()
@@ -283,6 +286,7 @@ export async function duplicarCotizacion(id: string) {
       iva: orig.iva,
       descuento: orig.descuento,
       costo_productos: orig.costo_productos,
+      costo_envio: orig.costo_envio ?? 0,
       estatus: "borrador",
       notas: orig.notas,
     })
@@ -343,7 +347,7 @@ export async function updateCotizacion(
 ) {
   const supabase = createAdminClient()
 
-  // total es GENERATED — Postgres lo recalcula
+  // total y utilidad_neta son GENERATED — Postgres los recalcula
   const { error: updErr } = await supabase
     .from("cotizaciones")
     .update({
@@ -356,6 +360,7 @@ export async function updateCotizacion(
       iva: input.iva,
       descuento: input.descuento,
       costo_productos: input.costo_productos,
+      costo_envio: input.costo_envio ?? 0,
       notas: input.notas,
     })
     .eq("id", id)

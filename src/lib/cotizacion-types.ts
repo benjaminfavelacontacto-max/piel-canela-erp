@@ -8,6 +8,9 @@ export type Cliente = {
   email: string | null
   direccion: string | null
   ciudad: string | null
+  estado?: string | null
+  rfc?: string | null
+  metodo_pago_pref?: string | null
 }
 
 export type Producto = {
@@ -18,6 +21,7 @@ export type Producto = {
   imagen_url: string | null
   peso: string | null
   precio: number
+  costo: number
 }
 
 export type CotizacionItem = {

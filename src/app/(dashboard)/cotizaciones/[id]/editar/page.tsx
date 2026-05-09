@@ -16,7 +16,7 @@ export default async function EditarCotizacionPage({
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .select(
-      "id, numero, cliente_id, fecha, valida_hasta, iva, notas",
+      "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, costo_envio, notas",
     )
     .eq("id", id)
     .maybeSingle()
@@ -37,7 +37,7 @@ export default async function EditarCotizacionPage({
   const [clientesRes, listaRes, itemsRes] = await Promise.all([
     supabase
       .from("clientes")
-      .select("id, nombre, nombre_negocio, telefono, email, direccion, ciudad")
+      .select("id, nombre, nombre_negocio, telefono, email, direccion, ciudad, estado, rfc, metodo_pago_pref")
       .order("nombre", { ascending: true }),
     supabase
       .from("listas_precios")
@@ -67,7 +67,7 @@ export default async function EditarCotizacionPage({
   const { data: prodRows, error: prodErr } = await supabase
     .from("productos")
     .select(
-      `id, sku, nombre, nombre_display, imagen_url, peso,
+      `id, sku, nombre, nombre_display, imagen_url, peso, costo,
        precios_producto!inner(precio, lista_id)`,
     )
     .eq(
@@ -86,6 +86,7 @@ export default async function EditarCotizacionPage({
       nombre_display: string | null
       imagen_url: string | null
       peso: string | null
+      costo: number | null
       precios_producto: { precio: number }[] | { precio: number } | null
     }
     productos = (prodRows as Row[]).map((r) => {
@@ -101,6 +102,7 @@ export default async function EditarCotizacionPage({
         imagen_url: findImageFor(display, r.imagen_url, imageMap),
         peso: r.peso,
         precio: Number(pp?.precio ?? 0),
+        costo: Number(r.costo ?? 0),
       }
     })
   }
@@ -148,6 +150,9 @@ export default async function EditarCotizacionPage({
     fecha: cot.fecha,
     valida_hasta: cot.valida_hasta,
     ivaActivo: Number(cot.iva ?? 0) > 0,
+    descuentoTipo: "monto",
+    descuentoValor: Number(cot.descuento ?? 0),
+    costoEnvio: Number(cot.costo_envio ?? 0),
     notas: cot.notas,
     items,
   }
