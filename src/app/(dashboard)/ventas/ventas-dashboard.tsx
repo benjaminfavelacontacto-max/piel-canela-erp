@@ -1,16 +1,30 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
   ShoppingBag,
   TrendingUp,
-  Wallet,
-  Percent,
   Users,
-  Repeat,
+  Receipt,
+  ChevronLeft,
+  ChevronRight,
   FileText,
 } from "lucide-react"
+import {
+  Bar,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Legend,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 export type Estatus = "pendiente" | "pagada_parcial" | "pagada_total" | "cancelada"
 
@@ -21,13 +35,10 @@ export type VentaRow = {
   cliente_id: string | null
   fecha: string
   total: number | null
-  costo_productos: number | null
-  costo_envio: number | null
   ganancia: number | null
   cantidad_pagada: number | null
   saldo_pendiente: number | null
   estatus: Estatus
-  notas: string | null
   clientes: {
     id: string
     nombre: string
@@ -35,36 +46,45 @@ export type VentaRow = {
   } | null
 }
 
-export type SocioRow = {
+export type VentaSocioRow = {
   venta_id: string
   socio_id: string
   monto: number
   pagado: boolean
 }
 
-export type Periodicidad = {
-  cliente_id: string
-  dias_promedio: number | null
-}
-
-export type RecuperacionSocio = {
+export type SocioInfo = {
   id: string
   nombre: string
-  asignado: number
-  cobrado: number
-  pendiente: number
+  porcentaje: number
 }
+
+const PAGE_SIZE = 15
+
+const SOCIO_COLORS: Record<string, string> = {
+  Sandra: "#db2777",
+  Benjamin: "#1b4332",
+}
+const FALLBACK_COLORS = ["#2563eb", "#ea580c", "#0891b2", "#7c3aed"]
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
+  maximumFractionDigits: 0,
 })
-
+const mxn2 = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
   year: "numeric",
 })
+const monthShort = new Intl.DateTimeFormat("es-MX", { month: "short" })
+const monthLong = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" })
 
 const estatusBadge: Record<Estatus, string> = {
   pagada_total: "bg-emerald-100 text-emerald-700",
@@ -72,7 +92,6 @@ const estatusBadge: Record<Estatus, string> = {
   pendiente: "bg-red-100 text-red-700",
   cancelada: "bg-gray-100 text-gray-600",
 }
-
 const estatusLabel: Record<Estatus, string> = {
   pagada_total: "Pagada",
   pagada_parcial: "Parcial",
@@ -80,160 +99,141 @@ const estatusLabel: Record<Estatus, string> = {
   cancelada: "Cancelada",
 }
 
-type EstatusFilter = "todos" | Estatus
-type ClienteFilter = "todos" | string
-
-function formatDias(d: number | null): string {
-  if (d == null) return "Una sola compra"
-  return `Cada ${d} días`
+function ymKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
 }
 
-function formatMeses(d: number | null): string {
-  if (d == null) return "Una sola compra"
-  return `Cada ${(d / 30.4).toFixed(1)} meses`
+function buildLast12Months(today: Date) {
+  const out: { key: string; date: Date; label: string }[] = []
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
+    const label = monthShort.format(d).replace(".", "")
+    out.push({ key: ymKey(d), date: d, label: `${label[0].toUpperCase()}${label.slice(1)}` })
+  }
+  return out
 }
 
 export function VentasDashboard({
   ventas,
+  venta_socios,
   socios,
-  recuperacion,
-  periodicidad,
   error,
 }: {
   ventas: VentaRow[]
-  socios: SocioRow[]
-  recuperacion: RecuperacionSocio[]
-  periodicidad: Periodicidad[]
+  venta_socios: VentaSocioRow[]
+  socios: SocioInfo[]
   error: string | null
 }) {
-  const [estatusFilter, setEstatusFilter] = useState<EstatusFilter>("todos")
-  const [clienteFilter, setClienteFilter] = useState<ClienteFilter>("todos")
+  const [from, setFrom] = useState<string>("")
+  const [to, setTo] = useState<string>("")
+  const [clienteFilter, setClienteFilter] = useState<string>("todos")
+  const [estatusFilter, setEstatusFilter] = useState<"todos" | Estatus>("todos")
+  const [page, setPage] = useState(1)
 
-  const stats = useMemo(() => {
-    const total = ventas.reduce((s, v) => s + Number(v.total ?? 0), 0)
-    const ganancia = ventas.reduce((s, v) => s + Number(v.ganancia ?? 0), 0)
-    const porCobrar = ventas.reduce((s, v) => s + Number(v.saldo_pendiente ?? 0), 0)
-    const margen = total > 0 ? (ganancia / total) * 100 : 0
-    return { total, ganancia, porCobrar, margen }
-  }, [ventas])
+  useEffect(() => {
+    setPage(1)
+  }, [from, to, clienteFilter, estatusFilter])
 
-  const socioInfo = useMemo(() => {
-    const m = new Map<string, { nombre: string; initial: string }>()
-    for (const r of recuperacion) {
-      m.set(r.id, {
-        nombre: r.nombre,
-        initial: (r.nombre[0] ?? "?").toUpperCase(),
-      })
-    }
-    return m
-  }, [recuperacion])
-
-  const sociosByVenta = useMemo(() => {
-    const m = new Map<string, SocioRow[]>()
-    for (const s of socios) {
-      const arr = m.get(s.venta_id) ?? []
-      arr.push(s)
-      m.set(s.venta_id, arr)
-    }
-    return m
-  }, [socios])
-
-  const clientesRanking = useMemo(() => {
-    type Group = {
-      id: string | null
-      nombre: string
-      total: number
-      ordenes: number
-      ultimaCompra: string
-      fechas: string[]
-    }
-    const map = new Map<string, Group>()
-    for (const v of ventas) {
-      if (v.estatus === "cancelada") continue
-      const key = v.cliente_id ?? "__sin__"
-      const nombre =
-        v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente"
-      let g = map.get(key)
-      if (!g) {
-        g = {
-          id: v.cliente_id,
-          nombre,
-          total: 0,
-          ordenes: 0,
-          ultimaCompra: v.fecha,
-          fechas: [],
-        }
-        map.set(key, g)
-      }
-      g.total += Number(v.total ?? 0)
-      g.ordenes += 1
-      g.fechas.push(v.fecha)
-      if (v.fecha > g.ultimaCompra) g.ultimaCompra = v.fecha
-    }
-    return Array.from(map.values())
-      .map((g) => ({
-        ...g,
-        ticketPromedio: g.ordenes > 0 ? g.total / g.ordenes : 0,
-      }))
-      .sort((a, b) => b.total - a.total)
-  }, [ventas])
-
-  const recurrencia = useMemo(() => {
-    const repeat = clientesRanking.filter((c) => c.ordenes > 1)
-    const totalClients = clientesRanking.length
-    const repeatRate =
-      totalClients > 0 ? (repeat.length / totalClients) * 100 : 0
-
-    const gaps: number[] = []
-    for (const c of repeat) {
-      const sorted = [...c.fechas].sort()
-      for (let i = 1; i < sorted.length; i++) {
-        const a = new Date(sorted[i - 1]).getTime()
-        const b = new Date(sorted[i]).getTime()
-        gaps.push((b - a) / (1000 * 60 * 60 * 24))
-      }
-    }
-    const avgDays =
-      gaps.length > 0 ? gaps.reduce((s, x) => s + x, 0) / gaps.length : 0
-
-    return {
-      repeatCount: repeat.length,
-      totalClients,
-      repeatRate,
-      avgDays: Math.round(avgDays),
-    }
-  }, [clientesRanking])
-
-  const periodicidadByCliente = useMemo(
-    () => new Map(periodicidad.map((p) => [p.cliente_id, p.dias_promedio])),
-    [periodicidad],
+  const sandraId = useMemo(
+    () => socios.find((s) => /sandra/i.test(s.nombre))?.id,
+    [socios],
+  )
+  const benjaminId = useMemo(
+    () => socios.find((s) => /benjamin/i.test(s.nombre))?.id,
+    [socios],
   )
 
-  const clienteOptions = useMemo(() => {
-    const map = new Map<string, string>()
+  // ─── KPIs (global) ────────────────────────────────────────────────
+  const kpis = useMemo(() => {
+    const totalVentas = ventas.reduce((s, v) => s + Number(v.total ?? 0), 0)
+    const ganancia = ventas.reduce((s, v) => s + Number(v.ganancia ?? 0), 0)
+    const ticket = ventas.length ? totalVentas / ventas.length : 0
+    const margen = totalVentas > 0 ? (ganancia / totalVentas) * 100 : 0
+
+    const tally = (id: string | undefined) =>
+      id
+        ? venta_socios
+            .filter((vs) => vs.socio_id === id)
+            .reduce((s, x) => s + Number(x.monto ?? 0), 0)
+        : 0
+    return {
+      totalVentas,
+      ganancia,
+      ticket,
+      margen,
+      sandra: tally(sandraId),
+      benjamin: tally(benjaminId),
+    }
+  }, [ventas, venta_socios, sandraId, benjaminId])
+
+  // ─── Last 12 months series ────────────────────────────────────────
+  const monthly = useMemo(() => {
+    const today = new Date()
+    const buckets = buildLast12Months(today)
+    const map = new Map(buckets.map((b) => [b.key, { ...b, total: 0, ganancia: 0, count: 0 }]))
     for (const v of ventas) {
-      if (v.cliente_id && !map.has(v.cliente_id)) {
-        map.set(
+      if (v.estatus === "cancelada") continue
+      const d = new Date(v.fecha)
+      if (Number.isNaN(d.getTime())) continue
+      const key = ymKey(d)
+      const b = map.get(key)
+      if (!b) continue
+      b.total += Number(v.total ?? 0)
+      b.ganancia += Number(v.ganancia ?? 0)
+      b.count += 1
+    }
+    return Array.from(map.values())
+  }, [ventas])
+
+  // ─── Socios stats ─────────────────────────────────────────────────
+  const sociosStats = useMemo(() => {
+    const ventaById = new Map(ventas.map((v) => [v.id, v]))
+    return socios.map((socio) => {
+      const items = venta_socios.filter((vs) => vs.socio_id === socio.id)
+      const vendido = items.reduce((s, x) => s + Number(x.monto ?? 0), 0)
+      const cobrado = items
+        .filter((x) => x.pagado)
+        .reduce((s, x) => s + Number(x.monto ?? 0), 0)
+      let ganancia = 0
+      for (const it of items) {
+        const v = ventaById.get(it.venta_id)
+        if (!v || !v.total || Number(v.total) === 0) continue
+        const share = Number(it.monto ?? 0) / Number(v.total)
+        ganancia += share * Number(v.ganancia ?? 0)
+      }
+      return { socio, vendido, cobrado, ganancia }
+    })
+  }, [socios, venta_socios, ventas])
+
+  const totalAsignado = sociosStats.reduce((s, x) => s + x.vendido, 0)
+
+  // ─── Cliente options for the filter ───────────────────────────────
+  const clienteOptions = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const v of ventas) {
+      if (v.cliente_id && !m.has(v.cliente_id)) {
+        m.set(
           v.cliente_id,
           v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? v.cliente_id,
         )
       }
     }
-    return Array.from(map.entries()).sort((a, b) =>
-      a[1].localeCompare(b[1], "es"),
-    )
+    return Array.from(m.entries()).sort((a, b) => a[1].localeCompare(b[1], "es"))
   }, [ventas])
 
+  // ─── Filtered ventas for the table ────────────────────────────────
   const filtered = useMemo(() => {
     let list = ventas
-    if (estatusFilter !== "todos") {
-      list = list.filter((v) => v.estatus === estatusFilter)
-    }
-    if (clienteFilter !== "todos") {
-      list = list.filter((v) => v.cliente_id === clienteFilter)
-    }
+    if (from) list = list.filter((v) => v.fecha >= from)
+    if (to) list = list.filter((v) => v.fecha <= to)
+    if (clienteFilter !== "todos") list = list.filter((v) => v.cliente_id === clienteFilter)
+    if (estatusFilter !== "todos") list = list.filter((v) => v.estatus === estatusFilter)
     return list
-  }, [ventas, estatusFilter, clienteFilter])
+  }, [ventas, from, to, clienteFilter, estatusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   return (
     <div className="p-8 space-y-6">
@@ -261,235 +261,291 @@ export function VentasDashboard({
         </div>
       )}
 
+      {/* ─── KPI row ─── */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card
+        <Kpi
           icon={ShoppingBag}
-          label="Total vendido"
-          value={mxn.format(stats.total)}
+          label="Total Ventas"
+          value={mxn.format(kpis.totalVentas)}
+          subtitle={`${ventas.length} órdenes`}
           tone="text-gray-900"
         />
-        <Card
+        <Kpi
           icon={TrendingUp}
-          label="Ganancia total"
-          value={mxn.format(stats.ganancia)}
+          label="Ganancia Neta"
+          value={mxn.format(kpis.ganancia)}
+          subtitle={`${kpis.margen.toFixed(1)}% margen`}
           tone="text-emerald-700"
         />
-        <Card
-          icon={Wallet}
-          label="Por cobrar"
-          value={mxn.format(stats.porCobrar)}
-          tone={stats.porCobrar > 0 ? "text-red-700" : "text-gray-900"}
+        <Kpi
+          icon={Users}
+          label="Sandra / Benjamin"
+          value={`${mxn.format(kpis.sandra)} / ${mxn.format(kpis.benjamin)}`}
+          subtitle="Asignado en venta_socios"
+          tone="text-pink-700"
         />
-        <Card
-          icon={Percent}
-          label="Margen promedio"
-          value={`${stats.margen.toFixed(1)}%`}
+        <Kpi
+          icon={Receipt}
+          label="Ticket promedio"
+          value={mxn.format(kpis.ticket)}
+          subtitle={`${ventas.length} ventas`}
           tone="text-blue-700"
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {recuperacion.length === 0 ? (
-          <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500">
-            No hay socios activos.
-          </div>
-        ) : (
-          recuperacion.map((s) => (
-            <InversionistaCard
-              key={s.id}
-              nombre={s.nombre}
-              stats={{
-                asignado: s.asignado,
-                cobrado: s.cobrado,
-                pendiente: s.pendiente,
-              }}
-            />
-          ))
-        )}
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-            <Users className="size-4 text-gray-500" />
+      {/* ─── Chart + Socios panel ─── */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
+          <header className="mb-3 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-              Top clientes
+              Ventas mensuales (últimos 12 meses)
             </h2>
+            <span className="text-xs text-gray-500">Total · Ganancia</span>
           </header>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <Th>Cliente</Th>
-                  <Th align="right">Total</Th>
-                  <Th align="right">Órdenes</Th>
-                  <Th align="right">Ticket prom.</Th>
-                  <Th align="right">Última compra</Th>
-                  <Th align="right">Periodicidad (Días)</Th>
-                  <Th align="right">Periodicidad (Mensual)</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {clientesRanking.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-5 py-8 text-center text-sm text-gray-500"
-                    >
-                      Sin datos.
-                    </td>
-                  </tr>
-                ) : (
-                  clientesRanking.slice(0, 10).map((c) => {
-                    const dias = c.id
-                      ? (periodicidadByCliente.get(c.id) ?? null)
-                      : null
-                    return (
-                      <tr key={c.id ?? "__sin__"} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 text-gray-900">
-                          {c.id ? (
-                            <Link
-                              href={`/clientes/${c.id}`}
-                              className="hover:text-pink-700 hover:underline"
-                            >
-                              {c.nombre}
-                            </Link>
-                          ) : (
-                            c.nombre
-                          )}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                          {mxn.format(c.total)}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-                          {c.ordenes}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-                          {mxn.format(c.ticketPromedio)}
-                        </td>
-                        <td className="px-5 py-3 text-right text-xs text-gray-500">
-                          {fechaFmt.format(new Date(c.ultimaCompra))}
-                        </td>
-                        <td
-                          className={`px-5 py-3 text-right tabular-nums ${
-                            dias == null ? "text-gray-400" : "text-gray-700"
-                          }`}
-                        >
-                          {formatDias(dias)}
-                        </td>
-                        <td
-                          className={`px-5 py-3 text-right tabular-nums ${
-                            dias == null ? "text-gray-400" : "text-gray-700"
-                          }`}
-                        >
-                          {formatMeses(dias)}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart
+              data={monthly}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                axisLine={{ stroke: "#e5e7eb" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                axisLine={{ stroke: "#e5e7eb" }}
+                tickLine={false}
+                tickFormatter={(v: number) =>
+                  v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`
+                }
+                width={60}
+              />
+              <Tooltip
+                cursor={{ fill: "#f9fafb" }}
+                contentStyle={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                formatter={(v: number) => mxn2.format(v)}
+                labelFormatter={(l, p) => {
+                  const item = p?.[0]?.payload
+                  return item?.date ? monthLong.format(item.date) : l
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar
+                dataKey="total"
+                name="Total vendido"
+                fill="#1b4332"
+                radius={[4, 4, 0, 0]}
+              />
+              <Line
+                type="monotone"
+                dataKey="ganancia"
+                name="Ganancia"
+                stroke="#db2777"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#db2777" }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-2">
-            <Repeat className="size-4 text-gray-500" />
+        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+          <header className="flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-              Recurrencia
+              Socios
             </h2>
+            <span className="text-xs text-gray-500">{socios.length} activos</span>
+          </header>
+
+          <div className="space-y-3">
+            {sociosStats.map(({ socio, vendido, cobrado, ganancia }, i) => {
+              const pct =
+                totalAsignado > 0 ? (vendido / totalAsignado) * 100 : 0
+              const color =
+                SOCIO_COLORS[socio.nombre] ??
+                FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+              return (
+                <div
+                  key={socio.id}
+                  className="rounded-lg border border-gray-100 p-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ background: color }}
+                      />
+                      <span className="text-sm font-semibold text-gray-900">
+                        {socio.nombre}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {socio.porcentaje}% participación
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
+                    <Mini label="Vendido" value={mxn.format(vendido)} />
+                    <Mini
+                      label="Ganancia"
+                      value={mxn.format(ganancia)}
+                      valueClass="text-emerald-700"
+                    />
+                    <Mini
+                      label="% del total"
+                      value={`${pct.toFixed(1)}%`}
+                    />
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{
+                        width: `${pct}%`,
+                        background: color,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 text-[10px] text-gray-500">
+                    Cobrado: {mxn.format(cobrado)} ·{" "}
+                    {vendido > 0
+                      ? `${((cobrado / vendido) * 100).toFixed(0)}%`
+                      : "—"}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-          <dl className="mt-3 space-y-3 text-sm">
-            <DefRow
-              label="Clientes recurrentes"
-              value={`${recurrencia.repeatCount} de ${recurrencia.totalClients}`}
-            />
-            <DefRow
-              label="Tasa de recurrencia"
-              value={`${recurrencia.repeatRate.toFixed(1)}%`}
-            />
-            <DefRow
-              label="Días entre compras"
-              value={
-                recurrencia.repeatCount > 0
-                  ? `${recurrencia.avgDays} días`
-                  : "—"
-              }
-            />
-          </dl>
+
+          {totalAsignado > 0 && (
+            <div className="border-t border-gray-100 pt-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-700 mb-2">
+                Distribución
+              </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={sociosStats.map((s) => ({
+                      name: s.socio.nombre,
+                      value: s.vendido,
+                    }))}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={45}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    stroke="#ffffff"
+                  >
+                    {sociosStats.map((s, i) => (
+                      <Cell
+                        key={s.socio.id}
+                        fill={
+                          SOCIO_COLORS[s.socio.nombre] ??
+                          FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number) => mxn2.format(v)}
+                    contentStyle={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-              Tabla de ventas
-            </h2>
-            <span className="text-xs text-gray-500">
-              {filtered.length}{" "}
-              {filtered.length === 1 ? "registro" : "registros"}
-              {(estatusFilter !== "todos" || clienteFilter !== "todos") &&
-                ` (de ${ventas.length})`}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={estatusFilter}
-              onChange={(e) =>
-                setEstatusFilter(e.target.value as EstatusFilter)
-              }
+      {/* ─── Filters ─── */}
+      <section className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <FilterField label="Desde">
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
               className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
-            >
-              <option value="todos">Todos los estatus</option>
-              <option value="pagada_total">Pagadas</option>
-              <option value="pagada_parcial">Parciales</option>
-              <option value="pendiente">Pendientes</option>
-            </select>
+            />
+          </FilterField>
+          <FilterField label="Hasta">
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+            />
+          </FilterField>
+          <FilterField label="Cliente">
             <select
               value={clienteFilter}
-              onChange={(e) =>
-                setClienteFilter(e.target.value as ClienteFilter)
-              }
+              onChange={(e) => setClienteFilter(e.target.value)}
               className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
             >
-              <option value="todos">Todos los clientes</option>
+              <option value="todos">Todos</option>
               {clienteOptions.map(([id, nombre]) => (
                 <option key={id} value={id}>
                   {nombre}
                 </option>
               ))}
             </select>
+          </FilterField>
+          <FilterField label="Estatus">
+            <select
+              value={estatusFilter}
+              onChange={(e) =>
+                setEstatusFilter(e.target.value as "todos" | Estatus)
+              }
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+            >
+              <option value="todos">Todos</option>
+              <option value="pagada_total">Pagadas</option>
+              <option value="pagada_parcial">Parciales</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="cancelada">Canceladas</option>
+            </select>
+          </FilterField>
+          <div className="ml-auto text-xs text-gray-500">
+            {filtered.length} / {ventas.length} registros
           </div>
-        </header>
+        </div>
+      </section>
+
+      {/* ─── Table ─── */}
+      <section className="rounded-xl border border-gray-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <Th>Orden</Th>
-                <Th>Fecha</Th>
+                <Th>Número</Th>
                 <Th>Cliente</Th>
+                <Th>Fecha</Th>
                 <Th align="right">Total</Th>
                 <Th align="right">Ganancia</Th>
                 <Th>Estatus</Th>
-                <Th align="right">Saldo</Th>
-                <Th>Socios</Th>
-                <Th align="right">Cot.</Th>
+                <Th align="right">Cotización</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.length === 0 ? (
+              {pageRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={7}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
                   </td>
                 </tr>
               ) : (
-                filtered.map((v) => (
+                pageRows.map((v) => (
                   <tr key={v.id} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-mono text-xs">
                       <Link
@@ -499,26 +555,17 @@ export function VentasDashboard({
                         {v.numero}
                       </Link>
                     </td>
+                    <td className="px-5 py-3 text-gray-900">
+                      {v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "—"}
+                    </td>
                     <td className="px-5 py-3 text-gray-600">
                       {fechaFmt.format(new Date(v.fecha))}
                     </td>
-                    <td className="px-5 py-3 text-gray-900">
-                      {v.clientes?.id ? (
-                        <Link
-                          href={`/clientes/${v.clientes.id}`}
-                          className="hover:text-pink-700 hover:underline"
-                        >
-                          {v.clientes.nombre_negocio ?? v.clientes.nombre}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
                     <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                      {mxn.format(Number(v.total ?? 0))}
+                      {mxn2.format(Number(v.total ?? 0))}
                     </td>
                     <td className="px-5 py-3 text-right tabular-nums text-emerald-700">
-                      {mxn.format(Number(v.ganancia ?? 0))}
+                      {mxn2.format(Number(v.ganancia ?? 0))}
                     </td>
                     <td className="px-5 py-3">
                       <span
@@ -526,21 +573,6 @@ export function VentasDashboard({
                       >
                         {estatusLabel[v.estatus]}
                       </span>
-                    </td>
-                    <td
-                      className={`px-5 py-3 text-right tabular-nums ${
-                        Number(v.saldo_pendiente ?? 0) > 0
-                          ? "text-red-700 font-medium"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {mxn.format(Number(v.saldo_pendiente ?? 0))}
-                    </td>
-                    <td className="px-5 py-3">
-                      <SociosCell
-                        items={sociosByVenta.get(v.id) ?? []}
-                        info={socioInfo}
-                      />
                     </td>
                     <td className="px-5 py-3 text-right">
                       {v.cotizacion_id ? (
@@ -561,37 +593,56 @@ export function VentasDashboard({
             </tbody>
           </table>
         </div>
+
+        {filtered.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
+            <span>
+              Mostrando {(safePage - 1) * PAGE_SIZE + 1}–
+              {Math.min(safePage * PAGE_SIZE, filtered.length)} de{" "}
+              {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, safePage - 1))}
+                disabled={safePage === 1}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="size-3" />
+                Anterior
+              </button>
+              <span className="px-2">
+                Página <strong className="text-gray-900">{safePage}</strong> de{" "}
+                {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage === totalPages}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Siguiente
+                <ChevronRight className="size-3" />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   )
 }
 
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode
-  align?: "left" | "right" | "center"
-}) {
-  return (
-    <th
-      className="px-5 py-2 text-xs font-medium uppercase tracking-wide text-gray-500"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
-  )
-}
-
-function Card({
+function Kpi({
   icon: Icon,
   label,
   value,
+  subtitle,
   tone,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
+  subtitle?: string
   tone: string
 }) {
   return (
@@ -605,126 +656,66 @@ function Card({
       <div className={`mt-2 text-2xl font-semibold tabular-nums ${tone}`}>
         {value}
       </div>
+      {subtitle && (
+        <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
+      )}
     </div>
   )
 }
 
-function InversionistaCard({
-  nombre,
-  stats,
+function Th({
+  children,
+  align = "left",
 }: {
-  nombre: string
-  stats: { asignado: number; cobrado: number; pendiente: number }
+  children: React.ReactNode
+  align?: "left" | "right" | "center"
 }) {
-  const pct = stats.asignado > 0 ? (stats.cobrado / stats.asignado) * 100 : 0
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">{nombre}</h3>
-        <span className="text-xs text-gray-500">{pct.toFixed(0)}% cobrado</span>
-      </div>
-      <div className="grid grid-cols-3 gap-3 text-center">
-        <SubStat
-          label="Asignado"
-          value={mxn.format(stats.asignado)}
-          containerClass="border-gray-100 bg-gray-50"
-          labelClass="text-gray-500"
-          valueClass="text-gray-900"
-        />
-        <SubStat
-          label="Cobrado"
-          value={mxn.format(stats.cobrado)}
-          containerClass="border-emerald-100 bg-emerald-50"
-          labelClass="text-emerald-700"
-          valueClass="text-emerald-800"
-        />
-        <SubStat
-          label="Pendiente"
-          value={mxn.format(stats.pendiente)}
-          containerClass="border-amber-100 bg-amber-50"
-          labelClass="text-amber-700"
-          valueClass="text-amber-800"
-        />
-      </div>
-    </div>
+    <th
+      className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-gray-500"
+      style={{ textAlign: align }}
+    >
+      {children}
+    </th>
   )
 }
 
-function SubStat({
+function FilterField({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-xs uppercase tracking-wide text-gray-500">
+        {label}
+      </span>
+      {children}
+    </label>
+  )
+}
+
+function Mini({
   label,
   value,
-  containerClass,
-  labelClass,
   valueClass,
 }: {
   label: string
   value: string
-  containerClass: string
-  labelClass: string
-  valueClass: string
+  valueClass?: string
 }) {
   return (
-    <div className={`rounded-lg border p-3 ${containerClass}`}>
-      <div className={`text-xs uppercase tracking-wide ${labelClass}`}>
+    <div className="rounded-md bg-gray-50 px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-wide text-gray-500">
         {label}
       </div>
       <div
-        className={`mt-1 text-base font-semibold tabular-nums ${valueClass}`}
+        className={`mt-0.5 text-xs font-semibold tabular-nums ${valueClass ?? "text-gray-900"}`}
       >
         {value}
       </div>
-    </div>
-  )
-}
-
-function SociosCell({
-  items,
-  info,
-}: {
-  items: SocioRow[]
-  info: Map<string, { nombre: string; initial: string }>
-}) {
-  if (items.length === 0) {
-    return <span className="text-xs text-gray-400">—</span>
-  }
-  const sorted = [...items].sort((a, b) => {
-    const na = info.get(a.socio_id)?.nombre ?? a.socio_id
-    const nb = info.get(b.socio_id)?.nombre ?? b.socio_id
-    return na.localeCompare(nb, "es")
-  })
-  const cobrados = sorted.filter((x) => x.pagado)
-  const label =
-    cobrados.length > 0
-      ? cobrados
-          .map((x) => info.get(x.socio_id)?.initial ?? "?")
-          .join("+")
-      : "—"
-  const tooltip = sorted
-    .map((x) => {
-      const meta = info.get(x.socio_id)
-      const status = x.pagado ? "cobrado" : "pendiente"
-      return `${meta?.nombre ?? x.socio_id}: ${mxn.format(Number(x.monto ?? 0))} (${status})`
-    })
-    .join(" · ")
-  return (
-    <span
-      title={tooltip}
-      className={`inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-xs ${
-        cobrados.length > 0
-          ? "border-emerald-200 bg-emerald-50 text-emerald-800 cursor-help"
-          : "border-amber-200 bg-amber-50 text-amber-800 cursor-help"
-      }`}
-    >
-      {label}
-    </span>
-  )
-}
-
-function DefRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-gray-600">{label}</dt>
-      <dd className="font-semibold tabular-nums text-gray-900">{value}</dd>
     </div>
   )
 }
