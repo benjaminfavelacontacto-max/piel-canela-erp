@@ -15,9 +15,18 @@ import {
   type ColumnDef,
   type ExpandedState,
   type HeaderContext,
+  type RowData,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table"
+
+// Module augmentation: agregamos `align` al meta de cada columna
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    align?: "left" | "right" | "center"
+  }
+}
 import {
   ArrowDown,
   ArrowUp,
@@ -621,6 +630,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "ventas_count",
+        meta: { align: "right" },
         header: (ctx) => <HeaderCell label="# Ventas" ctx={ctx} align="right" />,
         cell: ({ getValue }) => {
           const v = Number(getValue() ?? 0)
@@ -644,6 +654,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "cotizaciones_count",
+        meta: { align: "right" },
         header: (ctx) => <HeaderCell label="# Cotiz." ctx={ctx} align="right" />,
         cell: ({ getValue }) => {
           const v = Number(getValue() ?? 0)
@@ -657,6 +668,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "ltv",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="LTV (Total)" ctx={ctx} align="right" />
         ),
@@ -674,6 +686,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "ticket_promedio",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="Ticket prom." ctx={ctx} align="right" />
         ),
@@ -691,6 +704,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "utilidad_total",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="Utilidad" ctx={ctx} align="right" />
         ),
@@ -708,6 +722,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "saldo_total",
+        meta: { align: "right" },
         header: (ctx) => <HeaderCell label="Saldo" ctx={ctx} align="right" />,
         cell: ({ getValue }) => {
           const v = Number(getValue() ?? 0)
@@ -723,6 +738,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "ultimo_pedido",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="Última compra" ctx={ctx} align="right" />
         ),
@@ -753,6 +769,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "primer_pedido",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="Primera compra" ctx={ctx} align="right" />
         ),
@@ -770,6 +787,7 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "frecuencia_dias",
+        meta: { align: "right" },
         header: (ctx) => (
           <HeaderCell label="Frec. (días)" ctx={ctx} align="right" />
         ),
@@ -1187,11 +1205,18 @@ export function ClientesDashboard({
                 <tr key={hg.id} className="border-b border-gray-200">
                   {hg.headers.map((h, idx) => {
                     const isFirst = idx === 0
+                    const align = h.column.columnDef.meta?.align
+                    const alignClass =
+                      align === "right"
+                        ? "text-right"
+                        : align === "center"
+                          ? "text-center"
+                          : "text-left"
                     return (
                       <th
                         key={h.id}
                         style={{ width: h.getSize() }}
-                        className={`relative h-10 px-4 text-left font-medium ${isFirst ? "sticky left-0 z-20 bg-gray-50/95" : ""}`}
+                        className={`relative h-10 px-4 font-medium ${alignClass} ${isFirst ? "sticky left-0 z-20 bg-gray-50/95" : ""}`}
                       >
                         {h.isPlaceholder
                           ? null
@@ -1221,11 +1246,18 @@ export function ClientesDashboard({
                     >
                       {row.getVisibleCells().map((cell, idx) => {
                         const isFirst = idx === 0
+                        const align = cell.column.columnDef.meta?.align
+                        const alignClass =
+                          align === "right"
+                            ? "text-right"
+                            : align === "center"
+                              ? "text-center"
+                              : "text-left"
                         return (
                           <td
                             key={cell.id}
                             style={{ width: cell.column.getSize() }}
-                            className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F9FAFB]/60" : ""}`}
+                            className={`px-4 py-3 align-middle ${alignClass} ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F9FAFB]/60" : ""}`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
