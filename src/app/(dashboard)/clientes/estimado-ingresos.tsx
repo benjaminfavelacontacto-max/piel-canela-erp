@@ -1,10 +1,19 @@
 "use client"
 
 import { useMemo } from "react"
-import { Brain, Calendar, Sparkles, Target, TrendingUp, Zap } from "lucide-react"
+import {
+  Brain,
+  Calendar,
+  Sparkles,
+  Sun,
+  Target,
+  TrendingUp,
+  Zap,
+} from "lucide-react"
 import {
   Bar,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Legend,
   Line,
@@ -130,6 +139,52 @@ export function EstimadoIngresos({
     return Array.from(map.values()).sort((a, b) => a.mes.localeCompare(b.mes))
   }, [ventas])
 
+  // ─── Índices estacionales reales por mes-del-año (1..12) ─────────
+  // Si no hay datos históricos de un mes, fallback:
+  //   Jun-Ago = 1.4 (verano = bronceado)
+  //   Dic-Ene = 1.2 (fin de año)
+  //   Resto   = 0.9 (temporada normal)
+  const indiceEstacional = useMemo(() => {
+    const porMes: Record<number, { total: number; count: number }> = {}
+    for (const m of historico) {
+      const moy = parseInt(m.mes.slice(5, 7), 10)
+      porMes[moy] = porMes[moy] ?? { total: 0, count: 0 }
+      porMes[moy].total += m.real
+      porMes[moy].count += 1
+    }
+    const totalSum = historico.reduce((s, m) => s + m.real, 0)
+    const promedioGlobal =
+      historico.length > 0 ? totalSum / historico.length : 0
+
+    const idx: Record<number, number> = {}
+    for (let m = 1; m <= 12; m++) {
+      if (porMes[m] && promedioGlobal > 0) {
+        const avgMes = porMes[m].total / porMes[m].count
+        idx[m] = avgMes / promedioGlobal
+      } else {
+        // Defaults conservadores si no hay datos
+        idx[m] = m >= 6 && m <= 8 ? 1.4 : m === 12 || m === 1 ? 1.2 : 0.9
+      }
+    }
+    return idx
+  }, [historico])
+
+  // ─── Promedios mensuales históricos por mes-del-año (para insights) ─
+  const promedioPorMes = useMemo(() => {
+    const porMes: Record<number, { total: number; count: number }> = {}
+    for (const m of historico) {
+      const moy = parseInt(m.mes.slice(5, 7), 10)
+      porMes[moy] = porMes[moy] ?? { total: 0, count: 0 }
+      porMes[moy].total += m.real
+      porMes[moy].count += 1
+    }
+    const out: Record<number, number> = {}
+    for (let m = 1; m <= 12; m++) {
+      out[m] = porMes[m] ? porMes[m].total / porMes[m].count : 0
+    }
+    return out
+  }, [historico])
+
   // ─── Promedios reales + estimación basada en últimos 3 meses ─────
   const insights = useMemo(() => {
     const last3 = historico.slice(-3)
@@ -160,45 +215,98 @@ export function EstimadoIngresos({
     }
   }, [historico])
 
-  // ─── Proyección 3 meses futuros ──────────────────────────────────
+  // ─── Proyección 6 meses futuros con índice estacional ────────────
+  // estimado = promBase × indiceEstacional[mes] × factorConfianza(i)
+  // factorConfianza: 0.95 (mes 1) → 0.70 (mes 6+) — más incertidumbre futuro
   const proyecciones = useMemo(() => {
     if (historico.length === 0) return []
     const ultimoMes = historico[historico.length - 1].mes
-    return [1, 2, 3].map((i) => {
+    const promBase = insights.promMes3 // promedio últimos 3 meses (real)
+    const promGanBase = insights.promGanancia3
+    return [1, 2, 3, 4, 5, 6].map((i) => {
       const fecha = new Date(`${ultimoMes}-01T00:00:00`)
       fecha.setMonth(fecha.getMonth() + i)
+      const monthOfYear = fecha.getMonth() + 1
       const mesStr = fecha.toISOString().slice(0, 7)
-      // +2% mensual optimista compuesto
-      const factor = 1 + i * 0.02
+      const factorEstacional = indiceEstacional[monthOfYear] ?? 1
+      const factorConfianza = Math.max(0.7, 1 - i * 0.05)
       return {
         mes: mesStr,
-        estimado: Math.round(insights.estimadoMesProx * factor),
-        ganancia: Math.round(insights.promGanancia3 * factor),
+        estimado: Math.round(promBase * factorEstacional * factorConfianza),
+        ganancia: Math.round(promGanBase * factorEstacional * factorConfianza),
+        factorEstacional,
+        esTemporadaAlta: factorEstacional > 1.2,
+        monthOfYear,
       }
     })
-  }, [historico, insights])
+  }, [historico, insights, indiceEstacional])
+
+  // ─── Insights estacionales para banners y KPIs ──────────────────
+  const seasonalInsights = useMemo(() => {
+    const proxFecha = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+    const proxMonthOfYear = proxFecha.getMonth() + 1
+    const factorProx = indiceEstacional[proxMonthOfYear] ?? 1
+    const proxNombre = proxFecha.toLocaleDateString("es-MX", { month: "long" })
+    const proxNombreCap =
+      proxNombre.charAt(0).toUpperCase() + proxNombre.slice(1)
+
+    // Detectar próxima temporada alta dentro de los próximos 3 meses
+    let proxTempAlta: { mesNombre: string; factor: number; offset: number } | null = null
+    for (let i = 1; i <= 3; i++) {
+      const f = new Date(today.getFullYear(), today.getMonth() + i, 1)
+      const moy = f.getMonth() + 1
+      const factor = indiceEstacional[moy] ?? 1
+      if (factor > 1.2) {
+        proxTempAlta = {
+          mesNombre: f.toLocaleDateString("es-MX", { month: "long" }),
+          factor,
+          offset: i,
+        }
+        break
+      }
+    }
+
+    // Junio histórico (verano top)
+    const junioPromedio = Math.round(promedioPorMes[6] ?? 0)
+
+    return {
+      proxNombre: proxNombreCap,
+      factorProx,
+      proximaTemporadaAlta: factorProx > 1.2,
+      proxTempAlta,
+      junioPromedio,
+    }
+  }, [today, indiceEstacional, promedioPorMes])
 
   // ─── Combinar histórico + proyección para Recharts ──────────────
   const dataGrafica = useMemo(() => {
     return [
-      ...historico.map((m) => ({
-        mes: m.mes,
-        label: formatMesLabel(m.mes),
-        real: m.real,
-        estimado: null as number | null,
-        ganancia: m.ganancia,
-        esProyeccion: false,
-      })),
+      ...historico.map((m) => {
+        const moy = parseInt(m.mes.slice(5, 7), 10)
+        const esAlta = (indiceEstacional[moy] ?? 1) > 1.2
+        return {
+          mes: m.mes,
+          label: esAlta ? `${formatMesLabel(m.mes)} 🌞` : formatMesLabel(m.mes),
+          real: m.real,
+          estimado: null as number | null,
+          ganancia: m.ganancia,
+          esProyeccion: false,
+          esTemporadaAlta: esAlta,
+        }
+      }),
       ...proyecciones.map((p) => ({
         mes: p.mes,
-        label: `${formatMesLabel(p.mes)} (est.)`,
+        label: p.esTemporadaAlta
+          ? `${formatMesLabel(p.mes)} 🌞 (est.)`
+          : `${formatMesLabel(p.mes)} (est.)`,
         real: null as number | null,
         estimado: p.estimado,
         ganancia: p.ganancia,
         esProyeccion: true,
+        esTemporadaAlta: p.esTemporadaAlta,
       })),
     ]
-  }, [historico, proyecciones])
+  }, [historico, proyecciones, indiceEstacional])
 
   // ─── Clientes "probable recompra" ─────────────────────────────────
   // Si dias_sin_compra está cerca (o por encima) de su frecuencia_dias,
@@ -263,16 +371,60 @@ export function EstimadoIngresos({
         </span>
       </header>
 
+      {/* Banner temporada alta detectada en próximos 3 meses */}
+      {seasonalInsights.proxTempAlta && (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50/50 to-yellow-50/30 p-3 shadow-sm">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow">
+            <Sun className="size-4" />
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
+                seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
+              es temporada alta
+            </p>
+            <p className="text-[11px] text-amber-700">
+              Históricamente +
+              {Math.round(
+                (seasonalInsights.proxTempAlta.factor - 1) * 100,
+              )}
+              % sobre el promedio · prepara stock e inventario
+            </p>
+          </div>
+          {seasonalInsights.junioPromedio > 0 && (
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-[10.5px] font-bold tabular-nums text-amber-900 ring-1 ring-amber-200/60">
+              Junio prom.: {mxn.format(seasonalInsights.junioPromedio)}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* KPIs forecast */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ForecastCard
           icon={<Target className="size-4" />}
-          label={`Estimado ${proxMesLabel.split(" ")[0]}`}
-          value={mxn.format(insights.estimadoMesProx)}
-          sub="Próximo mes"
-          accent="text-pink-700"
-          gradient="from-pink-50 via-white to-rose-50/50"
-          ring="ring-pink-100"
+          label={`Estimado ${seasonalInsights.proxNombre}`}
+          value={mxn.format(proyecciones[0]?.estimado ?? insights.estimadoMesProx)}
+          sub={
+            seasonalInsights.proximaTemporadaAlta
+              ? `🌞 Temporada alta · factor ×${seasonalInsights.factorProx.toFixed(2)}`
+              : `Factor estacional ×${seasonalInsights.factorProx.toFixed(2)}`
+          }
+          accent={
+            seasonalInsights.proximaTemporadaAlta
+              ? "text-amber-700"
+              : "text-pink-700"
+          }
+          gradient={
+            seasonalInsights.proximaTemporadaAlta
+              ? "from-amber-50 via-white to-orange-50/50"
+              : "from-pink-50 via-white to-rose-50/50"
+          }
+          ring={
+            seasonalInsights.proximaTemporadaAlta
+              ? "ring-amber-100"
+              : "ring-pink-100"
+          }
           badge={
             <span
               className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
@@ -338,9 +490,17 @@ export function EstimadoIngresos({
                   <stop offset="0%" stopColor="#f9a8d4" stopOpacity={1} />
                   <stop offset="100%" stopColor="#fbcfe8" stopOpacity={0.6} />
                 </linearGradient>
+                <linearGradient id="gradRealAlta" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#fcd34d" stopOpacity={0.7} />
+                </linearGradient>
                 <linearGradient id="gradEst" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#c4b5fd" stopOpacity={0.9} />
                   <stop offset="100%" stopColor="#ddd6fe" stopOpacity={0.5} />
+                </linearGradient>
+                <linearGradient id="gradEstAlta" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#a78bfa" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.7} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -378,17 +538,35 @@ export function EstimadoIngresos({
               <Bar
                 dataKey="real"
                 name="real"
-                fill="url(#gradReal)"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
-              />
+              >
+                {dataGrafica.map((d, i) => (
+                  <Cell
+                    key={`real-${i}`}
+                    fill={
+                      d.esTemporadaAlta
+                        ? "url(#gradRealAlta)"
+                        : "url(#gradReal)"
+                    }
+                  />
+                ))}
+              </Bar>
               <Bar
                 dataKey="estimado"
                 name="estimado"
-                fill="url(#gradEst)"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
-              />
+              >
+                {dataGrafica.map((d, i) => (
+                  <Cell
+                    key={`est-${i}`}
+                    fill={
+                      d.esTemporadaAlta ? "url(#gradEstAlta)" : "url(#gradEst)"
+                    }
+                  />
+                ))}
+              </Bar>
               <Line
                 dataKey="ganancia"
                 name="ganancia"
@@ -400,22 +578,30 @@ export function EstimadoIngresos({
               />
             </ComposedChart>
           </ResponsiveContainer>
-          {/* Leyenda + nota */}
+          {/* Leyenda + nota explicativa con estacionalidad */}
           <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-gray-50 pt-4 text-[10.5px] text-gray-400">
             <span className="flex items-center gap-1.5">
               <span className="size-3 rounded-sm bg-pink-300" />
-              Ventas reales históricas
+              Ventas reales
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-3 rounded-sm bg-amber-400" />
+              🌞 Temp. alta histórica
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-3 rounded-sm bg-violet-300" />
-              Proyección (prom. últ. 3 meses +2%/mes)
+              Proyección
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-3 rounded-sm bg-violet-400" />
+              🌞 Proyección temp. alta
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-3 rounded-full bg-teal-500" />
               Ganancia neta
             </span>
             <span className="ml-auto italic">
-              Proyección automática · No garantiza resultados futuros
+              estimado = prom. 3m × índice estacional × confianza · 6 meses
             </span>
           </div>
         </article>
