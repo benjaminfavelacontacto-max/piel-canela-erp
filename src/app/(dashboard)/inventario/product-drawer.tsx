@@ -280,15 +280,15 @@ export function ProductDrawer({
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3">
                 <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                      tick={{ fill: "#9CA3AF", fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fill: "#9ca3af", fontSize: 10 }}
+                      tick={{ fill: "#9CA3AF", fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                       allowDecimals={false}
@@ -308,7 +308,7 @@ export function ProductDrawer({
                     />
                     <Bar
                       dataKey="cantidad"
-                      fill="#0d9488"
+                      fill="#0F766E"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>

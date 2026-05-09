@@ -697,12 +697,12 @@ export function RecurrenciaAnalytics({
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#f0f0f0"
+                stroke="#EEF1F4"
                 vertical={false}
               />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -712,7 +712,7 @@ export function RecurrenciaAnalytics({
                 orientation="left"
                 domain={[0, Math.max(5, maxClientesPorMes + 1)]}
                 allowDecimals={false}
-                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
                 label={{
@@ -720,7 +720,7 @@ export function RecurrenciaAnalytics({
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 11,
-                  fill: "#9ca3af",
+                  fill: "#9CA3AF",
                   style: { textAnchor: "middle" },
                 }}
               />
@@ -731,12 +731,12 @@ export function RecurrenciaAnalytics({
                 tickFormatter={(v: number) =>
                   v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
                 }
-                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ fill: "#fce7f3", opacity: 0.3 }}
+                cursor={{ fill: "#F3F5F7", opacity: 0.3 }}
                 content={<ActivosPorMesTooltip />}
               />
               <Legend
@@ -749,7 +749,7 @@ export function RecurrenciaAnalytics({
               <Bar
                 yAxisId="ingreso"
                 dataKey="ingreso"
-                fill="#fbcfe8"
+                fill="#CBD5E1"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
                 name="ingreso"
@@ -758,9 +758,9 @@ export function RecurrenciaAnalytics({
                 yAxisId="clientes"
                 type="monotone"
                 dataKey="clientes"
-                stroke="#0d9488"
+                stroke="#0F766E"
                 strokeWidth={2.5}
-                dot={{ r: 5, fill: "#0d9488", strokeWidth: 2, stroke: "white" }}
+                dot={{ r: 5, fill: "#0F766E", strokeWidth: 2, stroke: "white" }}
                 activeDot={{ r: 7 }}
                 animationDuration={1000}
                 name="clientes"

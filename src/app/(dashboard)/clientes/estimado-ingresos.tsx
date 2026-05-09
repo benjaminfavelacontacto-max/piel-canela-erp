@@ -492,36 +492,36 @@ export function EstimadoIngresos({
             >
               <defs>
                 <linearGradient id="gradHistReal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f9a8d4" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#fbcfe8" stopOpacity={0.7} />
+                  <stop offset="0%" stopColor="#94A3B8" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#CBD5E1" stopOpacity={0.7} />
                 </linearGradient>
                 <linearGradient id="gradHistAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#fed7aa" stopOpacity={0.6} />
+                  <stop offset="0%" stopColor="#FDE68A" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#FEF3C7" stopOpacity={0.6} />
                 </linearGradient>
                 <linearGradient id="gradProy" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#c4b5fd" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#ddd6fe" stopOpacity={0.5} />
+                  <stop offset="0%" stopColor="rgba(15,118,110,0.25)" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="rgba(15,118,110,0.20)" stopOpacity={0.5} />
                 </linearGradient>
                 <linearGradient id="gradProyAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.7} />
+                  <stop offset="0%" stopColor="rgba(15,118,110,0.50)" stopOpacity={1} />
+                  <stop offset="100%" stopColor="rgba(15,118,110,0.40)" stopOpacity={0.7} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#f0f0f0"
+                stroke="#EEF1F4"
                 vertical={false}
               />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                tick={{ fontSize: 11, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={formatYAxis}
-                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                tick={{ fontSize: 11, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
                 width={50}
@@ -532,7 +532,7 @@ export function EstimadoIngresos({
                 dataKey="real"
                 name="Ventas reales"
                 fill="url(#gradHistReal)"
-                stroke="#f9a8d4"
+                stroke="#94A3B8"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
                 legendType="square"
@@ -541,7 +541,7 @@ export function EstimadoIngresos({
                 dataKey="realAlta"
                 name="Temp. alta histórica"
                 fill="url(#gradHistAlta)"
-                stroke="#fb923c"
+                stroke="#FDE68A"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
                 legendType="square"
@@ -550,7 +550,7 @@ export function EstimadoIngresos({
                 dataKey="estimado"
                 name="Proyección"
                 fill="url(#gradProy)"
-                stroke="#c4b5fd"
+                stroke="rgba(15,118,110,0.25)"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
                 legendType="square"
@@ -559,7 +559,7 @@ export function EstimadoIngresos({
                 dataKey="estimadoAlta"
                 name="Proyección temp. alta"
                 fill="url(#gradProyAlta)"
-                stroke="#8b5cf6"
+                stroke="rgba(15,118,110,0.50)"
                 radius={[6, 6, 0, 0]}
                 animationDuration={1000}
                 legendType="square"
@@ -567,10 +567,10 @@ export function EstimadoIngresos({
               <Line
                 dataKey="ganancia"
                 name="Ganancia neta"
-                stroke="#0d9488"
+                stroke="#0F766E"
                 strokeWidth={2.5}
-                dot={{ r: 5, fill: "#0d9488", stroke: "white", strokeWidth: 2 }}
-                activeDot={{ r: 7, fill: "#0d9488" }}
+                dot={{ r: 5, fill: "#0F766E", stroke: "white", strokeWidth: 2 }}
+                activeDot={{ r: 7, fill: "#0F766E" }}
                 connectNulls
                 animationDuration={1200}
                 legendType="circle"
@@ -663,11 +663,11 @@ export function EstimadoIngresos({
 // cuando se usa <Cell> con fill por defecto undefined en el Bar padre).
 function HistVsProyLegend() {
   const items: Array<{ color: string; label: string; shape: "square" | "circle" }> = [
-    { color: "#fbcfe8", label: "Ventas reales", shape: "square" },
-    { color: "#fed7aa", label: "Temp. alta histórica 🌞", shape: "square" },
-    { color: "#ddd6fe", label: "Proyección", shape: "square" },
-    { color: "#a78bfa", label: "Proyección temp. alta 🌞", shape: "square" },
-    { color: "#0d9488", label: "Ganancia neta", shape: "circle" },
+    { color: "#CBD5E1", label: "Ventas reales", shape: "square" },
+    { color: "#FEF3C7", label: "Temp. alta histórica 🌞", shape: "square" },
+    { color: "rgba(15,118,110,0.20)", label: "Proyección", shape: "square" },
+    { color: "rgba(15,118,110,0.40)", label: "Proyección temp. alta 🌞", shape: "square" },
+    { color: "#0F766E", label: "Ganancia neta", shape: "circle" },
   ]
   return (
     <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-gray-600">

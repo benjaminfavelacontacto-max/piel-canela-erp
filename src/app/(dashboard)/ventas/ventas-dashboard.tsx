@@ -578,7 +578,7 @@ export function VentasDashboard({
               data={monthly}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
-              <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" />
               <XAxis
                 dataKey="label"
                 tick={{ fill: "#6b7280", fontSize: 12 }}
@@ -595,7 +595,7 @@ export function VentasDashboard({
                 width={60}
               />
               <Tooltip
-                cursor={{ fill: "#f9fafb" }}
+                cursor={{ fill: "#F3F5F7" }}
                 contentStyle={{
                   border: "1px solid #e5e7eb",
                   borderRadius: 8,
@@ -611,16 +611,16 @@ export function VentasDashboard({
               <Bar
                 dataKey="total"
                 name="Total vendido"
-                fill="#0d9488"
+                fill="#0F766E"
                 radius={[4, 4, 0, 0]}
               />
               <Line
                 type="monotone"
                 dataKey="ganancia"
                 name="Ganancia"
-                stroke="#db2777"
+                stroke="#94A3B8"
                 strokeWidth={2}
-                dot={{ r: 3, fill: "#db2777" }}
+                dot={{ r: 3, fill: "#94A3B8" }}
               />
             </ComposedChart>
           </ResponsiveContainer>

@@ -44,7 +44,7 @@ export function RecoveryChart({
   return (
     <ResponsiveContainer width="100%" height={340}>
       <LineChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-        <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+        <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" />
         <XAxis
           dataKey="label"
           tick={{ fill: "#6b7280", fontSize: 12 }}
@@ -71,25 +71,25 @@ export function RecoveryChart({
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <ReferenceLine
           y={invSandra}
-          stroke="#db2777"
+          stroke="#94A3B8"
           strokeDasharray="4 4"
           strokeOpacity={0.55}
           label={{
             value: `Inv. Sandra ${mxn.format(invSandra)}`,
             position: "insideTopRight",
-            fill: "#db2777",
+            fill: "#94A3B8",
             fontSize: 10,
           }}
         />
         <ReferenceLine
           y={invBenjamin}
-          stroke="#0d9488"
+          stroke="#0F766E"
           strokeDasharray="4 4"
           strokeOpacity={0.55}
           label={{
             value: `Inv. Benjamin ${mxn.format(invBenjamin)}`,
             position: "insideBottomRight",
-            fill: "#0d9488",
+            fill: "#0F766E",
             fontSize: 10,
           }}
         />
@@ -97,17 +97,17 @@ export function RecoveryChart({
           type="monotone"
           dataKey="sandra"
           name="Sandra"
-          stroke="#db2777"
+          stroke="#94A3B8"
           strokeWidth={2.5}
-          dot={{ r: 3, fill: "#db2777" }}
+          dot={{ r: 3, fill: "#94A3B8" }}
         />
         <Line
           type="monotone"
           dataKey="benjamin"
           name="Benjamin"
-          stroke="#0d9488"
+          stroke="#0F766E"
           strokeWidth={2.5}
-          dot={{ r: 3, fill: "#0d9488" }}
+          dot={{ r: 3, fill: "#0F766E" }}
         />
       </LineChart>
     </ResponsiveContainer>

@@ -91,19 +91,19 @@ export function MonthlyChart({
       <ComposedChart data={formatted} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0d9488" stopOpacity={1} />
-            <stop offset="100%" stopColor="#0d9488" stopOpacity={0.3} />
+            <stop offset="0%" stopColor="#0F766E" stopOpacity={1} />
+            <stop offset="100%" stopColor="#0F766E" stopOpacity={0.3} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
+        <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fill: "#9ca3af", fontSize: 11 }}
+          tick={{ fill: "#9CA3AF", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#9ca3af", fontSize: 11 }}
+          tick={{ fill: "#9CA3AF", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) =>
@@ -111,7 +111,7 @@ export function MonthlyChart({
           }
           width={60}
         />
-        <Tooltip cursor={{ fill: "#f9fafb" }} content={<CustomTooltip />} />
+        <Tooltip cursor={{ fill: "#F3F5F7" }} content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar
           dataKey="total"
@@ -125,9 +125,9 @@ export function MonthlyChart({
           type="monotone"
           dataKey="ganancia"
           name="Ganancia"
-          stroke="#db2777"
+          stroke="#94A3B8"
           strokeWidth={2.5}
-          dot={{ r: 3, fill: "#db2777", strokeWidth: 2, stroke: "#fff" }}
+          dot={{ r: 3, fill: "#94A3B8", strokeWidth: 2, stroke: "#fff" }}
           animationDuration={1200}
           animationEasing="ease-in-out"
         />

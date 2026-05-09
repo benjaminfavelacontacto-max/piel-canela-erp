@@ -1008,13 +1008,13 @@ export function CotizacionesList({
               data={monthlySeries}
               margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
             >
-              <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
               <Tooltip contentStyle={{ border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
               <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="conversiones" name="Convertidas en venta" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="conversiones" name="Convertidas en venta" fill="#0F766E" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </article>
@@ -1034,14 +1034,14 @@ export function CotizacionesList({
             >
               <defs>
                 <linearGradient id="gradValorConvertido" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.95} />
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.95} />
                   <stop offset="100%" stopColor="#6ee7b7" stopOpacity={0.5} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                tick={{ fontSize: 11, fill: "#9CA3AF" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) =>
@@ -1065,9 +1065,9 @@ export function CotizacionesList({
               <Line
                 dataKey="pipelineCreado"
                 name="Pipeline creado"
-                stroke="#0d9488"
+                stroke="#0F766E"
                 strokeWidth={2}
-                dot={{ r: 3, fill: "#0d9488" }}
+                dot={{ r: 3, fill: "#0F766E" }}
               />
             </ComposedChart>
           </ResponsiveContainer>

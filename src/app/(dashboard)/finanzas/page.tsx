@@ -7,9 +7,10 @@ import { RecoveryChart } from "./recovery-chart"
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
+// Paleta enterprise: emerald accent + slate neutral. Diferencia por nombre, no por color saturado.
 const SOCIO_COLOR: Record<string, string> = {
-  Sandra: "#db2777",
-  Benjamin: "#0d9488",
+  Sandra: "#94A3B8",
+  Benjamin: "#0F766E",
 }
 
 const mxn = new Intl.NumberFormat("es-MX", {

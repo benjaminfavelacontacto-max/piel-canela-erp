@@ -282,15 +282,15 @@ export function PrediccionCompras({
             data={timeline6m}
             margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
           >
-            <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: "#9ca3af", fontSize: 11 }}
+              tick={{ fill: "#9CA3AF", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#9ca3af", fontSize: 11 }}
+              tick={{ fill: "#9CA3AF", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) =>
@@ -299,7 +299,7 @@ export function PrediccionCompras({
               width={50}
             />
             <Tooltip
-              cursor={{ fill: "#ede9fe", opacity: 0.4 }}
+              cursor={{ fill: "#F3F5F7", opacity: 0.4 }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null
                 const data = payload[0].payload as (typeof timeline6m)[number]
