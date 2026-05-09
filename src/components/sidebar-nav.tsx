@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Package,
   FileText,
-  ShoppingCart,
+  ShoppingBag,
   Users,
   Wallet,
 } from "lucide-react"
@@ -16,7 +16,7 @@ const items = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/inventario", label: "Inventario", icon: Package },
   { href: "/cotizaciones", label: "Cotizaciones", icon: FileText },
-  { href: "/ventas", label: "Ventas", icon: ShoppingCart },
+  { href: "/ventas", label: "Ventas", icon: ShoppingBag },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/finanzas", label: "Finanzas", icon: Wallet },
 ]
