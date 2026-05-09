@@ -69,7 +69,7 @@ export function CotizacionPreview({
           <img
             src="/logo.png"
             alt="Piel Canela"
-            className="h-20 w-auto"
+            className="h-28 w-auto"
             style={{ objectFit: "contain" }}
           />
           <div className="text-right text-[#111827]">

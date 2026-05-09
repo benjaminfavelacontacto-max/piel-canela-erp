@@ -1,21 +1,19 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import {
   Search,
   Package,
-  AlertTriangle,
-  TrendingUp,
-  DollarSign,
-  Wallet,
   Sparkles,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  RefreshCw,
   X,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { PageHeader } from "@/components/page-header"
+import { actualizarTipoCambio } from "./actions"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -48,6 +46,15 @@ export type ProductoEnriquecido = {
   valor_inventario: number | null
   capital_invertido: number | null
   margen_pct: number | null
+  // Campos USD/MXN desde vista_inventario
+  precio_usd: number | null
+  precio_mxn_calculado: number | null
+  costo_envio_usd: number | null
+  costo_envio_mxn: number | null
+  costo_total_usd: number | null
+  costo_total_mxn: number | null
+  tipo_cambio: number | null
+  profit_unitario: number | null
   updated_at: string | null
   activo: boolean
 }
@@ -61,6 +68,12 @@ const mxn = new Intl.NumberFormat("es-MX", {
 const mxn2 = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+const usd2 = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
@@ -245,6 +258,17 @@ export function InventarioView({
     !!proveedorF ||
     topSellersOnly
 
+  // Tipo de cambio vigente (usar el valor más reciente entre los productos)
+  const tcVigente = useMemo(() => {
+    const valores = productos
+      .map((p) => p.tipo_cambio)
+      .filter((v): v is number => v != null && v > 0)
+    if (valores.length === 0) return 17.5
+    // mediana para resistir outliers
+    const sorted = [...valores].sort((a, b) => a - b)
+    return sorted[Math.floor(sorted.length / 2)]
+  }, [productos])
+
   // Esc clears search focus
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -386,14 +410,35 @@ export function InventarioView({
         onClose={() => setSelectedSku(null)}
       />
 
+      {/* Tipo de cambio note */}
+      <TipoCambioNote tc={tcVigente} />
+
       {/* Table */}
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col style={{ width: 60 }} />
+              <col style={{ width: 100 }} />
+              <col />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 90 }} />
+            </colgroup>
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <Th>Producto</Th>
-                <Th>SKU</Th>
+                <Th>Foto</Th>
                 <SortTh
                   active={sortKey === "categoria"}
                   dir={sortDir}
@@ -402,6 +447,25 @@ export function InventarioView({
                   Categoría
                 </SortTh>
                 <SortTh
+                  active={sortKey === "nombre"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("nombre")}
+                >
+                  Producto
+                </SortTh>
+                <Th align="center">Peso</Th>
+                <Th>SKU</Th>
+                <SortTh
+                  align="right"
+                  active={sortKey === "precio_publico"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("precio_publico")}
+                >
+                  Precio MXN
+                </SortTh>
+                <Th align="right">Precio USD</Th>
+                <Th align="right">Precio MXN<br/><span className="text-[9px] font-normal normal-case text-gray-400">(calc)</span></Th>
+                <SortTh
                   align="right"
                   active={sortKey === "stock_actual"}
                   dir={sortDir}
@@ -409,31 +473,11 @@ export function InventarioView({
                 >
                   Stock
                 </SortTh>
-                <Th align="center">Nivel</Th>
-                <SortTh
-                  align="right"
-                  active={sortKey === "precio_publico"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("precio_publico")}
-                >
-                  Precio
-                </SortTh>
-                <SortTh
-                  align="right"
-                  active={sortKey === "margen_pct"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("margen_pct")}
-                >
-                  Margen
-                </SortTh>
-                <SortTh
-                  align="right"
-                  active={sortKey === "valor_inventario"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("valor_inventario")}
-                >
-                  Valor
-                </SortTh>
+                <Th align="right">Costo USD</Th>
+                <Th align="right">Costo MXN</Th>
+                <Th align="right">P.Unit+Env<br/><span className="text-[9px] font-normal normal-case text-gray-400">USD</span></Th>
+                <Th align="right">P.Unit+Env<br/><span className="text-[9px] font-normal normal-case text-gray-400">MXN</span></Th>
+                <Th align="right">Profit</Th>
                 <SortTh
                   align="right"
                   active={sortKey === "unidades_vendidas"}
@@ -442,13 +486,15 @@ export function InventarioView({
                 >
                   Vendidos
                 </SortTh>
+                <Th align="right">Disponible</Th>
+                <Th align="center">Estatus</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {sorted.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={17}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
@@ -481,18 +527,6 @@ function ProductRow({
   isTop: boolean
   onClick: () => void
 }) {
-  // Stock bar: ratio current/min*2 capped 100%
-  const ratio =
-    p.stock_minimo > 0
-      ? Math.min(100, (p.stock_actual / (p.stock_minimo * 2)) * 100)
-      : Math.min(100, p.stock_actual)
-  const barColor =
-    p.estatus === "agotado"
-      ? "bg-red-500"
-      : p.estatus === "bajo"
-        ? "bg-amber-500"
-        : "bg-teal-500"
-
   const initials =
     p.nombre
       .trim()
@@ -500,62 +534,107 @@ function ProductRow({
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase() ?? "")
       .join("") || "?"
+  const disponible = Math.max(0, p.stock_actual)
+  const estatusBadge =
+    p.estatus === "agotado"
+      ? "bg-red-100 text-red-700"
+      : p.estatus === "bajo"
+        ? "bg-amber-100 text-amber-700"
+        : "bg-teal-100 text-teal-700"
+  const estatusLabel =
+    p.estatus === "agotado" ? "Agotado" : p.estatus === "bajo" ? "Bajo" : "OK"
+
+  const dash = <span className="text-gray-300">—</span>
 
   return (
     <tr
       onClick={onClick}
       className="group cursor-pointer transition-colors hover:bg-teal-50/40"
     >
-      <td className="px-3 py-2">
-        <div className="flex items-center gap-3">
-          {p.imagen_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={p.imagen_url}
-              alt={p.nombre}
-              className="size-10 shrink-0 rounded-lg border border-gray-100 object-cover"
-            />
-          ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 text-xs font-semibold text-gray-400">
-              {initials}
-            </div>
-          )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="truncate text-sm font-medium text-gray-900">
-                {p.nombre}
-              </span>
-              {isTop && (
-                <span
-                  title="Top vendido"
-                  className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700"
-                >
-                  ⭐ Top
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              {p.peso && (
-                <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px]">
-                  {p.peso}
-                </span>
-              )}
-              {p.proveedor && (
-                <span className="truncate text-[10px]">{p.proveedor}</span>
-              )}
-            </div>
+      {/* 1. Foto */}
+      <td className="px-2 py-2">
+        {p.imagen_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.imagen_url}
+            alt={p.nombre}
+            className="size-10 shrink-0 rounded-lg border border-gray-100 object-cover"
+          />
+        ) : (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 text-xs font-semibold text-gray-400">
+            {initials}
           </div>
-        </div>
+        )}
       </td>
-      <td className="px-3 py-2 font-mono text-xs text-gray-500">{p.sku}</td>
-      <td className="px-3 py-2">
+      {/* 2. Categoría */}
+      <td className="px-2 py-2">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${categoriaClass(p.categoria)}`}
+          className={`inline-flex max-w-full items-center truncate rounded-full px-2 py-0.5 text-[10px] font-medium ${categoriaClass(p.categoria)}`}
+          title={p.categoria}
         >
           {p.categoria}
         </span>
       </td>
-      <td className="px-3 py-2 text-right">
+      {/* 3. Producto */}
+      <td className="px-2 py-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className="truncate text-sm font-medium text-gray-900"
+            title={p.nombre_display ?? p.nombre}
+          >
+            {p.nombre_display ?? p.nombre}
+          </span>
+          {isTop && (
+            <span
+              title="Top vendido"
+              className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700"
+            >
+              ⭐
+            </span>
+          )}
+        </div>
+        {p.proveedor && (
+          <div className="truncate text-[10px] text-gray-400" title={p.proveedor}>
+            {p.proveedor}
+          </div>
+        )}
+      </td>
+      {/* 4. Peso */}
+      <td className="px-2 py-2 text-center text-xs text-gray-600">
+        {p.peso ?? dash}
+      </td>
+      {/* 5. SKU */}
+      <td className="px-2 py-2 font-mono text-xs text-gray-500 truncate" title={p.sku}>
+        {p.sku}
+      </td>
+      {/* 6. Precio Público MXN */}
+      <td className="px-2 py-2 text-right tabular-nums">
+        {p.precio_publico != null ? (
+          <span className="font-medium text-gray-900">
+            {mxn2.format(p.precio_publico)}
+          </span>
+        ) : (
+          dash
+        )}
+      </td>
+      {/* 7. Precio USD */}
+      <td className="px-2 py-2 text-right tabular-nums">
+        {p.precio_usd != null && p.precio_usd > 0 ? (
+          <span className="font-medium text-blue-600">
+            {usd2.format(p.precio_usd)}
+          </span>
+        ) : (
+          dash
+        )}
+      </td>
+      {/* 8. Precio MXN (calculado) */}
+      <td className="px-2 py-2 text-right tabular-nums text-gray-600">
+        {p.precio_mxn_calculado != null && p.precio_mxn_calculado > 0
+          ? mxn2.format(p.precio_mxn_calculado)
+          : dash}
+      </td>
+      {/* 9. Stock */}
+      <td className="px-2 py-2 text-right">
         <div className="font-semibold tabular-nums text-gray-900">
           {p.stock_actual.toLocaleString("es-MX")}
         </div>
@@ -563,92 +642,83 @@ function ProductRow({
           mín {p.stock_minimo.toLocaleString("es-MX")}
         </div>
       </td>
-      <td className="px-3 py-2">
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
-            <div
-              className={`h-full rounded-full ${barColor} transition-all duration-500`}
-              style={{ width: `${ratio}%` }}
-            />
-          </div>
+      {/* 10. Costo Total USD */}
+      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+        {p.costo_total_usd != null && p.costo_total_usd > 0
+          ? usd2.format(p.costo_total_usd)
+          : dash}
+      </td>
+      {/* 11. Costo Total MXN */}
+      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+        {p.costo_total_mxn != null && p.costo_total_mxn > 0
+          ? mxn2.format(p.costo_total_mxn)
+          : dash}
+      </td>
+      {/* 12. P.Unit + Envío USD */}
+      <td className="px-2 py-2 text-right tabular-nums">
+        {p.costo_envio_usd != null && p.costo_envio_usd > 0 ? (
+          <span className="font-medium text-orange-600">
+            {usd2.format(p.costo_envio_usd)}
+          </span>
+        ) : (
+          dash
+        )}
+      </td>
+      {/* 13. P.Unit + Envío MXN */}
+      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+        {p.costo_envio_mxn != null && p.costo_envio_mxn > 0
+          ? mxn2.format(p.costo_envio_mxn)
+          : dash}
+      </td>
+      {/* 14. Profit */}
+      <td className="px-2 py-2 text-right tabular-nums">
+        {p.profit_unitario != null && p.profit_unitario !== 0 ? (
           <span
-            className={`text-[10px] font-medium ${
-              p.estatus === "agotado"
-                ? "text-red-700"
-                : p.estatus === "bajo"
-                  ? "text-amber-700"
-                  : "text-teal-700"
-            }`}
+            className={`font-semibold ${p.profit_unitario > 0 ? "text-green-600" : "text-red-600"}`}
           >
-            {p.estatus === "agotado"
-              ? "Agotado"
-              : p.estatus === "bajo"
-                ? "Bajo"
-                : "OK"}
-          </span>
-        </div>
-      </td>
-      <td className="px-3 py-2 text-right tabular-nums">
-        {p.precio_publico != null ? (
-          <span className="font-medium text-gray-900">
-            {mxn2.format(p.precio_publico)}
+            {mxn2.format(p.profit_unitario)}
           </span>
         ) : (
-          <span className="text-gray-300">—</span>
+          dash
         )}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
-        {p.margen_pct != null ? (
-          <span
-            className={`font-medium ${p.margen_pct >= 50 ? "text-emerald-700" : p.margen_pct >= 30 ? "text-teal-700" : "text-amber-700"}`}
-          >
-            {p.margen_pct.toFixed(1)}%
-          </span>
-        ) : (
-          <span className="text-gray-300">—</span>
-        )}
+      {/* 15. Unid. Vendidas */}
+      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+        {p.unidades_vendidas > 0
+          ? p.unidades_vendidas.toLocaleString("es-MX")
+          : dash}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
-        {p.valor_inventario != null ? (
-          <span className="font-semibold text-gray-900">
-            {mxn.format(p.valor_inventario)}
-          </span>
-        ) : (
-          <span className="text-gray-300">—</span>
-        )}
+      {/* 16. Stock Disponible */}
+      <td className="px-2 py-2 text-right tabular-nums font-semibold text-gray-900">
+        {disponible.toLocaleString("es-MX")}
       </td>
-      <td className="px-3 py-2 text-right tabular-nums text-gray-700">
-        {p.unidades_vendidas > 0 ? p.unidades_vendidas : "—"}
+      {/* 17. Estatus */}
+      <td className="px-2 py-2 text-center">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${estatusBadge}`}
+        >
+          {estatusLabel}
+        </span>
       </td>
     </tr>
   )
 }
 
-function Kpi({
-  icon,
-  iconBg,
-  label,
-  value,
-  sub,
-  urgent,
-}: {
-  icon: React.ReactNode
-  iconBg: string
-  label: string
-  value: string
-  sub?: string
-  urgent?: boolean
-}) {
+function TipoCambioNote({ tc }: { tc: number }) {
   return (
-    <div
-      className={`rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${urgent ? "border-red-100" : "border-gray-100"}`}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <div className={`rounded-xl p-2 ${iconBg}`}>{icon}</div>
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-2.5 text-xs">
+      <div className="flex items-center gap-2 text-blue-900">
+        <span className="rounded-full bg-blue-100 px-2 py-0.5 font-semibold">
+          TC referencial
+        </span>
+        <span className="text-gray-700">
+          ${tc.toFixed(2)} <span className="text-gray-500">MXN/USD</span>
+        </span>
+        <span className="hidden text-gray-400 md:inline">
+          · costo MXN = costo USD × TC
+        </span>
       </div>
-      <p className="text-2xl font-bold tabular-nums text-gray-900">{value}</p>
-      <p className="mt-1 text-sm text-gray-500">{label}</p>
-      {sub && <p className="mt-1 text-xs text-gray-400">{sub}</p>}
+      <ActualizarTCButton tcActual={tc} />
     </div>
   )
 }
@@ -702,5 +772,38 @@ function SortTh({
         )}
       </span>
     </th>
+  )
+}
+
+function ActualizarTCButton({ tcActual }: { tcActual: number }) {
+  const [pending, startTransition] = useTransition()
+
+  function onClick() {
+    const raw = window.prompt(
+      "Nuevo tipo de cambio (MXN por USD):",
+      tcActual.toFixed(2),
+    )
+    if (raw == null) return
+    const num = Number(raw.replace(/,/g, "."))
+    if (!Number.isFinite(num) || num <= 0) {
+      alert("Valor inválido. Debe ser un número positivo.")
+      return
+    }
+    startTransition(async () => {
+      const res = await actualizarTipoCambio(num)
+      if (!res.ok) alert(`Error al actualizar: ${res.error}`)
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={pending}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
+    >
+      <RefreshCw className={`size-3 ${pending ? "animate-spin" : ""}`} />
+      {pending ? "Actualizando…" : "Actualizar TC"}
+    </button>
   )
 }

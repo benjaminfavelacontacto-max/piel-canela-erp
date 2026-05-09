@@ -68,6 +68,22 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - Fórmula ganancia: `ventas.total - ventas.costo_productos - ventas.costo_envio` (donde `total = subtotal + iva − descuento`)
 - Banner ámbar en formularios deja claro que el toggle define el IVA real cobrado
 
+## Regla: Costos USD/MXN y tipo de cambio (inventario)
+- `productos` tiene 4 columnas dolarizadas:
+  - `precio_usd` — precio público referencial en USD por SKU
+  - `costo_envio_usd` — costo unitario + envío en USD (lo que pagamos importando)
+  - `costo_envio_mxn` — costo unitario + envío en MXN (snapshot al tipo de cambio del momento)
+  - `tipo_cambio` — MXN/USD vigente, default `17.50`
+- `vista_inventario` recalcula campos derivados:
+  - `precio_mxn_calculado = precio_usd × tipo_cambio`
+  - `costo_total_usd = costo_envio_usd × stock_actual`
+  - `costo_total_mxn = costo_envio_mxn × stock_actual`
+  - `profit_unitario = precio_publico − costo_envio_mxn`
+  - `unidades_vendidas` agregado desde venta_items
+- El TC es referencial: el costo_envio_mxn real se snapshotea al momento del envío, NO se recalcula automáticamente cuando cambia `tipo_cambio`
+- Botón "Actualizar TC" en la pestaña Inventario actualiza `productos.tipo_cambio` masivamente vía server action `actualizarTipoCambio()`
+- En la UI mostrar siempre el TC vigente como badge: "TC referencial: $XX.XX MXN/USD"
+
 ## Regla: Cotizaciones/Ventas Internas Piel Canela
 - El cliente "Piel Canela" (UUID `08449791-0fab-4bfb-818f-b9dbf077c879`) es INTERNO (`is_internal = true` en BD)
 - Sus cotizaciones sirven SOLO para descontar inventario (la socia se lleva producto a su propio spa)

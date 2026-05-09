@@ -13,7 +13,11 @@ export default async function InventarioPage() {
       supabase
         .from("vista_inventario")
         .select(
-          "sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at",
+          `sku, nombre, categoria, stock_actual, stock_minimo, estatus, updated_at,
+           precio_publico, precio_usd, precio_mxn_calculado,
+           costo_envio_usd, costo_envio_mxn,
+           costo_total_usd, costo_total_mxn,
+           tipo_cambio, profit_unitario, unidades_vendidas`,
         ),
       supabase
         .from("productos")
@@ -154,7 +158,7 @@ export default async function InventarioPage() {
   const salesObj: Record<string, ProductoSales> = {}
   for (const [sku, s] of salesBySku) salesObj[sku] = s
 
-  // Vista (stock) por sku
+  // Vista (stock + costos USD/MXN) por sku
   type Vista = {
     sku: string | null
     nombre: string
@@ -163,6 +167,16 @@ export default async function InventarioPage() {
     stock_minimo: number | null
     estatus: string
     updated_at: string | null
+    precio_publico: number | null
+    precio_usd: number | null
+    precio_mxn_calculado: number | null
+    costo_envio_usd: number | null
+    costo_envio_mxn: number | null
+    costo_total_usd: number | null
+    costo_total_mxn: number | null
+    tipo_cambio: number | null
+    profit_unitario: number | null
+    unidades_vendidas: number | null
   }
   const vistas = (vistaRes.data ?? []) as Vista[]
 
@@ -201,10 +215,31 @@ export default async function InventarioPage() {
         stock_actual: stock,
         stock_minimo: minimo,
         estatus: (v.estatus as "ok" | "bajo" | "agotado") ?? "ok",
-        unidades_vendidas: agg.unidades,
+        unidades_vendidas:
+          v.unidades_vendidas != null
+            ? Number(v.unidades_vendidas)
+            : agg.unidades,
         valor_inventario: valor,
         capital_invertido: capital > 0 ? capital : null,
         margen_pct: margen,
+        // Campos USD/MXN desde la vista
+        precio_usd: v.precio_usd != null ? Number(v.precio_usd) : null,
+        precio_mxn_calculado:
+          v.precio_mxn_calculado != null
+            ? Number(v.precio_mxn_calculado)
+            : null,
+        costo_envio_usd:
+          v.costo_envio_usd != null ? Number(v.costo_envio_usd) : null,
+        costo_envio_mxn:
+          v.costo_envio_mxn != null ? Number(v.costo_envio_mxn) : null,
+        costo_total_usd:
+          v.costo_total_usd != null ? Number(v.costo_total_usd) : null,
+        costo_total_mxn:
+          v.costo_total_mxn != null ? Number(v.costo_total_mxn) : null,
+        tipo_cambio:
+          v.tipo_cambio != null ? Number(v.tipo_cambio) : null,
+        profit_unitario:
+          v.profit_unitario != null ? Number(v.profit_unitario) : null,
         updated_at: v.updated_at,
         activo: p?.activo ?? true,
       }
