@@ -563,16 +563,30 @@ export function CotizacionesList({
       {
         accessorKey: "numero",
         header: (ctx) => <HeaderCell label="Número" ctx={ctx} />,
-        cell: ({ getValue, row }) => (
-          <Link
-            href={`/cotizaciones/${row.original.id}`}
-            className="font-mono text-xs text-teal-700 transition hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {getValue() as string}
-          </Link>
-        ),
-        size: 200,
+        cell: ({ getValue, row }) => {
+          const numero = getValue() as string
+          const isPortal = numero.includes("-P-Portal")
+          return (
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/cotizaciones/${row.original.id}`}
+                className="font-mono text-xs text-teal-700 transition hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {numero}
+              </Link>
+              {isPortal && (
+                <span
+                  className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-700"
+                  title="Pedido recibido desde el portal público /order"
+                >
+                  Portal
+                </span>
+              )}
+            </div>
+          )
+        },
+        size: 220,
       },
       {
         id: "cliente",
