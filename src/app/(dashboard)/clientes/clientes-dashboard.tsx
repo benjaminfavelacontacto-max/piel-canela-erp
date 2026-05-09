@@ -392,6 +392,54 @@ export function ClientesDashboard({
     }
   }, [enriched])
 
+  // ─── Series mensuales para sparklines KPI ──────────────────────────
+  const monthlyKpi = useMemo(() => {
+    const months: {
+      key: string
+      nuevos: number
+      ltvGanado: number
+      activosCum: number
+    }[] = []
+    const now = today
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+      months.push({ key, nuevos: 0, ltvGanado: 0, activosCum: 0 })
+    }
+    const idx = new Map(months.map((m, i) => [m.key, i]))
+    // Nuevos clientes por mes (primer_pedido cae en ese mes)
+    for (const c of enriched) {
+      if (!c.primer_pedido) continue
+      const k = c.primer_pedido.slice(0, 7)
+      const i = idx.get(k)
+      if (i !== undefined) months[i].nuevos += 1
+    }
+    // LTV ganado por mes (suma ventas en ese mes)
+    for (const v of ventas) {
+      const k = v.fecha.slice(0, 7)
+      const i = idx.get(k)
+      if (i !== undefined) months[i].ltvGanado += Number(v.total ?? 0)
+    }
+    // Activos acumulados (clientes con ≥1 venta hasta ese mes)
+    const ventasByCli = new Map<string, string[]>()
+    for (const v of ventas) {
+      if (!v.cliente_id) continue
+      const arr = ventasByCli.get(v.cliente_id) ?? []
+      arr.push(v.fecha)
+      ventasByCli.set(v.cliente_id, arr)
+    }
+    for (let i = 0; i < months.length; i++) {
+      const m = months[i]
+      const cutoff = m.key + "-31"
+      let count = 0
+      for (const [, fechas] of ventasByCli) {
+        if (fechas.some((f) => f.slice(0, 7) <= m.key && f <= cutoff)) count++
+      }
+      m.activosCum = count
+    }
+    return months
+  }, [enriched, ventas, today])
+
   // ─── Drawer state ─────────────────────────────────────────────────
   const [selectedCliente, setSelectedCliente] = useState<EnrichedCliente | null>(
     null,
@@ -815,35 +863,58 @@ export function ClientesDashboard({
         title="Clientes"
         subtitle={`Base de ${kpis.total} clientes · ${kpis.activos} activos`}
         icon={<Users className="size-5" />}
-        kpis={[
-          {
-            label: "Total clientes",
-            value: kpis.total.toString(),
-            sub: "en base de datos",
-          },
-          {
-            label: "Recurrentes",
-            value: kpis.recurrentes.toString(),
-            sub: "≥3 compras",
-            color: "text-emerald-300",
-          },
-          {
-            label: "LTV total",
-            value: mxn.format(kpis.ltvTotal),
-            sub: `Ticket prom. ${mxn.format(kpis.ticketProm)}`,
-          },
-          {
-            label: "Mejor cliente",
-            value:
-              (
-                kpis.mejor?.nombre_negocio ??
-                kpis.mejor?.nombre ??
-                "—"
-              ).slice(0, 18),
-            sub: kpis.mejor ? mxn.format(kpis.mejor.ltv) : "",
-            color: "text-amber-300",
-          },
-        ]}
+        kpis={(() => {
+          const len = monthlyKpi.length
+          const cur = monthlyKpi[len - 1]
+          const prev = monthlyKpi[len - 2]
+          const pct = (a: number, b: number) =>
+            b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
+          const dNuevos = cur && prev ? pct(cur.nuevos, prev.nuevos) : 0
+          const dLtv = cur && prev ? pct(cur.ltvGanado, prev.ltvGanado) : 0
+          const dActivos = cur && prev ? pct(cur.activosCum, prev.activosCum) : 0
+          return [
+            {
+              label: "Total clientes",
+              value: kpis.total.toString(),
+              sub: `${cur?.nuevos ?? 0} nuevos este mes`,
+              trend: {
+                value: `${dActivos >= 0 ? "+" : ""}${dActivos.toFixed(1)}%`,
+                positive: dActivos >= 0,
+              },
+              sparkline: monthlyKpi.map((m) => m.activosCum),
+            },
+            {
+              label: "Recurrentes",
+              value: kpis.recurrentes.toString(),
+              sub: "≥3 compras",
+              trend: {
+                value: `${dNuevos >= 0 ? "+" : ""}${dNuevos.toFixed(1)}%`,
+                positive: dNuevos >= 0,
+              },
+              sparkline: monthlyKpi.map((m) => m.nuevos),
+            },
+            {
+              label: "LTV total",
+              value: mxn.format(kpis.ltvTotal),
+              sub: `${mxn.format(cur?.ltvGanado ?? 0)} este mes`,
+              trend: {
+                value: `${dLtv >= 0 ? "+" : ""}${dLtv.toFixed(1)}%`,
+                positive: dLtv >= 0,
+              },
+              sparkline: monthlyKpi.map((m) => m.ltvGanado),
+            },
+            {
+              label: "Mejor cliente",
+              value:
+                (
+                  kpis.mejor?.nombre_negocio ??
+                  kpis.mejor?.nombre ??
+                  "—"
+                ).slice(0, 18),
+              sub: kpis.mejor ? mxn.format(kpis.mejor.ltv) : "",
+            },
+          ]
+        })()}
         actions={
           <Link
             href="/clientes/nuevo"

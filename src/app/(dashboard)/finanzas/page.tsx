@@ -213,6 +213,44 @@ export default async function FinanzasPage() {
   void invSandra
   void invBenjamin
 
+  // ─── Series últimos 12 meses para sparklines KPI ─────────────────
+  const today = new Date()
+  type MK = {
+    key: string
+    recuperadoMes: number
+    recuperadoAcum: number
+    netoAcum: number
+  }
+  const monthly12: MK[] = []
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    monthly12.push({ key, recuperadoMes: 0, recuperadoAcum: 0, netoAcum: 0 })
+  }
+  const idxMK = new Map(monthly12.map((m, i) => [m.key, i]))
+  for (const vs of ventaSocios) {
+    const venta = ventaById.get(vs.venta_id)
+    if (!venta?.fecha) continue
+    const mes = venta.fecha.slice(0, 7)
+    const i = idxMK.get(mes)
+    if (i !== undefined) monthly12[i].recuperadoMes += Number(vs.monto ?? 0)
+  }
+  let acum = 0
+  for (const m of monthly12) {
+    acum += m.recuperadoMes
+    m.recuperadoAcum = acum
+  }
+  // Inversión acumulada por mes (snapshot del invertido en cada cutoff)
+  const invByMonth: number[] = monthly12.map((m) => {
+    const cutoff = m.key + "-31"
+    return inversionesData
+      .filter((i) => (i.fecha ?? "0000-00-00") <= cutoff)
+      .reduce((s, x) => s + Number(x.monto_mxn ?? 0), 0)
+  })
+  for (let i = 0; i < monthly12.length; i++) {
+    monthly12[i].netoAcum = monthly12[i].recuperadoAcum - invByMonth[i]
+  }
+
   // Totales globales para hero
   const totalInvertido = kpisPorSocio.reduce(
     (s, k) => s + k.totalInvertido,
@@ -234,32 +272,54 @@ export default async function FinanzasPage() {
         title="Finanzas"
         subtitle="Control de inversiones y capital · ROI por socio"
         icon={<TrendingUp className="size-5" />}
-        kpis={[
-          {
-            label: "Total invertido",
-            value: mxn.format(totalInvertido),
-            sub: "ambos socios",
-          },
-          {
-            label: "Capital recuperado",
-            value: mxn.format(totalRecuperado),
-            sub: "de ventas reales",
-            color: "text-emerald-300",
-          },
-          {
-            label: "Ganancia neta",
-            value: mxn.format(gananciaNeta),
-            sub: "resultado neto",
-            color:
-              gananciaNeta >= 0 ? "text-emerald-300" : "text-rose-300",
-          },
-          {
-            label: "ROI promedio",
-            value: `${roiPromedio.toFixed(1)}%`,
-            sub: "retorno sobre inversión",
-            color: "text-teal-300",
-          },
-        ]}
+        kpis={(() => {
+          const len = monthly12.length
+          const cur = monthly12[len - 1]
+          const prev = monthly12[len - 2]
+          const pct = (a: number, b: number) =>
+            b === 0 ? (a > 0 ? 100 : 0) : ((a - b) / b) * 100
+          const dRecMes = cur && prev ? pct(cur.recuperadoMes, prev.recuperadoMes) : 0
+          const dNeto = cur && prev ? pct(cur.netoAcum, prev.netoAcum) : 0
+          return [
+            {
+              label: "Total invertido",
+              value: mxn.format(totalInvertido),
+              sub: "ambos socios",
+            },
+            {
+              label: "Capital recuperado",
+              value: mxn.format(totalRecuperado),
+              sub: `${mxn.format(cur?.recuperadoMes ?? 0)} este mes`,
+              trend: {
+                value: `${dRecMes >= 0 ? "+" : ""}${dRecMes.toFixed(1)}%`,
+                positive: dRecMes >= 0,
+              },
+              sparkline: monthly12.map((m) => m.recuperadoAcum),
+            },
+            {
+              label: "Ganancia neta",
+              value: mxn.format(gananciaNeta),
+              sub: gananciaNeta >= 0 ? "en positivo" : "aún en rojo",
+              color:
+                gananciaNeta >= 0 ? "text-emerald-700" : "text-rose-600",
+              trend: {
+                value: `${dNeto >= 0 ? "+" : ""}${dNeto.toFixed(1)}%`,
+                positive: dNeto >= 0,
+              },
+              sparkline: monthly12.map((m) => m.netoAcum),
+            },
+            {
+              label: "ROI promedio",
+              value: `${roiPromedio.toFixed(1)}%`,
+              sub: "retorno sobre inversión",
+              sparkline: monthly12.map((m, i) =>
+                invByMonth[i] > 0
+                  ? (m.recuperadoAcum / invByMonth[i] - 1) * 100
+                  : 0,
+              ),
+            },
+          ]
+        })()}
       />
 
       {inversionesError && (
