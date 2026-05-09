@@ -165,6 +165,7 @@ export type ClienteStats = {
 export type ProductoStats = {
   nombre: string
   sku: string
+  categoria: string
   cantidadVendida: number
   totalGenerado: number
 }
@@ -192,7 +193,11 @@ type VentaForStats = {
 type ItemRow = {
   cantidad: number
   precio_unitario: number
-  productos: { nombre: string; sku: string | null } | null
+  productos: {
+    nombre: string
+    sku: string | null
+    categorias: { nombre: string } | null
+  } | null
 }
 
 export async function getVentasStats(filtros?: {
@@ -231,7 +236,9 @@ export async function getVentasStats(filtros?: {
   if (ventaIds.length > 0) {
     const r = await admin
       .from("venta_items")
-      .select("cantidad, precio_unitario, producto_id, productos(nombre, sku)")
+      .select(
+        "cantidad, precio_unitario, producto_id, productos!inner(nombre, sku, categorias(nombre))",
+      )
       .in("venta_id", ventaIds)
     if (r.error) console.error("[getVentasStats] venta_items error:", r.error.message)
     items = (r.data ?? []) as unknown as ItemRow[]
@@ -239,7 +246,9 @@ export async function getVentasStats(filtros?: {
   if (items.length === 0 && cotIds.length > 0) {
     const r = await admin
       .from("cotizacion_items")
-      .select("cantidad, precio_unitario, producto_id, productos(nombre, sku)")
+      .select(
+        "cantidad, precio_unitario, producto_id, productos!inner(nombre, sku, categorias(nombre))",
+      )
       .in("cotizacion_id", cotIds)
     if (r.error) console.error("[getVentasStats] cotizacion_items error:", r.error.message)
     items = (r.data ?? []) as unknown as ItemRow[]
@@ -277,17 +286,20 @@ export async function getVentasStats(filtros?: {
     return acc
   }, {})
 
-  // ─── Top productos ──────────────────────────────────────────────
+  // ─── Top productos (key by SKU para evitar colisiones de nombre) ─
   const porProducto = items.reduce<Record<string, ProductoStats>>(
     (acc, item) => {
       const nombre = item.productos?.nombre ?? "Desconocido"
       const sku = item.productos?.sku ?? ""
+      const categoria = item.productos?.categorias?.nombre ?? "Sin categoría"
+      const key = sku || nombre
       const cur =
-        acc[nombre] ?? { nombre, sku, cantidadVendida: 0, totalGenerado: 0 }
+        acc[key] ??
+        { nombre, sku, categoria, cantidadVendida: 0, totalGenerado: 0 }
       cur.cantidadVendida += Number(item.cantidad ?? 0)
       cur.totalGenerado +=
         Number(item.cantidad ?? 0) * Number(item.precio_unitario ?? 0)
-      acc[nombre] = cur
+      acc[key] = cur
       return acc
     },
     {},

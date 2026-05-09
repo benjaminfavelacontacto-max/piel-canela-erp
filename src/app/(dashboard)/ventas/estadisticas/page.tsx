@@ -43,6 +43,26 @@ function frecuenciaLabel(n: number): {
   return { label: "Nueva", className: "bg-gray-100 text-gray-600" }
 }
 
+const categoriaBadge: Record<string, string> = {
+  CINTAS: "bg-orange-100 text-orange-700",
+  ACTIVADORES: "bg-teal-100 text-teal-700",
+  POTENCIADORES: "bg-green-100 text-green-700",
+  // Spec'd "OXIGENANTES" pero la categoría real es "EMULSIÓN REVELADORA" (los OX-*)
+  "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
+  OXIGENANTES: "bg-blue-100 text-blue-700",
+  AEROGRAFÍA: "bg-purple-100 text-purple-700",
+  "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
+  "POLVO DE BLANQUEAR": "bg-pink-100 text-pink-700",
+  HUMECTANTES: "bg-cyan-100 text-cyan-700",
+  EXFOLIANTS: "bg-indigo-100 text-indigo-700",
+  "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
+  SHAMPOO: "bg-sky-100 text-sky-700",
+  SOMBRILLA: "bg-slate-100 text-slate-700",
+}
+function categoriaClass(c: string): string {
+  return categoriaBadge[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
+}
+
 export default async function EstadisticasPage({
   searchParams,
 }: {
@@ -213,6 +233,7 @@ export default async function EstadisticasPage({
                     <tr className="border-b border-gray-100 bg-gray-50">
                       <Th>Producto</Th>
                       <Th>SKU</Th>
+                      <Th>Categoría</Th>
                       <Th align="right">Unidades</Th>
                       <Th align="right">Total generado</Th>
                     </tr>
@@ -221,7 +242,7 @@ export default async function EstadisticasPage({
                     {stats.topProductos.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={5}
                           className="px-5 py-8 text-center text-sm text-gray-500"
                         >
                           Sin datos.
@@ -229,7 +250,7 @@ export default async function EstadisticasPage({
                       </tr>
                     ) : (
                       stats.topProductos.map((p, i) => (
-                        <tr key={`${p.nombre}-${i}`} className="hover:bg-gray-50">
+                        <tr key={`${p.sku}-${i}`} className="hover:bg-gray-50">
                           <td className="px-5 py-3 text-gray-900">
                             <span className="text-xs text-gray-400 mr-2">
                               #{i + 1}
@@ -238,6 +259,13 @@ export default async function EstadisticasPage({
                           </td>
                           <td className="px-5 py-3 font-mono text-xs text-gray-500">
                             {p.sku || "—"}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${categoriaClass(p.categoria)}`}
+                            >
+                              {p.categoria}
+                            </span>
                           </td>
                           <td className="px-5 py-3 text-right tabular-nums text-gray-500">
                             {p.cantidadVendida.toLocaleString("es-MX")}
