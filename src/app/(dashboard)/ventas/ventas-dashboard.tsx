@@ -64,7 +64,7 @@ const PAGE_SIZE = 15
 
 const SOCIO_COLORS: Record<string, string> = {
   Sandra: "#db2777",
-  Benjamin: "#1b4332",
+  Benjamin: "#0d9488",
 }
 const FALLBACK_COLORS = ["#2563eb", "#ea580c", "#0891b2", "#7c3aed"]
 
@@ -88,7 +88,7 @@ const monthShort = new Intl.DateTimeFormat("es-MX", { month: "short" })
 const monthLong = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" })
 
 const estatusBadge: Record<Estatus, string> = {
-  pagada_total: "bg-emerald-100 text-emerald-700",
+  pagada_total: "bg-teal-100 text-teal-700",
   pagada_parcial: "bg-amber-100 text-amber-700",
   pendiente: "bg-red-100 text-red-700",
   cancelada: "bg-gray-100 text-gray-600",
@@ -350,7 +350,7 @@ export function VentasDashboard({
               <Bar
                 dataKey="total"
                 name="Total vendido"
-                fill="#1b4332"
+                fill="#0d9488"
                 radius={[4, 4, 0, 0]}
               />
               <Line

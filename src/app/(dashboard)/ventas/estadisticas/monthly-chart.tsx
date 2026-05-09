@@ -65,7 +65,7 @@ export function MonthlyChart({
           formatter={(v: number) => mxn.format(v)}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey="total" name="Total vendido" fill="#1b4332" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" name="Total vendido" fill="#0d9488" radius={[4, 4, 0, 0]} />
         <Line
           type="monotone"
           dataKey="ganancia"

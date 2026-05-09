@@ -47,7 +47,7 @@ function estatusFor(total: number, pagado: number): Estatus {
 const estatusBadge: Record<Estatus, string> = {
   pendiente: "bg-amber-100 text-amber-700",
   pagada_parcial: "bg-blue-100 text-blue-700",
-  pagada_total: "bg-emerald-100 text-emerald-700",
+  pagada_total: "bg-teal-100 text-teal-700",
 }
 
 const estatusLabel: Record<Estatus, string> = {

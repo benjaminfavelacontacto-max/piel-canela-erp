@@ -21,7 +21,7 @@ type Estatus = "pendiente" | "pagada_parcial" | "pagada_total" | "cancelada"
 const estatusBadge: Record<Estatus, string> = {
   pendiente: "bg-amber-100 text-amber-700",
   pagada_parcial: "bg-blue-100 text-blue-700",
-  pagada_total: "bg-emerald-100 text-emerald-700",
+  pagada_total: "bg-teal-100 text-teal-700",
   cancelada: "bg-gray-100 text-gray-600",
 }
 

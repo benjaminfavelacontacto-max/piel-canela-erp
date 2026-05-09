@@ -12,7 +12,7 @@ import { marcarVendida } from "../actions"
 const estatusBadge: Record<Estatus, string> = {
   borrador: "bg-gray-100 text-gray-700",
   enviada: "bg-blue-100 text-blue-700",
-  aceptada: "bg-emerald-100 text-emerald-700",
+  aceptada: "bg-teal-100 text-teal-700",
   rechazada: "bg-red-100 text-red-700",
   vencida: "bg-amber-100 text-amber-700",
 }
@@ -110,7 +110,7 @@ export function CotizacionDetail({
             type="button"
             onClick={handleMarkSold}
             disabled={pending || currentEstatus === "aceptada"}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+            className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
           >
             <CheckCircle2 className="size-4" />
             {currentEstatus === "aceptada"

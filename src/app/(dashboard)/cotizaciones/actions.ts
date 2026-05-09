@@ -30,6 +30,7 @@ export type SaveCotizacionInput = {
 export async function saveCotizacion(input: SaveCotizacionInput) {
   const supabase = await createClient()
 
+  // total es GENERATED — no se inserta. Postgres lo calcula desde subtotal + iva − descuento.
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .insert({
@@ -41,7 +42,6 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
       subtotal: input.subtotal,
       iva: input.iva,
       descuento: input.descuento,
-      total: input.total,
       costo_productos: input.costo_productos,
       estatus: "borrador",
       notas: input.notas,
@@ -50,17 +50,21 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
     .single()
 
   if (cotErr || !cot) {
-    return { ok: false as const, error: cotErr?.message ?? "Error al crear cotización" }
+    console.error("[saveCotizacion] insert cotización falló:", cotErr)
+    return {
+      ok: false as const,
+      error: cotErr?.message ?? "Error al crear cotización",
+    }
   }
 
   if (input.items.length > 0) {
+    // cotizacion_items.subtotal también es GENERATED — no se inserta.
     const itemsRows = input.items.map((it, i) => ({
       cotizacion_id: cot.id,
       producto_id: it.producto_id,
       cantidad: it.cantidad,
       precio_unitario: it.precio_unitario,
       costo_unitario: it.costo_unitario,
-      subtotal: it.subtotal,
       sort_order: i,
     }))
 
@@ -69,7 +73,11 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
       .insert(itemsRows)
 
     if (itemsErr) {
-      return { ok: false as const, error: `Cotización creada pero items fallaron: ${itemsErr.message}` }
+      console.error("[saveCotizacion] insert items falló:", itemsErr)
+      return {
+        ok: false as const,
+        error: `Cotización creada pero items fallaron: ${itemsErr.message}`,
+      }
     }
   }
 

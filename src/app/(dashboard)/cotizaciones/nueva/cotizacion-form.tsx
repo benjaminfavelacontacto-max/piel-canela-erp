@@ -151,35 +151,42 @@ export function CotizacionForm({
       return
     }
     startTransition(async () => {
-      const result = await saveCotizacion({
-        numero: numero.trim(),
-        cliente_id: clienteId,
-        fecha,
-        valida_hasta: validaHasta || null,
-        moneda: "MXN",
-        subtotal,
-        iva,
-        descuento: 0,
-        total,
-        costo_productos: items.reduce(
-          (s, it) => s + it.costo_unitario * it.cantidad,
-          0,
-        ),
-        notas: notas || null,
-        items: items.map((it) => ({
-          producto_id: it.producto_id,
-          cantidad: it.cantidad,
-          precio_unitario: it.precio_unitario,
-          costo_unitario: it.costo_unitario,
-          subtotal: it.subtotal,
-        })),
-      })
-      if (!result.ok) {
-        toast.error(result.error)
-        return
+      try {
+        const result = await saveCotizacion({
+          numero: numero.trim(),
+          cliente_id: clienteId,
+          fecha,
+          valida_hasta: validaHasta || null,
+          moneda: "MXN",
+          subtotal,
+          iva,
+          descuento: 0,
+          total,
+          costo_productos: items.reduce(
+            (s, it) => s + it.costo_unitario * it.cantidad,
+            0,
+          ),
+          notas: notas || null,
+          items: items.map((it) => ({
+            producto_id: it.producto_id,
+            cantidad: it.cantidad,
+            precio_unitario: it.precio_unitario,
+            costo_unitario: it.costo_unitario,
+            subtotal: it.subtotal,
+          })),
+        })
+        if (!result.ok) {
+          console.error("[handleSave] saveCotizacion returned error:", result.error)
+          toast.error(result.error, { duration: 8000 })
+          return
+        }
+        toast.success("Cotización guardada.")
+        router.push(`/cotizaciones/${result.id}`)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error("[handleSave] threw:", e)
+        toast.error(`Error al guardar: ${msg}`, { duration: 8000 })
       }
-      toast.success("Cotización guardada.")
-      router.push(`/cotizaciones/${result.id}`)
     })
   }
 
@@ -307,7 +314,7 @@ export function CotizacionForm({
               type="button"
               onClick={addItem}
               disabled={!selectedProduct}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               <Plus className="size-4" />
               Agregar
@@ -388,12 +395,17 @@ export function CotizacionForm({
             </label>
           </div>
 
-          <label className="flex items-center justify-between text-sm">
-            <span className="text-gray-700">IVA 16%</span>
+          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div>
+              <p className="text-sm font-medium text-gray-900">IVA 16%</p>
+              <p className="text-xs text-gray-500">
+                Aplica impuesto al subtotal
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setIvaActivo((v) => !v)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
                 ivaActivo ? "bg-pink-600" : "bg-gray-300"
               }`}
               aria-pressed={ivaActivo}
@@ -404,7 +416,7 @@ export function CotizacionForm({
                 }`}
               />
             </button>
-          </label>
+          </div>
 
           <label className="block text-xs">
             <span className="text-gray-600">Notas (opcional)</span>

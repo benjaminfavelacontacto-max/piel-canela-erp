@@ -74,7 +74,7 @@ export function CotizacionPreview({
           />
           <div className="text-right text-[#111827]">
             <div className="text-lg font-bold leading-tight">PIEL CANELA</div>
-            <div className="text-sm font-semibold text-[#1b4332]">
+            <div className="text-sm font-semibold text-[#0d9488]">
               Spa &amp; Bronceado
             </div>
             <div className="mt-1 text-xs text-[#374151] leading-snug">
@@ -203,7 +203,7 @@ export function CotizacionPreview({
           {data.ivaActivo && (
             <TotalRow label="IVA 16%" value={mxn.format(data.iva)} />
           )}
-          <div className="mt-2 flex items-center justify-between rounded-md bg-[#1b4332] px-4 py-2.5 text-[#ffffff]">
+          <div className="mt-2 flex items-center justify-between rounded-md bg-[#0d9488] px-4 py-2.5 text-[#ffffff]">
             <span className="text-sm font-bold">TOTAL</span>
             <span
               className="text-lg font-bold"
@@ -229,7 +229,7 @@ export function CotizacionPreview({
         <div className="mt-1">
           <a
             href={INSTAGRAM_URL}
-            className="text-[#1b4332] font-semibold no-underline"
+            className="text-[#0d9488] font-semibold no-underline"
           >
             @pielcanela_spabronceado
           </a>
@@ -241,7 +241,7 @@ export function CotizacionPreview({
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[#1b4332] px-10 py-2 text-center">
+    <div className="bg-[#0d9488] px-10 py-2 text-center">
       <span className="text-sm font-bold tracking-wide text-[#ffffff]">
         {children}
       </span>

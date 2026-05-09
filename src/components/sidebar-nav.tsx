@@ -35,7 +35,7 @@ export function SidebarNav() {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-amber-100 text-amber-900"
+                ? "bg-teal-100 text-teal-700"
                 : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
             )}
           >
