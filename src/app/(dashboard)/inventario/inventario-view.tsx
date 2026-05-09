@@ -5,9 +5,6 @@ import {
   Search,
   Package,
   Sparkles,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
   RefreshCw,
   X,
 } from "lucide-react"
@@ -71,29 +68,21 @@ const mxn2 = new Intl.NumberFormat("es-MX", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const usd2 = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const categoriaBadge: Record<string, string> = {
-  CINTAS: "bg-orange-100 text-orange-700",
+const categoriaBadgeColor: Record<string, string> = {
   ACTIVADORES: "bg-teal-100 text-teal-700",
-  POTENCIADORES: "bg-green-100 text-green-700",
+  POTENCIADORES: "bg-emerald-100 text-emerald-700",
+  CINTAS: "bg-orange-100 text-orange-700",
   "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
-  AEROGRAFÍA: "bg-purple-100 text-purple-700",
+  "POLVO DE BLANQUEAR": "bg-purple-100 text-purple-700",
+  EXFOLIANTS: "bg-pink-100 text-pink-700",
+  HUMECTANTES: "bg-indigo-100 text-indigo-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
-  "POLVO DE BLANQUEAR": "bg-pink-100 text-pink-700",
-  HUMECTANTES: "bg-cyan-100 text-cyan-700",
-  EXFOLIANTS: "bg-indigo-100 text-indigo-700",
-  "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
-  SHAMPOO: "bg-sky-100 text-sky-700",
-  SOMBRILLA: "bg-slate-100 text-slate-700",
+  AEROGRAFÍA: "bg-red-100 text-red-700",
+  "DYE COLOR": "bg-cyan-100 text-cyan-700",
+  OTROS: "bg-gray-100 text-gray-600",
 }
 function categoriaClass(c: string): string {
-  return categoriaBadge[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
+  return categoriaBadgeColor[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
 }
 
 function norm(s: string): string {
@@ -161,8 +150,8 @@ export function InventarioView({
   const [categoriaF, setCategoriaF] = useState("")
   const [proveedorF, setProveedorF] = useState("")
   const [topSellersOnly, setTopSellersOnly] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>("nombre")
-  const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const sortKey: SortKey = "nombre"
+  const sortDir: SortDir = "asc"
 
   // Top sellers IDs (top 20 by unidades_vendidas)
   const topSellersSet = useMemo(() => {
@@ -206,15 +195,6 @@ export function InventarioView({
     })
     return copy
   }, [filtered, sortKey, sortDir])
-
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(k)
-      setSortDir(k === "nombre" || k === "categoria" ? "asc" : "desc")
-    }
-  }
 
   // KPIs
   const kpis = useMemo(() => {
@@ -414,87 +394,66 @@ export function InventarioView({
       <TipoCambioNote tc={tcVigente} />
 
       {/* Table */}
-      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="w-full table-fixed text-sm">
-            <colgroup>
-              <col style={{ width: 60 }} />
-              <col style={{ width: 100 }} />
-              <col />
-              <col style={{ width: 70 }} />
-              <col style={{ width: 120 }} />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 90 }} />
-              <col style={{ width: 100 }} />
-              <col style={{ width: 70 }} />
-              <col style={{ width: 100 }} />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 100 }} />
-              <col style={{ width: 80 }} />
-              <col style={{ width: 80 }} />
-              <col style={{ width: 90 }} />
-            </colgroup>
+      <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse" style={{ minWidth: "1200px" }}>
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <Th>Foto</Th>
-                <SortTh
-                  active={sortKey === "categoria"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("categoria")}
-                >
-                  Categoría
-                </SortTh>
-                <SortTh
-                  active={sortKey === "nombre"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("nombre")}
-                >
+              <tr className="border-b border-gray-100">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[50px]">
+                  Foto
+                </th>
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[90px]">
+                  Cat.
+                </th>
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[60px]">
+                  Peso
+                </th>
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
                   Producto
-                </SortTh>
-                <Th align="center">Peso</Th>
-                <Th>SKU</Th>
-                <SortTh
-                  align="right"
-                  active={sortKey === "precio_publico"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("precio_publico")}
-                >
-                  Precio MXN
-                </SortTh>
-                <Th align="right">Precio USD</Th>
-                <Th align="right">Precio MXN<br/><span className="text-[9px] font-normal normal-case text-gray-400">(calc)</span></Th>
-                <SortTh
-                  align="right"
-                  active={sortKey === "stock_actual"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("stock_actual")}
-                >
+                </th>
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[100px]">
+                  SKU
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[90px]">
+                  P. Público
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                  USD
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                  MXN calc.
+                </th>
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[60px]">
                   Stock
-                </SortTh>
-                <Th align="right">Costo USD</Th>
-                <Th align="right">Costo MXN</Th>
-                <Th align="right">P.Unit+Env<br/><span className="text-[9px] font-normal normal-case text-gray-400">USD</span></Th>
-                <Th align="right">P.Unit+Env<br/><span className="text-[9px] font-normal normal-case text-gray-400">MXN</span></Th>
-                <Th align="right">Profit</Th>
-                <SortTh
-                  align="right"
-                  active={sortKey === "unidades_vendidas"}
-                  dir={sortDir}
-                  onClick={() => toggleSort("unidades_vendidas")}
-                >
-                  Vendidos
-                </SortTh>
-                <Th align="right">Disponible</Th>
-                <Th align="center">Estatus</Th>
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                  Costo USD
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                  Costo MXN
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                  +Env USD
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                  +Env MXN
+                </th>
+                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[80px]">
+                  Profit
+                </th>
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[55px]">
+                  Vend.
+                </th>
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wide w-[70px]">
+                  Estatus
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {sorted.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={17}
+                    colSpan={16}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
@@ -520,182 +479,158 @@ export function InventarioView({
 
 function ProductRow({
   p,
-  isTop,
+  isTop: _isTop,
   onClick,
 }: {
   p: ProductoEnriquecido
   isTop: boolean
   onClick: () => void
 }) {
-  const initials =
-    p.nombre
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  const disponible = Math.max(0, p.stock_actual)
+  void _isTop
+  const tc = p.tipo_cambio ?? 17.5
+  const precioUsd = p.precio_usd ?? 0
+  const costoMxnCalc = precioUsd * tc
+  const catShort =
+    p.categoria.length > 10 ? p.categoria.slice(0, 10) + "…" : p.categoria
   const estatusBadge =
-    p.estatus === "agotado"
-      ? "bg-red-100 text-red-700"
-      : p.estatus === "bajo"
-        ? "bg-amber-100 text-amber-700"
-        : "bg-teal-100 text-teal-700"
+    p.stock_actual <= 0
+      ? "bg-red-100 text-red-600"
+      : p.stock_actual <= p.stock_minimo
+        ? "bg-amber-100 text-amber-600"
+        : "bg-green-100 text-green-600"
   const estatusLabel =
-    p.estatus === "agotado" ? "Agotado" : p.estatus === "bajo" ? "Bajo" : "OK"
-
-  const dash = <span className="text-gray-300">—</span>
+    p.stock_actual <= 0
+      ? "Agotado"
+      : p.stock_actual <= p.stock_minimo
+        ? "Bajo"
+        : "Ok"
+  const stockColor =
+    p.stock_actual <= 0
+      ? "text-red-500"
+      : p.stock_actual <= p.stock_minimo
+        ? "text-amber-500"
+        : "text-gray-700"
 
   return (
     <tr
       onClick={onClick}
-      className="group cursor-pointer transition-colors hover:bg-teal-50/40"
+      className="border-b border-gray-50 cursor-pointer hover:bg-gray-50/50 transition-colors"
     >
-      {/* 1. Foto */}
-      <td className="px-2 py-2">
+      {/* Foto */}
+      <td className="py-2 px-2">
         {p.imagen_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={p.imagen_url}
-            alt={p.nombre}
-            className="size-10 shrink-0 rounded-lg border border-gray-100 object-cover"
+            alt=""
+            className="w-8 h-8 rounded-lg object-cover"
           />
         ) : (
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 text-xs font-semibold text-gray-400">
-            {initials}
+          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">
+            {p.sku?.slice(0, 2)}
           </div>
         )}
       </td>
-      {/* 2. Categoría */}
-      <td className="px-2 py-2">
+
+      {/* Categoría */}
+      <td className="py-2 px-2">
         <span
-          className={`inline-flex max-w-full items-center truncate rounded-full px-2 py-0.5 text-[10px] font-medium ${categoriaClass(p.categoria)}`}
+          className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${categoriaClass(p.categoria)}`}
           title={p.categoria}
         >
-          {p.categoria}
+          {catShort}
         </span>
       </td>
-      {/* 3. Producto */}
-      <td className="px-2 py-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span
-            className="truncate text-sm font-medium text-gray-900"
-            title={p.nombre_display ?? p.nombre}
-          >
-            {p.nombre_display ?? p.nombre}
-          </span>
-          {isTop && (
-            <span
-              title="Top vendido"
-              className="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700"
-            >
-              ⭐
-            </span>
-          )}
-        </div>
-        {p.proveedor && (
-          <div className="truncate text-[10px] text-gray-400" title={p.proveedor}>
-            {p.proveedor}
-          </div>
-        )}
+
+      {/* Peso */}
+      <td className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap">
+        {p.peso ?? "—"}
       </td>
-      {/* 4. Peso */}
-      <td className="px-2 py-2 text-center text-xs text-gray-600">
-        {p.peso ?? dash}
+
+      {/* Producto */}
+      <td className="py-2 px-2">
+        <p
+          className="text-xs font-medium text-gray-900 truncate max-w-[160px]"
+          title={p.nombre_display ?? p.nombre}
+        >
+          {p.nombre_display ?? p.nombre}
+        </p>
       </td>
-      {/* 5. SKU */}
-      <td className="px-2 py-2 font-mono text-xs text-gray-500 truncate" title={p.sku}>
-        {p.sku}
+
+      {/* SKU */}
+      <td className="py-2 px-2">
+        <code className="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded">
+          {p.sku}
+        </code>
       </td>
-      {/* 6. Precio Público MXN */}
-      <td className="px-2 py-2 text-right tabular-nums">
-        {p.precio_publico != null ? (
-          <span className="font-medium text-gray-900">
-            {mxn2.format(p.precio_publico)}
-          </span>
-        ) : (
-          dash
-        )}
+
+      {/* Precio Público */}
+      <td className="py-2 px-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">
+        {p.precio_publico != null ? mxn2.format(p.precio_publico) : "—"}
       </td>
-      {/* 7. Precio USD */}
-      <td className="px-2 py-2 text-right tabular-nums">
-        {p.precio_usd != null && p.precio_usd > 0 ? (
-          <span className="font-medium text-blue-600">
-            {usd2.format(p.precio_usd)}
-          </span>
-        ) : (
-          dash
-        )}
+
+      {/* Precio USD */}
+      <td className="py-2 px-2 text-right text-xs text-blue-600 font-medium whitespace-nowrap">
+        {precioUsd > 0 ? `$${precioUsd.toFixed(2)}` : "—"}
       </td>
-      {/* 8. Precio MXN (calculado) */}
-      <td className="px-2 py-2 text-right tabular-nums text-gray-600">
+
+      {/* Precio MXN calculado */}
+      <td className="py-2 px-2 text-right text-xs text-gray-500 whitespace-nowrap">
         {p.precio_mxn_calculado != null && p.precio_mxn_calculado > 0
           ? mxn2.format(p.precio_mxn_calculado)
-          : dash}
+          : "—"}
       </td>
-      {/* 9. Stock */}
-      <td className="px-2 py-2 text-right">
-        <div className="font-semibold tabular-nums text-gray-900">
-          {p.stock_actual.toLocaleString("es-MX")}
-        </div>
-        <div className="text-[10px] text-gray-400">
-          mín {p.stock_minimo.toLocaleString("es-MX")}
-        </div>
+
+      {/* Stock */}
+      <td className="py-2 px-2 text-center">
+        <span className={`text-xs font-bold ${stockColor}`}>
+          {p.stock_actual}
+        </span>
+        <span className="block text-[9px] text-gray-400">
+          mín {p.stock_minimo}
+        </span>
       </td>
-      {/* 10. Costo Total USD */}
-      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+
+      {/* Costo USD (precio_usd solamente) */}
+      <td className="py-2 px-2 text-right text-xs text-gray-600 whitespace-nowrap">
+        {precioUsd > 0 ? `$${precioUsd.toFixed(2)}` : "—"}
+      </td>
+
+      {/* Costo MXN */}
+      <td className="py-2 px-2 text-right text-xs text-gray-600 whitespace-nowrap">
+        {precioUsd > 0 ? mxn2.format(costoMxnCalc) : "—"}
+      </td>
+
+      {/* P.Unit + Envío USD */}
+      <td className="py-2 px-2 text-right text-xs text-orange-600 font-medium whitespace-nowrap">
         {p.costo_total_usd != null && p.costo_total_usd > 0
-          ? usd2.format(p.costo_total_usd)
-          : dash}
+          ? `$${p.costo_total_usd.toFixed(2)}`
+          : "—"}
       </td>
-      {/* 11. Costo Total MXN */}
-      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
+
+      {/* P.Unit + Envío MXN */}
+      <td className="py-2 px-2 text-right text-xs text-orange-700 whitespace-nowrap">
         {p.costo_total_mxn != null && p.costo_total_mxn > 0
           ? mxn2.format(p.costo_total_mxn)
-          : dash}
+          : "—"}
       </td>
-      {/* 12. P.Unit + Envío USD */}
-      <td className="px-2 py-2 text-right tabular-nums">
-        {p.costo_envio_usd != null && p.costo_envio_usd > 0 ? (
-          <span className="font-medium text-orange-600">
-            {usd2.format(p.costo_envio_usd)}
-          </span>
-        ) : (
-          dash
-        )}
+
+      {/* Profit */}
+      <td className="py-2 px-2 text-right text-xs font-bold text-emerald-600 whitespace-nowrap">
+        {p.profit_unitario != null && p.profit_unitario !== 0
+          ? mxn2.format(p.profit_unitario)
+          : "—"}
       </td>
-      {/* 13. P.Unit + Envío MXN */}
-      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
-        {p.costo_envio_mxn != null && p.costo_envio_mxn > 0
-          ? mxn2.format(p.costo_envio_mxn)
-          : dash}
+
+      {/* Unidades vendidas */}
+      <td className="py-2 px-2 text-center text-xs text-gray-700 font-medium">
+        {p.unidades_vendidas || 0}
       </td>
-      {/* 14. Profit */}
-      <td className="px-2 py-2 text-right tabular-nums">
-        {p.profit_unitario != null && p.profit_unitario !== 0 ? (
-          <span
-            className={`font-semibold ${p.profit_unitario > 0 ? "text-green-600" : "text-red-600"}`}
-          >
-            {mxn2.format(p.profit_unitario)}
-          </span>
-        ) : (
-          dash
-        )}
-      </td>
-      {/* 15. Unid. Vendidas */}
-      <td className="px-2 py-2 text-right tabular-nums text-gray-700">
-        {p.unidades_vendidas > 0
-          ? p.unidades_vendidas.toLocaleString("es-MX")
-          : dash}
-      </td>
-      {/* 16. Stock Disponible */}
-      <td className="px-2 py-2 text-right tabular-nums font-semibold text-gray-900">
-        {disponible.toLocaleString("es-MX")}
-      </td>
-      {/* 17. Estatus */}
-      <td className="px-2 py-2 text-center">
+
+      {/* Estatus */}
+      <td className="py-2 px-2 text-center">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${estatusBadge}`}
+          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${estatusBadge}`}
         >
           {estatusLabel}
         </span>
@@ -720,58 +655,6 @@ function TipoCambioNote({ tc }: { tc: number }) {
       </div>
       <ActualizarTCButton tcActual={tc} />
     </div>
-  )
-}
-
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode
-  align?: "left" | "right" | "center"
-}) {
-  return (
-    <th
-      className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
-  )
-}
-
-function SortTh({
-  children,
-  active,
-  dir,
-  onClick,
-  align = "left",
-}: {
-  children: React.ReactNode
-  active: boolean
-  dir: "asc" | "desc"
-  onClick: () => void
-  align?: "left" | "right" | "center"
-}) {
-  return (
-    <th
-      onClick={onClick}
-      className="cursor-pointer select-none px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-      style={{ textAlign: align }}
-    >
-      <span className="inline-flex items-center gap-1">
-        {children}
-        {active ? (
-          dir === "asc" ? (
-            <ArrowUp className="size-3" />
-          ) : (
-            <ArrowDown className="size-3" />
-          )
-        ) : (
-          <ArrowUpDown className="size-3 opacity-40" />
-        )}
-      </span>
-    </th>
   )
 }
 
