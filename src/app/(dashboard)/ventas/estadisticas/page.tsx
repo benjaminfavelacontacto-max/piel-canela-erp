@@ -227,7 +227,7 @@ export default async function EstadisticasPage({
   const cambioGanancia = ant ? pctChange(gananciaPeriodo, prevGanancia) : null
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 space-y-8">
       {/* ─── Header ─── */}
       <div className="animate-in fade-in slide-in-from-top-2 duration-300">
         <div className="mb-2 flex items-center gap-3 text-sm">
@@ -354,7 +354,7 @@ export default async function EstadisticasPage({
 
           {/* ─── Chart + Top Clientes (3/5 + 2/5) ─── */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md lg:col-span-3">
+            <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md lg:col-span-3">
               <header className="mb-4 flex items-center gap-2">
                 <BarChart3 className="size-4 text-teal-600" />
                 <h3 className="font-semibold text-gray-900">
@@ -390,7 +390,7 @@ export default async function EstadisticasPage({
               </span>
             </div>
             {stats.topProductos.length === 0 ? (
-              <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">
+              <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-sm text-gray-400">
                 Sin datos.
               </div>
             ) : (
@@ -461,7 +461,7 @@ function Kpi({
   change?: number | null
 }) {
   return (
-    <div className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <div className={`rounded-xl p-2.5 transition-colors ${iconBg}`}>
           {icon}

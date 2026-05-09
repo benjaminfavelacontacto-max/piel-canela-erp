@@ -25,7 +25,7 @@ export default async function EditarVentaPage({
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-4">
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error.message}
         </div>
@@ -39,7 +39,7 @@ export default async function EditarVentaPage({
   const cliente = venta.clientes as Cliente
 
   return (
-    <div className="p-8">
+    <div className="p-4">
       <nav className="mb-4 flex items-center gap-2 text-xs text-gray-500">
         <Link href="/ventas" className="hover:text-gray-900">
           Ventas

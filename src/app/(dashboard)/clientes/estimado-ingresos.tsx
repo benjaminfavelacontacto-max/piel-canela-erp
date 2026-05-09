@@ -485,7 +485,7 @@ export function EstimadoIngresos({
               </p>
             </div>
           </header>
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={220}>
             <ComposedChart
               data={dataGrafica}
               margin={{ top: 5, right: 5, left: 0, bottom: 0 }}

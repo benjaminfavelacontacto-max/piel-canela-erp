@@ -434,7 +434,7 @@ export default async function DashboardPage() {
     .slice(0, 8)
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 space-y-8">
       {/* ─── Header ─── */}
       <header className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
         <div>
@@ -521,7 +521,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* ─── Chart full-width con summary inline ─── */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md">
         <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">
@@ -734,7 +734,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ─── Activity feed ─── */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
         <header className="mb-4 flex items-center gap-2">
           <Calendar className="size-4 text-gray-500" />
           <h2 className="text-sm font-semibold text-gray-900">
@@ -815,7 +815,7 @@ function Kpi({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default ${urgent ? "border-red-100" : "border-gray-100"}`}
+      className={`rounded-2xl border bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default ${urgent ? "border-red-100" : "border-gray-100"}`}
     >
       <div className="mb-4 flex items-center justify-between">
         <div className={`p-2 rounded-xl ${iconBg}`}>{icon}</div>

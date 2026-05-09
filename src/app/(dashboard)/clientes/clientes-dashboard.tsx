@@ -426,6 +426,8 @@ export function ClientesDashboard({
   const [sorting, setSorting] = useState<SortingState>([
     { id: "ltv", desc: true },
   ])
+  // Default: Avatar+Cliente, Tipo, Estatus, # Ventas, LTV, Acciones.
+  // Resto togglable.
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     rfc: false,
     ciudad: false,
@@ -435,6 +437,11 @@ export function ClientesDashboard({
     saldo_total: false,
     vendedor_nombre: false,
     metodo_pago_pref: false,
+    contacto: false,
+    ticket_promedio: false,
+    utilidad_total: false,
+    ultimo_pedido: false,
+    frecuencia_dias: false,
   })
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [showColumnMenu, setShowColumnMenu] = useState(false)
@@ -810,7 +817,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 space-y-4">
       {/* Header */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">

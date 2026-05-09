@@ -690,7 +690,7 @@ export function RecurrenciaAnalytics({
             Sin ventas registradas.
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={220}>
             <ComposedChart
               data={activosPorMes}
               margin={{ top: 5, right: 5, left: 5, bottom: 0 }}

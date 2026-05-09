@@ -171,7 +171,7 @@ export function VentaForm({
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4">
       <nav className="mb-4 flex items-center gap-2 text-xs text-gray-500">
         <Link href="/ventas" className="hover:text-gray-900">
           Ventas

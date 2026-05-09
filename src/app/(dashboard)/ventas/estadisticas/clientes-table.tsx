@@ -40,7 +40,7 @@ export function ClientesTable({ data }: { data: ClienteStats[] }) {
 
   if (data.length === 0) {
     return (
-      <div className="p-8 text-center text-sm text-gray-400">Sin datos.</div>
+      <div className="p-4 text-center text-sm text-gray-400">Sin datos.</div>
     )
   }
 

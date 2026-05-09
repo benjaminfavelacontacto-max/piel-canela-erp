@@ -258,7 +258,7 @@ export function InventarioView({
   }, [])
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex items-center gap-3">
           <Package className="size-7 text-teal-700" />

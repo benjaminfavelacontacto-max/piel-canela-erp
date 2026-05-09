@@ -503,6 +503,8 @@ export function CotizacionesList({
   const [sorting, setSorting] = useState<SortingState>([
     { id: "fecha", desc: true },
   ])
+  // Default: Fecha, Número, Cliente, Total, Estado, Estatus BD, Acciones.
+  // Resto togglable desde menú "Columnas".
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     valida_hasta: false,
     subtotal: false,
@@ -514,6 +516,9 @@ export function CotizacionesList({
     rfc: false,
     ciudad: false,
     ultimaActividad: false,
+    diasAbierta: false,
+    probabilidad: false,
+    estatus: false, // BD original — uso estadoComercial computado
   })
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
   const [showColumnMenu, setShowColumnMenu] = useState(false)
@@ -871,7 +876,7 @@ export function CotizacionesList({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="space-y-5 p-8">
+    <div className="space-y-4 p-4">
       {/* Header */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">

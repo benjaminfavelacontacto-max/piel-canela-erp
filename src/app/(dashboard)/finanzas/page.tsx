@@ -210,7 +210,7 @@ export default async function FinanzasPage() {
   const invBenjamin = kpisPorSocio.find((k) => k.socio.id === BENJAMIN_ID)?.totalInvertido ?? 0
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 space-y-4">
       <header className="flex items-center gap-3">
         <TrendingUp className="size-7 text-teal-700" />
         <div>
