@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
 
@@ -158,9 +159,12 @@ export type ClienteStats = {
   nombre: string
   totalCompras: number
   numOrdenes: number
+  ultimaCompra: string
+  ticketPromedio: number
 }
 export type ProductoStats = {
   nombre: string
+  sku: string
   cantidadVendida: number
   totalGenerado: number
 }
@@ -168,23 +172,27 @@ export type VentasStats = {
   ventasPorMes: MesStats[]
   topClientes: ClienteStats[]
   topProductos: ProductoStats[]
+  clientesUnicos: number
+  totalVentas: number
+  totalOrdenes: number
+  ticketPromedioGlobal: number
+  mejorMes: { mes: string; total: number } | null
 }
 
-type VentaWithRel = {
+type VentaForStats = {
   id: string
   total: number | null
   ganancia: number | null
   fecha: string
   cliente_id: string | null
+  cotizacion_id: string | null
   clientes: { nombre: string; nombre_negocio: string | null } | null
-  venta_items:
-    | {
-        cantidad: number
-        precio_unitario: number
-        producto_id: string
-        productos: { nombre: string } | null
-      }[]
-    | null
+}
+
+type ItemRow = {
+  cantidad: number
+  precio_unitario: number
+  productos: { nombre: string; sku: string | null } | null
 }
 
 export async function getVentasStats(filtros?: {
@@ -194,22 +202,50 @@ export async function getVentasStats(filtros?: {
   clienteId?: string
 }): Promise<VentasStats | null> {
   const supabase = await createClient()
+  // venta_items / productos pueden estar RLS-bloqueados para anon
+  const admin = createAdminClient()
 
   let query = supabase.from("ventas").select(
-    `id, total, ganancia, fecha, cliente_id,
-     clientes(nombre, nombre_negocio),
-     venta_items(cantidad, precio_unitario, producto_id, productos(nombre))`,
+    `id, total, ganancia, fecha, cliente_id, cotizacion_id,
+     clientes(nombre, nombre_negocio)`,
   )
-
   if (filtros?.desde) query = query.gte("fecha", filtros.desde)
   if (filtros?.hasta) query = query.lte("fecha", filtros.hasta)
   if (filtros?.clienteId) query = query.eq("cliente_id", filtros.clienteId)
 
   const { data, error } = await query.order("fecha", { ascending: true })
-  if (error) return null
-  const ventas = (data ?? []) as unknown as VentaWithRel[]
+  if (error) {
+    console.error("[getVentasStats] ventas error:", error.message)
+    return null
+  }
+  const ventas = (data ?? []) as unknown as VentaForStats[]
+  const ventaIds = ventas.map((v) => v.id)
+  const cotIds = ventas
+    .map((v) => v.cotizacion_id)
+    .filter((x): x is string => !!x)
 
-  // Ventas por mes
+  // Pull venta_items (admin: bypass RLS). Fallback a cotizacion_items
+  // cuando venta_items esté vacío para el histórico (las ventas seedeadas
+  // se vinculan a su cotización pero nunca poblaron venta_items).
+  let items: ItemRow[] = []
+  if (ventaIds.length > 0) {
+    const r = await admin
+      .from("venta_items")
+      .select("cantidad, precio_unitario, producto_id, productos(nombre, sku)")
+      .in("venta_id", ventaIds)
+    if (r.error) console.error("[getVentasStats] venta_items error:", r.error.message)
+    items = (r.data ?? []) as unknown as ItemRow[]
+  }
+  if (items.length === 0 && cotIds.length > 0) {
+    const r = await admin
+      .from("cotizacion_items")
+      .select("cantidad, precio_unitario, producto_id, productos(nombre, sku)")
+      .in("cotizacion_id", cotIds)
+    if (r.error) console.error("[getVentasStats] cotizacion_items error:", r.error.message)
+    items = (r.data ?? []) as unknown as ItemRow[]
+  }
+
+  // ─── Ventas por mes ─────────────────────────────────────────────
   const ventasPorMes = ventas.reduce<Record<string, MesStats>>((acc, v) => {
     if (!v.fecha) return acc
     const mes = v.fecha.slice(0, 7)
@@ -221,27 +257,33 @@ export async function getVentasStats(filtros?: {
     return acc
   }, {})
 
-  // Top clientes
-  const porCliente = ventas.reduce<Record<string, ClienteStats>>((acc, v) => {
+  // ─── Top clientes (con ultima compra y ticket promedio) ────────
+  type ClienteAcc = {
+    nombre: string
+    totalCompras: number
+    numOrdenes: number
+    ultimaCompra: string
+  }
+  const porCliente = ventas.reduce<Record<string, ClienteAcc>>((acc, v) => {
     const nombre =
       v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente"
-    const cur = acc[nombre] ?? { nombre, totalCompras: 0, numOrdenes: 0 }
+    const cur =
+      acc[nombre] ??
+      { nombre, totalCompras: 0, numOrdenes: 0, ultimaCompra: v.fecha }
     cur.totalCompras += Number(v.total ?? 0)
     cur.numOrdenes += 1
+    if (v.fecha > cur.ultimaCompra) cur.ultimaCompra = v.fecha
     acc[nombre] = cur
     return acc
   }, {})
 
-  // Top productos
-  const items = ventas.flatMap((v) => v.venta_items ?? [])
+  // ─── Top productos ──────────────────────────────────────────────
   const porProducto = items.reduce<Record<string, ProductoStats>>(
     (acc, item) => {
       const nombre = item.productos?.nombre ?? "Desconocido"
-      const cur = acc[nombre] ?? {
-        nombre,
-        cantidadVendida: 0,
-        totalGenerado: 0,
-      }
+      const sku = item.productos?.sku ?? ""
+      const cur =
+        acc[nombre] ?? { nombre, sku, cantidadVendida: 0, totalGenerado: 0 }
       cur.cantidadVendida += Number(item.cantidad ?? 0)
       cur.totalGenerado +=
         Number(item.cantidad ?? 0) * Number(item.precio_unitario ?? 0)
@@ -251,16 +293,36 @@ export async function getVentasStats(filtros?: {
     {},
   )
 
+  // ─── KPIs globales del periodo ──────────────────────────────────
+  const ventasPorMesArr = Object.values(ventasPorMes).sort((a, b) =>
+    a.mes.localeCompare(b.mes),
+  )
+  const totalVentas = ventas.reduce((s, v) => s + Number(v.total ?? 0), 0)
+  const totalOrdenes = ventas.length
+  const ticketPromedioGlobal = totalOrdenes > 0 ? totalVentas / totalOrdenes : 0
+  const clientesUnicos = Object.keys(porCliente).length
+  const mejorMes =
+    ventasPorMesArr.length > 0
+      ? ventasPorMesArr.reduce((best, m) => (m.total > best.total ? m : best))
+      : null
+
   return {
-    ventasPorMes: Object.values(ventasPorMes).sort((a, b) =>
-      a.mes.localeCompare(b.mes),
-    ),
+    ventasPorMes: ventasPorMesArr,
     topClientes: Object.values(porCliente)
+      .map((c) => ({
+        ...c,
+        ticketPromedio: c.numOrdenes > 0 ? c.totalCompras / c.numOrdenes : 0,
+      }))
       .sort((a, b) => b.totalCompras - a.totalCompras)
       .slice(0, 10),
     topProductos: Object.values(porProducto)
       .sort((a, b) => b.totalGenerado - a.totalGenerado)
       .slice(0, 10),
+    clientesUnicos,
+    totalVentas,
+    totalOrdenes,
+    ticketPromedioGlobal,
+    mejorMes: mejorMes ? { mes: mejorMes.mes, total: mejorMes.total } : null,
   }
 }
 

@@ -1,15 +1,15 @@
 import Link from "next/link"
-import { ArrowLeft, BarChart3, Package, Users } from "lucide-react"
+import {
+  ArrowLeft,
+  BarChart3,
+  Package,
+  Users,
+  Receipt,
+  TrendingUp,
+} from "lucide-react"
 import { getVentasStats } from "../actions"
 import { MonthlyChart } from "./monthly-chart"
-
-type Periodo = "mes" | "trimestre" | "year" | "todo"
-const PERIODOS: { key: Periodo; label: string }[] = [
-  { key: "mes", label: "Este mes" },
-  { key: "trimestre", label: "Trimestre" },
-  { key: "year", label: "Este año" },
-  { key: "todo", label: "Todo" },
-]
+import { PeriodoTabs } from "./periodo-tabs"
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -17,37 +17,39 @@ const mxn = new Intl.NumberFormat("es-MX", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
+const mxn0 = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+})
+const fechaFmt = new Intl.DateTimeFormat("es-MX", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+})
+const monthLong = new Intl.DateTimeFormat("es-MX", {
+  month: "long",
+  year: "numeric",
+})
 
-function isoDate(d: Date) {
-  return d.toISOString().slice(0, 10)
-}
-
-function rangoFor(p: Periodo): { desde?: string; hasta?: string } {
-  const today = new Date()
-  if (p === "todo") return {}
-  if (p === "mes") {
-    return { desde: isoDate(new Date(today.getFullYear(), today.getMonth(), 1)) }
-  }
-  if (p === "trimestre") {
-    const q = Math.floor(today.getMonth() / 3)
-    return { desde: isoDate(new Date(today.getFullYear(), q * 3, 1)) }
-  }
-  if (p === "year") {
-    return { desde: isoDate(new Date(today.getFullYear(), 0, 1)) }
-  }
-  return {}
+function frecuenciaLabel(n: number): {
+  label: string
+  className: string
+} {
+  if (n >= 4)
+    return { label: "Alta", className: "bg-teal-100 text-teal-700" }
+  if (n >= 2)
+    return { label: "Media", className: "bg-amber-100 text-amber-700" }
+  return { label: "Nueva", className: "bg-gray-100 text-gray-600" }
 }
 
 export default async function EstadisticasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodo?: string }>
+  searchParams: Promise<{ desde?: string; hasta?: string }>
 }) {
-  const { periodo } = await searchParams
-  const activo: Periodo = (PERIODOS.find((p) => p.key === periodo)?.key ??
-    "todo") as Periodo
-  const filtros = rangoFor(activo)
-  const stats = await getVentasStats(filtros)
+  const { desde, hasta } = await searchParams
+  const stats = await getVentasStats({ desde, hasta })
 
   return (
     <div className="p-8 space-y-6">
@@ -65,25 +67,11 @@ export default async function EstadisticasPage({
               Estadísticas de Ventas
             </h1>
             <p className="text-gray-500 text-sm mt-1">
-              Top clientes, productos y tendencia mensual
+              KPIs, top clientes, top productos y tendencia mensual
             </p>
           </div>
         </div>
-        <nav className="flex flex-wrap items-center gap-2">
-          {PERIODOS.map((p) => (
-            <Link
-              key={p.key}
-              href={`/ventas/estadisticas?periodo=${p.key}`}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                activo === p.key
-                  ? "bg-pink-600 text-white"
-                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {p.label}
-            </Link>
-          ))}
-        </nav>
+        <PeriodoTabs />
       </header>
 
       {!stats && (
@@ -94,6 +82,38 @@ export default async function EstadisticasPage({
 
       {stats && (
         <>
+          {/* KPIs del periodo */}
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Kpi
+              icon={Users}
+              label="Clientes únicos"
+              value={stats.clientesUnicos.toLocaleString("es-MX")}
+              subtitle={`${stats.totalOrdenes} órdenes`}
+              tone="text-pink-700"
+            />
+            <Kpi
+              icon={Receipt}
+              label="Ticket promedio global"
+              value={mxn0.format(stats.ticketPromedioGlobal)}
+              subtitle={`Total ${mxn0.format(stats.totalVentas)}`}
+              tone="text-blue-700"
+            />
+            <Kpi
+              icon={TrendingUp}
+              label="Mejor mes"
+              value={
+                stats.mejorMes
+                  ? monthLong.format(new Date(stats.mejorMes.mes + "-01"))
+                  : "—"
+              }
+              subtitle={
+                stats.mejorMes ? mxn0.format(stats.mejorMes.total) : "Sin datos"
+              }
+              tone="text-emerald-700"
+            />
+          </section>
+
+          {/* Chart */}
           <section className="rounded-xl border border-gray-200 bg-white p-5">
             <header className="mb-3 flex items-center gap-2">
               <BarChart3 className="size-4 text-gray-500" />
@@ -104,6 +124,7 @@ export default async function EstadisticasPage({
             <MonthlyChart data={stats.ventasPorMes} />
           </section>
 
+          {/* Top clientes + Top productos */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section className="rounded-xl border border-gray-200 bg-white">
               <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
@@ -115,44 +136,65 @@ export default async function EstadisticasPage({
                   {stats.topClientes.length}
                 </span>
               </header>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <Th>Cliente</Th>
-                    <Th align="right">Órdenes</Th>
-                    <Th align="right">Total compras</Th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {stats.topClientes.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="px-5 py-8 text-center text-sm text-gray-500"
-                      >
-                        Sin datos.
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <Th>Cliente</Th>
+                      <Th align="right">Órdenes</Th>
+                      <Th align="right">Total</Th>
+                      <Th align="right">Ticket prom.</Th>
+                      <Th align="right">Última</Th>
+                      <Th>Frecuencia</Th>
                     </tr>
-                  ) : (
-                    stats.topClientes.map((c, i) => (
-                      <tr key={`${c.nombre}-${i}`} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 text-gray-900">
-                          <span className="text-xs text-gray-400 mr-2">
-                            #{i + 1}
-                          </span>
-                          {c.nombre}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-                          {c.numOrdenes}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                          {mxn.format(c.totalCompras)}
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {stats.topClientes.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-5 py-8 text-center text-sm text-gray-500"
+                        >
+                          Sin datos.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      stats.topClientes.map((c, i) => {
+                        const f = frecuenciaLabel(c.numOrdenes)
+                        return (
+                          <tr key={`${c.nombre}-${i}`} className="hover:bg-gray-50">
+                            <td className="px-5 py-3 text-gray-900">
+                              <span className="text-xs text-gray-400 mr-2">
+                                #{i + 1}
+                              </span>
+                              {c.nombre}
+                            </td>
+                            <td className="px-5 py-3 text-right tabular-nums text-gray-500">
+                              {c.numOrdenes}
+                            </td>
+                            <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
+                              {mxn.format(c.totalCompras)}
+                            </td>
+                            <td className="px-5 py-3 text-right tabular-nums text-gray-700">
+                              {mxn.format(c.ticketPromedio)}
+                            </td>
+                            <td className="px-5 py-3 text-right text-xs text-gray-500">
+                              {fechaFmt.format(new Date(c.ultimaCompra))}
+                            </td>
+                            <td className="px-5 py-3">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${f.className}`}
+                              >
+                                {f.label}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white">
@@ -165,47 +207,84 @@ export default async function EstadisticasPage({
                   {stats.topProductos.length}
                 </span>
               </header>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <Th>Producto</Th>
-                    <Th align="right">Unidades</Th>
-                    <Th align="right">Total generado</Th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {stats.topProductos.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="px-5 py-8 text-center text-sm text-gray-500"
-                      >
-                        Sin datos.
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <Th>Producto</Th>
+                      <Th>SKU</Th>
+                      <Th align="right">Unidades</Th>
+                      <Th align="right">Total generado</Th>
                     </tr>
-                  ) : (
-                    stats.topProductos.map((p, i) => (
-                      <tr key={`${p.nombre}-${i}`} className="hover:bg-gray-50">
-                        <td className="px-5 py-3 text-gray-900">
-                          <span className="text-xs text-gray-400 mr-2">
-                            #{i + 1}
-                          </span>
-                          {p.nombre}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-                          {p.cantidadVendida.toLocaleString("es-MX")}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                          {mxn.format(p.totalGenerado)}
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {stats.topProductos.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-5 py-8 text-center text-sm text-gray-500"
+                        >
+                          Sin datos.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      stats.topProductos.map((p, i) => (
+                        <tr key={`${p.nombre}-${i}`} className="hover:bg-gray-50">
+                          <td className="px-5 py-3 text-gray-900">
+                            <span className="text-xs text-gray-400 mr-2">
+                              #{i + 1}
+                            </span>
+                            {p.nombre}
+                          </td>
+                          <td className="px-5 py-3 font-mono text-xs text-gray-500">
+                            {p.sku || "—"}
+                          </td>
+                          <td className="px-5 py-3 text-right tabular-nums text-gray-500">
+                            {p.cantidadVendida.toLocaleString("es-MX")}
+                          </td>
+                          <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
+                            {mxn.format(p.totalGenerado)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  subtitle,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string
+  subtitle?: string
+  tone: string
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          {label}
+        </span>
+        <Icon className={`size-4 ${tone}`} />
+      </div>
+      <div className={`mt-2 text-2xl font-semibold tabular-nums ${tone}`}>
+        {value}
+      </div>
+      {subtitle && (
+        <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
       )}
     </div>
   )
