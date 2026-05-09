@@ -151,39 +151,46 @@ const ESTATUS_OPTIONS: { value: Estatus; label: string }[] = [
   { value: "vencida", label: "Vencida" },
 ]
 
+// Paleta diferenciada — cada estatus usa una familia de color distinta
+// con dot indicator visible, mismo nivel de saturación, premium soft.
 const ESTATUS_CONF: Record<
   Estatus,
-  { label: string; bg: string; text: string; ring: string }
+  { label: string; bg: string; text: string; ring: string; dot: string }
 > = {
   borrador: {
     label: "Borrador",
-    bg: "bg-gray-100",
-    text: "text-gray-700",
-    ring: "ring-gray-200",
+    bg: "bg-[#F1F5F9]", // slate-100
+    text: "text-[#475569]", // slate-600
+    ring: "ring-[#E2E8F0]",
+    dot: "bg-[#94A3B8]", // slate-400
   },
   enviada: {
     label: "Enviada",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    ring: "ring-blue-200/60",
+    bg: "bg-[#DBEAFE]", // blue-100
+    text: "text-[#1D4ED8]", // blue-700
+    ring: "ring-[#BFDBFE]",
+    dot: "bg-[#3B82F6]", // blue-500
   },
   aceptada: {
     label: "Aceptada",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200/60",
+    bg: "bg-[#D1FAE5]", // emerald-100
+    text: "text-[#047857]", // emerald-700
+    ring: "ring-[#A7F3D0]",
+    dot: "bg-[#10B981]", // emerald-500
   },
   rechazada: {
     label: "Rechazada",
-    bg: "bg-rose-50",
-    text: "text-[#DC2626]",
-    ring: "ring-rose-200/60",
+    bg: "bg-[#FEE2E2]", // red-100
+    text: "text-[#B91C1C]", // red-700
+    ring: "ring-[#FECACA]",
+    dot: "bg-[#EF4444]", // red-500
   },
   vencida: {
     label: "Vencida",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    ring: "ring-amber-200/60",
+    bg: "bg-[#FEF3C7]", // amber-100
+    text: "text-[#B45309]", // amber-700
+    ring: "ring-[#FDE68A]",
+    dot: "bg-[#F59E0B]", // amber-500
   },
 }
 
@@ -282,7 +289,9 @@ function StatusCell({
         value={val}
         onChange={handleChange}
         disabled={pending}
-        className={`cursor-pointer appearance-none rounded-full border-0 px-2.5 py-1 pr-6 text-[11px] font-medium ring-1 transition focus:outline-none focus:ring-2 focus:ring-offset-1 ${conf.bg} ${conf.text} ${conf.ring} ${pending ? "opacity-60" : "hover:shadow-sm"}`}
+        title="Cambiar estatus"
+        aria-label="Cambiar estatus de la cotización"
+        className={`cursor-pointer appearance-none rounded-full border-0 py-1 pl-5 pr-7 text-[11px] font-semibold tabular-nums ring-1 transition-all duration-180 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0F766E]/30 ${conf.bg} ${conf.text} ${conf.ring} ${pending ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(15,23,42,0.06)]"}`}
       >
         {ESTATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
@@ -290,12 +299,18 @@ function StatusCell({
           </option>
         ))}
       </select>
-      <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-current opacity-60">
+      {/* Dot indicator (izquierda) */}
+      <span
+        className={`pointer-events-none absolute left-2 top-1/2 size-1.5 -translate-y-1/2 rounded-full ${conf.dot}`}
+        aria-hidden
+      />
+      {/* Chevron (derecha) — más visible para que se vea editable */}
+      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-current opacity-70">
         {pending ? (
-          <Loader2 className="size-2.5 animate-spin" />
+          <Loader2 className="size-3 animate-spin" />
         ) : (
-          <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
-            <path d="M4 6L0.5 1.5h7z" />
+          <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 3.5L4.5 6L7 3.5" />
           </svg>
         )}
       </span>
@@ -1091,7 +1106,7 @@ export function CotizacionesList({
       },
       {
         accessorKey: "estatus",
-        header: (ctx) => <HeaderCell label="Estatus BD" ctx={ctx} />,
+        header: (ctx) => <HeaderCell label="Estatus" ctx={ctx} />,
         cell: ({ getValue, row }) => (
           <StatusCell
             cotId={row.original.id}
