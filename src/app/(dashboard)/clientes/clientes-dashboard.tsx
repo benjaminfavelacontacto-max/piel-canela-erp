@@ -947,10 +947,14 @@ export function ClientesDashboard({
               </div>
             </header>
 
-            {/* Hero strip — 4 métricas en banda horizontal sin cards */}
+            {/* Hero strip — superficie glass única con divisores invisibles */}
             <section
-              className="grid grid-cols-2 divide-x divide-[rgba(15,23,42,0.06)] overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 backdrop-blur lg:grid-cols-4"
+              className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] lg:grid-cols-4"
               style={{
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62))",
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
                 boxShadow:
                   "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
               }}
@@ -960,18 +964,21 @@ export function ClientesDashboard({
                 value={kpis.total.toString()}
                 trend={dActivos}
                 sub={`${cur?.nuevos ?? 0} nuevos este mes`}
+                sparkline={monthlyKpi.map((m) => m.activosCum)}
               />
               <HeroMetric
                 label="Recurrentes"
                 value={kpis.recurrentes.toString()}
                 trend={dNuevos}
                 sub="≥3 compras"
+                sparkline={monthlyKpi.map((m) => m.nuevos)}
               />
               <HeroMetric
                 label="LTV total"
                 value={mxn.format(kpis.ltvTotal)}
                 trend={dLtv}
                 sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
+                sparkline={monthlyKpi.map((m) => m.ltvGanado)}
               />
               <HeroMetric
                 label="Mejor cliente"
@@ -991,9 +998,9 @@ export function ClientesDashboard({
               </div>
             )}
 
-            {/* Split panel — Activos / Saldo */}
+            {/* Split panel — Activos / Saldo (compacto horizontal) */}
             <section
-              className="grid grid-cols-1 divide-y divide-[rgba(15,23,42,0.06)] overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+              className="grid grid-cols-1 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white sm:grid-cols-2"
               style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
             >
               <SplitMetric
@@ -1001,12 +1008,22 @@ export function ClientesDashboard({
                 value={kpis.activos.toString()}
                 sub={`${kpis.recurrentes} recurrentes`}
                 accent="emerald"
+                progress={
+                  kpis.total > 0
+                    ? (kpis.activos / kpis.total) * 100
+                    : 0
+                }
               />
               <SplitMetric
                 label="Saldo pendiente"
                 value={mxn.format(kpis.saldoTotal)}
                 sub={`${kpis.inactivos} inactivos`}
                 accent={kpis.saldoTotal > 0 ? "rose" : "neutral"}
+                progress={
+                  kpis.ltvTotal > 0
+                    ? (kpis.saldoTotal / kpis.ltvTotal) * 100
+                    : 0
+                }
               />
             </section>
 
@@ -1297,64 +1314,122 @@ export function ClientesDashboard({
   )
 }
 
-/** Métrica del hero strip — sin card, divisor vertical entre métricas */
+/** Sparkline de fondo ultra-tenue para Hero metric */
+function BgSparkline({ points }: { points: number[] }) {
+  if (points.length < 2) return null
+  const w = 100
+  const h = 36
+  const min = Math.min(...points)
+  const max = Math.max(...points)
+  const range = max - min || 1
+  const step = w / (points.length - 1)
+  const path = points
+    .map((v, i) => {
+      const x = i * step
+      const y = h - ((v - min) / range) * h
+      return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`
+    })
+    .join(" ")
+  return (
+    <svg
+      className="pointer-events-none absolute inset-x-0 bottom-0 w-full"
+      width="100%"
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d={`${path} L ${w} ${h} L 0 ${h} Z`}
+        fill="#0F766E"
+        fillOpacity="0.04"
+      />
+      <path
+        d={path}
+        stroke="#0F766E"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.18"
+      />
+    </svg>
+  )
+}
+
+/** Métrica del hero strip — superficie glass única, hover lift, micro-sparkline al fondo */
 function HeroMetric({
   label,
   value,
   trend,
   sub,
   truncate,
+  sparkline,
 }: {
   label: string
   value: string
   trend?: number
   sub?: string
   truncate?: boolean
+  sparkline?: number[]
 }) {
   return (
-    <div className="px-5 py-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
-          {label}
-        </p>
-        {trend !== undefined && (
-          <span
-            className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
-              trend >= 0 ? "text-emerald-600" : "text-rose-600"
-            }`}
-          >
-            <span aria-hidden className="text-[8px]">
-              {trend >= 0 ? "▲" : "▼"}
+    <div
+      className="group relative overflow-hidden px-5 py-4 transition-all duration-180 hover:bg-white/40"
+      style={{
+        // Divisor sutilísimo solo a la izquierda (excepto primero — neutralizado por overflow)
+        boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)",
+      }}
+    >
+      {sparkline && <BgSparkline points={sparkline} />}
+      <div className="relative">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+            {label}
+          </p>
+          {trend !== undefined && (
+            <span
+              className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
+                trend >= 0 ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              <span aria-hidden className="text-[8px]">
+                {trend >= 0 ? "▲" : "▼"}
+              </span>
+              {Math.abs(trend).toFixed(1)}%
             </span>
-            {Math.abs(trend).toFixed(1)}%
-          </span>
+          )}
+        </div>
+        <p
+          className={`mt-1.5 text-[26px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
+          title={truncate ? value : undefined}
+          style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]">
+            {sub}
+          </p>
         )}
       </div>
-      <p
-        className={`mt-1 text-[24px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
-        title={truncate ? value : undefined}
-        style={{ fontFeatureSettings: '"tnum" 1' }}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-1 text-[11px] leading-tight text-[#64748B]">{sub}</p>
-      )}
     </div>
   )
 }
 
-/** Split panel — 2 métricas en una banda con divisor vertical */
+/** Split panel — métrica horizontal compacta con mini progress */
 function SplitMetric({
   label,
   value,
   sub,
   accent,
+  progress,
 }: {
   label: string
   value: string
   sub?: string
   accent: "emerald" | "rose" | "neutral"
+  progress?: number
 }) {
   const valueColor =
     accent === "emerald"
@@ -1362,31 +1437,57 @@ function SplitMetric({
       : accent === "rose"
         ? "text-rose-600"
         : "text-[#0F172A]"
+  const barColor =
+    accent === "emerald"
+      ? "bg-emerald-500"
+      : accent === "rose"
+        ? "bg-rose-500"
+        : "bg-gray-400"
   const tintBg =
     accent === "emerald"
-      ? "bg-gradient-to-br from-emerald-50/40 to-transparent"
+      ? "bg-gradient-to-r from-emerald-50/40 via-transparent to-transparent"
       : accent === "rose"
-        ? "bg-gradient-to-br from-rose-50/40 to-transparent"
+        ? "bg-gradient-to-r from-rose-50/40 via-transparent to-transparent"
         : ""
+  const pct = Math.max(0, Math.min(100, progress ?? 0))
   return (
-    <div className={`px-5 py-3.5 ${tintBg}`}>
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
-        {label}
-      </p>
-      <p
-        className={`mt-1 text-[22px] font-bold leading-none tracking-[-0.03em] tabular-nums ${valueColor}`}
-        style={{ fontFeatureSettings: '"tnum" 1' }}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-1 text-[11px] leading-tight text-[#64748B]">{sub}</p>
-      )}
+    <div
+      className={`relative flex items-center gap-4 px-5 py-3 transition-colors duration-180 ${tintBg}`}
+      style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+            {label}
+          </p>
+          {sub && (
+            <p className="text-[10.5px] tabular-nums text-[#94A3B8]">{sub}</p>
+          )}
+        </div>
+        <div className="mt-1 flex items-end gap-3">
+          <p
+            className={`text-[20px] font-bold leading-none tracking-[-0.03em] tabular-nums ${valueColor}`}
+            style={{ fontFeatureSettings: '"tnum" 1' }}
+          >
+            {value}
+          </p>
+          {progress !== undefined && (
+            <div className="mb-1 flex-1">
+              <div className="h-1 overflow-hidden rounded-full bg-[rgba(15,23,42,0.05)]">
+                <div
+                  className={`h-1 rounded-full ${barColor} transition-all duration-500`}
+                  style={{ width: `${pct}%`, opacity: 0.85 }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
-/** Mini insight pill — editorial badge, no card */
+/** Mini insight pill — editorial, glass, hover lift sutil */
 function InsightPill({
   children,
   tone = "neutral",
@@ -1396,19 +1497,25 @@ function InsightPill({
 }) {
   const toneClass =
     tone === "emerald"
-      ? "bg-[rgba(15,118,110,0.06)] text-[#0F766E] ring-emerald-200/40"
+      ? "bg-[rgba(15,118,110,0.05)] text-[#0F766E]"
       : tone === "amber"
-        ? "bg-[rgba(217,119,6,0.06)] text-[#B45309] ring-amber-200/40"
+        ? "bg-[rgba(217,119,6,0.05)] text-[#B45309]"
         : tone === "rose"
-          ? "bg-[rgba(220,38,38,0.06)] text-[#B91C1C] ring-rose-200/40"
+          ? "bg-[rgba(220,38,38,0.05)] text-[#B91C1C]"
           : tone === "violet"
-            ? "bg-[rgba(139,92,246,0.06)] text-[#7C3AED] ring-violet-200/40"
-            : "bg-[#F3F5F7] text-[#64748B] ring-gray-200"
+            ? "bg-[rgba(139,92,246,0.05)] text-[#7C3AED]"
+            : "bg-[rgba(15,23,42,0.04)] text-[#64748B]"
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tabular-nums ring-1 ${toneClass}`}
+      className={`group inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-medium tabular-nums backdrop-blur-sm transition-all duration-180 hover:-translate-y-0.5 ${toneClass}`}
+      style={{
+        boxShadow: "inset 0 0 0 1px rgba(15,23,42,0.04)",
+      }}
     >
-      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current opacity-60" />
+      <span
+        aria-hidden
+        className="size-1 shrink-0 rounded-full bg-current opacity-50 transition-opacity duration-180 group-hover:opacity-100"
+      />
       {children}
     </span>
   )
