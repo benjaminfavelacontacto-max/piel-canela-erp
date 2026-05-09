@@ -17,6 +17,8 @@ import {
 import { VentasTablePremium, type EnrichedVenta } from "./ventas-table-premium"
 import { VentaDrawer } from "./venta-drawer"
 import { AnimatedNumber } from "./estadisticas/animated-number"
+import { PageHeader } from "@/components/page-header"
+import { formatMXNshort } from "@/lib/utils"
 import {
   Bar,
   CartesianGrid,
@@ -386,32 +388,52 @@ export function VentasDashboard({
 
   return (
     <div className="p-4 space-y-4">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ShoppingBag className="size-7 text-amber-700" />
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Ventas</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {ventas.length} ventas · {clienteOptions.length} clientes
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/ventas/estadisticas"
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <BarChart3 className="size-4" />
-            Ver estadísticas →
-          </Link>
-          <Link
-            href="/ventas/nueva"
-            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
-          >
-            Nueva Venta
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title="Ventas"
+        subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}
+        icon={<ShoppingBag className="size-5" />}
+        gradient="bg-gradient-to-br from-[#0f2d0f] via-[#1a4a1a] to-[#134e13]"
+        kpis={[
+          {
+            label: "Total histórico",
+            value: mxn.format(kpis.totalVentas),
+            sub: `${kpis.activosCount} órdenes`,
+          },
+          {
+            label: "Utilidad neta",
+            value: mxn.format(kpis.utilidadNeta),
+            sub: `${kpis.margenNeto.toFixed(1)}% margen`,
+            color: "text-emerald-300",
+          },
+          {
+            label: "Sandra",
+            value: formatMXNshort(kpis.sandra),
+            sub: "acumulado",
+          },
+          {
+            label: "Benjamin",
+            value: formatMXNshort(kpis.benjamin),
+            sub: "acumulado",
+          },
+        ]}
+        actions={
+          <>
+            <Link
+              href="/ventas/estadisticas"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30"
+            >
+              <BarChart3 className="size-4" />
+              Estadísticas
+            </Link>
+            <Link
+              href="/ventas/nueva"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0f2d0f] transition-all hover:bg-white/90"
+            >
+              + Nueva Venta
+            </Link>
+          </>
+        }
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

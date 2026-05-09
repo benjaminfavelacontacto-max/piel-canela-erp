@@ -44,6 +44,7 @@ import { EstimadoIngresos } from "./estimado-ingresos"
 import { PrediccionCompras } from "./prediccion-compras"
 import { TIPOS_CLIENTE, getTipoConf } from "./tipos-cliente"
 import { actualizarTipoCliente } from "./actions"
+import { PageHeader } from "@/components/page-header"
 
 // ─── Types compartidos ──────────────────────────────────────────────
 
@@ -818,28 +819,50 @@ export function ClientesDashboard({
 
   return (
     <div className="p-4 space-y-4">
-      {/* Header */}
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="size-7 text-pink-600" />
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Clientes</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {kpis.total} clientes · {kpis.activos} activos · LTV total{" "}
-              {mxn.format(kpis.ltvTotal)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="Clientes"
+        subtitle={`Base de ${kpis.total} clientes · ${kpis.activos} activos`}
+        icon={<Users className="size-5" />}
+        gradient="bg-gradient-to-br from-[#4a1a3a] via-[#5a1f47] to-[#3b0f2d]"
+        kpis={[
+          {
+            label: "Total clientes",
+            value: kpis.total.toString(),
+            sub: "en base de datos",
+          },
+          {
+            label: "Recurrentes",
+            value: kpis.recurrentes.toString(),
+            sub: "≥3 compras",
+            color: "text-pink-300",
+          },
+          {
+            label: "LTV total",
+            value: mxn.format(kpis.ltvTotal),
+            sub: `Ticket prom. ${mxn.format(kpis.ticketProm)}`,
+          },
+          {
+            label: "Mejor cliente",
+            value:
+              (
+                kpis.mejor?.nombre_negocio ??
+                kpis.mejor?.nombre ??
+                "—"
+              ).slice(0, 18),
+            sub: kpis.mejor ? mxn.format(kpis.mejor.ltv) : "",
+            color: "text-amber-300",
+          },
+        ]}
+        actions={
           <Link
             href="/clientes/nuevo"
-            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#4a1a3a] transition-all hover:bg-white/90"
           >
             <UserPlus className="size-4" />
             Nuevo cliente
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -847,16 +870,8 @@ export function ClientesDashboard({
         </div>
       )}
 
-      {/* KPIs básicos (F3 los amplía con heatmap, etc.) */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <Kpi
-          icon={<Users className="size-4" />}
-          label="Total clientes"
-          value={kpis.total.toString()}
-          accent="text-gray-900"
-          gradient="from-gray-50 via-white to-gray-50"
-          ring="ring-gray-100"
-        />
+      {/* KPIs secundarios — saldo + inactivos */}
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-2">
         <Kpi
           icon={<Sparkles className="size-4" />}
           label="Activos"
@@ -865,25 +880,6 @@ export function ClientesDashboard({
           accent="text-emerald-700"
           gradient="from-emerald-50 via-white to-teal-50/50"
           ring="ring-emerald-100"
-        />
-        <Kpi
-          icon={<TrendingUp className="size-4" />}
-          label="LTV total"
-          value={mxn.format(kpis.ltvTotal)}
-          sub={`Ticket prom. ${mxn.format(kpis.ticketProm)}`}
-          accent="text-pink-700"
-          gradient="from-pink-50 via-white to-rose-50/50"
-          ring="ring-pink-100"
-        />
-        <Kpi
-          icon={<Crown className="size-4" />}
-          label="Mejor cliente"
-          value={kpis.mejor?.nombre_negocio ?? kpis.mejor?.nombre ?? "—"}
-          sub={kpis.mejor ? mxn.format(kpis.mejor.ltv) : ""}
-          accent="text-amber-700"
-          gradient="from-amber-50 via-white to-orange-50/50"
-          ring="ring-amber-100"
-          truncate
         />
         <Kpi
           icon={<Building2 className="size-4" />}

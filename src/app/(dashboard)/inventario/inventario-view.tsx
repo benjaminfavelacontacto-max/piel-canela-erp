@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
+import { PageHeader } from "@/components/page-header"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -259,60 +260,48 @@ export function InventarioView({
 
   return (
     <div className="p-4 space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Package className="size-7 text-teal-700" />
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Inventario</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {productos.length} productos · {categorias.length} categorías
-            </p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Inventario"
+        subtitle={`${productos.length} productos · ${categorias.length} categorías`}
+        icon={<Package className="size-5" />}
+        gradient="bg-gradient-to-br from-[#1a1a4a] via-[#1e2d5a] to-[#0d1f3c]"
+        kpis={[
+          {
+            label: "Valor inventario",
+            value: mxn.format(kpis.valor),
+            sub: `${kpis.totalProds} SKUs activos`,
+          },
+          {
+            label: "Capital invertido",
+            value: mxn.format(kpis.capital),
+            sub: "costo prom. de ventas",
+          },
+          {
+            label: "Utilidad potencial",
+            value: mxn.format(kpis.utilidadPotencial),
+            sub:
+              kpis.valor > 0
+                ? `${((kpis.utilidadPotencial / kpis.valor) * 100).toFixed(1)}% margen`
+                : "—",
+            color: "text-emerald-300",
+          },
+          {
+            label: "Stock crítico",
+            value: `${kpis.agotados + kpis.criticos}`,
+            sub: `${kpis.agotados} agotados · ${kpis.criticos} bajos`,
+            color:
+              kpis.agotados + kpis.criticos > 0
+                ? "text-red-300"
+                : "text-emerald-300",
+          },
+        ]}
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
-
-      {/* KPIs */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi
-          icon={<DollarSign className="size-5 text-teal-600" />}
-          iconBg="bg-teal-50"
-          label="Valor del inventario"
-          value={mxn.format(kpis.valor)}
-          sub={`A precio público · ${kpis.totalProds} SKUs`}
-        />
-        <Kpi
-          icon={<Wallet className="size-5 text-blue-600" />}
-          iconBg="bg-blue-50"
-          label="Capital invertido"
-          value={mxn.format(kpis.capital)}
-          sub={`Costo promedio derivado de ventas`}
-        />
-        <Kpi
-          icon={<TrendingUp className="size-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
-          label="Utilidad potencial"
-          value={mxn.format(kpis.utilidadPotencial)}
-          sub={
-            kpis.valor > 0
-              ? `${((kpis.utilidadPotencial / kpis.valor) * 100).toFixed(1)}% margen`
-              : "—"
-          }
-        />
-        <Kpi
-          icon={<AlertTriangle className="size-5 text-red-600" />}
-          iconBg="bg-red-50"
-          label="Stock crítico"
-          value={`${kpis.agotados + kpis.criticos}`}
-          sub={`${kpis.agotados} agotados · ${kpis.criticos} bajos`}
-          urgent={kpis.agotados + kpis.criticos > 0}
-        />
-      </section>
 
       {/* Search + filters */}
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

@@ -1,6 +1,7 @@
 import { TrendingUp, Wallet, ChartLine, ScrollText } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { PageHeader } from "@/components/page-header"
 import { RecoveryChart } from "./recovery-chart"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -208,18 +209,58 @@ export default async function FinanzasPage() {
 
   const invSandra = kpisPorSocio.find((k) => k.socio.id === SANDRA_ID)?.totalInvertido ?? 0
   const invBenjamin = kpisPorSocio.find((k) => k.socio.id === BENJAMIN_ID)?.totalInvertido ?? 0
+  void invSandra
+  void invBenjamin
+
+  // Totales globales para hero
+  const totalInvertido = kpisPorSocio.reduce(
+    (s, k) => s + k.totalInvertido,
+    0,
+  )
+  const totalRecuperado = kpisPorSocio.reduce(
+    (s, k) => s + k.capitalRecuperado,
+    0,
+  )
+  const gananciaNeta = totalRecuperado - totalInvertido
+  const roiPromedio =
+    totalInvertido > 0
+      ? (totalRecuperado / totalInvertido - 1) * 100
+      : 0
 
   return (
     <div className="p-4 space-y-4">
-      <header className="flex items-center gap-3">
-        <TrendingUp className="size-7 text-teal-700" />
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Finanzas</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Inversiones, recuperación de capital y ROI por socio
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Finanzas"
+        subtitle="Control de inversiones y capital · ROI por socio"
+        icon={<TrendingUp className="size-5" />}
+        gradient="bg-gradient-to-br from-[#1a3a4a] via-[#1e4a5a] to-[#0d2f3c]"
+        kpis={[
+          {
+            label: "Total invertido",
+            value: mxn.format(totalInvertido),
+            sub: "ambos socios",
+          },
+          {
+            label: "Capital recuperado",
+            value: mxn.format(totalRecuperado),
+            sub: "de ventas reales",
+            color: "text-emerald-300",
+          },
+          {
+            label: "Ganancia neta",
+            value: mxn.format(gananciaNeta),
+            sub: "resultado neto",
+            color:
+              gananciaNeta >= 0 ? "text-emerald-300" : "text-rose-300",
+          },
+          {
+            label: "ROI promedio",
+            value: `${roiPromedio.toFixed(1)}%`,
+            sub: "retorno sobre inversión",
+            color: "text-teal-300",
+          },
+        ]}
+      />
 
       {inversionesError && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

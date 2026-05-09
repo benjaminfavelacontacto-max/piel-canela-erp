@@ -15,6 +15,8 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
+import { formatMXNshort } from "@/lib/utils"
+import { PageHeader } from "@/components/page-header"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -434,68 +436,59 @@ export default async function DashboardPage() {
     .slice(0, 8)
 
   return (
-    <div className="p-4 space-y-8">
-      {/* ─── Header ─── */}
-      <header className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {greeting(today)}, Benjamín 👋
-          </h1>
-          <p className="text-sm text-gray-500 mt-1 capitalize">
-            {fechaLarga.format(today)}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href="/ventas/nueva"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-lg"
-          >
-            <Plus className="size-4" />
-            Nueva Venta
-          </Link>
-          <Link
-            href="/cotizaciones/nueva"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <Plus className="size-4" />
-            Cotización
-          </Link>
-        </div>
-      </header>
+    <div className="p-4 space-y-4">
+      {/* ─── Header premium con KPIs inline ─── */}
+      <PageHeader
+        title={`${greeting(today)}, Benjamín 👋`}
+        subtitle={fechaLarga.format(today)}
+        kpis={[
+          {
+            label: "Ventas del mes",
+            value: mxn.format(totalVentasMes),
+            sub: `${ventasMes.length} órdenes`,
+          },
+          {
+            label: "Ganancia neta",
+            value: mxn.format(gananciaMes),
+            sub:
+              totalVentasMes > 0
+                ? `${((gananciaMes / totalVentasMes) * 100).toFixed(1)}% margen`
+                : "Sin ventas",
+            color: "text-emerald-300",
+          },
+          {
+            label: "Sandra / Benjamin",
+            value: `${formatMXNshort(sandra.recuperado)} / ${formatMXNshort(benjamin.recuperado)}`,
+            sub: "recuperado",
+          },
+          {
+            label: "Ticket promedio",
+            value: mxn.format(ticketMes),
+            sub: "este mes",
+          },
+        ]}
+        actions={
+          <>
+            <Link
+              href="/ventas/nueva"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30"
+            >
+              <Plus className="size-4" />
+              Nueva Venta
+            </Link>
+            <Link
+              href="/cotizaciones/nueva"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0f2d0f] transition-all hover:bg-white/90"
+            >
+              <Plus className="size-4" />
+              Cotización
+            </Link>
+          </>
+        }
+      />
 
-      {/* ─── KPI cards (6) ─── */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <Kpi
-          icon={<ShoppingBag className="size-5 text-teal-600" />}
-          iconBg="bg-teal-50"
-          label="Ventas este mes"
-          value={mxn.format(totalVentasMes)}
-          sub={`${ventasMes.length} órdenes este mes`}
-          change={cambioVentas}
-        />
-        <Kpi
-          icon={<TrendingUp className="size-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
-          label="Ganancia del mes"
-          value={mxn.format(gananciaMes)}
-          sub={
-            totalVentasMes > 0
-              ? `${((gananciaMes / totalVentasMes) * 100).toFixed(1)}% margen`
-              : "Sin ventas"
-          }
-        />
-        <Kpi
-          icon={<Receipt className="size-5 text-blue-600" />}
-          iconBg="bg-blue-50"
-          label="Ticket promedio"
-          value={mxn.format(ticketMes)}
-          sub={
-            ventasMesAnt.length > 0
-              ? `vs ${mxn.format(ticketMesAnt)} el mes pasado`
-              : "Primer mes"
-          }
-          change={ventasMesAnt.length > 0 ? cambioTicket : undefined}
-        />
+      {/* ─── KPIs secundarios ─── */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Kpi
           icon={<Users className="size-5 text-pink-600" />}
           iconBg="bg-pink-50"
