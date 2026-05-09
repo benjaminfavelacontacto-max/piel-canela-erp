@@ -852,7 +852,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       {/* ─── Header ejecutivo (custom) ─── */}
       {(() => {
         const len = monthlyKpi.length
@@ -1314,11 +1314,11 @@ export function ClientesDashboard({
   )
 }
 
-/** Sparkline de fondo ultra-tenue para Hero metric */
-function BgSparkline({ points }: { points: number[] }) {
+/** Micro-sparkline individual — solo detrás del número, ultra-tenue */
+function MicroSpark({ points }: { points: number[] }) {
   if (points.length < 2) return null
-  const w = 100
-  const h = 36
+  const w = 80
+  const h = 22
   const min = Math.min(...points)
   const max = Math.max(...points)
   const range = max - min || 1
@@ -1332,32 +1332,33 @@ function BgSparkline({ points }: { points: number[] }) {
     .join(" ")
   return (
     <svg
-      className="pointer-events-none absolute inset-x-0 bottom-0 w-full"
-      width="100%"
+      className="pointer-events-none absolute -bottom-0.5 right-3 transition-opacity duration-180 group-hover:opacity-100"
+      width={w}
       height={h}
       viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
       fill="none"
       aria-hidden
+      style={{ opacity: 0.55 }}
     >
-      <path
-        d={`${path} L ${w} ${h} L 0 ${h} Z`}
-        fill="#0F766E"
-        fillOpacity="0.04"
-      />
       <path
         d={path}
         stroke="#0F766E"
-        strokeWidth="1.5"
+        strokeWidth="1.25"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.18"
+        opacity="0.7"
       />
     </svg>
   )
 }
 
-/** Métrica del hero strip — superficie glass única, hover lift, micro-sparkline al fondo */
+/**
+ * Métrica del hero strip premium.
+ * - Surface glass única (no cards visibles)
+ * - Micro-sparkline solo detrás del número (top-right del bloque)
+ * - Hover glow sutil + translateY
+ * - Tipografía: label tracking 0.12em opacity baja, número 28px font-700
+ */
 function HeroMetric({
   label,
   value,
@@ -1375,49 +1376,55 @@ function HeroMetric({
 }) {
   return (
     <div
-      className="group relative overflow-hidden px-5 py-4 transition-all duration-180 hover:bg-white/40"
+      className="group relative overflow-hidden px-6 py-4 transition-all duration-180 hover:bg-[rgba(255,255,255,0.55)]"
       style={{
-        // Divisor sutilísimo solo a la izquierda (excepto primero — neutralizado por overflow)
-        boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)",
+        boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)",
       }}
     >
-      {sparkline && <BgSparkline points={sparkline} />}
       <div className="relative">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
-            {label}
+        <p
+          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+          style={{ letterSpacing: "0.14em" }}
+        >
+          {label}
+        </p>
+        <div className="mt-1.5 flex items-baseline justify-between gap-2">
+          <p
+            className={`text-[28px] font-semibold leading-none tracking-[-0.035em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
+            title={truncate ? value : undefined}
+            style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+          >
+            {value}
           </p>
           {trend !== undefined && (
             <span
-              className={`inline-flex items-center gap-0.5 text-[10.5px] font-semibold tabular-nums ${
+              className={`inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold tabular-nums ${
                 trend >= 0 ? "text-emerald-600" : "text-rose-600"
               }`}
             >
-              <span aria-hidden className="text-[8px]">
+              <span aria-hidden className="text-[7px]">
                 {trend >= 0 ? "▲" : "▼"}
               </span>
               {Math.abs(trend).toFixed(1)}%
             </span>
           )}
         </div>
-        <p
-          className={`mt-1.5 text-[26px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
-          title={truncate ? value : undefined}
-          style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
-        >
-          {value}
-        </p>
         {sub && (
-          <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]">
+          <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]/80">
             {sub}
           </p>
         )}
+        {sparkline && <MicroSpark points={sparkline} />}
       </div>
     </div>
   )
 }
 
-/** Split panel — métrica horizontal compacta con mini progress */
+/**
+ * Split panel — KPI rail compacto.
+ * Label + value + sub inline + thin progress (max width 80px).
+ * No fluff. Una fila por métrica.
+ */
 function SplitMetric({
   label,
   value,
@@ -1445,49 +1452,49 @@ function SplitMetric({
         : "bg-gray-400"
   const tintBg =
     accent === "emerald"
-      ? "bg-gradient-to-r from-emerald-50/40 via-transparent to-transparent"
+      ? "bg-gradient-to-r from-emerald-50/30 via-transparent to-transparent"
       : accent === "rose"
-        ? "bg-gradient-to-r from-rose-50/40 via-transparent to-transparent"
+        ? "bg-gradient-to-r from-rose-50/30 via-transparent to-transparent"
         : ""
   const pct = Math.max(0, Math.min(100, progress ?? 0))
   return (
     <div
-      className={`relative flex items-center gap-4 px-5 py-3 transition-colors duration-180 ${tintBg}`}
+      className={`relative px-5 py-3 transition-colors duration-180 ${tintBg}`}
       style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
     >
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
-            {label}
-          </p>
-          {sub && (
-            <p className="text-[10.5px] tabular-nums text-[#94A3B8]">{sub}</p>
-          )}
-        </div>
-        <div className="mt-1 flex items-end gap-3">
-          <p
-            className={`text-[20px] font-bold leading-none tracking-[-0.03em] tabular-nums ${valueColor}`}
-            style={{ fontFeatureSettings: '"tnum" 1' }}
-          >
-            {value}
-          </p>
-          {progress !== undefined && (
-            <div className="mb-1 flex-1">
-              <div className="h-1 overflow-hidden rounded-full bg-[rgba(15,23,42,0.05)]">
-                <div
-                  className={`h-1 rounded-full ${barColor} transition-all duration-500`}
-                  style={{ width: `${pct}%`, opacity: 0.85 }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+      <p
+        className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+        style={{ letterSpacing: "0.14em" }}
+      >
+        {label}
+      </p>
+      <div className="mt-1 flex items-baseline justify-between gap-3">
+        <p
+          className={`text-[19px] font-semibold leading-none tracking-[-0.03em] tabular-nums ${valueColor}`}
+          style={{ fontFeatureSettings: '"tnum" 1' }}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p className="text-[10.5px] tabular-nums text-[#94A3B8]">{sub}</p>
+        )}
       </div>
+      {progress !== undefined && (
+        <div className="mt-2 h-[3px] w-20 overflow-hidden rounded-full bg-[rgba(15,23,42,0.04)]">
+          <div
+            className={`h-[3px] rounded-full ${barColor} transition-all duration-500`}
+            style={{ width: `${pct}%`, opacity: 0.7 }}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
-/** Mini insight pill — editorial, glass, hover lift sutil */
+/**
+ * AI insight pill — apariencia de "AI insight" no badge.
+ * Glass + ultra-low padding + hover glow del tono.
+ */
 function InsightPill({
   children,
   tone = "neutral",
@@ -1497,19 +1504,36 @@ function InsightPill({
 }) {
   const toneClass =
     tone === "emerald"
-      ? "bg-[rgba(15,118,110,0.05)] text-[#0F766E]"
+      ? "text-[#0F766E]"
       : tone === "amber"
-        ? "bg-[rgba(217,119,6,0.05)] text-[#B45309]"
+        ? "text-[#B45309]"
         : tone === "rose"
-          ? "bg-[rgba(220,38,38,0.05)] text-[#B91C1C]"
+          ? "text-[#B91C1C]"
           : tone === "violet"
-            ? "bg-[rgba(139,92,246,0.05)] text-[#7C3AED]"
-            : "bg-[rgba(15,23,42,0.04)] text-[#64748B]"
+            ? "text-[#7C3AED]"
+            : "text-[#64748B]"
+  const glowRgb =
+    tone === "emerald"
+      ? "15,118,110"
+      : tone === "amber"
+        ? "217,119,6"
+        : tone === "rose"
+          ? "220,38,38"
+          : tone === "violet"
+            ? "139,92,246"
+            : "100,116,139"
   return (
     <span
-      className={`group inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-medium tabular-nums backdrop-blur-sm transition-all duration-180 hover:-translate-y-0.5 ${toneClass}`}
+      className={`group inline-flex items-center gap-1.5 rounded-full bg-white/55 px-2 py-[3px] text-[10px] font-semibold tabular-nums backdrop-blur-md transition-all duration-180 hover:-translate-y-0.5 ${toneClass}`}
       style={{
-        boxShadow: "inset 0 0 0 1px rgba(15,23,42,0.04)",
+        boxShadow: `inset 0 0 0 1px rgba(${glowRgb},0.10), 0 1px 2px rgba(15,23,42,0.02)`,
+        letterSpacing: "-0.005em",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `inset 0 0 0 1px rgba(${glowRgb},0.18), 0 4px 14px rgba(${glowRgb},0.12)`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = `inset 0 0 0 1px rgba(${glowRgb},0.10), 0 1px 2px rgba(15,23,42,0.02)`
       }}
     >
       <span
