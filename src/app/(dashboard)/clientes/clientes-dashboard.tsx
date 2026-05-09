@@ -998,15 +998,9 @@ export function ClientesDashboard({
                 sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
                 sparkline={monthlyKpi.map((m) => m.ltvGanado)}
               />
-              <HeroMetric
-                label="Mejor cliente"
-                value={(
-                  kpis.mejor?.nombre_negocio ??
-                  kpis.mejor?.nombre ??
-                  "—"
-                ).slice(0, 18)}
-                sub={kpis.mejor ? mxn.format(kpis.mejor.ltv) : ""}
-                truncate
+              <BestClienteMetric
+                cliente={kpis.mejor ?? null}
+                pctRevenue={concentrado}
               />
             </section>
 
@@ -1447,6 +1441,103 @@ function HeroMetric({
           </p>
         )}
         {sparkline && <MicroSpark points={sparkline} />}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Mejor cliente — celda especial del hero strip con avatar + Top badge
+ * + % revenue. Más editorial que un HeroMetric genérico.
+ */
+function BestClienteMetric({
+  cliente,
+  pctRevenue,
+}: {
+  cliente: EnrichedCliente | null
+  pctRevenue: number
+}) {
+  if (!cliente) {
+    return (
+      <div
+        className="group relative overflow-hidden px-6 py-4 transition-all duration-180"
+        style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)" }}
+      >
+        <p
+          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+          style={{ letterSpacing: "0.14em" }}
+        >
+          Mejor cliente
+        </p>
+        <p className="mt-1.5 text-[18px] font-semibold leading-none tracking-[-0.025em] text-[#94A3B8]">
+          Sin ventas
+        </p>
+      </div>
+    )
+  }
+  const display = cliente.nombre_negocio ?? cliente.nombre
+  const initials =
+    display
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  const isTop = pctRevenue >= 25
+  return (
+    <div
+      className="group relative overflow-hidden px-6 py-4 transition-all duration-180 hover:bg-[rgba(255,255,255,0.55)]"
+      style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)" }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+          style={{ letterSpacing: "0.14em" }}
+        >
+          Mejor cliente
+        </p>
+        {isTop && (
+          <span
+            className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200/50"
+            title="Top cliente — concentra >25% del LTV"
+          >
+            ★ Top
+          </span>
+        )}
+      </div>
+      <div className="mt-1.5 flex items-center gap-2">
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ring-2 ring-white"
+          style={{
+            background:
+              "linear-gradient(135deg, #0F766E 0%, #115E59 100%)",
+          }}
+        >
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p
+            className="truncate text-[14px] font-semibold leading-tight tracking-[-0.02em] text-[#0F172A]"
+            title={display}
+          >
+            {display}
+          </p>
+          <p
+            className="text-[11px] tabular-nums text-[#64748B]"
+            style={{ fontFeatureSettings: '"tnum" 1' }}
+          >
+            {mxn.format(cliente.ltv)}
+            {pctRevenue > 0 && (
+              <>
+                <span className="mx-1 text-gray-300">·</span>
+                <span className="font-semibold text-[#0F766E]">
+                  {pctRevenue.toFixed(0)}%
+                </span>{" "}
+                revenue
+              </>
+            )}
+          </p>
+        </div>
       </div>
     </div>
   )
