@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign } from "lucide-react"
+import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
@@ -159,11 +159,20 @@ export default async function VentaDetailPage({
             </p>
           </div>
         </div>
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${estatusBadge[estatus]}`}
-        >
-          {estatusLabel[estatus]}
-        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/ventas/${id}/editar`}
+            className="inline-flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-700"
+          >
+            <Pencil className="size-4" />
+            Editar venta
+          </Link>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${estatusBadge[estatus]}`}
+          >
+            {estatusLabel[estatus]}
+          </span>
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -285,16 +294,20 @@ export default async function VentaDetailPage({
                     </td>
                   </tr>
                 )}
-                {Number(venta.iva ?? 0) > 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-1 text-right text-xs uppercase tracking-wide text-gray-500">
-                      IVA
-                    </td>
-                    <td className="px-3 py-1 text-right tabular-nums">
-                      {mxn.format(Number(venta.iva))}
-                    </td>
-                  </tr>
-                )}
+                <tr>
+                  <td colSpan={5} className="px-3 py-1 text-right text-xs uppercase tracking-wide text-gray-500">
+                    IVA{Number(venta.iva ?? 0) > 0 ? " 16%" : ""}
+                  </td>
+                  <td className="px-3 py-1 text-right tabular-nums">
+                    {Number(venta.iva ?? 0) > 0 ? (
+                      <span className="text-teal-700 font-medium">
+                        {mxn.format(Number(venta.iva))}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+                </tr>
                 <tr className="border-t border-gray-200">
                   <td colSpan={5} className="px-3 py-2 text-right text-xs uppercase tracking-wide text-gray-700 font-semibold">
                     Total

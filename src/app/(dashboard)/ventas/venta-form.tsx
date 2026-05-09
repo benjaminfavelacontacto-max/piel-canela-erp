@@ -81,7 +81,7 @@ export function VentaForm({
 
   // Manual totals (only used when no cotizacion is loaded)
   const [manualSubtotal, setManualSubtotal] = useState<number>(0)
-  const [manualIva, setManualIva] = useState<number>(0)
+  const [ivaActivo, setIvaActivo] = useState<boolean>(false)
   const [manualDescuento, setManualDescuento] = useState<number>(0)
   const [manualCostoProductos, setManualCostoProductos] = useState<number>(0)
   const [manualCostoEnvio, setManualCostoEnvio] = useState<number>(0)
@@ -97,18 +97,21 @@ export function VentaForm({
         costo_envio: 0,
       }
     }
+    const iva = ivaActivo
+      ? Number((manualSubtotal * 0.16).toFixed(2))
+      : 0
     return {
       subtotal: manualSubtotal,
-      iva: manualIva,
+      iva,
       descuento: manualDescuento,
-      total: Math.max(0, manualSubtotal + manualIva - manualDescuento),
+      total: Math.max(0, manualSubtotal + iva - manualDescuento),
       costo_productos: manualCostoProductos,
       costo_envio: manualCostoEnvio,
     }
   }, [
     cotizacion,
     manualSubtotal,
-    manualIva,
+    ivaActivo,
     manualDescuento,
     manualCostoProductos,
     manualCostoEnvio,
@@ -282,27 +285,56 @@ export function VentaForm({
                 <Row label="Total" value={mxn.format(totals.total)} valueClass="font-bold text-base" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Field label="Subtotal">
-                  <NumberInput value={manualSubtotal} onChange={setManualSubtotal} />
-                </Field>
-                <Field label="IVA">
-                  <NumberInput value={manualIva} onChange={setManualIva} />
-                </Field>
-                <Field label="Descuento">
-                  <NumberInput value={manualDescuento} onChange={setManualDescuento} />
-                </Field>
-                <Field label="Costo productos">
-                  <NumberInput value={manualCostoProductos} onChange={setManualCostoProductos} />
-                </Field>
-                <Field label="Costo envío">
-                  <NumberInput value={manualCostoEnvio} onChange={setManualCostoEnvio} />
-                </Field>
-                <Field label="Total (calculado)">
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-semibold tabular-nums">
-                    {mxn.format(totals.total)}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Field label="Subtotal">
+                    <NumberInput value={manualSubtotal} onChange={setManualSubtotal} />
+                  </Field>
+                  <Field label="Descuento">
+                    <NumberInput value={manualDescuento} onChange={setManualDescuento} />
+                  </Field>
+                  <Field label="Costo productos">
+                    <NumberInput value={manualCostoProductos} onChange={setManualCostoProductos} />
+                  </Field>
+                  <Field label="Costo envío">
+                    <NumberInput value={manualCostoEnvio} onChange={setManualCostoEnvio} />
+                  </Field>
+                </div>
+
+                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">IVA 16%</p>
+                    <p className="text-xs text-gray-500">
+                      Aplica impuesto al subtotal
+                      {ivaActivo
+                        ? ` (${mxn.format(totals.iva)})`
+                        : ""}
+                    </p>
                   </div>
-                </Field>
+                  <button
+                    type="button"
+                    onClick={() => setIvaActivo((v) => !v)}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                      ivaActivo ? "bg-pink-600" : "bg-gray-300"
+                    }`}
+                    aria-pressed={ivaActivo}
+                  >
+                    <span
+                      className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${
+                        ivaActivo ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total calculado</span>
+                    <span className="font-semibold tabular-nums text-gray-900">
+                      {mxn.format(totals.total)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

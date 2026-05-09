@@ -2,6 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { parseNotas } from "./notas-util"
+
+const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
+const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
 export type SaveVentaInput = {
   numero: string
@@ -99,8 +103,6 @@ export async function saveVenta(input: SaveVentaInput) {
   }
 
   // División hardcodeada Sandra/Benjamin al 50% (no depende de RLS sobre `socios`).
-  const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
-  const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
   const half = Number((input.total / 2).toFixed(2))
   const ventaSocios = [
     {
@@ -260,5 +262,96 @@ export async function getVentasStats(filtros?: {
       .sort((a, b) => b.totalGenerado - a.totalGenerado)
       .slice(0, 10),
   }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// updateVenta — edición desde /ventas/[id]/editar
+// ───────────────────────────────────────────────────────────────────
+
+export type UpdateVentaInput = {
+  id: string
+  notas: string
+  ivaActivo: boolean
+  cantidad_pagada: number
+}
+
+function ventaEstatus(
+  total: number,
+  pagado: number,
+): "pendiente" | "pagada_parcial" | "pagada_total" {
+  if (pagado <= 0) return "pendiente"
+  if (pagado >= total) return "pagada_total"
+  return "pagada_parcial"
+}
+
+export async function updateVenta(input: UpdateVentaInput) {
+  const supabase = await createClient()
+
+  const { data: current, error: fetchErr } = await supabase
+    .from("ventas")
+    .select("subtotal, descuento, notas")
+    .eq("id", input.id)
+    .single()
+  if (fetchErr || !current) {
+    console.error("[updateVenta] fetch falló:", fetchErr)
+    return {
+      ok: false as const,
+      error: fetchErr?.message ?? "Venta no encontrada",
+    }
+  }
+
+  const subtotal = Number(current.subtotal ?? 0)
+  const descuento = Number(current.descuento ?? 0)
+  const iva = input.ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
+  // total y saldo_pendiente son GENERATED — Postgres los calcula desde
+  // subtotal/iva/descuento/cantidad_pagada. Solo usamos el cálculo aquí
+  // para decidir el estatus correcto.
+  const calcTotal = subtotal + iva - descuento
+  const estatus = ventaEstatus(calcTotal, input.cantidad_pagada)
+
+  // Preserva el tag "Método: X." si existe en las notas previas
+  const { metodo } = parseNotas(current.notas)
+  const newNotas =
+    input.notas.trim().length > 0
+      ? metodo
+        ? `Método: ${metodo}. ${input.notas.trim()}`
+        : input.notas.trim()
+      : metodo
+        ? `Método: ${metodo}.`
+        : null
+
+  const { error: updErr } = await supabase
+    .from("ventas")
+    .update({
+      iva,
+      cantidad_pagada: input.cantidad_pagada,
+      estatus,
+      notas: newNotas,
+    })
+    .eq("id", input.id)
+
+  if (updErr) {
+    console.error("[updateVenta] update falló:", updErr)
+    return { ok: false as const, error: updErr.message }
+  }
+
+  // Re-distribuir 50/50 las venta_socios al nuevo total (las dos rows ya existen)
+  const half = Number((calcTotal / 2).toFixed(2))
+  await supabase
+    .from("venta_socios")
+    .update({ monto: half })
+    .eq("venta_id", input.id)
+    .eq("socio_id", SANDRA_ID)
+  await supabase
+    .from("venta_socios")
+    .update({ monto: half })
+    .eq("venta_id", input.id)
+    .eq("socio_id", BENJAMIN_ID)
+
+  revalidatePath(`/ventas/${input.id}`)
+  revalidatePath("/ventas")
+  revalidatePath("/")
+
+  return { ok: true as const }
 }
 

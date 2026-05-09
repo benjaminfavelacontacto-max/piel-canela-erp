@@ -11,6 +11,7 @@ import {
   ChevronRight,
   FileText,
   BarChart3,
+  Pencil,
 } from "lucide-react"
 import {
   Bar,
@@ -36,6 +37,7 @@ export type VentaRow = {
   cliente_id: string | null
   fecha: string
   total: number | null
+  iva: number | null
   ganancia: number | null
   cantidad_pagada: number | null
   saldo_pendiente: number | null
@@ -61,6 +63,10 @@ export type SocioInfo = {
 }
 
 const PAGE_SIZE = 15
+
+// Hardcoded para no depender de RLS sobre `socios`
+const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
+const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
 const SOCIO_COLORS: Record<string, string> = {
   Sandra: "#db2777",
@@ -135,37 +141,27 @@ export function VentasDashboard({
     setPage(1)
   }, [from, to, clienteFilter, estatusFilter])
 
-  const sandraId = useMemo(
-    () => socios.find((s) => /sandra/i.test(s.nombre))?.id,
-    [socios],
-  )
-  const benjaminId = useMemo(
-    () => socios.find((s) => /benjamin/i.test(s.nombre))?.id,
-    [socios],
-  )
-
-  // ─── KPIs (global) ────────────────────────────────────────────────
+  // ─── KPIs (global, hardcoded socio IDs) ───────────────────────────
   const kpis = useMemo(() => {
     const totalVentas = ventas.reduce((s, v) => s + Number(v.total ?? 0), 0)
     const ganancia = ventas.reduce((s, v) => s + Number(v.ganancia ?? 0), 0)
     const ticket = ventas.length ? totalVentas / ventas.length : 0
     const margen = totalVentas > 0 ? (ganancia / totalVentas) * 100 : 0
 
-    const tally = (id: string | undefined) =>
-      id
-        ? venta_socios
-            .filter((vs) => vs.socio_id === id)
-            .reduce((s, x) => s + Number(x.monto ?? 0), 0)
-        : 0
+    const tally = (id: string) =>
+      venta_socios
+        .filter((vs) => vs.socio_id === id)
+        .reduce((s, x) => s + Number(x.monto ?? 0), 0)
+
     return {
       totalVentas,
       ganancia,
       ticket,
       margen,
-      sandra: tally(sandraId),
-      benjamin: tally(benjaminId),
+      sandra: tally(SANDRA_ID),
+      benjamin: tally(BENJAMIN_ID),
     }
-  }, [ventas, venta_socios, sandraId, benjaminId])
+  }, [ventas, venta_socios])
 
   // ─── Last 12 months series ────────────────────────────────────────
   const monthly = useMemo(() => {
@@ -186,10 +182,15 @@ export function VentasDashboard({
     return Array.from(map.values())
   }, [ventas])
 
-  // ─── Socios stats ─────────────────────────────────────────────────
+  // ─── Socios stats (fallback hardcoded si RLS bloquea `socios`) ────
   const sociosStats = useMemo(() => {
+    const fallback: SocioInfo[] = [
+      { id: SANDRA_ID, nombre: "Sandra", porcentaje: 50 },
+      { id: BENJAMIN_ID, nombre: "Benjamin", porcentaje: 50 },
+    ]
+    const list = socios.length > 0 ? socios : fallback
     const ventaById = new Map(ventas.map((v) => [v.id, v]))
-    return socios.map((socio) => {
+    return list.map((socio) => {
       const items = venta_socios.filter((vs) => vs.socio_id === socio.id)
       const vendido = items.reduce((s, x) => s + Number(x.monto ?? 0), 0)
       const cobrado = items
@@ -539,66 +540,89 @@ export function VentasDashboard({
                 <Th>Cliente</Th>
                 <Th>Fecha</Th>
                 <Th align="right">Total</Th>
+                <Th align="right">IVA</Th>
                 <Th align="right">Ganancia</Th>
                 <Th>Estatus</Th>
                 <Th align="right">Cotización</Th>
+                <Th align="right">Acciones</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {pageRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={9}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
                   </td>
                 </tr>
               ) : (
-                pageRows.map((v) => (
-                  <tr key={v.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-mono text-xs">
-                      <Link
-                        href={`/ventas/${v.id}`}
-                        className="text-pink-700 hover:underline"
-                      >
-                        {v.numero}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-gray-900">
-                      {v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "—"}
-                    </td>
-                    <td className="px-5 py-3 text-gray-600">
-                      {fechaFmt.format(new Date(v.fecha))}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                      {mxn2.format(Number(v.total ?? 0))}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-emerald-700">
-                      {mxn2.format(Number(v.ganancia ?? 0))}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estatusBadge[v.estatus]}`}
-                      >
-                        {estatusLabel[v.estatus]}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      {v.cotizacion_id ? (
+                pageRows.map((v) => {
+                  const ivaVal = Number(v.iva ?? 0)
+                  return (
+                    <tr key={v.id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3 font-mono text-xs">
                         <Link
-                          href={`/cotizaciones/${v.cotizacion_id}`}
-                          className="inline-flex items-center gap-1 text-xs text-pink-600 hover:underline"
+                          href={`/ventas/${v.id}`}
+                          className="text-pink-700 hover:underline"
                         >
-                          <FileText className="size-3" />
-                          Ver
+                          {v.numero}
                         </Link>
-                      ) : (
-                        <span className="text-xs text-gray-300">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-5 py-3 text-gray-900">
+                        {v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "—"}
+                      </td>
+                      <td className="px-5 py-3 text-gray-600">
+                        {fechaFmt.format(new Date(v.fecha))}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
+                        {mxn2.format(Number(v.total ?? 0))}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums">
+                        {ivaVal > 0 ? (
+                          <span className="inline-flex items-center rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
+                            {mxn2.format(ivaVal)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-emerald-700">
+                        {mxn2.format(Number(v.ganancia ?? 0))}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estatusBadge[v.estatus]}`}
+                        >
+                          {estatusLabel[v.estatus]}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        {v.cotizacion_id ? (
+                          <Link
+                            href={`/cotizaciones/${v.cotizacion_id}`}
+                            className="inline-flex items-center gap-1 text-xs text-pink-600 hover:underline"
+                          >
+                            <FileText className="size-3" />
+                            Ver
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <Link
+                          href={`/ventas/${v.id}/editar`}
+                          className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-pink-700 hover:underline"
+                        >
+                          <Pencil className="size-3" />
+                          Editar
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
