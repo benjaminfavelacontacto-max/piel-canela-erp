@@ -3,9 +3,10 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 const PRESETS = [
-  { key: "mes", label: "Este mes" },
-  { key: "trimestre", label: "Trimestre" },
-  { key: "year", label: "Este año" },
+  { key: "7d", label: "7 días" },
+  { key: "30d", label: "30 días" },
+  { key: "90d", label: "90 días" },
+  { key: "1a", label: "1 año" },
   { key: "todo", label: "Todo" },
 ] as const
 
@@ -18,25 +19,15 @@ function isoDate(d: Date) {
 function presetRange(key: PresetKey): { desde: string; hasta: string } | null {
   const today = new Date()
   const hasta = isoDate(today)
-  if (key === "mes") {
-    return {
-      desde: isoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
-      hasta,
-    }
+  const back = (days: number) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() - days)
+    return isoDate(d)
   }
-  if (key === "trimestre") {
-    const q = Math.floor(today.getMonth() / 3)
-    return {
-      desde: isoDate(new Date(today.getFullYear(), q * 3, 1)),
-      hasta,
-    }
-  }
-  if (key === "year") {
-    return {
-      desde: isoDate(new Date(today.getFullYear(), 0, 1)),
-      hasta,
-    }
-  }
+  if (key === "7d") return { desde: back(7), hasta }
+  if (key === "30d") return { desde: back(30), hasta }
+  if (key === "90d") return { desde: back(90), hasta }
+  if (key === "1a") return { desde: back(365), hasta }
   return null
 }
 
@@ -67,7 +58,7 @@ export function PeriodoTabs() {
   }
 
   return (
-    <nav className="flex flex-wrap items-center gap-2">
+    <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
       {PRESETS.map((p) => {
         const active = isActive(p.key)
         return (
@@ -75,21 +66,16 @@ export function PeriodoTabs() {
             key={p.key}
             type="button"
             onClick={() => selectPreset(p.key)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               active
-                ? "bg-pink-600 text-white"
-                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             {p.label}
           </button>
         )
       })}
-      {currentDesde && currentHasta && (
-        <span className="text-xs text-gray-500 ml-2">
-          {currentDesde} → {currentHasta}
-        </span>
-      )}
-    </nav>
+    </div>
   )
 }

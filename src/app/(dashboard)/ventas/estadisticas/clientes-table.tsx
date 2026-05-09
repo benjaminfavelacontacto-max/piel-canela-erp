@@ -1,43 +1,32 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronRight } from "lucide-react"
 import type { ClienteStats } from "../actions"
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 })
-const fechaFmt = new Intl.DateTimeFormat("es-MX", {
+const fechaCorta = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
-  year: "numeric",
+  year: "2-digit",
 })
 
-function frecuenciaLabel(n: number): {
-  label: string
-  className: string
-  pulse: boolean
-} {
+function frecuenciaBadge(n: number): { label: string; className: string } {
   if (n >= 4)
     return {
-      label: "Alta",
-      className: "bg-teal-100 text-teal-700",
-      pulse: true,
+      label: "● Alta",
+      className: "bg-green-50 text-green-700",
     }
   if (n >= 2)
     return {
-      label: "Media",
-      className: "bg-amber-100 text-amber-700",
-      pulse: false,
+      label: "● Media",
+      className: "bg-yellow-50 text-yellow-700",
     }
-  return {
-    label: "Nueva",
-    className: "bg-gray-100 text-gray-600",
-    pulse: false,
-  }
+  return { label: "● Nueva", className: "bg-gray-50 text-gray-500" }
 }
 
 function diasDesde(iso: string): number {
@@ -47,176 +36,80 @@ function diasDesde(iso: string): number {
 
 export function ClientesTable({ data }: { data: ClienteStats[] }) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const maxTotal = data[0]?.totalCompras ?? 1
+
+  if (data.length === 0) {
+    return (
+      <div className="p-8 text-center text-sm text-gray-400">Sin datos.</div>
+    )
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-100 bg-gray-50">
-            <Th></Th>
-            <Th>Cliente</Th>
-            <Th align="right">Órdenes</Th>
-            <Th align="right">Total</Th>
-            <Th align="right">Ticket prom.</Th>
-            <Th align="right">Última</Th>
-            <Th>Frecuencia</Th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {data.length === 0 ? (
-            <tr>
-              <td
-                colSpan={7}
-                className="px-5 py-8 text-center text-sm text-gray-500"
-              >
-                Sin datos.
-              </td>
-            </tr>
-          ) : (
-            data.map((c, i) => {
-              const f = frecuenciaLabel(c.numOrdenes)
-              const isOpen = expanded === c.nombre
-              return (
-                <ClienteRow
-                  key={`${c.nombre}-${i}`}
-                  c={c}
-                  i={i}
-                  f={f}
-                  isOpen={isOpen}
-                  onToggle={() => setExpanded(isOpen ? null : c.nombre)}
-                />
-              )
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function ClienteRow({
-  c,
-  i,
-  f,
-  isOpen,
-  onToggle,
-}: {
-  c: ClienteStats
-  i: number
-  f: { label: string; className: string; pulse: boolean }
-  isOpen: boolean
-  onToggle: () => void
-}) {
-  const dias = diasDesde(c.ultimaCompra)
-  return (
-    <>
-      <tr
-        onClick={onToggle}
-        className="cursor-pointer transition-colors duration-150 hover:bg-teal-50"
-      >
-        <td className="px-3 py-3 text-gray-400">
-          {isOpen ? (
-            <ChevronDown className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
-          )}
-        </td>
-        <td className="px-5 py-3 text-gray-900">
-          <span className="text-xs text-gray-400 mr-2">#{i + 1}</span>
-          {c.nombre}
-        </td>
-        <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-          {c.numOrdenes}
-        </td>
-        <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-          {mxn.format(c.totalCompras)}
-        </td>
-        <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-          {mxn.format(c.ticketPromedio)}
-        </td>
-        <td className="px-5 py-3 text-right text-xs text-gray-500">
-          {fechaFmt.format(new Date(c.ultimaCompra))}
-        </td>
-        <td className="px-5 py-3">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${f.className}`}
+    <div className="divide-y divide-gray-50">
+      {data.map((c) => {
+        const isOpen = expanded === c.nombre
+        const f = frecuenciaBadge(c.numOrdenes)
+        const ratio = maxTotal > 0 ? (c.totalCompras / maxTotal) * 100 : 0
+        const inicial = c.nombre.trim()[0]?.toUpperCase() ?? "?"
+        const ticket = c.numOrdenes > 0 ? c.totalCompras / c.numOrdenes : 0
+        return (
+          <div
+            key={c.nombre}
+            className="cursor-pointer p-4 transition-colors hover:bg-gray-50"
+            onClick={() => setExpanded(isOpen ? null : c.nombre)}
           >
-            {f.pulse && (
-              <span className="size-1.5 rounded-full bg-teal-500 animate-pulse" />
-            )}
-            {f.label}
-          </span>
-        </td>
-      </tr>
-      {isOpen && (
-        <tr className="animate-in fade-in slide-in-from-top-1 duration-200">
-          <td colSpan={7} className="bg-teal-50/60 p-0">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-6 py-4 text-sm">
-              <Stat
-                emoji="📅"
-                label="Última compra"
-                value={fechaFmt.format(new Date(c.ultimaCompra))}
-              />
-              <Stat
-                emoji="⏱"
-                label="Tiempo desde la última"
-                value={dias === 0 ? "Hoy" : `Hace ${dias} día${dias === 1 ? "" : "s"}`}
-                tone={
-                  dias > 60
-                    ? "text-amber-700"
-                    : dias > 30
-                      ? "text-blue-700"
-                      : "text-emerald-700"
-                }
-              />
-              <Stat
-                emoji="🔁"
-                label="Órdenes totales"
-                value={`${c.numOrdenes}`}
-              />
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 text-xs font-bold text-white">
+                {inicial}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium text-gray-900">
+                    {c.nombre}
+                  </p>
+                  <p className="ml-2 shrink-0 text-sm font-bold text-gray-900">
+                    {mxn.format(c.totalCompras)}
+                  </p>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-700"
+                      style={{ width: `${ratio}%` }}
+                    />
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${f.className}`}
+                  >
+                    {f.label}
+                  </span>
+                </div>
+              </div>
             </div>
-          </td>
-        </tr>
-      )}
-    </>
-  )
-}
-
-function Stat({
-  emoji,
-  label,
-  value,
-  tone = "text-gray-900",
-}: {
-  emoji: string
-  label: string
-  value: string
-  tone?: string
-}) {
-  return (
-    <div>
-      <div className="text-xs text-gray-500">
-        <span className="mr-1">{emoji}</span>
-        {label}
-      </div>
-      <div className={`mt-0.5 text-sm font-semibold ${tone}`}>{value}</div>
+            {isOpen && (
+              <div className="mt-3 grid grid-cols-3 gap-3 border-t border-gray-100 pt-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-400">Órdenes</p>
+                  <p className="font-bold text-gray-900">{c.numOrdenes}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-400">Ticket prom.</p>
+                  <p className="font-bold text-gray-900">{mxn.format(ticket)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-400">Última compra</p>
+                  <p className="font-bold text-gray-900 text-xs">
+                    {fechaCorta.format(new Date(c.ultimaCompra))}
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    hace {diasDesde(c.ultimaCompra)} días
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
-  )
-}
-
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode
-  align?: "left" | "right" | "center"
-}) {
-  return (
-    <th
-      className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-gray-500"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
   )
 }

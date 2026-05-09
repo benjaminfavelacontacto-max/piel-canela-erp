@@ -84,16 +84,22 @@ export function MonthlyChart({
   return (
     <ResponsiveContainer width="100%" height={320}>
       <ComposedChart data={formatted} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+        <defs>
+          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0d9488" stopOpacity={1} />
+            <stop offset="100%" stopColor="#0d9488" stopOpacity={0.3} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fill: "#6b7280", fontSize: 12 }}
-          axisLine={{ stroke: "#e5e7eb" }}
+          tick={{ fill: "#9ca3af", fontSize: 11 }}
+          axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#6b7280", fontSize: 12 }}
-          axisLine={{ stroke: "#e5e7eb" }}
+          tick={{ fill: "#9ca3af", fontSize: 11 }}
+          axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) =>
             v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`
@@ -101,12 +107,12 @@ export function MonthlyChart({
           width={60}
         />
         <Tooltip cursor={{ fill: "#f9fafb" }} content={<CustomTooltip />} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <Bar
           dataKey="total"
           name="Total vendido"
-          fill="#0d9488"
-          radius={[4, 4, 0, 0]}
+          fill="url(#colorTotal)"
+          radius={[6, 6, 0, 0]}
           animationDuration={800}
           animationEasing="ease-out"
         />
@@ -115,8 +121,8 @@ export function MonthlyChart({
           dataKey="ganancia"
           name="Ganancia"
           stroke="#db2777"
-          strokeWidth={2}
-          dot={{ r: 3, fill: "#db2777" }}
+          strokeWidth={2.5}
+          dot={{ r: 3, fill: "#db2777", strokeWidth: 2, stroke: "#fff" }}
           animationDuration={1200}
           animationEasing="ease-in-out"
         />

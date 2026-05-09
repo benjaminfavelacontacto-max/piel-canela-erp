@@ -1,29 +1,26 @@
 import Link from "next/link"
 import {
-  ArrowLeft,
-  BarChart3,
-  Package,
+  Sparkles,
   Users,
-  Receipt,
+  Package,
+  BarChart3,
   TrendingUp,
-  Lightbulb,
+  TrendingDown,
+  Receipt,
+  ShoppingCart,
 } from "lucide-react"
 import { getVentasStats } from "../actions"
-import type { ClienteStats, ProductoStats } from "../actions"
+import type { ProductoStats } from "../actions"
+import { createClient } from "@/lib/supabase/server"
 import { MonthlyChart } from "./monthly-chart"
 import { PeriodoTabs } from "./periodo-tabs"
-import { AnimatedKpi, StaticKpi } from "./animated-kpi"
 import { ClientesTable } from "./clientes-table"
+import { AnimatedNumber } from "./animated-number"
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-const mxn0 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
+  minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 })
 const monthLong = new Intl.DateTimeFormat("es-MX", {
@@ -50,85 +47,35 @@ function categoriaClass(c: string): string {
   return categoriaBadge[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
 }
 
-type Insight = {
-  emoji: string
-  title: string
-  detail: string
-  borderColor: string
-}
-
 function diasDesde(iso: string): number {
   const ms = Date.now() - new Date(iso).getTime()
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)))
 }
 
-function buildInsights(stats: NonNullable<Awaited<ReturnType<typeof getVentasStats>>>): Insight[] {
-  const out: Insight[] = []
+function pctChange(now: number, prev: number): number {
+  if (prev === 0) return now > 0 ? 100 : 0
+  return ((now - prev) / prev) * 100
+}
 
-  // a) Cliente en riesgo: mayor número de órdenes históricas + sin compra >60 días
-  const riesgoCandidatos = stats.topClientes
-    .filter((c) => diasDesde(c.ultimaCompra) > 60)
-    .sort((a, b) => b.numOrdenes - a.numOrdenes)
-  if (riesgoCandidatos.length > 0) {
-    const c = riesgoCandidatos[0]
-    out.push({
-      emoji: "⚠️",
-      title: `${c.nombre} en riesgo`,
-      detail: `Tiene ${c.numOrdenes} órdenes pero no compra hace ${diasDesde(c.ultimaCompra)} días`,
-      borderColor: "border-amber-400",
-    })
+function periodAnterior(
+  desde?: string,
+  hasta?: string,
+): { desde: string; hasta: string } | null {
+  if (!desde || !hasta) return null
+  const d = new Date(desde)
+  const h = new Date(hasta)
+  const days = Math.max(
+    1,
+    Math.floor((h.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+  )
+  const prevHasta = new Date(d)
+  prevHasta.setDate(prevHasta.getDate() - 1)
+  const prevDesde = new Date(prevHasta)
+  prevDesde.setDate(prevDesde.getDate() - days + 1)
+  return {
+    desde: prevDesde.toISOString().slice(0, 10),
+    hasta: prevHasta.toISOString().slice(0, 10),
   }
-
-  // b) Mejor mes
-  if (stats.mejorMes) {
-    out.push({
-      emoji: "🏆",
-      title: `Mejor mes: ${monthLong.format(new Date(stats.mejorMes.mes + "-01"))}`,
-      detail: `Vendiste ${mxn0.format(stats.mejorMes.total)}`,
-      borderColor: "border-emerald-400",
-    })
-  }
-
-  // c) Producto estrella
-  if (stats.topProductos.length > 0) {
-    const p = stats.topProductos[0]
-    out.push({
-      emoji: "⭐",
-      title: `${p.nombre} es tu producto estrella`,
-      detail: `${p.cantidadVendida.toLocaleString("es-MX")} unidades vendidas (${p.categoria})`,
-      borderColor: "border-teal-400",
-    })
-  }
-
-  // d) Tendencia: comparar mes actual vs anterior
-  const arr = stats.ventasPorMes
-  if (arr.length >= 2) {
-    const ult = arr[arr.length - 1]
-    const ant = arr[arr.length - 2]
-    if (ant.total > 0) {
-      const pct = ((ult.total - ant.total) / ant.total) * 100
-      const up = pct >= 0
-      out.push({
-        emoji: up ? "📈" : "📉",
-        title: `Tendencia ${up ? "+" : ""}${pct.toFixed(1)}% vs mes anterior`,
-        detail: `${mxn0.format(ult.total)} vs ${mxn0.format(ant.total)}`,
-        borderColor: up ? "border-emerald-400" : "border-red-400",
-      })
-    }
-  }
-
-  // e) Cliente más valioso
-  if (stats.topClientes.length > 0) {
-    const c = stats.topClientes[0]
-    out.push({
-      emoji: "💎",
-      title: `${c.nombre} es tu cliente más valioso`,
-      detail: `Total acumulado ${mxn0.format(c.totalCompras)} en ${c.numOrdenes} órdenes`,
-      borderColor: "border-purple-400",
-    })
-  }
-
-  return out
 }
 
 export default async function EstadisticasPage({
@@ -138,30 +85,132 @@ export default async function EstadisticasPage({
 }) {
   const { desde, hasta } = await searchParams
   const stats = await getVentasStats({ desde, hasta })
-  const insights = stats ? buildInsights(stats) : []
+
+  // Periodo anterior — para % vs anterior. Solo si hay rango definido.
+  const ant = periodAnterior(desde, hasta)
+  let prevTotal = 0
+  let prevGanancia = 0
+  let prevOrdenes = 0
+  if (ant) {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from("ventas")
+      .select("total, ganancia")
+      .gte("fecha", ant.desde)
+      .lte("fecha", ant.hasta)
+    for (const v of data ?? []) {
+      prevTotal += Number(v.total ?? 0)
+      prevGanancia += Number(v.ganancia ?? 0)
+      prevOrdenes += 1
+    }
+  }
+
+  const margen =
+    stats && stats.totalVentas > 0
+      ? ((stats.totalVentas - prevGanancia) /* placeholder */, 0) // unused
+      : 0
+  void margen
+
+  // ─── Insights ────────────────────────────────────────────────────
+  type Insight = { emoji: string; texto: string }
+  const insights: Insight[] = []
+  if (stats) {
+    const topCli = stats.topClientes[0]
+    if (topCli) {
+      insights.push({
+        emoji: "🏆",
+        texto: `Mejor cliente: ${topCli.nombre} con ${mxn.format(topCli.totalCompras)}`,
+      })
+    }
+    const topProd = stats.topProductos[0]
+    if (topProd) {
+      insights.push({
+        emoji: "⭐",
+        texto: `Producto estrella: ${topProd.nombre} (${topProd.cantidadVendida.toLocaleString("es-MX")} unidades)`,
+      })
+    }
+    const arr = stats.ventasPorMes
+    if (arr.length >= 2) {
+      const ult = arr[arr.length - 1]
+      const ante = arr[arr.length - 2]
+      if (ante.total > 0) {
+        const pct = ((ult.total - ante.total) / ante.total) * 100
+        insights.push({
+          emoji: pct >= 0 ? "📈" : "📉",
+          texto: `Ventas ${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs mes anterior`,
+        })
+      }
+    }
+    const margenPeriodo =
+      stats.totalVentas > 0
+        ? (stats.ventasPorMes.reduce((s, m) => s + m.ganancia, 0) /
+            stats.totalVentas) *
+          100
+        : 0
+    insights.push({
+      emoji: "💎",
+      texto: `Margen neto del periodo: ${margenPeriodo.toFixed(1)}%`,
+    })
+    const masRecurrente = [...stats.topClientes].sort(
+      (a, b) => b.numOrdenes - a.numOrdenes,
+    )[0]
+    if (masRecurrente) {
+      insights.push({
+        emoji: "🔁",
+        texto: `Cliente más recurrente: ${masRecurrente.nombre} (${masRecurrente.numOrdenes} órdenes)`,
+      })
+    }
+    const enRiesgo = stats.topClientes
+      .filter((c) => diasDesde(c.ultimaCompra) > 60)
+      .sort((a, b) => b.numOrdenes - a.numOrdenes)[0]
+    insights.push({
+      emoji: enRiesgo ? "⚠️" : "✅",
+      texto: enRiesgo
+        ? `${enRiesgo.nombre} sin comprar hace +${diasDesde(enRiesgo.ultimaCompra)} días`
+        : "Todos los clientes activos",
+    })
+  }
+
+  // KPI numbers
+  const totalVentas = stats?.totalVentas ?? 0
+  const gananciaPeriodo = stats?.ventasPorMes.reduce((s, m) => s + m.ganancia, 0) ?? 0
+  const totalOrdenes = stats?.totalOrdenes ?? 0
+  const ticket = stats?.ticketPromedioGlobal ?? 0
+  const margenPct = totalVentas > 0 ? (gananciaPeriodo / totalVentas) * 100 : 0
+
+  // % vs anterior (solo si periodo definido)
+  const cambioVentas = ant ? pctChange(totalVentas, prevTotal) : null
+  const cambioOrdenes = ant ? pctChange(totalOrdenes, prevOrdenes) : null
+  const ticketPrev = ant && prevOrdenes > 0 ? prevTotal / prevOrdenes : 0
+  const cambioTicket = ant ? pctChange(ticket, ticketPrev) : null
+  const cambioGanancia = ant ? pctChange(gananciaPeriodo, prevGanancia) : null
 
   return (
-    <div className="p-8 space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-        <div className="flex items-center gap-3">
+    <div className="p-8 space-y-8">
+      {/* ─── Header ─── */}
+      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="mb-2 flex items-center gap-3 text-sm">
           <Link
             href="/ventas"
-            className="text-gray-400 hover:text-gray-600"
-            aria-label="Volver a Ventas"
+            className="text-gray-400 transition-colors hover:text-gray-600"
           >
-            <ArrowLeft className="size-5" />
+            ← Ventas
           </Link>
+          <span className="text-gray-300">/</span>
+          <span className="font-medium text-gray-700">Estadísticas</span>
+        </div>
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Estadísticas de Ventas
+            <h1 className="text-3xl font-bold text-gray-900">
+              Centro de Análisis
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              KPIs, top clientes, top productos y tendencia mensual
+            <p className="mt-1 text-gray-500">
+              Métricas financieras en tiempo real
             </p>
           </div>
+          <PeriodoTabs />
         </div>
-        <PeriodoTabs />
-      </header>
+      </div>
 
       {!stats && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -171,181 +220,233 @@ export default async function EstadisticasPage({
 
       {stats && (
         <>
-          {/* ─── Insights ─── */}
+          {/* ─── KPI cards (4) ─── */}
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <Kpi
+              icon={<TrendingUp className="size-5 text-teal-600" />}
+              iconBg="bg-teal-50 group-hover:bg-teal-100"
+              label="Total vendido"
+              value={
+                <AnimatedNumber
+                  value={totalVentas}
+                  prefix="$"
+                />
+              }
+              sub={
+                ant
+                  ? `vs ${mxn.format(prevTotal)} periodo anterior`
+                  : "Todo el histórico"
+              }
+              change={cambioVentas}
+            />
+            <Kpi
+              icon={<Sparkles className="size-5 text-emerald-600" />}
+              iconBg="bg-emerald-50 group-hover:bg-emerald-100"
+              label="Ganancia neta"
+              value={
+                <AnimatedNumber
+                  value={gananciaPeriodo}
+                  prefix="$"
+                />
+              }
+              sub={`${margenPct.toFixed(1)}% margen`}
+              change={cambioGanancia}
+            />
+            <Kpi
+              icon={<ShoppingCart className="size-5 text-pink-600" />}
+              iconBg="bg-pink-50 group-hover:bg-pink-100"
+              label="Órdenes"
+              value={<AnimatedNumber value={totalOrdenes} />}
+              sub={
+                ant
+                  ? `vs ${prevOrdenes} órdenes`
+                  : `${(totalOrdenes / Math.max(1, stats.ventasPorMes.length / 4 || 1)).toFixed(1)} prom. semanal`
+              }
+              change={cambioOrdenes}
+            />
+            <Kpi
+              icon={<Receipt className="size-5 text-blue-600" />}
+              iconBg="bg-blue-50 group-hover:bg-blue-100"
+              label="Ticket promedio"
+              value={
+                <AnimatedNumber
+                  value={ticket}
+                  prefix="$"
+                />
+              }
+              sub={
+                ant
+                  ? `vs ${mxn.format(ticketPrev)} anterior`
+                  : "Promedio histórico"
+              }
+              change={cambioTicket}
+            />
+          </section>
+
+          {/* ─── Insights premium ─── */}
           {insights.length > 0 && (
-            <section className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <header className="flex items-center gap-2">
-                <Lightbulb className="size-4 text-amber-500" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-                  Insights
-                </h2>
-              </header>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <section className="rounded-2xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-700 p-6 text-white shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500">
+              <div className="mb-5 flex items-center gap-2">
+                <div className="rounded-xl bg-white/10 p-2 backdrop-blur-sm">
+                  <Sparkles className="size-5" />
+                </div>
+                <h2 className="text-lg font-semibold">Insights automáticos</h2>
+                <span className="ml-auto rounded-full bg-white/20 px-3 py-1 text-xs">
+                  Actualizado ahora
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {insights.map((it, i) => (
                   <div
                     key={i}
-                    className={`flex items-start gap-3 rounded-xl border-l-4 ${it.borderColor} bg-white p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md cursor-default`}
+                    className="cursor-default rounded-xl bg-white/10 p-3.5 backdrop-blur-sm transition-colors hover:bg-white/20"
                   >
-                    <span className="text-2xl select-none">{it.emoji}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {it.title}
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        {it.detail}
-                      </div>
-                    </div>
+                    <p className="text-sm leading-relaxed">
+                      <span className="mr-1.5">{it.emoji}</span>
+                      {it.texto}
+                    </p>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* ─── KPIs animados ─── */}
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <AnimatedKpi
-              icon={<Users className="size-4 text-pink-700" />}
-              label="Clientes únicos"
-              value={stats.clientesUnicos}
-              formatStyle="integer"
-              subtitle={`${stats.totalOrdenes} órdenes`}
-              tone="text-pink-700"
-            />
-            <AnimatedKpi
-              icon={<Receipt className="size-4 text-blue-700" />}
-              label="Ticket promedio global"
-              value={stats.ticketPromedioGlobal}
-              formatStyle="currency"
-              subtitle={`Total ${mxn0.format(stats.totalVentas)}`}
-              tone="text-blue-700"
-            />
-            <StaticKpi
-              icon={<TrendingUp className="size-4 text-emerald-700" />}
-              label="Mejor mes"
-              value={
-                stats.mejorMes
-                  ? monthLong.format(new Date(stats.mejorMes.mes + "-01"))
-                  : "—"
-              }
-              subtitle={
-                stats.mejorMes ? mxn0.format(stats.mejorMes.total) : "Sin datos"
-              }
-              tone="text-emerald-700"
-            />
-          </section>
-
-          {/* ─── Chart ─── */}
-          <section className="rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:shadow-md">
-            <header className="mb-3 flex items-center gap-2">
-              <BarChart3 className="size-4 text-gray-500" />
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-                Ventas por mes
-              </h2>
-            </header>
-            <MonthlyChart data={stats.ventasPorMes} />
-          </section>
-
-          {/* ─── Top clientes + Top productos ─── */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <section className="rounded-xl border border-gray-200 bg-white">
-              <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-                <Users className="size-4 text-gray-500" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-                  Top clientes
-                </h2>
-                <span className="ml-auto text-xs text-gray-500">
-                  {stats.topClientes.length}
+          {/* ─── Chart + Top Clientes (3/5 + 2/5) ─── */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md lg:col-span-3">
+              <header className="mb-4 flex items-center gap-2">
+                <BarChart3 className="size-4 text-teal-600" />
+                <h3 className="font-semibold text-gray-900">
+                  Ventas por mes
+                </h3>
+                <span className="ml-auto text-xs text-gray-400">
+                  {stats.mejorMes
+                    ? `Mejor mes ${monthLong.format(new Date(stats.mejorMes.mes + "-01"))}`
+                    : ""}
                 </span>
               </header>
-              <ClientesTable data={stats.topClientes as ClienteStats[]} />
+              <MonthlyChart data={stats.ventasPorMes} />
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white">
-              <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-                <Package className="size-4 text-gray-500" />
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-                  Top productos
-                </h2>
-                <span className="ml-auto text-xs text-gray-500">
-                  {stats.topProductos.length}
-                </span>
+            <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden lg:col-span-2">
+              <header className="border-b border-gray-50 p-5">
+                <h3 className="flex items-center gap-2 font-semibold">
+                  <Users className="size-4 text-teal-600" />
+                  Top Clientes
+                </h3>
               </header>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
-                      <Th>Producto</Th>
-                      <Th>SKU</Th>
-                      <Th>Categoría</Th>
-                      <Th align="right">Unidades</Th>
-                      <Th align="right">Total generado</Th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {stats.topProductos.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="px-5 py-8 text-center text-sm text-gray-500"
-                        >
-                          Sin datos.
-                        </td>
-                      </tr>
-                    ) : (
-                      stats.topProductos.map((p: ProductoStats, i) => (
-                        <tr
-                          key={`${p.sku}-${i}`}
-                          className="cursor-default transition-colors duration-150 hover:bg-teal-50"
-                        >
-                          <td className="px-5 py-3 text-gray-900">
-                            <span className="text-xs text-gray-400 mr-2">
-                              #{i + 1}
-                            </span>
-                            {p.nombre}
-                          </td>
-                          <td className="px-5 py-3 font-mono text-xs text-gray-500">
-                            {p.sku || "—"}
-                          </td>
-                          <td className="px-5 py-3">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${categoriaClass(p.categoria)}`}
-                            >
-                              {p.categoria}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-right tabular-nums text-gray-500">
-                            {p.cantidadVendida.toLocaleString("es-MX")}
-                          </td>
-                          <td className="px-5 py-3 text-right tabular-nums font-semibold text-gray-900">
-                            {mxn.format(p.totalGenerado)}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <ClientesTable data={stats.topClientes} />
             </section>
           </div>
+
+          {/* ─── Top Productos (2-col card grid) ─── */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Package className="size-4 text-teal-600" />
+              <h3 className="font-semibold text-gray-900">Top productos</h3>
+              <span className="text-xs text-gray-400">
+                {stats.topProductos.length} productos
+              </span>
+            </div>
+            {stats.topProductos.length === 0 ? (
+              <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">
+                Sin datos.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {stats.topProductos.map((p: ProductoStats, i) => (
+                  <div
+                    key={`${p.sku}-${i}`}
+                    className="group rounded-xl border border-gray-100 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 text-sm font-bold text-gray-400">
+                          #{i + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900">
+                            {p.nombre}
+                          </p>
+                          <p className="font-mono text-xs text-gray-400">
+                            {p.sku || "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium ${categoriaClass(p.categoria)}`}
+                      >
+                        {p.categoria}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-lg bg-gray-50 p-2.5">
+                        <p className="text-xs text-gray-400">Unidades</p>
+                        <p className="font-bold text-gray-900">
+                          {p.cantidadVendida.toLocaleString("es-MX")}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-teal-50 p-2.5">
+                        <p className="text-xs text-teal-600">Generado</p>
+                        <p className="font-bold text-teal-700">
+                          {mxn.format(p.totalGenerado)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
     </div>
   )
 }
 
-function Th({
-  children,
-  align = "left",
+function Kpi({
+  icon,
+  iconBg,
+  label,
+  value,
+  sub,
+  change,
 }: {
-  children: React.ReactNode
-  align?: "left" | "right" | "center"
+  icon: React.ReactNode
+  iconBg: string
+  label: string
+  value: React.ReactNode
+  sub?: string
+  change?: number | null
 }) {
   return (
-    <th
-      className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-gray-500"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
+    <div className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+      <div className="mb-4 flex items-center justify-between">
+        <div className={`rounded-xl p-2.5 transition-colors ${iconBg}`}>
+          {icon}
+        </div>
+        {change !== undefined && change !== null && (
+          <span
+            className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              change >= 0
+                ? "bg-green-50 text-green-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            {change >= 0 ? (
+              <TrendingUp className="size-3" />
+            ) : (
+              <TrendingDown className="size-3" />
+            )}
+            {Math.abs(change).toFixed(1)}%
+          </span>
+        )}
+      </div>
+      <p className="mb-1 text-3xl font-bold tabular-nums text-gray-900">
+        {value}
+      </p>
+      <p className="text-sm text-gray-500">{label}</p>
+      {sub && <p className="mt-1 text-xs text-gray-400">{sub}</p>}
+    </div>
   )
 }
