@@ -630,8 +630,8 @@ export function ClientesDashboard({
       },
       {
         accessorKey: "ventas_count",
-        meta: { align: "right" },
-        header: (ctx) => <HeaderCell label="# Ventas" ctx={ctx} align="right" />,
+        meta: { align: "center" },
+        header: (ctx) => <HeaderCell label="# Ventas" ctx={ctx} align="center" />,
         cell: ({ getValue }) => {
           const v = Number(getValue() ?? 0)
           return (
@@ -1115,13 +1115,13 @@ export function ClientesDashboard({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar nombre, negocio, RFC, email, ciudad…"
-                className="h-8 w-72 rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                className="h-10 w-72 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
               />
             </div>
             <select
@@ -1129,7 +1129,7 @@ export function ClientesDashboard({
               onChange={(e) =>
                 setStatusFilter(e.target.value as "todos" | ClienteStatus)
               }
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los estatus</option>
               <option value="activo">Activos</option>
@@ -1142,7 +1142,7 @@ export function ClientesDashboard({
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
             >
               <option value="todos">Todos los tipos</option>
               {TIPOS_CLIENTE.map((t) => (
@@ -1155,9 +1155,9 @@ export function ClientesDashboard({
               <button
                 type="button"
                 onClick={() => setShowColumnMenu((s) => !s)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
               >
-                <Columns3 className="size-3.5" />
+                <Columns3 className="size-4" />
                 Columnas
               </button>
               {showColumnMenu && (
