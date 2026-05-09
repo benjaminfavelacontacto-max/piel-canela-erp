@@ -230,20 +230,21 @@ export async function getVentasStats(filtros?: {
     .map((v) => v.cotizacion_id)
     .filter((x): x is string => !!x)
 
-  // Pull venta_items (admin: bypass RLS). Fallback a cotizacion_items
-  // cuando venta_items esté vacío para el histórico (las ventas seedeadas
-  // se vinculan a su cotización pero nunca poblaron venta_items).
+  // Pull TODOS los venta_items históricos (admin: bypass RLS) — sin filtro
+  // de fecha. Top productos siempre refleja el histórico completo;
+  // restringirlo al periodo del filtro escondería las cintas que se
+  // vendieron en ventas de meses pasados.
   let items: ItemRow[] = []
-  if (ventaIds.length > 0) {
-    const r = await admin
-      .from("venta_items")
-      .select(
-        "cantidad, precio_unitario, producto_id, productos!inner(nombre, sku, categorias(nombre))",
-      )
-      .in("venta_id", ventaIds)
-    if (r.error) console.error("[getVentasStats] venta_items error:", r.error.message)
-    items = (r.data ?? []) as unknown as ItemRow[]
-  }
+  const r1 = await admin
+    .from("venta_items")
+    .select(
+      "cantidad, precio_unitario, producto_id, productos!inner(nombre, sku, categorias(nombre))",
+    )
+  if (r1.error) console.error("[getVentasStats] venta_items error:", r1.error.message)
+  items = (r1.data ?? []) as unknown as ItemRow[]
+
+  // Fallback histórico desde cotizacion_items si por algún motivo
+  // venta_items quedara vacío (queda como red de seguridad).
   if (items.length === 0 && cotIds.length > 0) {
     const r = await admin
       .from("cotizacion_items")
@@ -254,6 +255,9 @@ export async function getVentasStats(filtros?: {
     if (r.error) console.error("[getVentasStats] cotizacion_items error:", r.error.message)
     items = (r.data ?? []) as unknown as ItemRow[]
   }
+  // Suprimir warning de unused vars
+  void ventaIds
+  void cotIds
 
   // ─── Ventas por mes ─────────────────────────────────────────────
   const ventasPorMes = ventas.reduce<Record<string, MesStats>>((acc, v) => {
@@ -330,7 +334,7 @@ export async function getVentasStats(filtros?: {
       .slice(0, 10),
     topProductos: Object.values(porProducto)
       .sort((a, b) => b.totalGenerado - a.totalGenerado)
-      .slice(0, 10),
+      .slice(0, 20),
     clientesUnicos,
     totalVentas,
     totalOrdenes,
