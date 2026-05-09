@@ -36,17 +36,25 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function estatusFor(total: number, pagado: number): "pendiente" | "parcial" | "pagada" {
+type Estatus = "pendiente" | "pagada_parcial" | "pagada_total"
+
+function estatusFor(total: number, pagado: number): Estatus {
   if (pagado <= 0) return "pendiente"
-  if (pagado >= total) return "pagada"
-  return "parcial"
+  if (pagado >= total) return "pagada_total"
+  return "pagada_parcial"
 }
 
-const estatusBadge = {
+const estatusBadge: Record<Estatus, string> = {
   pendiente: "bg-amber-100 text-amber-700",
-  parcial: "bg-blue-100 text-blue-700",
-  pagada: "bg-emerald-100 text-emerald-700",
-} as const
+  pagada_parcial: "bg-blue-100 text-blue-700",
+  pagada_total: "bg-emerald-100 text-emerald-700",
+}
+
+const estatusLabel: Record<Estatus, string> = {
+  pendiente: "Pendiente",
+  pagada_parcial: "Parcial",
+  pagada_total: "Pagada",
+}
 
 export function VentaForm({
   clientes,
@@ -335,7 +343,7 @@ export function VentaForm({
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estatusBadge[estatus]}`}
                     >
-                      {estatus[0].toUpperCase() + estatus.slice(1)}
+                      {estatusLabel[estatus]}
                     </span>
                   </div>
                 </div>

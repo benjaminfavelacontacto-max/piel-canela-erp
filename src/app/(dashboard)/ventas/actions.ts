@@ -25,17 +25,19 @@ function buildNotas(metodo: string, notas: string): string {
   return `${tag} ${notas.trim()}`
 }
 
-function estatusFor(total: number, pagado: number): "pendiente" | "parcial" | "pagada" {
+function estatusFor(
+  total: number,
+  pagado: number,
+): "pendiente" | "pagada_parcial" | "pagada_total" {
   if (pagado <= 0) return "pendiente"
-  if (pagado >= total) return "pagada"
-  return "parcial"
+  if (pagado >= total) return "pagada_total"
+  return "pagada_parcial"
 }
 
 export async function saveVenta(input: SaveVentaInput) {
   const supabase = await createClient()
 
-  const ganancia = input.total - input.iva - input.costo_productos - input.costo_envio
-  const saldoPendiente = Math.max(0, input.total - input.cantidad_pagada)
+  // total, ganancia y saldo_pendiente son columnas GENERATED — Postgres las calcula.
   const estatus = estatusFor(input.total, input.cantidad_pagada)
 
   const { data: venta, error: ventaErr } = await supabase
@@ -49,12 +51,9 @@ export async function saveVenta(input: SaveVentaInput) {
       subtotal: input.subtotal,
       iva: input.iva,
       descuento: input.descuento,
-      total: input.total,
       costo_productos: input.costo_productos,
       costo_envio: input.costo_envio,
-      ganancia,
       cantidad_pagada: input.cantidad_pagada,
-      saldo_pendiente: saldoPendiente,
       estatus,
       notas: buildNotas(input.metodo_pago, input.notas),
       inventario_descontado: false,

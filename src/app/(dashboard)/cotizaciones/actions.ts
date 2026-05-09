@@ -118,6 +118,7 @@ export async function marcarVendida(cotizacionId: string) {
     return { ok: false as const, error: itemsErr.message }
   }
 
+  // total / ganancia / saldo_pendiente son GENERATED — Postgres los calcula.
   const { data: venta, error: ventaErr } = await supabase
     .from("ventas")
     .insert({
@@ -128,7 +129,6 @@ export async function marcarVendida(cotizacionId: string) {
       subtotal: cot.subtotal,
       iva: cot.iva,
       descuento: cot.descuento,
-      total: cot.total,
       costo_productos: cot.costo_productos,
       notas: cot.notas,
       cotizacion_id: cotizacionId,
