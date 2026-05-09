@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { ClientesDashboard } from "./clientes-dashboard"
 import type {
   ClienteRow,
@@ -48,9 +49,16 @@ export default async function ClientesPage() {
         .eq("activo", true),
     ])
 
-  const clientes = (clientesRes.data ?? []) as unknown as ClienteRow[]
-  const ventas = (ventasRes.data ?? []) as VentaSummaryRow[]
-  const cotizaciones = (cotizacionesRes.data ?? []) as CotizacionSummaryRow[]
+  // Excluir cliente interno (Piel Canela) del CRM y sus métricas
+  const internalIds = await getInternalClienteIds()
+  const clientes = ((clientesRes.data ?? []) as unknown as ClienteRow[])
+    .filter((c) => !internalIds.has(c.id))
+  const ventas = ((ventasRes.data ?? []) as VentaSummaryRow[]).filter(
+    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+  )
+  const cotizaciones = (
+    (cotizacionesRes.data ?? []) as CotizacionSummaryRow[]
+  ).filter((c) => !c.cliente_id || !internalIds.has(c.cliente_id))
   const ventaItems = (ventaItemsRes.data ?? []) as unknown as VentaItemSummary[]
   const socios = (sociosRes.data ?? []) as SocioBasic[]
   const error =

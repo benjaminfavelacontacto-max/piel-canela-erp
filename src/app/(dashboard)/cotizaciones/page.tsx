@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { CotizacionesList } from "./cotizaciones-list"
 import type {
   ClienteOption,
@@ -20,7 +21,7 @@ export default async function CotizacionesPage() {
         `id, numero, fecha, valida_hasta, subtotal, descuento, iva, total,
          costo_productos, costo_envio, utilidad_neta, estatus, cliente_id,
          notas, created_at, updated_at,
-         clientes(id, nombre, nombre_negocio, rfc, ciudad, vendedor_socio_id)`,
+         clientes(id, nombre, nombre_negocio, rfc, ciudad, vendedor_socio_id, is_internal)`,
       )
       .order("fecha", { ascending: false })
       .limit(500),
@@ -41,10 +42,13 @@ export default async function CotizacionesPage() {
       .select("id, numero, fecha, total, cotizacion_id, cliente_id"),
   ])
 
+  // Set de cliente_ids internos (Piel Canela) — para split de KPIs
+  // y para badge "Interno" en la tabla.
+  const internalIds = await getInternalClienteIds()
   const cotizaciones = (cotsRes.data ?? []) as unknown as CotizacionRow[]
   const clientes = (clientesRes.data ?? []) as ClienteOption[]
   const items = (itemsRes.data ?? []) as unknown as CotItemRow[]
-  const ventas = (ventasRes.data ?? []) as {
+  const ventasRaw = (ventasRes.data ?? []) as {
     id: string
     numero: string
     fecha: string
@@ -52,6 +56,10 @@ export default async function CotizacionesPage() {
     cotizacion_id: string | null
     cliente_id: string | null
   }[]
+  // Ventas internas no se cuentan como conversiones financieras
+  const ventas = ventasRaw.filter(
+    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+  )
   const error =
     cotsRes.error?.message ??
     clientesRes.error?.message ??
@@ -59,10 +67,15 @@ export default async function CotizacionesPage() {
     null
 
   // ─── KPIs globales rediseñados ────────────────────────────────────
+  // totalCotizaciones cuenta TODAS (incluidas internas Piel Canela).
   const totalCotizaciones = cotizaciones.length
-  const convertidas = ventas.length
+  // KPIs financieros usan SOLO cotizaciones NO internas
+  const cotsExternas = cotizaciones.filter(
+    (c) => !c.cliente_id || !internalIds.has(c.cliente_id),
+  )
+  const convertidas = ventas.length // ventas ya está filtrado (sin internas)
 
-  // Valor convertido = SUM ventas.total (lo realmente cobrado/cobrable)
+  // Valor convertido = SUM ventas externas
   const valorConvertido = ventas.reduce(
     (s, v) => s + Number(v.total ?? 0),
     0,
@@ -75,8 +88,8 @@ export default async function CotizacionesPage() {
 
   const hoyISO = new Date().toISOString().slice(0, 10)
 
-  // Pipeline potencial = SUM cotizaciones NO convertidas, vigentes, no perdidas
-  const pipelinePotencial = cotizaciones
+  // Pipeline potencial = SUM cotizaciones EXTERNAS, no convertidas, vigentes, no perdidas
+  const pipelinePotencial = cotsExternas
     .filter(
       (c) =>
         !cotIdsConVenta.has(c.id) &&
@@ -86,8 +99,8 @@ export default async function CotizacionesPage() {
     )
     .reduce((s, c) => s + Number(c.total ?? 0), 0)
 
-  // Pendiente convertir (enviadas vigentes, ya en flujo activo)
-  const pendienteConvertir = cotizaciones
+  // Pendiente convertir (enviadas vigentes externas)
+  const pendienteConvertir = cotsExternas
     .filter(
       (c) =>
         c.estatus === "enviada" &&
@@ -96,9 +109,11 @@ export default async function CotizacionesPage() {
     )
     .reduce((s, c) => s + Number(c.total ?? 0), 0)
 
-  // Tasa de conversión
+  // Tasa de conversión sobre cotizaciones externas (más honesto)
   const tasaConversion =
-    totalCotizaciones > 0 ? (convertidas / totalCotizaciones) * 100 : 0
+    cotsExternas.length > 0
+      ? (convertidas / cotsExternas.length) * 100
+      : 0
 
   // Tiempo promedio de cierre (días entre cot.fecha y venta.fecha)
   const cotById = new Map(cotizaciones.map((c) => [c.id, c]))
@@ -117,15 +132,15 @@ export default async function CotizacionesPage() {
       ? tiemposCierre.reduce((s, x) => s + x, 0) / tiemposCierre.length
       : 0
 
-  // Ticket promedio cotización
+  // Ticket promedio cotización (excluye internas)
   const ticketProm =
-    totalCotizaciones > 0
-      ? cotizaciones.reduce((s, c) => s + Number(c.total ?? 0), 0) /
-        totalCotizaciones
+    cotsExternas.length > 0
+      ? cotsExternas.reduce((s, c) => s + Number(c.total ?? 0), 0) /
+        cotsExternas.length
       : 0
 
-  // Utilidad estimada del pipeline (cotizaciones no convertidas activas × utilidad_neta)
-  const utilidadEstimada = cotizaciones
+  // Utilidad estimada del pipeline (cotizaciones externas no convertidas activas × utilidad_neta)
+  const utilidadEstimada = cotsExternas
     .filter(
       (c) =>
         !cotIdsConVenta.has(c.id) &&
@@ -134,8 +149,8 @@ export default async function CotizacionesPage() {
     )
     .reduce((s, c) => s + Number(c.utilidad_neta ?? 0), 0)
 
-  // Activas = en pipeline (no convertidas, vigentes, no perdidas)
-  const activas = cotizaciones.filter(
+  // Activas = en pipeline (cotizaciones externas no convertidas, vigentes, no perdidas)
+  const activas = cotsExternas.filter(
     (c) =>
       !cotIdsConVenta.has(c.id) &&
       c.estatus !== "rechazada" &&
@@ -143,8 +158,8 @@ export default async function CotizacionesPage() {
       (c.valida_hasta == null || c.valida_hasta >= hoyISO),
   ).length
 
-  // Perdidas = rechazada + vencida sin venta
-  const perdidas = cotizaciones.filter(
+  // Perdidas = cotizaciones externas rechazadas + vencidas sin venta
+  const perdidas = cotsExternas.filter(
     (c) =>
       !cotIdsConVenta.has(c.id) &&
       (c.estatus === "rechazada" ||

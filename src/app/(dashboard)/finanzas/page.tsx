@@ -83,14 +83,30 @@ export default async function FinanzasPage() {
       .in("id", [SANDRA_ID, BENJAMIN_ID]),
     supabase
       .from("ventas")
-      .select("id, numero, fecha, total, notas")
+      .select("id, numero, fecha, total, notas, cliente_id")
       .order("fecha", { ascending: true }),
   ])
 
+  // Excluir ventas internas (Piel Canela) — no entran en ROI ni capital recuperado
+  const internalIds = await (
+    await import("@/lib/internal-clientes")
+  ).getInternalClienteIds()
   const inversionesData = (invRes.data ?? []) as Inversion[]
-  const ventaSocios = (vsRes.data ?? []) as VentaSocio[]
   const sociosDb = (sociosRes.data ?? []) as Socio[]
-  const ventas = (ventasRes.data ?? []) as Venta[]
+  const ventasRaw = (ventasRes.data ?? []) as (Venta & {
+    cliente_id?: string | null
+  })[]
+  const ventas = ventasRaw.filter(
+    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+  )
+  const internalVentaIds = new Set(
+    ventasRaw
+      .filter((v) => v.cliente_id && internalIds.has(v.cliente_id))
+      .map((v) => v.id),
+  )
+  const ventaSocios = ((vsRes.data ?? []) as VentaSocio[]).filter(
+    (vs) => !internalVentaIds.has(vs.venta_id),
+  )
 
   const inversionesError = invRes.error?.message ?? null
 

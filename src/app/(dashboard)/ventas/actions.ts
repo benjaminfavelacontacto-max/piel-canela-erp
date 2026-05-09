@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
 
@@ -224,7 +225,11 @@ export async function getVentasStats(filtros?: {
     console.error("[getVentasStats] ventas error:", error.message)
     return null
   }
-  const ventas = (data ?? []) as unknown as VentaForStats[]
+  // Excluir ventas internas (Piel Canela) — movimientos de inventario
+  const internalIds = await getInternalClienteIds()
+  const ventas = ((data ?? []) as unknown as VentaForStats[]).filter(
+    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+  )
   const ventaIds = ventas.map((v) => v.id)
   const cotIds = ventas
     .map((v) => v.cotizacion_id)
@@ -352,6 +357,10 @@ export type UpdateVentaInput = {
   notas: string
   ivaActivo: boolean
   cantidad_pagada: number
+  // Campos financieros opcionales — solo se actualizan si vienen definidos
+  descuento?: number
+  costo_envio?: number
+  costo_productos?: number
 }
 
 function ventaEstatus(
@@ -369,7 +378,7 @@ export async function updateVenta(input: UpdateVentaInput) {
 
   const { data: current, error: fetchErr } = await supabase
     .from("ventas")
-    .select("subtotal, descuento, notas")
+    .select("subtotal, descuento, costo_envio, costo_productos, notas")
     .eq("id", input.id)
     .single()
   if (fetchErr || !current) {
@@ -381,7 +390,8 @@ export async function updateVenta(input: UpdateVentaInput) {
   }
 
   const subtotal = Number(current.subtotal ?? 0)
-  const descuento = Number(current.descuento ?? 0)
+  const descuento =
+    input.descuento != null ? Number(input.descuento) : Number(current.descuento ?? 0)
   const iva = input.ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
   // total y saldo_pendiente son GENERATED — Postgres los calcula desde
   // subtotal/iva/descuento/cantidad_pagada. Solo usamos el cálculo aquí
@@ -400,14 +410,20 @@ export async function updateVenta(input: UpdateVentaInput) {
         ? `Método: ${metodo}.`
         : null
 
+  const updatePayload: Record<string, unknown> = {
+    iva,
+    cantidad_pagada: input.cantidad_pagada,
+    estatus,
+    notas: newNotas,
+  }
+  if (input.descuento != null) updatePayload.descuento = input.descuento
+  if (input.costo_envio != null) updatePayload.costo_envio = input.costo_envio
+  if (input.costo_productos != null)
+    updatePayload.costo_productos = input.costo_productos
+
   const { error: updErr } = await supabase
     .from("ventas")
-    .update({
-      iva,
-      cantidad_pagada: input.cantidad_pagada,
-      estatus,
-      notas: newNotas,
-    })
+    .update(updatePayload)
     .eq("id", input.id)
 
   if (updErr) {
@@ -415,23 +431,64 @@ export async function updateVenta(input: UpdateVentaInput) {
     return { ok: false as const, error: updErr.message }
   }
 
-  // Re-distribuir 50/50 las venta_socios al nuevo total (las dos rows ya existen)
-  const half = Number((calcTotal / 2).toFixed(2))
-  await supabase
-    .from("venta_socios")
-    .update({ monto: half })
-    .eq("venta_id", input.id)
-    .eq("socio_id", SANDRA_ID)
-  await supabase
-    .from("venta_socios")
-    .update({ monto: half })
-    .eq("venta_id", input.id)
-    .eq("socio_id", BENJAMIN_ID)
+  // NOTA: venta_socios.monto NO se modifica aquí. El reparto Sandra/Benjamin
+  // refleja el cobro real per Sheet ("A quien se le dio") — se gestiona
+  // independiente, no es 50/50 automático sobre el total.
 
   revalidatePath(`/ventas/${input.id}`)
   revalidatePath("/ventas")
   revalidatePath("/")
 
+  return { ok: true as const }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// updateVentaSocio — UPSERT del monto de un socio para una venta
+// Permite editar el reparto Sandra/Benjamin desde la tabla.
+// ───────────────────────────────────────────────────────────────────
+
+export async function updateVentaSocio(
+  ventaId: string,
+  socioId: string,
+  monto: number,
+) {
+  if (!Number.isFinite(monto) || monto < 0) {
+    return { ok: false as const, error: "Monto inválido" }
+  }
+  const supabase = createAdminClient()
+  const m = Number(monto.toFixed(2))
+
+  const { data: existing, error: fetchErr } = await supabase
+    .from("venta_socios")
+    .select("id")
+    .eq("venta_id", ventaId)
+    .eq("socio_id", socioId)
+    .maybeSingle()
+
+  if (fetchErr) {
+    return { ok: false as const, error: fetchErr.message }
+  }
+
+  if (existing) {
+    const { error } = await supabase
+      .from("venta_socios")
+      .update({ monto: m })
+      .eq("id", existing.id)
+    if (error) return { ok: false as const, error: error.message }
+  } else {
+    const { error } = await supabase
+      .from("venta_socios")
+      .insert({
+        venta_id: ventaId,
+        socio_id: socioId,
+        monto: m,
+        pagado: false,
+      })
+    if (error) return { ok: false as const, error: error.message }
+  }
+
+  revalidatePath("/ventas")
+  revalidatePath("/")
   return { ok: true as const }
 }
 

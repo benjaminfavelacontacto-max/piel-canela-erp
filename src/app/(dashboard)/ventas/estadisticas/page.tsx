@@ -95,10 +95,13 @@ export default async function EstadisticasPage({
     const supabase = await createClient()
     const { data } = await supabase
       .from("ventas")
-      .select("total, ganancia")
+      .select("total, ganancia, cliente_id, clientes!left(is_internal)")
       .gte("fecha", ant.desde)
       .lte("fecha", ant.hasta)
     for (const v of data ?? []) {
+      // Excluir ventas internas (Piel Canela)
+      const cli = v.clientes as { is_internal?: boolean } | null
+      if (cli?.is_internal === true) continue
       prevTotal += Number(v.total ?? 0)
       prevGanancia += Number(v.ganancia ?? 0)
       prevOrdenes += 1

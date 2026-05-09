@@ -94,6 +94,7 @@ export type CotizacionRow = {
     rfc: string | null
     ciudad: string | null
     vendedor_socio_id: string | null
+    is_internal?: boolean | null
   } | null
 }
 
@@ -583,8 +584,18 @@ export function CotizacionesList({
           if (!c) return <span className="text-xs text-gray-300">—</span>
           return (
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-gray-900">
-                {c.nombre_negocio ?? c.nombre}
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-medium text-gray-900">
+                  {c.nombre_negocio ?? c.nombre}
+                </span>
+                {c.is_internal && (
+                  <span
+                    className="shrink-0 rounded-full bg-gray-200 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-gray-700"
+                    title="Movimiento interno — no cuenta en KPIs financieros"
+                  >
+                    🏠 Interno
+                  </span>
+                )}
               </div>
               {c.nombre_negocio && (
                 <div className="truncate text-[10px] text-gray-500">
@@ -594,7 +605,7 @@ export function CotizacionesList({
             </div>
           )
         },
-        size: 220,
+        size: 240,
       },
       {
         id: "rfc",

@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -140,12 +141,12 @@ export default async function DashboardPage() {
       .gte("fecha", monthStart),
     supabase
       .from("ventas")
-      .select("total")
+      .select("total, cliente_id")
       .gte("fecha", lastMonthStart)
       .lte("fecha", lastMonthEnd),
     supabase
       .from("ventas")
-      .select("id, fecha, total, ganancia, estatus")
+      .select("id, fecha, total, ganancia, estatus, cliente_id")
       .order("fecha", { ascending: true }),
     supabase.from("clientes").select("*", { count: "exact", head: true }),
     supabase
@@ -159,7 +160,7 @@ export default async function DashboardPage() {
       .order("stock_actual", { ascending: true })
       .limit(8),
     admin.from("inversiones").select("socio_id, monto_mxn"),
-    admin.from("venta_socios").select("socio_id, monto"),
+    admin.from("venta_socios").select("venta_id, socio_id, monto"),
     admin
       .from("ventas")
       .select(
@@ -177,7 +178,9 @@ export default async function DashboardPage() {
       .limit(4),
     admin
       .from("venta_items")
-      .select("cantidad, precio_unitario, productos(nombre, sku)")
+      .select(
+        "venta_id, cantidad, precio_unitario, productos(nombre, sku)",
+      )
       .gte("created_at", monthStart),
     admin
       .from("cotizaciones")
@@ -189,18 +192,23 @@ export default async function DashboardPage() {
     admin
       .from("cotizaciones")
       .select(
-        "id, numero, total, fecha, created_at, clientes(nombre, nombre_negocio)",
+        "id, numero, total, fecha, created_at, cliente_id, clientes(nombre, nombre_negocio)",
       )
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(20),
     admin
       .from("ventas")
       .select(
-        "id, numero, total, fecha, created_at, clientes(nombre, nombre_negocio)",
+        "id, numero, total, fecha, created_at, cliente_id, clientes(nombre, nombre_negocio)",
       )
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(20),
   ])
+
+  // Excluir ventas/cotizaciones de clientes internos (Piel Canela) de KPIs.
+  const internalIds = await getInternalClienteIds()
+  const isInternalCli = (cli: string | null | undefined) =>
+    !!cli && internalIds.has(cli)
 
   type VentaRow = {
     id: string
@@ -214,30 +222,51 @@ export default async function DashboardPage() {
     created_at?: string
     valida_hasta?: string | null
   }
-  const ventasMes = (ventasMesRes.data ?? []) as unknown as VentaRow[]
-  const ventasMesAnt = (ventasMesAntRes.data ?? []) as { total: number | null }[]
-  const ventasAll = (ventasAllRes.data ?? []) as {
+  const ventasMes = (
+    (ventasMesRes.data ?? []) as unknown as VentaRow[]
+  ).filter((v) => !isInternalCli(v.cliente_id))
+  const ventasMesAnt = (
+    (ventasMesAntRes.data ?? []) as {
+      total: number | null
+      cliente_id: string | null
+    }[]
+  ).filter((v) => !isInternalCli(v.cliente_id))
+  const ventasAllRaw = (ventasAllRes.data ?? []) as {
     id: string
     fecha: string
     total: number | null
     ganancia: number | null
     estatus: Estatus
+    cliente_id: string | null
   }[]
+  const ventasAll = ventasAllRaw.filter((v) => !isInternalCli(v.cliente_id))
+  // Set de venta_ids internos para filtrar venta_socios y venta_items
+  const internalVentaIds = new Set(
+    ventasAllRaw.filter((v) => isInternalCli(v.cliente_id)).map((v) => v.id),
+  )
   const inversiones = (inversionesRes.data ?? []) as {
     socio_id: string
     monto_mxn: number
   }[]
-  const ventaSocios = (ventaSociosRes.data ?? []) as {
-    socio_id: string
-    monto: number
-  }[]
-  const recentVentas = (recentVentasRes.data ?? []) as unknown as VentaRow[]
+  const ventaSocios = (
+    (ventaSociosRes.data ?? []) as {
+      venta_id: string
+      socio_id: string
+      monto: number
+    }[]
+  ).filter((vs) => !internalVentaIds.has(vs.venta_id))
+  const recentVentas = (
+    (recentVentasRes.data ?? []) as unknown as VentaRow[]
+  ).filter((v) => !isInternalCli(v.cliente_id))
   const cotPendList = (cotizacionesPendListRes.data ?? []) as unknown as VentaRow[]
-  const itemsMes = (itemsTopMesRes.data ?? []) as {
-    cantidad: number
-    precio_unitario: number
-    productos: { nombre: string; sku: string | null } | null
-  }[]
+  const itemsMes = (
+    (itemsTopMesRes.data ?? []) as unknown as {
+      venta_id: string
+      cantidad: number
+      precio_unitario: number
+      productos: { nombre: string; sku: string | null } | null
+    }[]
+  ).filter((it) => !internalVentaIds.has(it.venta_id))
   const inventarioBajo = (inventarioBajoRes.data ?? []) as {
     sku: string | null
     nombre: string
@@ -246,8 +275,16 @@ export default async function DashboardPage() {
     estatus: string
   }[]
   const proximaCot = (proximaCotRes.data ?? []) as unknown as VentaRow[]
-  const allCotsRecientes = (todasCotsRecRes.data ?? []) as unknown as VentaRow[]
-  const allVentasRecientes = (todasVentasRecRes.data ?? []) as unknown as VentaRow[]
+  const allCotsRecientes = (
+    (todasCotsRecRes.data ?? []) as unknown as VentaRow[]
+  )
+    .filter((c) => !isInternalCli(c.cliente_id))
+    .slice(0, 8)
+  const allVentasRecientes = (
+    (todasVentasRecRes.data ?? []) as unknown as VentaRow[]
+  )
+    .filter((v) => !isInternalCli(v.cliente_id))
+    .slice(0, 8)
 
   // ─── KPI calcs ────────────────────────────────────────────────────
   const totalVentasMes = ventasMes.reduce((s, v) => s + Number(v.total ?? 0), 0)
