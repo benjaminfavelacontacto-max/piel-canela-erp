@@ -356,125 +356,174 @@ export function EstimadoIngresos({
   const proxMesLabel = monthLong.format(proxMes)
 
   return (
-    <section className="space-y-4">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-white shadow-sm">
-            <Brain className="size-4" />
-          </span>
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">
-              Estimado de ingresos
-            </h3>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              Basado en historial, recurrencia y patrones de recompra
-            </p>
-          </div>
-        </div>
-        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-700">
-          predictivo
-        </span>
-      </header>
+    <section
+      className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] p-5"
+      style={{
+        background:
+          "radial-gradient(ellipse at top right, rgba(139,92,246,0.04), transparent 50%), radial-gradient(ellipse at bottom left, rgba(15,118,110,0.03), transparent 50%), white",
+        boxShadow:
+          "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+      }}
+    >
+      {/* Glow violet sutil top-right */}
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-40"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%)",
+          filter: "blur(40px)",
+        }}
+        aria-hidden
+      />
 
-      {/* Banner temporada alta detectada en próximos 3 meses */}
-      {seasonalInsights.proxTempAlta && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-orange-50/50 to-yellow-50/30 p-3 shadow-sm">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow">
-            <Sun className="size-4" />
-          </span>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-amber-900">
-              {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
-                seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
-              es temporada alta
-            </p>
-            <p className="text-[11px] text-amber-700">
-              Históricamente +
-              {Math.round(
-                (seasonalInsights.proxTempAlta.factor - 1) * 100,
-              )}
-              % sobre el promedio · prepara stock e inventario
-            </p>
-          </div>
-          {seasonalInsights.junioPromedio > 0 && (
-            <span className="rounded-full bg-amber-100 px-2 py-1 text-[10.5px] font-bold tabular-nums text-amber-900 ring-1 ring-amber-200/60">
-              Junio prom.: {mxn.format(seasonalInsights.junioPromedio)}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* KPIs forecast */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <ForecastCard
-          icon={<Target className="size-4" />}
-          label={`Estimado ${seasonalInsights.proxNombre}`}
-          value={mxn.format(proyecciones[0]?.estimado ?? insights.estimadoMesProx)}
-          sub={
-            seasonalInsights.proximaTemporadaAlta
-              ? `🌞 Temporada alta · factor ×${seasonalInsights.factorProx.toFixed(2)}`
-              : `Factor estacional ×${seasonalInsights.factorProx.toFixed(2)}`
-          }
-          accent={
-            seasonalInsights.proximaTemporadaAlta
-              ? "text-amber-700"
-              : "text-[#0F766E]"
-          }
-          gradient={
-            seasonalInsights.proximaTemporadaAlta
-              ? "from-amber-50 via-white to-orange-50/50"
-              : "from-pink-50 via-white to-rose-50/50"
-          }
-          ring={
-            seasonalInsights.proximaTemporadaAlta
-              ? "ring-amber-100"
-              : "ring-pink-100"
-          }
-          badge={
+      <div className="relative space-y-4">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                insights.tendenciaPct >= 0
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-rose-100 text-rose-700"
-              }`}
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                boxShadow:
+                  "0 1px 2px rgba(139,92,246,0.2), 0 4px 12px rgba(139,92,246,0.15)",
+              }}
             >
-              {insights.tendenciaPct >= 0 ? "↗" : "↘"}{" "}
-              {Math.abs(insights.tendenciaPct).toFixed(0)}%
+              <Brain className="size-4" strokeWidth={1.75} />
             </span>
-          }
-        />
-        <ForecastCard
-          icon={<Calendar className="size-4" />}
-          label="Proyección trimestral"
-          value={mxn.format(insights.estimadoTrim)}
-          sub="Próximos 3 meses"
-          accent="text-violet-700"
-          gradient="from-violet-50 via-white to-purple-50/50"
-          ring="ring-violet-100"
-        />
-        <ForecastCard
-          icon={<TrendingUp className="size-4" />}
-          label="Promedio últimos 3 meses"
-          value={mxn.format(insights.promMes3)}
-          sub={`vs ${mxn.format(insights.promMes6)} (6m)`}
-          accent="text-emerald-700"
-          gradient="from-emerald-50 via-white to-teal-50/50"
-          ring="ring-emerald-100"
-        />
-        <ForecastCard
-          icon={<Zap className="size-4" />}
-          label="Recompra probable"
-          value={mxn.format(probabilidadTotal)}
-          sub={`${probableRecompra.length} clientes en cycle`}
-          accent="text-amber-700"
-          gradient="from-amber-50 via-white to-orange-50/50"
-          ring="ring-amber-100"
-        />
-      </div>
+            <div>
+              <h3
+                className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F172A]"
+              >
+                AI Revenue Intelligence
+              </h3>
+              <p className="mt-0.5 text-[11px] text-[#64748B]">
+                Predicciones basadas en recurrencia y patrones de recompra
+              </p>
+            </div>
+          </div>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full bg-violet-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 ring-1 ring-violet-200/40 backdrop-blur-sm"
+          >
+            <span className="relative flex size-1.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-violet-400 opacity-75" />
+              <span className="relative size-1.5 rounded-full bg-violet-500" />
+            </span>
+            Predictivo
+          </span>
+        </header>
+
+        {/* Hero alert: temporada alta detectada */}
+        {seasonalInsights.proxTempAlta && (
+          <div
+            className="relative flex items-start gap-4 overflow-hidden rounded-xl border border-amber-200/40 p-4"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(254,243,199,0.6) 0%, rgba(254,215,170,0.3) 50%, rgba(255,255,255,0.5) 100%)",
+              boxShadow: "0 4px 12px rgba(245,158,11,0.06)",
+            }}
+          >
+            <div
+              className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full opacity-60"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(245,158,11,0.10), transparent 70%)",
+                filter: "blur(20px)",
+              }}
+              aria-hidden
+            />
+            <span
+              className="relative flex size-11 shrink-0 items-center justify-center rounded-xl text-white"
+              style={{
+                background:
+                  "linear-gradient(135deg, #F59E0B 0%, #EA580C 100%)",
+                boxShadow:
+                  "0 1px 2px rgba(245,158,11,0.25), 0 6px 20px rgba(245,158,11,0.20)",
+              }}
+            >
+              <Sun className="size-5" strokeWidth={1.75} />
+            </span>
+            <div className="relative flex-1 min-w-0">
+              <p
+                className="text-[15px] font-semibold tracking-[-0.015em] text-[#78350F]"
+              >
+                {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
+                  seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
+                es temporada alta
+              </p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-amber-800/80">
+                Históricamente{" "}
+                <span className="font-semibold tabular-nums text-amber-900">
+                  +
+                  {Math.round(
+                    (seasonalInsights.proxTempAlta.factor - 1) * 100,
+                  )}
+                  %
+                </span>{" "}
+                sobre el promedio · prepara stock e inventario
+              </p>
+            </div>
+            {seasonalInsights.junioPromedio > 0 && (
+              <div
+                className="relative shrink-0 rounded-lg border border-amber-200/50 bg-white/60 px-3 py-2 backdrop-blur-sm"
+              >
+                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-amber-700/80">
+                  Promedio histórico
+                </p>
+                <p
+                  className="mt-0.5 text-base font-bold tabular-nums tracking-[-0.025em] text-amber-900"
+                  style={{ fontFeatureSettings: '"tnum" 1' }}
+                >
+                  {mxn.format(seasonalInsights.junioPromedio)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* AI tiles compactos — sin cards visibles */}
+        <div
+          className="grid grid-cols-2 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/60 backdrop-blur-sm lg:grid-cols-4"
+        >
+          <AiTile
+            icon={<Target className="size-3.5" strokeWidth={1.75} />}
+            label={`Estimado ${seasonalInsights.proxNombre}`}
+            value={mxn.format(
+              proyecciones[0]?.estimado ?? insights.estimadoMesProx,
+            )}
+            sub={
+              seasonalInsights.proximaTemporadaAlta
+                ? `Temporada alta · ×${seasonalInsights.factorProx.toFixed(2)}`
+                : `Factor ×${seasonalInsights.factorProx.toFixed(2)}`
+            }
+            tone={seasonalInsights.proximaTemporadaAlta ? "amber" : "emerald"}
+            trend={insights.tendenciaPct}
+          />
+          <AiTile
+            icon={<Calendar className="size-3.5" strokeWidth={1.75} />}
+            label="Proyección Q3"
+            value={mxn.format(insights.estimadoTrim)}
+            sub="Próximos 3 meses"
+            tone="violet"
+          />
+          <AiTile
+            icon={<TrendingUp className="size-3.5" strokeWidth={1.75} />}
+            label="Promedio 3m"
+            value={mxn.format(insights.promMes3)}
+            sub={`vs ${mxn.format(insights.promMes6)} (6m)`}
+            tone="emerald"
+          />
+          <AiTile
+            icon={<Zap className="size-3.5" strokeWidth={1.75} />}
+            label="Recompra probable"
+            value={mxn.format(probabilidadTotal)}
+            sub={`${probableRecompra.length} clientes en cycle`}
+            tone="amber"
+          />
+        </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Bar chart histórico + estimado proyectado */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm lg:col-span-2">
           <header className="mb-3 flex items-center justify-between">
             <div>
               <h4 className="text-sm font-semibold text-gray-900">
@@ -585,7 +634,7 @@ export function EstimadoIngresos({
         </article>
 
         {/* Lista de clientes probable recompra */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
           <header className="mb-3">
             <div className="flex items-center gap-1.5">
               <Sparkles className="size-3.5 text-amber-600" />
@@ -655,6 +704,7 @@ export function EstimadoIngresos({
           )}
         </article>
       </div>
+      </div>
     </section>
   )
 }
@@ -691,42 +741,70 @@ function HistVsProyLegend() {
   )
 }
 
-function ForecastCard({
+/**
+ * AI tile compacto — sin card visible, solo icono mono + label + valor + sub.
+ * Divisores invisibles entre tiles (inset shadow). Hover sutil.
+ */
+function AiTile({
   icon,
   label,
   value,
   sub,
-  accent,
-  gradient,
-  ring,
-  badge,
+  tone = "emerald",
+  trend,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   sub?: string
-  accent: string
-  gradient: string
-  ring: string
-  badge?: React.ReactNode
+  tone?: "emerald" | "violet" | "amber" | "rose"
+  trend?: number
 }) {
+  const iconColor =
+    tone === "violet"
+      ? "text-violet-600"
+      : tone === "amber"
+        ? "text-amber-600"
+        : tone === "rose"
+          ? "text-rose-600"
+          : "text-[#0F766E]"
   return (
-    <article
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+    <div
+      className="group relative px-4 py-3 transition-all duration-180 hover:bg-white/50"
+      style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
     >
-      <header className="flex items-center justify-between">
-        <div className={`flex items-center gap-1.5 ${accent}`}>
-          {icon}
-          <span className="text-[10.5px] font-semibold uppercase tracking-wider">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className={iconColor}>{icon}</span>
+          <p
+            className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+            style={{ letterSpacing: "0.12em" }}
+          >
             {label}
-          </span>
+          </p>
         </div>
-        {badge}
-      </header>
-      <div className={`mt-2 text-lg font-bold tabular-nums ${accent}`}>
-        {value}
+        {trend !== undefined && (
+          <span
+            className={`inline-flex items-center gap-0.5 text-[9.5px] font-semibold tabular-nums ${
+              trend >= 0 ? "text-emerald-600" : "text-rose-600"
+            }`}
+          >
+            <span aria-hidden className="text-[7px]">
+              {trend >= 0 ? "▲" : "▼"}
+            </span>
+            {Math.abs(trend).toFixed(0)}%
+          </span>
+        )}
       </div>
-      {sub && <div className="mt-0.5 text-[10.5px] text-gray-600">{sub}</div>}
-    </article>
+      <p
+        className="mt-1.5 text-[20px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A]"
+        style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]">{sub}</p>
+      )}
+    </div>
   )
 }
