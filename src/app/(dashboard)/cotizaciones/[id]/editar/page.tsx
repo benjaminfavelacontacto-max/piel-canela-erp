@@ -122,7 +122,7 @@ export default async function EditarCotizacionPage({
       peso: string | null
     } | null
   }
-  const items: CotizacionItem[] = ((itemsRes.data ?? []) as ItemRow[]).map(
+  const items: CotizacionItem[] = ((itemsRes.data ?? []) as unknown as ItemRow[]).map(
     (r) => {
       const display =
         r.productos?.nombre_display ?? r.productos?.nombre ?? "—"

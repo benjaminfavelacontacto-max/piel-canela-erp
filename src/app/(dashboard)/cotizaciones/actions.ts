@@ -260,10 +260,7 @@ export async function duplicarCotizacion(id: string) {
       "[duplicarCotizacion] fetch error:",
       JSON.stringify(fetchErr, null, 2),
     )
-    return {
-      ok: false as const,
-      error: fetchErr?.message ?? "Cotización no encontrada",
-    }
+    throw new Error(fetchErr?.message ?? "Cotización no encontrada")
   }
 
   const newNumero = `${orig.numero}-COPIA-${Date.now().toString().slice(-6)}`
@@ -297,10 +294,7 @@ export async function duplicarCotizacion(id: string) {
       "[duplicarCotizacion] insert error:",
       JSON.stringify(insErr, null, 2),
     )
-    return {
-      ok: false as const,
-      error: insErr?.message ?? "No se pudo duplicar",
-    }
+    throw new Error(insErr?.message ?? "No se pudo duplicar")
   }
 
   const { data: items, error: itemsErr } = await supabase

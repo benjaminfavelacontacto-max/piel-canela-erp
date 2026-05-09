@@ -116,7 +116,7 @@ export default async function VentaDetailPage({
     direccion: string | null
     ciudad: string | null
   }
-  const cliente = (venta.clientes as Cliente | null) ?? null
+  const cliente = (venta.clientes as unknown as Cliente | null) ?? null
   const { metodo, notas } = parseNotas(venta.notas)
   const estatus = venta.estatus as Estatus
 

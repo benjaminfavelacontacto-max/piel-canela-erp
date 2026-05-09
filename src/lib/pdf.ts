@@ -40,7 +40,6 @@ export async function downloadCotizacionPdf(
   nombreCliente: string,
 ) {
   const mod = await import("html2pdf.js")
-  // @ts-expect-error html2pdf.js doesn't ship types
   const html2pdf = mod.default ?? mod
 
   const filename = `PC_${safeFilenamePart(numeroOrden)}_${safeFilenamePart(nombreCliente)}.pdf`

@@ -601,7 +601,7 @@ export function VentasDashboard({
                   borderRadius: 8,
                   fontSize: 12,
                 }}
-                formatter={(v: number) => mxn2.format(v)}
+                formatter={(v) => mxn2.format(Number(v ?? 0))}
                 labelFormatter={(l, p) => {
                   const item = p?.[0]?.payload
                   return item?.date ? monthLong.format(item.date) : l
@@ -722,7 +722,7 @@ export function VentasDashboard({
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(v: number) => mxn2.format(v)}
+                    formatter={(v) => mxn2.format(Number(v ?? 0))}
                     contentStyle={{
                       border: "1px solid #e5e7eb",
                       borderRadius: 8,

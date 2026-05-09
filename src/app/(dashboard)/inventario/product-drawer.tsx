@@ -300,8 +300,10 @@ export function ProductDrawer({
                         borderRadius: 8,
                         fontSize: 11,
                       }}
-                      formatter={(v: number, key: string) =>
-                        key === "cantidad" ? `${v} u` : mxn2.format(v)
+                      formatter={(v, key) =>
+                        key === "cantidad"
+                          ? `${Number(v ?? 0)} u`
+                          : mxn2.format(Number(v ?? 0))
                       }
                     />
                     <Bar

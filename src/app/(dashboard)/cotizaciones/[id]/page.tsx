@@ -64,7 +64,7 @@ export default async function CotizacionDetailPage({
     } | null
   }
 
-  const items: CotizacionItem[] = ((itemRows ?? []) as ItemRow[]).map((r) => {
+  const items: CotizacionItem[] = ((itemRows ?? []) as unknown as ItemRow[]).map((r) => {
     const display = r.productos?.nombre_display ?? r.productos?.nombre ?? "—"
     return {
       producto_id: r.productos?.id ?? "",
@@ -81,7 +81,7 @@ export default async function CotizacionDetailPage({
 
   const ivaActivo = Number(cot.iva ?? 0) > 0
 
-  const cliente = (cot.clientes as Cliente | null) ?? null
+  const cliente = (cot.clientes as unknown as Cliente | null) ?? null
 
   const preview: CotizacionData = {
     numero: cot.numero,

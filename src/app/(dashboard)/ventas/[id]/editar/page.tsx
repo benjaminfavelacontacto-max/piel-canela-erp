@@ -36,7 +36,7 @@ export default async function EditarVentaPage({
 
   const { metodo, notas: notasLimpias } = parseNotas(venta.notas)
   type Cliente = { nombre: string; nombre_negocio: string | null } | null
-  const cliente = venta.clientes as Cliente
+  const cliente = venta.clientes as unknown as Cliente
 
   return (
     <div className="p-4">

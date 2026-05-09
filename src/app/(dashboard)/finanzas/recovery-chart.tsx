@@ -66,7 +66,7 @@ export function RecoveryChart({
             borderRadius: 8,
             fontSize: 12,
           }}
-          formatter={(v: number) => mxn.format(v)}
+          formatter={(v) => mxn.format(Number(v ?? 0))}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <ReferenceLine
