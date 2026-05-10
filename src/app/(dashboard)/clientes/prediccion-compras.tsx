@@ -68,6 +68,28 @@ const CONFIANZA_CONF: Record<
 
 type EnrichedConPred = EnrichedCliente & { pred: PrediccionResult }
 
+// Avatar gradient consistente por nombre (hash → índice estable)
+const AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #4F46E5, #047857)",
+  "linear-gradient(135deg, #047857, #0E7490)",
+  "linear-gradient(135deg, #B45309, #B91C1C)",
+  "linear-gradient(135deg, #BE185D, #4F46E5)",
+  "linear-gradient(135deg, #0E7490, #047857)",
+  "linear-gradient(135deg, #EA580C, #B45309)",
+  "linear-gradient(135deg, #7E22CE, #BE185D)",
+  "linear-gradient(135deg, #047857, #B45309)",
+  "linear-gradient(135deg, #A8895F, #BE185D)",
+  "linear-gradient(135deg, #0891B2, #4F46E5)",
+  "linear-gradient(135deg, #B91C1C, #EA580C)",
+  "linear-gradient(135deg, #15803D, #0891B2)",
+]
+function getAvatarGradient(nombre: string): string {
+  if (!nombre) return AVATAR_GRADIENTS[0]
+  let hash = 0
+  for (let i = 0; i < nombre.length; i++) hash += nombre.charCodeAt(i)
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length]
+}
+
 export function PrediccionCompras({
   clientes,
   ventas,
@@ -346,6 +368,12 @@ export function PrediccionCompras({
     lejano: "#94A3B8",
   } as const
 
+  // Top 3 estables (basados en clientesPanel sin filtrar)
+  const topIds = useMemo(
+    () => new Set(clientesPanel.slice(0, 3).map((c) => c.id)),
+    [clientesPanel],
+  )
+
   const filtrados = useMemo(() => {
     return clientesPanel.filter((c) => {
       const diasProx = c.proximaFecha
@@ -551,7 +579,7 @@ export function PrediccionCompras({
         {filtrados.map((cliente, i) => {
           const fechaInfo = fechaHumana(cliente.proximaFecha)
           const accion = accionRecomendada(cliente)
-          const isTop = i < 3 && filtro === "TODOS"
+          const isTop = filtro === "TODOS" && topIds.has(cliente.id)
           const isExp = expandido === cliente.id
           const tendencia =
             (cliente.ticketEsperado ?? 0) > (cliente.ticketAnterior ?? 0)
@@ -603,17 +631,11 @@ export function PrediccionCompras({
                     />
                   )}
                   <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[11px] text-[12px] font-bold text-white"
                     style={{
-                      background:
-                        i === 0
-                          ? "linear-gradient(135deg,#4F46E5,#047857)"
-                          : i === 1
-                            ? "linear-gradient(135deg,#047857,#0E7490)"
-                            : i === 2
-                              ? "linear-gradient(135deg,#B45309,#B91C1C)"
-                              : "linear-gradient(135deg,#475569,#1F2937)",
-                      boxShadow: "0 2px 4px rgba(15,23,42,0.10)",
+                      background: getAvatarGradient(cliente.nombre),
+                      boxShadow: "0 2px 6px rgba(15,23,42,0.12)",
+                      letterSpacing: "0.02em",
                     }}
                   >
                     {cliente.iniciales}
