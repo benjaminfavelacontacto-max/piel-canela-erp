@@ -147,7 +147,10 @@ export default async function PedidosPage() {
                 className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <header className="flex items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/pedidos/${pedido.id}`}
+                    className="flex flex-1 items-center gap-3 transition-opacity hover:opacity-70"
+                  >
                     <div
                       className="flex size-11 shrink-0 items-center justify-center rounded-xl text-lg"
                       style={{
@@ -189,7 +192,14 @@ export default async function PedidosPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
+                  <Link
+                    href={`/pedidos/${pedido.id}`}
+                    className="hidden sm:inline-flex pc-btn-secondary"
+                    style={{ height: 36, padding: "0 14px", fontSize: 12 }}
+                  >
+                    Ver detalle →
+                  </Link>
                 </header>
 
                 <div className="grid grid-cols-2 divide-x divide-[rgba(15,23,42,0.04)] sm:grid-cols-3 lg:grid-cols-6">
