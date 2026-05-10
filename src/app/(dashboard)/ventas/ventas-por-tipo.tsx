@@ -34,28 +34,65 @@ export interface TipoData {
 }
 
 const COLORES_CATEGORIA: Record<string, string> = {
-  CINTAS: "#B45309",
   ACTIVADORES: "#0F766E",
   POTENCIADORES: "#047857",
-  OXIGENANTES: "#0E7490",
-  POLVOS: "#BE185D",
-  "POLVO DE BLANQUEAR": "#7E22CE",
-  AEROSOL: "#EA580C",
+  CINTAS: "#B45309",
   "EMULSIÓN REVELADORA": "#1D4ED8",
   EMULSIÓN: "#1D4ED8",
+  "POLVO DE BLANQUEAR": "#7E22CE",
+  POLVOS: "#7E22CE",
   "ACEITE CORPORAL": "#B45309",
   ACEITE: "#B45309",
-  EXFOLIANTS: "#0F766E",
-  HUMECTANTES: "#4F46E5",
-  "DYE COLOR": "#0E7490",
+  OXIGENANTES: "#0E7490",
   AEROGRAFÍA: "#B91C1C",
+  AEROSOL: "#EA580C",
+  HUMECTANTES: "#4F46E5",
+  HIDRATANTES: "#4F46E5",
+  EXFOLIANTS: "#A16207",
+  EXFOLIANTES: "#A16207",
+  "DYE COLOR": "#0E7490",
+  SOMBRILLA: "#A8895F",
+  SOMBRILLAS: "#A8895F",
   SHAMPOO: "#BE185D",
   OTROS: "#475569",
-  "SIN CATEGORÍA": "#94A3B8",
+  "SIN CATEGORÍA": "#64748B",
 }
 
-const getColor = (cat: string) =>
-  COLORES_CATEGORIA[cat.toUpperCase()] ?? "#475569"
+// Paleta de fallback (tonos saturados que funcionan en light theme)
+const FALLBACK_COLORS = [
+  "#D97706",
+  "#059669",
+  "#4F46E5",
+  "#DB2777",
+  "#0D9488",
+  "#7C3AED",
+  "#EA580C",
+  "#0891B2",
+  "#65A30D",
+  "#DC2626",
+  "#2563EB",
+  "#C026D3",
+]
+const colorCache: Record<string, string> = {}
+let fallbackIndex = 0
+
+const getColor = (cat: string): string => {
+  if (!cat) return COLORES_CATEGORIA["OTROS"]
+  const key = cat.toUpperCase().trim()
+  // Match exacto
+  if (COLORES_CATEGORIA[key]) return COLORES_CATEGORIA[key]
+  // Match por substring (ej: "EMULSIÓN" dentro de "EMULSIÓN REVELADORA")
+  const matchKey = Object.keys(COLORES_CATEGORIA).find(
+    (k) => key.includes(k) || k.includes(key),
+  )
+  if (matchKey) return COLORES_CATEGORIA[matchKey]
+  // Fallback: asignar color del ciclo y cachear (idempotente por nombre)
+  if (!colorCache[key]) {
+    colorCache[key] = FALLBACK_COLORS[fallbackIndex % FALLBACK_COLORS.length]
+    fallbackIndex++
+  }
+  return colorCache[key]
+}
 
 const ESTATUS_CONFIG: Record<
   string,
