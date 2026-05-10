@@ -115,14 +115,23 @@ export default async function VentasPage() {
         v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente",
     })
   }
+  type OrdenWithCat = {
+    id: string
+    numero: string | number | null
+    fecha: string
+    total: number
+    estatus: string | null
+    cliente: string
+    unidadesCat: number
+    subtotalCat: number
+  }
   const tipoMap = new Map<
     string,
     {
       categoria: string
       totalVentas: number
       totalUnidades: number
-      ordenSet: Set<string>
-      ordenes: typeof ventasById extends Map<string, infer V> ? V[] : never
+      ordenesMap: Map<string, OrdenWithCat>
     }
   >()
   for (const it of itemsConCat) {
@@ -134,25 +143,31 @@ export default async function VentasPage() {
         categoria: cat,
         totalVentas: 0,
         totalUnidades: 0,
-        ordenSet: new Set(),
-        ordenes: [],
+        ordenesMap: new Map(),
       }
       tipoMap.set(cat, entry)
     }
-    entry.totalVentas += Number(it.subtotal ?? 0)
-    entry.totalUnidades += Number(it.cantidad ?? 0)
-    if (!entry.ordenSet.has(it.venta_id)) {
-      entry.ordenSet.add(it.venta_id)
+    const cantidad = Number(it.cantidad ?? 0)
+    const subtotal = Number(it.subtotal ?? 0)
+    entry.totalVentas += subtotal
+    entry.totalUnidades += cantidad
+
+    let orden = entry.ordenesMap.get(it.venta_id)
+    if (!orden) {
       const venta = ventasById.get(it.venta_id)
-      if (venta) entry.ordenes.push(venta)
+      if (!venta) continue
+      orden = { ...venta, unidadesCat: 0, subtotalCat: 0 }
+      entry.ordenesMap.set(it.venta_id, orden)
     }
+    orden.unidadesCat += cantidad
+    orden.subtotalCat += subtotal
   }
   const tiposData = Array.from(tipoMap.values())
-    .map(({ categoria, totalVentas, totalUnidades, ordenes }) => ({
+    .map(({ categoria, totalVentas, totalUnidades, ordenesMap }) => ({
       categoria,
       totalVentas,
       totalUnidades,
-      ordenes,
+      ordenes: Array.from(ordenesMap.values()),
     }))
     .sort((a, b) => b.totalVentas - a.totalVentas)
   const stock = (stockRes.data ?? []) as VistaStockRow[]

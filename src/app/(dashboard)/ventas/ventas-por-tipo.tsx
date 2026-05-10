@@ -22,6 +22,8 @@ interface Orden {
   total: number
   estatus: string | null
   cliente: string
+  unidadesCat: number
+  subtotalCat: number
 }
 
 export interface TipoData {
@@ -585,13 +587,16 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
           {/* Header de columnas */}
           <div
-            className="grid items-center gap-6 border-b border-[rgba(15,23,42,0.06)] px-8 py-3"
-            style={{ gridTemplateColumns: "1fr 180px 110px 130px 100px 40px" }}
+            className="grid items-center gap-5 border-b border-[rgba(15,23,42,0.06)] px-8 py-3"
+            style={{
+              gridTemplateColumns: "1fr 160px 100px 100px 130px 100px 40px",
+            }}
           >
             {[
               { label: "Orden", align: "left" },
               { label: "Cliente", align: "left" },
               { label: "Fecha", align: "center" },
+              { label: "Unidades", align: "center" },
               { label: "Total venta", align: "right" },
               { label: "Estatus", align: "center" },
               { label: "", align: "center" },
@@ -624,10 +629,10 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 return (
                   <div
                     key={orden.id}
-                    className="grid items-center gap-6 overflow-hidden border-b border-[rgba(15,23,42,0.03)] px-8 py-3.5 transition-colors hover:bg-gray-50/60"
+                    className="grid items-center gap-5 overflow-hidden border-b border-[rgba(15,23,42,0.03)] px-8 py-3.5 transition-colors hover:bg-gray-50/60"
                     style={{
                       gridTemplateColumns:
-                        "1fr 180px 110px 130px 100px 40px",
+                        "1fr 160px 100px 100px 130px 100px 40px",
                     }}
                   >
                     {/* Número clickeable */}
@@ -674,8 +679,28 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                       })}
                     </p>
 
-                    {/* Total */}
-                    <p className="text-right text-[13px] font-bold tabular-nums text-[#0F172A]">
+                    {/* Unidades de la categoría seleccionada en esta orden */}
+                    <div className="text-center">
+                      <span
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums"
+                        style={{
+                          background: `${catColor}10`,
+                          color: catColor,
+                          border: `1px solid ${catColor}25`,
+                        }}
+                      >
+                        {orden.unidadesCat}
+                        <span className="text-[9px] font-normal opacity-70">
+                          uds
+                        </span>
+                      </span>
+                      <p className="mt-0.5 text-[9.5px] tabular-nums text-gray-400">
+                        {fmtMXN(orden.subtotalCat)}
+                      </p>
+                    </div>
+
+                    {/* Total venta completa (más tenue — es el total de TODA la venta) */}
+                    <p className="text-right text-[13px] font-semibold tabular-nums text-gray-500">
                       {fmtMXN(Number(orden.total))}
                     </p>
 
