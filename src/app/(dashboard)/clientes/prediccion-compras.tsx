@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import {
   AlertTriangle,
   Brain,
@@ -199,254 +199,579 @@ export function PrediccionCompras({
     }))
   }, [predicciones, today])
 
-  return (
-    <section
-      className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] p-5"
-      style={{
-        background:
-          "radial-gradient(ellipse at top right, rgba(139,92,246,0.04), transparent 50%), radial-gradient(ellipse at bottom left, rgba(15,118,110,0.03), transparent 50%), white",
-        boxShadow:
-          "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
-      }}
-    >
-      <div
-        className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-40"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%)",
-          filter: "blur(40px)",
-        }}
-        aria-hidden
-      />
+  // ─── Mapeo a ClientePrediccion para nuevo panel ────────────────────
+  type Filtro = "TODOS" | "ALTA_PROB" | "ALTO_VALOR" | "ESTA_SEMANA" | "RIESGO" | "SIN_DATA"
+  const [filtro, setFiltro] = useState<Filtro>("TODOS")
+  const [expandido, setExpandido] = useState<string | null>(null)
 
-      <div className="relative space-y-4">
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+  const ticketAnteriorMap = useMemo(() => {
+    const m = new Map<string, number>()
+    const sorted = [...ventas].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    )
+    for (const v of sorted) {
+      if (v.cliente_id && !m.has(v.cliente_id)) m.set(v.cliente_id, Number(v.total ?? 0))
+    }
+    return m
+  }, [ventas])
+
+  const clientesPanel = useMemo(() => {
+    return predicciones.map((c) => {
+      const display = c.nombre_negocio ?? c.nombre
+      const iniciales =
+        display
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((s) => s[0]?.toUpperCase() ?? "")
+          .join("") || "?"
+      return {
+        id: c.id,
+        nombre: display,
+        iniciales,
+        compras: c.ventas_count,
+        frecuenciaDias: c.frecuencia_dias,
+        proximaFecha: c.pred.fechaProxima,
+        probabilidad: Math.round((c.pred.probabilidadProx60 ?? 0) * 100),
+        ticketEsperado: c.pred.ingresoEstimadoProx,
+        ticketPromedio: c.ticket_promedio,
+        ticketAnterior: ticketAnteriorMap.get(c.id) ?? c.ticket_promedio,
+        diasDesdeUltimaCompra: c.dias_sin_compra ?? 0,
+        suficienteData: c.pred.metodo !== "insufficient",
+      }
+    })
+  }, [predicciones, ticketAnteriorMap])
+
+  const fmtMXNAbbr = (v: number) =>
+    v >= 1000
+      ? `$\${(v / 1000).toFixed(0)}K`
+      : `$\${v.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
+
+  const fechaHumana = (
+    fecha: Date | null,
+  ): {
+    label: string
+    sub: string
+    urgencia: "pasado" | "hoy" | "pronto" | "normal" | "lejano"
+  } => {
+    if (!fecha) return { label: "Sin predicción", sub: "", urgencia: "normal" }
+    const h = new Date()
+    h.setHours(0, 0, 0, 0)
+    const f = new Date(fecha)
+    f.setHours(0, 0, 0, 0)
+    const diff = Math.round((f.getTime() - h.getTime()) / 86400000)
+    const sub = fechaCorta.format(f)
+    if (diff < 0) return { label: `Atrasado \${Math.abs(diff)}d`, sub, urgencia: "pasado" }
+    if (diff === 0) return { label: "Hoy", sub, urgencia: "hoy" }
+    if (diff === 1) return { label: "Mañana", sub, urgencia: "hoy" }
+    if (diff <= 7) return { label: `En \${diff} días`, sub, urgencia: "pronto" }
+    if (diff <= 30) return { label: `\${diff}d`, sub, urgencia: "normal" }
+    return { label: `\${diff}d`, sub, urgencia: "lejano" }
+  }
+
+  type AccionInfo = { label: string; color: string; bg: string; border: string; icon: string }
+  const accionRecomendada = (
+    c: (typeof clientesPanel)[number],
+  ): AccionInfo => {
+    if (!c.suficienteData)
+      return {
+        label: "Recopilar data",
+        color: "#64748B",
+        bg: "rgba(100,116,139,0.08)",
+        border: "rgba(100,116,139,0.20)",
+        icon: "•",
+      }
+    const diasProx = c.proximaFecha
+      ? Math.round((c.proximaFecha.getTime() - today.getTime()) / 86400000)
+      : 999
+    if (c.diasDesdeUltimaCompra > (c.frecuenciaDias ?? 90) * 1.5)
+      return {
+        label: "Reenganchar",
+        color: "#B91C1C",
+        bg: "rgba(220,38,38,0.08)",
+        border: "rgba(220,38,38,0.25)",
+        icon: "↻",
+      }
+    if (diasProx <= 0)
+      return {
+        label: "Contactar HOY",
+        color: "#047857",
+        bg: "rgba(5,150,105,0.10)",
+        border: "rgba(5,150,105,0.30)",
+        icon: "⚡",
+      }
+    if (diasProx <= 7 && c.probabilidad >= 70)
+      return {
+        label: "Contactar pronto",
+        color: "#047857",
+        bg: "rgba(5,150,105,0.08)",
+        border: "rgba(5,150,105,0.20)",
+        icon: "📞",
+      }
+    if (c.probabilidad >= 80)
+      return {
+        label: "Upsell potencial",
+        color: "#4F46E5",
+        bg: "rgba(99,102,241,0.08)",
+        border: "rgba(99,102,241,0.20)",
+        icon: "↑",
+      }
+    if (diasProx <= 14)
+      return {
+        label: "Follow-up",
+        color: "#B45309",
+        bg: "rgba(217,119,6,0.08)",
+        border: "rgba(217,119,6,0.20)",
+        icon: "💬",
+      }
+    return {
+      label: "Esperar",
+      color: "#64748B",
+      bg: "rgba(100,116,139,0.06)",
+      border: "rgba(100,116,139,0.14)",
+      icon: "⏳",
+    }
+  }
+
+  const URG_COLOR = {
+    pasado: "#B91C1C",
+    hoy: "#047857",
+    pronto: "#B45309",
+    normal: "#475569",
+    lejano: "#94A3B8",
+  } as const
+
+  const filtrados = useMemo(() => {
+    return clientesPanel.filter((c) => {
+      const diasProx = c.proximaFecha
+        ? Math.round((c.proximaFecha.getTime() - today.getTime()) / 86400000)
+        : 999
+      switch (filtro) {
+        case "ALTA_PROB":
+          return c.probabilidad >= 70 && c.suficienteData
+        case "ALTO_VALOR":
+          return c.ticketEsperado >= 10000
+        case "ESTA_SEMANA":
+          return diasProx >= 0 && diasProx <= 7
+        case "RIESGO":
+          return (
+            c.suficienteData &&
+            c.diasDesdeUltimaCompra > (c.frecuenciaDias ?? 90) * 1.3
+          )
+        case "SIN_DATA":
+          return !c.suficienteData
+        default:
+          return true
+      }
+    })
+  }, [clientesPanel, filtro, today])
+
+  // KPIs derivados para header
+  const revenueSemana = clientesPanel
+    .filter((c) => {
+      if (!c.proximaFecha) return false
+      const d = Math.round(
+        (c.proximaFecha.getTime() - today.getTime()) / 86400000,
+      )
+      return d >= 0 && d <= 7 && c.probabilidad >= 60
+    })
+    .reduce((s, c) => s + c.ticketEsperado * (c.probabilidad / 100), 0)
+  const activosCount = clientesPanel.filter(
+    (c) => c.probabilidad >= 50 && c.suficienteData,
+  ).length
+  const enRiesgoCount = clientesPanel.filter(
+    (c) =>
+      c.suficienteData &&
+      c.diasDesdeUltimaCompra > (c.frecuenciaDias ?? 90) * 1.3,
+  ).length
+
+  const FILTROS: { key: Filtro; label: string; count: number }[] = [
+    { key: "TODOS", label: "Todos", count: clientesPanel.length },
+    {
+      key: "ALTA_PROB",
+      label: "Alta probabilidad",
+      count: clientesPanel.filter(
+        (c) => c.probabilidad >= 70 && c.suficienteData,
+      ).length,
+    },
+    {
+      key: "ALTO_VALOR",
+      label: "Alto valor",
+      count: clientesPanel.filter((c) => c.ticketEsperado >= 10000).length,
+    },
+    {
+      key: "ESTA_SEMANA",
+      label: "Esta semana",
+      count: clientesPanel.filter((c) => {
+        const d = c.proximaFecha
+          ? Math.round(
+              (c.proximaFecha.getTime() - today.getTime()) / 86400000,
+            )
+          : 999
+        return d >= 0 && d <= 7
+      }).length,
+    },
+    { key: "RIESGO", label: "En riesgo", count: enRiesgoCount },
+    {
+      key: "SIN_DATA",
+      label: "Sin datos",
+      count: clientesPanel.filter((c) => !c.suficienteData).length,
+    },
+  ]
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* KPI HEADER */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          {
+            label: "Revenue proyectado esta semana",
+            value: mxn.format(revenueSemana),
+            sub: "probabilidad ponderada · 7 días",
+            color: "#047857",
+            tint: "rgba(5,150,105,0.08)",
+            border: "rgba(5,150,105,0.20)",
+          },
+          {
+            label: "Clientes activos con predicción",
+            value: String(activosCount),
+            sub: `de \${clientesPanel.length} clientes totales`,
+            color: "#4F46E5",
+            tint: "rgba(99,102,241,0.06)",
+            border: "rgba(99,102,241,0.18)",
+          },
+          {
+            label: "En riesgo de abandono",
+            value: String(enRiesgoCount),
+            sub: enRiesgoCount === 0 ? "Todos al día ✓" : "Requieren atención",
+            color: enRiesgoCount > 0 ? "#B91C1C" : "#047857",
+            tint:
+              enRiesgoCount > 0
+                ? "rgba(220,38,38,0.06)"
+                : "rgba(5,150,105,0.06)",
+            border:
+              enRiesgoCount > 0
+                ? "rgba(220,38,38,0.18)"
+                : "rgba(5,150,105,0.18)",
+          },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border bg-white p-4 shadow-sm"
+            style={{ borderColor: kpi.border, background: kpi.tint }}
+          >
+            <p
+              className="mb-2 text-[9.5px] font-semibold uppercase tracking-[0.10em]"
+              style={{ color: kpi.color, opacity: 0.85 }}
+            >
+              {kpi.label}
+            </p>
+            <p
+              className="mb-1 text-[22px] font-bold leading-none tracking-[-0.02em] tabular-nums"
+              style={{ color: kpi.color, fontFeatureSettings: '"tnum" 1' }}
+            >
+              {kpi.value}
+            </p>
+            <p className="text-[10.5px] text-gray-500">{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* FILTROS */}
+      <div className="flex flex-wrap gap-1.5">
+        {FILTROS.map((f) => {
+          const active = filtro === f.key
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFiltro(f.key)}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all"
               style={{
-                background:
-                  "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
-                boxShadow:
-                  "0 1px 2px rgba(139,92,246,0.2), 0 4px 12px rgba(139,92,246,0.15)",
+                background: active ? "rgba(99,102,241,0.10)" : "white",
+                color: active ? "#4F46E5" : "#64748B",
+                border: `1px solid \${active ? "rgba(99,102,241,0.30)" : "rgba(15,23,42,0.08)"}`,
               }}
             >
-              <Brain className="size-4" strokeWidth={1.75} />
-            </span>
-            <div>
-              <h3 className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F172A]">
-                AI Pattern Analysis
-              </h3>
-              <p className="mt-0.5 text-[11px] text-[#64748B]">
-                CDF empírica · Bell curve · seasonality boost
-              </p>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 ring-1 ring-violet-200/40 backdrop-blur-sm">
-            <span className="relative flex size-1.5">
-              <span className="absolute inset-0 animate-ping rounded-full bg-violet-400 opacity-75" />
-              <span className="relative size-1.5 rounded-full bg-violet-500" />
-            </span>
-            AI-ready
-          </span>
-        </header>
+              {f.label}
+              <span
+                className="rounded-full px-1.5 py-px text-[9px] font-bold tabular-nums"
+                style={{
+                  background: active
+                    ? "rgba(99,102,241,0.20)"
+                    : "rgba(15,23,42,0.06)",
+                  color: active ? "#4F46E5" : "#94A3B8",
+                }}
+              >
+                {f.count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
-        {/* AI tiles compactos — superficie única */}
-        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/60 backdrop-blur-sm lg:grid-cols-4">
-          <AiTile
-            icon={<Target className="size-3.5" strokeWidth={1.75} />}
-            label="Ingreso 60d"
-            value={mxn.format(kpis.ingreso60)}
-            sub={`30d ${mxn.format(kpis.ingreso30)} · 90d ${mxn.format(kpis.ingreso90)}`}
-            tone="emerald"
-          />
-          <AiTile
-            icon={<Zap className="size-3.5" strokeWidth={1.75} />}
-            label="Alta probabilidad"
-            value={`${kpis.altaProb}`}
-            sub="P(60d) ≥ 60%"
-            tone="emerald"
-          />
-          <AiTile
-            icon={<AlertTriangle className="size-3.5" strokeWidth={1.75} />}
-            label="En riesgo"
-            value={`${kpis.enRiesgo}`}
-            sub="Riesgo ≥ 60%"
-            tone="rose"
-          />
-          <AiTile
-            icon={<Crown className="size-3.5" strokeWidth={1.75} />}
-            label="Valor futuro 12m"
-            value={mxn.format(kpis.valorFuturoTotal)}
-            sub={
-              kpis.mejorPredicho
-                ? `Top: ${(kpis.mejorPredicho.nombre_negocio ?? kpis.mejorPredicho.nombre).slice(0, 18)}`
-                : ""
-            }
-            tone="amber"
-          />
-        </div>
-
-      {/* Timeline 6 meses */}
-      <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
-        <header className="mb-3 flex items-center justify-between">
-          <div>
-            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-[#0F172A]">
-              <Calendar className="size-4 text-violet-600" strokeWidth={1.75} />
-              Timeline predictivo · próximos 6 meses
-            </h4>
-            <p className="mt-0.5 text-[11px] text-[#64748B]">
-              Ingreso esperado por mes = Σ (ticket × P de cada cliente para ese mes)
-            </p>
-          </div>
-        </header>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart
-            data={timeline6m}
-            margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: "#9CA3AF", fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: "#9CA3AF", fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v: number) =>
-                v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`
-              }
-              width={50}
-            />
-            <Tooltip
-              cursor={{ fill: "#F3F5F7", opacity: 0.4 }}
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const data = payload[0].payload as (typeof timeline6m)[number]
-                return (
-                  <div className="min-w-[220px] rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
-                    <p className="mb-2 border-b border-gray-100 pb-1.5 font-semibold text-gray-800">
-                      {data.label}
-                    </p>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span className="text-gray-600">Ingreso esperado</span>
-                      <span className="font-bold text-violet-700 tabular-nums">
-                        {mxn2.format(data.total)}
-                      </span>
-                    </div>
-                    {data.contribuciones.length > 0 && (
-                      <>
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                          Top probable
-                        </div>
-                        {data.contribuciones.map((c, i) => (
-                          <div
-                            key={i}
-                            className="mt-0.5 flex justify-between text-[11px]"
-                          >
-                            <span className="truncate text-gray-700">
-                              {c.cliente.slice(0, 26)}
-                            </span>
-                            <span className="ml-2 tabular-nums text-[#0F766E]">
-                              {(c.prob * 100).toFixed(0)}%
-                            </span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                )
-              }}
-            />
-            <Bar dataKey="total" radius={[6, 6, 0, 0]}>
-              {timeline6m.map((m, i) => (
-                <Cell
-                  key={i}
-                  fill={
-                    m.total > 0
-                      ? `rgba(167, 139, 250, ${0.4 + Math.min(0.6, m.total / Math.max(1, ...timeline6m.map((x) => x.total)) * 0.6)})`
-                      : "#f3f4f6"
-                  }
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </article>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Próximas compras — CRM intelligence list */}
-        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm lg:col-span-2">
-          <header className="mb-3 flex items-center justify-between">
-            <div>
-              <h4 className="flex items-center gap-1.5 text-sm font-semibold text-[#0F172A]">
-                <Sparkles className="size-4 text-[#0F766E]" strokeWidth={1.75} />
-                Próximas compras esperadas
-              </h4>
-              <p className="mt-0.5 text-[11px] text-[#64748B]">
-                Ordenado por probabilidad × ticket esperado
-              </p>
-            </div>
-            <span className="rounded-full bg-[#F3F5F7] px-2 py-0.5 text-[10px] font-medium text-[#64748B] tabular-nums">
-              Top {proximasCompras.length}
-            </span>
-          </header>
-          {proximasCompras.length === 0 ? (
-            <p className="py-8 text-center text-xs italic text-[#94A3B8]">
-              Sin patrones suficientes para predecir.
-            </p>
-          ) : (
-            <ul className="-mx-2 divide-y divide-[rgba(15,23,42,0.04)]">
-              {proximasCompras.map((c) => (
-                <ClienteRowCRM
-                  key={c.id}
-                  cliente={c}
-                  onClick={onClienteClick ? () => onClienteClick(c) : undefined}
-                />
-              ))}
-            </ul>
-          )}
-        </article>
-
-        {/* Clientes en riesgo */}
-        <article
-          className="relative overflow-hidden rounded-xl border border-rose-200/40 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+      {/* TABLA */}
+      <div className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
+        {/* Header columnas */}
+        <div
+          className="grid items-center gap-3 border-b border-[rgba(15,23,42,0.04)] px-5 py-2.5"
           style={{
-            background:
-              "radial-gradient(ellipse at top right, rgba(220,38,38,0.04), transparent 60%), white",
+            gridTemplateColumns: "1fr 110px 120px 100px 130px 160px",
           }}
         >
-          <header className="mb-3">
-            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-rose-700">
-              <TrendingDown className="size-4" strokeWidth={1.75} />
-              En riesgo de abandono
-            </h4>
-            <p className="mt-0.5 text-[11px] text-rose-600/70">
-              Días sin compra &gt; frecuencia normal
+          {[
+            { l: "Cliente", a: "left" },
+            { l: "Próxima compra", a: "center" },
+            { l: "Probabilidad", a: "center" },
+            { l: "Frecuencia", a: "center" },
+            { l: "Revenue esp.", a: "center" },
+            { l: "Acción", a: "center" },
+          ].map((h, i) => (
+            <p
+              key={i}
+              className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400"
+              style={{ textAlign: h.a as "left" | "center" }}
+            >
+              {h.l}
             </p>
-          </header>
-          {enRiesgo.length === 0 ? (
-            <p className="py-6 text-center text-xs italic text-[#94A3B8]">
-              Ningún cliente en zona de riesgo. 🎉
-            </p>
-          ) : (
-            <ul className="-mx-2 divide-y divide-[rgba(15,23,42,0.04)]">
-              {enRiesgo.map((c) => (
-                <RiesgoRow
-                  key={c.id}
-                  cliente={c}
-                  onClick={onClienteClick ? () => onClienteClick(c) : undefined}
-                />
-              ))}
-            </ul>
-          )}
-        </article>
+          ))}
+        </div>
+
+        {filtrados.length === 0 && (
+          <div className="px-6 py-10 text-center text-[13px] text-gray-400">
+            No hay clientes en esta categoría
+          </div>
+        )}
+
+        {filtrados.map((cliente, i) => {
+          const fechaInfo = fechaHumana(cliente.proximaFecha)
+          const accion = accionRecomendada(cliente)
+          const isTop = i < 3 && filtro === "TODOS"
+          const isExp = expandido === cliente.id
+          const tendencia =
+            cliente.ticketEsperado > cliente.ticketAnterior
+              ? "↑"
+              : cliente.ticketEsperado < cliente.ticketAnterior
+                ? "↓"
+                : "→"
+          const tendColor =
+            tendencia === "↑"
+              ? "#047857"
+              : tendencia === "↓"
+                ? "#B91C1C"
+                : "#94A3B8"
+          return (
+            <div
+              key={cliente.id}
+              className="border-b border-[rgba(15,23,42,0.03)] transition-colors"
+              style={{
+                background: isTop
+                  ? "rgba(99,102,241,0.025)"
+                  : "white",
+                cursor: "pointer",
+              }}
+              onClick={() => setExpandido(isExp ? null : cliente.id)}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(15,23,42,0.02)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = isTop
+                  ? "rgba(99,102,241,0.025)"
+                  : "white")
+              }
+            >
+              <div
+                className="grid items-center gap-3 px-5 py-3"
+                style={{
+                  gridTemplateColumns: "1fr 110px 120px 100px 130px 160px",
+                }}
+              >
+                {/* Cliente */}
+                <div className="flex min-w-0 items-center gap-2.5">
+                  {isTop && (
+                    <span
+                      className="h-8 w-1 shrink-0 rounded-full"
+                      style={{
+                        background:
+                          "linear-gradient(180deg,#4F46E5,#047857)",
+                      }}
+                    />
+                  )}
+                  <span
+                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold text-white"
+                    style={{
+                      background:
+                        i === 0
+                          ? "linear-gradient(135deg,#4F46E5,#047857)"
+                          : i === 1
+                            ? "linear-gradient(135deg,#047857,#0E7490)"
+                            : i === 2
+                              ? "linear-gradient(135deg,#B45309,#B91C1C)"
+                              : "linear-gradient(135deg,#475569,#1F2937)",
+                      boxShadow: "0 2px 4px rgba(15,23,42,0.10)",
+                    }}
+                  >
+                    {cliente.iniciales}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12.5px] font-semibold text-[#0F172A]">
+                      {cliente.nombre}
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {cliente.compras} compra
+                      {cliente.compras !== 1 ? "s" : ""} históricas
+                    </p>
+                  </div>
+                </div>
+
+                {/* Próxima fecha */}
+                <div className="text-center">
+                  <p
+                    className="text-[12px] font-bold leading-none tabular-nums"
+                    style={{ color: URG_COLOR[fechaInfo.urgencia] }}
+                  >
+                    {fechaInfo.label}
+                  </p>
+                  {fechaInfo.sub && (
+                    <p className="mt-0.5 text-[9.5px] text-gray-400">
+                      {fechaInfo.sub}
+                    </p>
+                  )}
+                </div>
+
+                {/* Probabilidad */}
+                <div className="text-center">
+                  {!cliente.suficienteData ? (
+                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[9.5px] font-semibold text-gray-500">
+                      Insuf. data
+                    </span>
+                  ) : (
+                    <>
+                      <p
+                        className="mb-1 text-[14px] font-bold leading-none tabular-nums"
+                        style={{
+                          color:
+                            cliente.probabilidad >= 80
+                              ? "#047857"
+                              : cliente.probabilidad >= 50
+                                ? "#B45309"
+                                : "#B91C1C",
+                        }}
+                      >
+                        {cliente.probabilidad}%
+                      </p>
+                      <div className="h-[3px] overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `\${cliente.probabilidad}%`,
+                            background:
+                              cliente.probabilidad >= 80
+                                ? "#047857"
+                                : cliente.probabilidad >= 50
+                                  ? "#B45309"
+                                  : "#B91C1C",
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Frecuencia */}
+                <div className="text-center">
+                  <p className="text-[12px] font-semibold tabular-nums text-[#475569]">
+                    {cliente.frecuenciaDias
+                      ? `\${Math.round(cliente.frecuenciaDias)}d`
+                      : "—"}
+                  </p>
+                  <p className="mt-0.5 text-[9.5px] text-gray-400">
+                    {cliente.frecuenciaDias ? "ciclo" : "sin ciclo"}
+                  </p>
+                </div>
+
+                {/* Revenue esperado */}
+                <div className="text-center">
+                  {cliente.ticketEsperado > 0 ? (
+                    <>
+                      <p
+                        className="text-[14px] font-bold leading-none tabular-nums text-[#0F172A]"
+                        style={{ letterSpacing: "-0.01em" }}
+                      >
+                        {fmtMXNAbbr(cliente.ticketEsperado)}
+                      </p>
+                      <span
+                        className="mt-0.5 inline-block text-[9.5px] font-semibold"
+                        style={{ color: tendColor }}
+                      >
+                        {tendencia} vs anterior
+                      </span>
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-gray-300">—</p>
+                  )}
+                </div>
+
+                {/* Acción */}
+                <div className="flex justify-center">
+                  <span
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-bold"
+                    style={{
+                      background: accion.bg,
+                      color: accion.color,
+                      border: `1px solid \${accion.border}`,
+                    }}
+                  >
+                    <span className="text-[10px]">{accion.icon}</span>
+                    {accion.label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Expandido */}
+              {isExp && (
+                <div
+                  className="grid grid-cols-2 gap-2 border-t border-[rgba(15,23,42,0.03)] bg-gray-50/50 px-5 py-3 sm:grid-cols-4"
+                >
+                  {[
+                    {
+                      l: "Última compra",
+                      v: `Hace \${cliente.diasDesdeUltimaCompra}d`,
+                    },
+                    {
+                      l: "Ticket promedio",
+                      v: mxn.format(cliente.ticketPromedio),
+                    },
+                    {
+                      l: "Ticket anterior",
+                      v: mxn.format(cliente.ticketAnterior),
+                    },
+                    {
+                      l: "Revenue total",
+                      v: mxn.format(
+                        cliente.ticketPromedio * cliente.compras,
+                      ),
+                    },
+                  ].map((s, j) => (
+                    <div
+                      key={j}
+                      className="rounded-lg border border-gray-100 bg-white px-3 py-2"
+                    >
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+                        {s.l}
+                      </p>
+                      <p className="mt-0.5 text-[12.5px] font-bold tabular-nums text-[#0F172A]">
+                        {s.v}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
-      </div>
-    </section>
+    </div>
   )
 }
 
