@@ -79,19 +79,28 @@ DECLARE
   v_laura uuid; v_glendy uuid; v_sunbeach uuid;
   v_fedex uuid; v_analucia uuid; v_elizabeth uuid; v_karla uuid;
 BEGIN
-  SELECT id INTO v_shams     FROM clientes WHERE nombre ILIKE '%Shams%' LIMIT 1;
-  SELECT id INTO v_mithra    FROM clientes WHERE nombre ILIKE '%Mithra%' LIMIT 1;
-  SELECT id INTO v_temple    FROM clientes WHERE nombre ILIKE '%Temple%' LIMIT 1;
-  SELECT id INTO v_mariela   FROM clientes WHERE nombre ILIKE '%Mariela%' LIMIT 1;
-  SELECT id INTO v_iliana    FROM clientes WHERE nombre ILIKE '%Iliana%' OR nombre ILIKE '%Liliana%' LIMIT 1;
-  SELECT id INTO v_katiuska  FROM clientes WHERE nombre ILIKE '%Katiuska%' LIMIT 1;
-  SELECT id INTO v_laura     FROM clientes WHERE nombre ILIKE '%Laura Elena%' LIMIT 1;
-  SELECT id INTO v_glendy    FROM clientes WHERE nombre ILIKE '%Glendy%' LIMIT 1;
-  SELECT id INTO v_sunbeach  FROM clientes WHERE nombre ILIKE '%Sunbeach%' LIMIT 1;
-  SELECT id INTO v_fedex     FROM clientes WHERE nombre ILIKE '%Fedex%' OR nombre ILIKE '%Devoluc%' LIMIT 1;
+  SELECT id INTO v_shams     FROM clientes WHERE nombre_negocio ILIKE '%Shams%' OR nombre ILIKE '%Shams%' LIMIT 1;
+  SELECT id INTO v_mithra    FROM clientes WHERE id = '1533ff4d-4d77-4fcc-b9c9-154d3b4bbb89';
+  SELECT id INTO v_temple    FROM clientes WHERE nombre_negocio ILIKE '%Temple%' OR nombre ILIKE '%Temple%' LIMIT 1;
+  SELECT id INTO v_mariela   FROM clientes WHERE nombre_negocio ILIKE '%Mariela%' OR nombre ILIKE '%Mariela%' LIMIT 1;
+  SELECT id INTO v_iliana    FROM clientes WHERE nombre_negocio ILIKE '%Iliana%' OR nombre_negocio ILIKE '%Liliana%' OR nombre ILIKE '%Iliana%' OR nombre ILIKE '%Liliana%' LIMIT 1;
+  SELECT id INTO v_katiuska  FROM clientes WHERE nombre_negocio ILIKE '%Katiuska%' OR nombre ILIKE '%Katiuska%' LIMIT 1;
+  SELECT id INTO v_laura     FROM clientes WHERE nombre ILIKE '%Laura Elena%' OR nombre_negocio ILIKE '%Laura Elena%' LIMIT 1;
+  SELECT id INTO v_glendy    FROM clientes WHERE nombre ILIKE '%Glendy%' OR nombre_negocio ILIKE '%Glendy%' LIMIT 1;
+  SELECT id INTO v_sunbeach  FROM clientes WHERE nombre ILIKE '%Sunbeach%' OR nombre_negocio ILIKE '%Sunbeach%' LIMIT 1;
+  SELECT id INTO v_fedex     FROM clientes WHERE nombre ILIKE '%Fedex%' OR nombre ILIKE '%Devoluc%' OR nombre_negocio ILIKE '%Fedex%' LIMIT 1;
   SELECT id INTO v_analucia  FROM clientes WHERE nombre ILIKE '%Ana Lucia%' OR nombre ILIKE '%Ana Lucía%' LIMIT 1;
-  SELECT id INTO v_elizabeth FROM clientes WHERE nombre ILIKE '%Elizabeth%' LIMIT 1;
-  SELECT id INTO v_karla     FROM clientes WHERE nombre ILIKE '%Karla%' LIMIT 1;
+  SELECT id INTO v_elizabeth FROM clientes WHERE nombre ILIKE '%Elizabeth%' OR nombre_negocio ILIKE '%Elizabeth%' LIMIT 1;
+  SELECT id INTO v_karla     FROM clientes WHERE nombre ILIKE '%Karla%' OR nombre_negocio ILIKE '%Karla%' LIMIT 1;
+
+  IF v_shams IS NULL OR v_mithra IS NULL OR v_temple IS NULL OR v_mariela IS NULL
+     OR v_iliana IS NULL OR v_katiuska IS NULL OR v_laura IS NULL OR v_glendy IS NULL
+     OR v_sunbeach IS NULL OR v_fedex IS NULL OR v_analucia IS NULL OR v_elizabeth IS NULL
+     OR v_karla IS NULL THEN
+    RAISE EXCEPTION 'Cliente faltante: shams=%, mithra=%, temple=%, mariela=%, iliana=%, katiuska=%, laura=%, glendy=%, sunbeach=%, fedex=%, analucia=%, elizabeth=%, karla=%',
+      v_shams, v_mithra, v_temple, v_mariela, v_iliana, v_katiuska, v_laura, v_glendy,
+      v_sunbeach, v_fedex, v_analucia, v_elizabeth, v_karla;
+  END IF;
 
   INSERT INTO ventas(
     cliente_id, numero, fecha,
