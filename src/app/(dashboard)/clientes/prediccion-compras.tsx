@@ -244,8 +244,8 @@ export function PrediccionCompras({
 
   const fmtMXNAbbr = (v: number) =>
     v >= 1000
-      ? `$\${(v / 1000).toFixed(0)}K`
-      : `$\${v.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
+      ? `$${(v / 1000).toFixed(0)}K`
+      : `$${v.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
 
   const fechaHumana = (
     fecha: Date | null,
@@ -261,12 +261,12 @@ export function PrediccionCompras({
     f.setHours(0, 0, 0, 0)
     const diff = Math.round((f.getTime() - h.getTime()) / 86400000)
     const sub = fechaCorta.format(f)
-    if (diff < 0) return { label: `Atrasado \${Math.abs(diff)}d`, sub, urgencia: "pasado" }
+    if (diff < 0) return { label: `Atrasado ${Math.abs(diff)}d`, sub, urgencia: "pasado" }
     if (diff === 0) return { label: "Hoy", sub, urgencia: "hoy" }
     if (diff === 1) return { label: "Mañana", sub, urgencia: "hoy" }
-    if (diff <= 7) return { label: `En \${diff} días`, sub, urgencia: "pronto" }
-    if (diff <= 30) return { label: `\${diff}d`, sub, urgencia: "normal" }
-    return { label: `\${diff}d`, sub, urgencia: "lejano" }
+    if (diff <= 7) return { label: `En ${diff} días`, sub, urgencia: "pronto" }
+    if (diff <= 30) return { label: `${diff}d`, sub, urgencia: "normal" }
+    return { label: `${diff}d`, sub, urgencia: "lejano" }
   }
 
   type AccionInfo = { label: string; color: string; bg: string; border: string; icon: string }
@@ -435,7 +435,7 @@ export function PrediccionCompras({
           {
             label: "Clientes activos con predicción",
             value: String(activosCount),
-            sub: `de \${clientesPanel.length} clientes totales`,
+            sub: `de ${clientesPanel.length} clientes totales`,
             color: "#4F46E5",
             tint: "rgba(99,102,241,0.06)",
             border: "rgba(99,102,241,0.18)",
@@ -490,7 +490,7 @@ export function PrediccionCompras({
               style={{
                 background: active ? "rgba(99,102,241,0.10)" : "white",
                 color: active ? "#4F46E5" : "#64748B",
-                border: `1px solid \${active ? "rgba(99,102,241,0.30)" : "rgba(15,23,42,0.08)"}`,
+                border: `1px solid ${active ? "rgba(99,102,241,0.30)" : "rgba(15,23,42,0.08)"}`,
               }}
             >
               {f.label}
@@ -664,7 +664,7 @@ export function PrediccionCompras({
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{
-                            width: `\${cliente.probabilidad}%`,
+                            width: `${cliente.probabilidad}%`,
                             background:
                               cliente.probabilidad >= 80
                                 ? "#047857"
@@ -682,7 +682,7 @@ export function PrediccionCompras({
                 <div className="text-center">
                   <p className="text-[12px] font-semibold tabular-nums text-[#475569]">
                     {cliente.frecuenciaDias
-                      ? `\${Math.round(cliente.frecuenciaDias)}d`
+                      ? `${Math.round(cliente.frecuenciaDias)}d`
                       : "—"}
                   </p>
                   <p className="mt-0.5 text-[9.5px] text-gray-400">
@@ -719,7 +719,7 @@ export function PrediccionCompras({
                     style={{
                       background: accion.bg,
                       color: accion.color,
-                      border: `1px solid \${accion.border}`,
+                      border: `1px solid ${accion.border}`,
                     }}
                   >
                     <span className="text-[10px]">{accion.icon}</span>
@@ -736,7 +736,7 @@ export function PrediccionCompras({
                   {[
                     {
                       l: "Última compra",
-                      v: `Hace \${cliente.diasDesdeUltimaCompra}d`,
+                      v: `Hace ${cliente.diasDesdeUltimaCompra}d`,
                     },
                     {
                       l: "Ticket promedio",
