@@ -145,6 +145,7 @@ export function VentasDashboard({
   const [from, setFrom] = useState<string>("")
   const [to, setTo] = useState<string>("")
   const [clienteFilter, setClienteFilter] = useState<string>("todos")
+  const [periodo, setPeriodo] = useState<"3M" | "6M" | "1A" | "TODO">("1A")
   const [estatusFilter, setEstatusFilter] = useState<"todos" | Estatus>("todos")
   const [socioFilter, setSocioFilter] = useState<"todos" | "sandra" | "benjamin" | "ambos">("todos")
   const [productoFilter, setProductoFilter] = useState<string>("todos")
@@ -279,6 +280,50 @@ export function VentasDashboard({
     }
     return Array.from(map.values())
   }, [ventas])
+
+  // ─── Series mensual completa (todos los meses desde la primera venta) ──
+  const monthlyAll = useMemo(() => {
+    const valid = ventas.filter(
+      (v) => v.estatus !== "cancelada" && !Number.isNaN(new Date(v.fecha).getTime()),
+    )
+    if (valid.length === 0) return monthly
+    const earliest = valid.reduce(
+      (min, v) => (new Date(v.fecha) < min ? new Date(v.fecha) : min),
+      new Date(valid[0].fecha),
+    )
+    const today = new Date()
+    const buckets: { key: string; date: Date; label: string }[] = []
+    const cursor = new Date(earliest.getFullYear(), earliest.getMonth(), 1)
+    const end = new Date(today.getFullYear(), today.getMonth(), 1)
+    while (cursor <= end) {
+      const label = monthShort.format(cursor).replace(".", "")
+      buckets.push({
+        key: ymKey(cursor),
+        date: new Date(cursor),
+        label: `${label[0].toUpperCase()}${label.slice(1)}`,
+      })
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+    const map = new Map(
+      buckets.map((b) => [b.key, { ...b, total: 0, ganancia: 0, count: 0 }]),
+    )
+    for (const v of valid) {
+      const key = ymKey(new Date(v.fecha))
+      const b = map.get(key)
+      if (!b) continue
+      b.total += Number(v.total ?? 0)
+      b.ganancia += Number(v.ganancia ?? 0)
+      b.count += 1
+    }
+    return Array.from(map.values())
+  }, [ventas, monthly])
+
+  // ─── Filtro por período ──
+  const monthlyFiltered = useMemo(() => {
+    if (periodo === "TODO") return monthlyAll
+    const n = periodo === "3M" ? 3 : periodo === "6M" ? 6 : 12
+    return monthly.slice(-n)
+  }, [periodo, monthly, monthlyAll])
 
   // ─── Socios stats (fallback hardcoded si RLS bloquea `socios`) ────
   const sociosStats = useMemo(() => {
@@ -455,15 +500,57 @@ export function VentasDashboard({
       {/* ─── Chart principal + Socios panel (dominante) ─── */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] lg:col-span-2">
-          <header className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-              Ventas mensuales (últimos 12 meses)
-            </h2>
-            <span className="text-xs text-gray-500">Total · Ganancia</span>
+          <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                Ventas mensuales
+              </h2>
+              <p className="mt-0.5 text-[10.5px] text-gray-400">
+                {periodo === "TODO"
+                  ? `Historial completo · ${monthlyAll.length} meses · Total · Ganancia`
+                  : periodo === "1A"
+                    ? "Últimos 12 meses · Total · Ganancia"
+                    : periodo === "6M"
+                      ? "Últimos 6 meses · Total · Ganancia"
+                      : "Últimos 3 meses · Total · Ganancia"}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50/60 p-0.5">
+              {(["3M", "6M", "1A", "TODO"] as const).map((p) => {
+                const active = periodo === p
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPeriodo(p)}
+                    className="rounded-md px-2.5 py-1 text-[11px] font-semibold transition-all"
+                    style={{
+                      background: active ? "white" : "transparent",
+                      color: active ? "#0F766E" : "#64748B",
+                      boxShadow: active
+                        ? "0 1px 2px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,118,110,0.20)"
+                        : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.color = "#0F172A"
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.color = "#64748B"
+                      }
+                    }}
+                  >
+                    {p}
+                  </button>
+                )
+              })}
+            </div>
           </header>
           <ResponsiveContainer width="100%" height={260}>
             <ComposedChart
-              data={monthly}
+              data={monthlyFiltered}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               barCategoryGap="32%"
             >
