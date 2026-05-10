@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { BarChart3, Sparkles } from "lucide-react"
 import { VentasTablePremium, type EnrichedVenta } from "./ventas-table-premium"
+import { VentasPorTipo, type TipoData } from "./ventas-por-tipo"
 import { VentaDrawer } from "./venta-drawer"
 import { PageHeader } from "@/components/page-header"
 import {
@@ -129,6 +130,7 @@ export function VentasDashboard({
   venta_items,
   stock,
   inversionesPorSocio,
+  tiposData,
   error,
 }: {
   ventas: VentaRow[]
@@ -137,6 +139,7 @@ export function VentasDashboard({
   venta_items: VentaItemRow[]
   stock: VistaStockRow[]
   inversionesPorSocio: Record<string, number>
+  tiposData?: TipoData[]
   error: string | null
 }) {
   const [from, setFrom] = useState<string>("")
@@ -821,6 +824,11 @@ export function VentasDashboard({
           </FilterField>
         </div>
       </section>
+
+      {/* ─── Ventas por Tipo de Producto ─── */}
+      {tiposData && tiposData.length > 0 && (
+        <VentasPorTipo data={tiposData} />
+      )}
 
       {/* ─── Tabla premium ─── */}
       <VentasTablePremium

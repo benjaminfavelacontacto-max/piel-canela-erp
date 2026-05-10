@@ -75,6 +75,86 @@ export default async function VentasPage() {
   const venta_items = (
     (ventaItemsRes.data ?? []) as unknown as VentaItemRow[]
   ).filter((it) => !internalVentaIds.has(it.venta_id))
+
+  // ── Datos para "Ventas por Tipo de Producto" ──
+  const ventasPorTipoRes = await admin
+    .from("venta_items")
+    .select(
+      `cantidad, subtotal, venta_id,
+       productos(categorias(nombre))`,
+    )
+  type VentaItemConCat = {
+    cantidad: number
+    subtotal: number
+    venta_id: string
+    productos: { categorias: { nombre: string } | null } | null
+  }
+  const itemsConCat = ((ventasPorTipoRes.data ?? []) as unknown as VentaItemConCat[]).filter(
+    (it) => !internalVentaIds.has(it.venta_id),
+  )
+  // Index ventas por id para acceso rápido a fecha/total/estatus/cliente
+  const ventasById = new Map<
+    string,
+    {
+      id: string
+      numero: string | number | null
+      fecha: string
+      total: number
+      estatus: string | null
+      cliente: string
+    }
+  >()
+  for (const v of ventas) {
+    ventasById.set(v.id, {
+      id: v.id,
+      numero: v.numero ?? null,
+      fecha: v.fecha,
+      total: Number(v.total ?? 0),
+      estatus: v.estatus ?? null,
+      cliente:
+        v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente",
+    })
+  }
+  const tipoMap = new Map<
+    string,
+    {
+      categoria: string
+      totalVentas: number
+      totalUnidades: number
+      ordenSet: Set<string>
+      ordenes: typeof ventasById extends Map<string, infer V> ? V[] : never
+    }
+  >()
+  for (const it of itemsConCat) {
+    const cat =
+      it.productos?.categorias?.nombre?.toUpperCase() ?? "SIN CATEGORÍA"
+    let entry = tipoMap.get(cat)
+    if (!entry) {
+      entry = {
+        categoria: cat,
+        totalVentas: 0,
+        totalUnidades: 0,
+        ordenSet: new Set(),
+        ordenes: [],
+      }
+      tipoMap.set(cat, entry)
+    }
+    entry.totalVentas += Number(it.subtotal ?? 0)
+    entry.totalUnidades += Number(it.cantidad ?? 0)
+    if (!entry.ordenSet.has(it.venta_id)) {
+      entry.ordenSet.add(it.venta_id)
+      const venta = ventasById.get(it.venta_id)
+      if (venta) entry.ordenes.push(venta)
+    }
+  }
+  const tiposData = Array.from(tipoMap.values())
+    .map(({ categoria, totalVentas, totalUnidades, ordenes }) => ({
+      categoria,
+      totalVentas,
+      totalUnidades,
+      ordenes,
+    }))
+    .sort((a, b) => b.totalVentas - a.totalVentas)
   const stock = (stockRes.data ?? []) as VistaStockRow[]
   const inversiones = (inversionesRes.data ?? []) as {
     socio_id: string
@@ -100,6 +180,7 @@ export default async function VentasPage() {
       venta_items={venta_items}
       stock={stock}
       inversionesPorSocio={inversionesPorSocio}
+      tiposData={tiposData}
       error={error}
     />
   )
