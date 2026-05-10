@@ -445,3 +445,65 @@
     width: 0%;
   }
 }
+
+/* ─────────────────────────────────────────────────────────
+ * Glass / Futurista System — Apple Vision Pro / macOS Sonoma
+ * Capa adicional sobre el design system enterprise.
+ * Aplicada selectivamente: NO sobrescribe `.pc-*` ni `body`.
+ * ───────────────────────────────────────────────────────── */
+:root {
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-bg-card: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-card: rgba(0, 0, 0, 0.06);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --glass-blur: blur(20px);
+  --glass-blur-strong: blur(40px);
+
+  /* Brand glass (Lujo Silencioso) */
+  --green-glass: rgba(27, 48, 34, 0.85);
+  --green-ambient: rgba(45, 90, 67, 0.15);
+
+  /* Depth layers */
+  --depth-0: #f0f4f0;
+  --depth-1: rgba(255, 255, 255, 0.7);
+  --depth-2: rgba(255, 255, 255, 0.9);
+  --depth-3: rgba(255, 255, 255, 0.98);
+}
+
+/* Gradiente atmosférico del dashboard — aplicar con className="glass-app-bg"
+   en el wrapper del layout (NO en body, para no afectar /order). */
+.glass-app-bg {
+  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0ea 40%, #eef0f4 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.04) inset;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  transform: translateY(-1px);
+}
+
+.glass-dark {
+  background: rgba(27, 48, 34, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: white;
+}
