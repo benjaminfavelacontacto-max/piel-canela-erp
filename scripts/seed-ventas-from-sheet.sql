@@ -53,22 +53,22 @@ INSERT INTO clientes(nombre, telefono, is_internal)
 SELECT 'Glendy Escalante','9993331647',false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Glendy Escalante');
 INSERT INTO clientes(nombre, telefono, is_internal)
-SELECT 'Laura Elena',null,false
+SELECT 'Laura Elena',0,false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Laura Elena');
 INSERT INTO clientes(nombre, telefono, is_internal)
 SELECT 'Sunbeach','2222385874',false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Sunbeach');
 INSERT INTO clientes(nombre, telefono, is_internal)
-SELECT 'Fedex Devolución',null,false
+SELECT 'Fedex Devolución',0,false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Fedex%' OR nombre ILIKE '%Devoluc%');
 INSERT INTO clientes(nombre, telefono, is_internal)
-SELECT 'Ana Lucia',null,false
+SELECT 'Ana Lucia',0,false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Ana Lucia' OR nombre ILIKE 'Ana Lucía');
 INSERT INTO clientes(nombre, telefono, is_internal)
 SELECT 'Elizabeth Prado','5544525825',false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Elizabeth Prado');
 INSERT INTO clientes(nombre, telefono, is_internal)
-SELECT 'Karla Sandoval',null,false
+SELECT 'Karla Sandoval',0,false
 WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre ILIKE 'Karla Sandoval');
 
 -- 3) INSERT 42 ventas con ON CONFLICT (numero) DO NOTHING
@@ -112,44 +112,44 @@ BEGIN
   (v_mithra,'PC-120625003-C-Mithra','2025-06-13',19676.91,3148.31,0,4556.78,22825.22,612.82,'pagada_total',null),
   (v_shams,'PC-170325003-C-Shams Bronceado Natural','2025-03-25',13526.00,2164.16,0,4497.31,15690.16,671,'pagada_total',null),
   (v_sunbeach,'PC-280525002-V-Sunbeach','2025-06-01',3354.61,0,0,737.55,3354.61,486.39,'pagada_total',null),
-  (v_temple,'PC-020126002-V-The Temple Bronze','2026-01-12',6225.18,0,0,null,6225.18,null,'pagada_total',null),
-  (v_temple,'PC-020126003-V-The Temple Bronze','2026-01-13',4119.69,659.15,802.73,null,3976.11,null,'pagada_total',null),
+  (v_temple,'PC-020126002-V-The Temple Bronze','2026-01-12',6225.18,0,0,0,6225.18,0,'pagada_total',null),
+  (v_temple,'PC-020126003-V-The Temple Bronze','2026-01-13',4119.69,659.15,802.73,0,3976.11,0,'pagada_total',null),
   (v_laura,'PC-030925001-C-Laura Elena','2025-09-03',17403.22,0,0,4895.75,17403.22,0,'pagada_total','Venta de Curso con 5% descuento / Pgo de FB Camp'),
   (v_shams,'PC-040425004-V-Shams Bronceado Natural','2025-03-25',8000.00,0,0,2552.63,8000.00,400.45,'pagada_total',null),
   (v_temple,'PC-040526005-V-The Temple Bronze','2026-05-04',4020.17,643.23,0,1043.16,4663.40,1014.26,'pagada_total','Envio caro con DHL'),
   (v_mithra,'PC-060425001-Mitra','2025-03-11',10340.69,1654.51,0,2722.39,10340.69,783,'pagada_parcial','Se le regalo el envío'),
   (v_shams,'PC-060625005-C-Shams Bronceado Natural','2025-06-06',54189.00,8670.24,0,16904.87,62859.24,1671.31,'pagada_total','Se perdio 6 Morango y se dividio el dinero'),
   (v_shams,'PC-071225009-V-Shams Bronceado Natural','2025-12-15',18127.51,0,0,16527.02,15844.51,479,'pendiente','Se le dio credito un Potencia 3.0 saldo pendiente $2242.82'),
-  (v_shams,'PC-090226010-V-Shams Bronceado Natural','2026-02-09',7919.09,0,0,null,7919.09,null,'pagada_total',null),
+  (v_shams,'PC-090226010-V-Shams Bronceado Natural','2026-02-09',7919.09,0,0,0,7919.09,0,'pagada_total',null),
   (v_mithra,'PC-090425002-V-Mithra','2025-06-11',21360.81,3417.73,0,5476.15,24778.54,582.82,'pagada_total',null),
   (v_shams,'PC-090625006-C-Shams Bronceado Natural','2025-06-09',9200.00,0,0,2110.69,9200.00,719.14,'pagada_total','Se le regalo el envío'),
-  (v_analucia,'PC-100426001-V-Ana Lucia','2026-04-04',1235.74,0,0,null,1235.74,null,'pagada_total',null),
-  (v_temple,'PC-110226003-V-The Temple Bronze','2026-02-11',3937.09,629.93,0,null,4567.02,null,'pagada_total',null),
-  (v_temple,'PC-110226004-V-The Temple Bronze','2026-02-11',5825.49,0,0,null,5825.49,null,'pagada_total',null),
+  (v_analucia,'PC-100426001-V-Ana Lucia','2026-04-04',1235.74,0,0,0,1235.74,0,'pagada_total',null),
+  (v_temple,'PC-110226003-V-The Temple Bronze','2026-02-11',3937.09,629.93,0,0,4567.02,0,'pagada_total',null),
+  (v_temple,'PC-110226004-V-The Temple Bronze','2026-02-11',5825.49,0,0,0,5825.49,0,'pagada_total',null),
   (v_fedex,'PC-110625001-V-Perdidas','2025-06-11',8039.04,0,0,2080.53,8039.04,0,'pagada_total','Devolucion Fedex por 6 Activador Morango'),
   (v_iliana,'PC-120525001-Iliana del Angel','2025-05-13',15885.81,0,0,4656.97,15885.81,374.19,'pagada_total',null),
   (v_mariela,'PC-120625002-V-Mariela','2025-06-13',3150.00,0,0,1590.05,3150.00,0,'pagada_total','Sandra entrego en Pielcanela'),
-  (v_shams,'PC-130226011-V-Shams Bronceado Natural','2026-02-13',7775.88,0,0,null,7775.88,null,'pagada_total',null),
+  (v_shams,'PC-130226011-V-Shams Bronceado Natural','2026-02-13',7775.88,0,0,0,7775.88,0,'pagada_total',null),
   (v_mariela,'PC-130425001-V-Mariela','2025-04-18',11462.37,0,0,3140.63,11462.37,0,'pagada_total',null),
   (v_temple,'PC-130625001-V-The Temple Bronze -2','2025-06-13',2880.02,460.80,0,720.01,0,417.31,'pendiente','Pago en T1 Saldo a Favor $802.73'),
   (v_temple,'PC-130625001-V-The Temple Bronze-1','2025-06-13',3682.83,589.25,0,887.68,7954.83,417.31,'pagada_total','Pago el subtotal y el total'),
   (v_mithra,'PC-131025005-V-Mithra','2025-10-14',18547.69,2967.63,0,4444.59,21515.32,124.50,'pagada_total','Mithra dio el envio Benjamin pago el material'),
   (v_katiuska,'PC-150425001-V-Katiuska','2025-04-21',11415.85,1826.54,0,4438.68,13242.39,727.20,'pagada_total',null),
-  (v_shams,'PC-151025007-V-Shams Bronceado Natural','2025-10-16',7165.33,0,0,1748.85,7165.33,null,'pagada_total',null),
-  (v_mithra,'PC-151225006-V-Mithra','2025-12-16',20647.69,3303.63,0,null,23951.32,null,'pagada_total',null),
-  (v_shams,'PC-180824002-V','2024-08-23',6551.00,0,0,1730.00,6551.00,null,'pagada_total',null),
+  (v_shams,'PC-151025007-V-Shams Bronceado Natural','2025-10-16',7165.33,0,0,1748.85,7165.33,0,'pagada_total',null),
+  (v_mithra,'PC-151225006-V-Mithra','2025-12-16',20647.69,3303.63,0,0,23951.32,0,'pagada_total',null),
+  (v_shams,'PC-180824002-V','2024-08-23',6551.00,0,0,1730.00,6551.00,0,'pagada_total',null),
   (v_shams,'PC-180824002-V-Sams Bronceado Natural','2025-03-06',15702.00,0,0,2585.57,15702.00,633,'pagada_total',null),
-  (v_shams,'PC-190226012-V-Shams Bronceado Natural','2026-02-19',5991.88,0,0,null,5991.88,null,'pagada_total',null),
-  (v_laura,'PC-190426002-V-Laura Elena','2026-04-19',1500.00,0,0,748.17,1500.00,null,'pagada_total',null),
-  (v_shams,'PC-190825006-C-Shams Bronceado Natural','2025-09-20',25584.87,0,0,9324.98,25584.87,null,'pagada_total',null),
-  (v_mithra,'PC-200226007-V-Mithra','2026-02-23',19147.69,3063.63,0,null,22211.32,null,'pagada_total',null),
-  (v_karla,'PC-210426001-V-Karla Sandoval','2026-04-21',13775.68,0,0,null,13775.68,null,'pagada_total',null),
+  (v_shams,'PC-190226012-V-Shams Bronceado Natural','2026-02-19',5991.88,0,0,0,5991.88,0,'pagada_total',null),
+  (v_laura,'PC-190426002-V-Laura Elena','2026-04-19',1500.00,0,0,748.17,1500.00,0,'pagada_total',null),
+  (v_shams,'PC-190825006-C-Shams Bronceado Natural','2025-09-20',25584.87,0,0,9324.98,25584.87,0,'pagada_total',null),
+  (v_mithra,'PC-200226007-V-Mithra','2026-02-23',19147.69,3063.63,0,0,22211.32,0,'pagada_total',null),
+  (v_karla,'PC-210426001-V-Karla Sandoval','2026-04-21',13775.68,0,0,0,13775.68,0,'pagada_total',null),
   (v_iliana,'PC-210625002-C-Liliana del Angel','2025-06-21',2805.54,0,0,957.16,2805.54,397.58,'pagada_total',null),
-  (v_shams,'PC-250326013-V-Shams Bronceado Natural','2026-03-25',11438.98,0,0,null,11438.98,null,'pagada_total',null),
+  (v_shams,'PC-250326013-V-Shams Bronceado Natural','2026-03-25',11438.98,0,0,0,11438.98,0,'pagada_total',null),
   (v_mithra,'PC-270825004-V-Mithra','2025-08-27',9648.99,1543.84,0,2348.56,11192.83,140,'pagada_total','Pago envio con su guia personal'),
-  (v_shams,'PC-281025008-V-Shams Bronceado Natural','2025-10-28',5991.88,0,0,1497.97,5991.88,null,'pagada_total',null),
-  (v_elizabeth,'PC-301025001-V-Elizabeth Prado','2025-10-30',4200.00,0,0,2055.41,4200.00,null,'pagada_total',null),
-  (v_mithra,'PC-310326008-V-Mithra','2026-03-31',18874.86,0,0,null,18874.86,null,'pagada_total',null)
+  (v_shams,'PC-281025008-V-Shams Bronceado Natural','2025-10-28',5991.88,0,0,1497.97,5991.88,0,'pagada_total',null),
+  (v_elizabeth,'PC-301025001-V-Elizabeth Prado','2025-10-30',4200.00,0,0,2055.41,4200.00,0,'pagada_total',null),
+  (v_mithra,'PC-310326008-V-Mithra','2026-03-31',18874.86,0,0,0,18874.86,0,'pagada_total',null)
   ON CONFLICT (numero) DO NOTHING;
 END $$;
 
