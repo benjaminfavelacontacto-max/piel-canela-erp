@@ -42,6 +42,7 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
 import { ClienteDrawer } from "./cliente-drawer"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
 import { EstimadoIngresos } from "./estimado-ingresos"
@@ -870,7 +871,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="p-6 space-y-6">
       {/* ─── Header ejecutivo (custom) ─── */}
       {(() => {
         const len = monthlyKpi.length
@@ -899,165 +900,62 @@ export function ClientesDashboard({
           : "—"
         const trimChange = dLtv
 
+        const mejorDisplay = kpis.mejor
+          ? kpis.mejor.nombre_negocio ?? kpis.mejor.nombre
+          : "—"
         return (
           <>
-            {/* ═══ HERO BANNER · Lujo Silencioso ═══ */}
-            <section
-              style={{
-                background:
-                  "linear-gradient(90deg, #1E1A33 0%, #2A244A 100%)",
-              }}
-            >
-              <div className="px-6 pt-6 pb-6 space-y-5">
-                {/* Title row */}
-                <header className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p
-                      className="mb-1"
-                      style={{
-                        color: "rgba(255,255,255,0.40)",
-                        fontSize: "10px",
-                        fontWeight: 400,
-                        letterSpacing: "0.22em",
-                        textTransform: "uppercase",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      Base de Clientes · Piel Canela
-                    </p>
-                    <h1
-                      className="text-[26px] font-medium leading-tight tracking-[-0.02em] text-white"
-                    >
-                      Clientes
-                    </h1>
-                    <p
-                      className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] tabular-nums"
-                      style={{
-                        color: "rgba(255,255,255,0.7)",
-                        letterSpacing: "-0.005em",
-                      }}
-                    >
-                      <span>
-                        <span className="font-semibold text-white">
-                          {kpis.total}
-                        </span>{" "}
-                        clientes
-                      </span>
-                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
-                      <span>
-                        <span className="font-semibold text-white">
-                          {kpis.activos}
-                        </span>{" "}
-                        activos
-                      </span>
-                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
-                      <span>
-                        <span
-                          className="font-semibold"
-                          style={{ color: "#C5A47E" }}
-                        >
-                          {mxn.format(kpis.ltvTotal)}
-                        </span>{" "}
-                        LTV
-                      </span>
-                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
-                      <span
-                        className="font-semibold"
-                        style={{
-                          color:
-                            trimChange >= 0
-                              ? "rgba(167,243,208,0.95)"
-                              : "rgba(252,165,165,0.95)",
-                        }}
-                      >
-                        {trimChange >= 0 ? "+" : ""}
-                        {trimChange.toFixed(1)}% este mes
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm"
-                      style={{
-                        background: "rgba(255,255,255,0.08)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        color: "rgba(255,255,255,0.7)",
-                      }}
-                    >
-                      Últimos 12 meses
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm"
-                      style={{
-                        background: "rgba(255,255,255,0.08)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        color: "rgba(255,255,255,0.7)",
-                      }}
-                    >
-                      <span className="relative flex size-1.5">
-                        <span
-                          className="absolute inset-0 animate-ping rounded-full opacity-75"
-                          style={{ background: "rgba(167,243,208,0.9)" }}
-                        />
-                        <span
-                          className="relative size-1.5 rounded-full"
-                          style={{ background: "rgba(167,243,208,1)" }}
-                        />
-                      </span>
-                      Live
-                    </span>
-                    <Link
-                      href="/clientes/nuevo"
-                      className="inline-flex h-[38px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all hover:-translate-y-0.5"
-                      style={{
-                        background: "rgba(255,255,255,0.12)",
-                        color: "white",
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid rgba(255,255,255,0.15)",
-                      }}
-                    >
-                      <UserPlus className="size-4" strokeWidth={1.75} />
-                      Nuevo cliente
-                    </Link>
-                  </div>
-                </header>
+            <PageHeader
+              title="Clientes"
+              subtitle="Base de clientes · LTV y patrones de recompra"
+              kpis={[
+                {
+                  label: "Total clientes",
+                  value: kpis.total.toString(),
+                  sub: `${cur?.nuevos ?? 0} nuevos este mes`,
+                  trend: {
+                    value: `${dActivos >= 0 ? "+" : ""}${dActivos.toFixed(1)}%`,
+                    positive: dActivos >= 0,
+                  },
+                  sparkline: monthlyKpi.map((m) => m.activosCum),
+                },
+                {
+                  label: "Recurrentes",
+                  value: kpis.recurrentes.toString(),
+                  sub: "≥3 compras",
+                  trend: {
+                    value: `${dNuevos >= 0 ? "+" : ""}${dNuevos.toFixed(1)}%`,
+                    positive: dNuevos >= 0,
+                  },
+                  sparkline: monthlyKpi.map((m) => m.nuevos),
+                },
+                {
+                  label: "LTV total",
+                  value: mxn.format(kpis.ltvTotal),
+                  sub: `${mxn.format(cur?.ltvGanado ?? 0)} este mes`,
+                  trend: {
+                    value: `${dLtv >= 0 ? "+" : ""}${dLtv.toFixed(1)}%`,
+                    positive: dLtv >= 0,
+                  },
+                  sparkline: monthlyKpi.map((m) => m.ltvGanado),
+                },
+                {
+                  label: "Mejor cliente",
+                  value: mejorDisplay,
+                  sub: kpis.mejor
+                    ? `${mxn.format(kpis.mejor.ltv)} · ${concentrado.toFixed(0)}% revenue`
+                    : "Sin ventas",
+                },
+              ]}
+              actions={
+                <Link href="/clientes/nuevo" className="pc-btn-primary">
+                  <UserPlus className="size-4" strokeWidth={1.75} />
+                  Nuevo cliente
+                </Link>
+              }
+            />
 
-            {/* Hero strip — 4 glass cards individuales sobre el dark banner */}
-            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <HeroMetric
-                label="Total clientes"
-                value={kpis.total.toString()}
-                trend={dActivos}
-                sub={`${cur?.nuevos ?? 0} nuevos este mes`}
-                sparkline={monthlyKpi.map((m) => m.activosCum)}
-                sparkColor="rgba(233,213,255,0.7)"
-              />
-              <HeroMetric
-                label="Recurrentes"
-                value={kpis.recurrentes.toString()}
-                trend={dNuevos}
-                sub="≥3 compras"
-                sparkline={monthlyKpi.map((m) => m.nuevos)}
-                sparkColor="rgba(197,164,126,0.8)"
-              />
-              <HeroMetric
-                label="LTV total"
-                value={mxn.format(kpis.ltvTotal)}
-                trend={dLtv}
-                sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
-                sparkline={monthlyKpi.map((m) => m.ltvGanado)}
-                sparkColor="rgba(167,243,208,0.6)"
-              />
-              <BestClienteMetric
-                cliente={kpis.mejor ?? null}
-                pctRevenue={concentrado}
-              />
-            </section>
-              </div>
-            </section>
-
-            {/* ═══ Resto del contenido sobre fondo light ═══ */}
-            <div className="px-6 space-y-4">
+            <div className="space-y-4">
 
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -1139,7 +1037,7 @@ export function ClientesDashboard({
         )
       })()}
 
-      <div className="px-6 space-y-4">
+      <div className="space-y-4">
         {/* Estimado de ingresos predictivo */}
         <EstimadoIngresos clientes={enriched} ventas={ventas} />
 
