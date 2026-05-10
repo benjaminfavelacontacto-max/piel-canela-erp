@@ -12,6 +12,7 @@ import { ProductDrawer } from "./product-drawer"
 import { PageHeader } from "@/components/page-header"
 import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
+import { ImageUpload } from "./image-upload"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -828,20 +829,14 @@ function ProductRow({
       onClick={onClick}
       className="border-b border-gray-50 cursor-pointer hover:bg-gray-50/50 transition-colors"
     >
-      {/* Foto */}
-      <td className="py-2 px-2">
-        {p.imagen_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={p.imagen_url}
-            alt=""
-            className="w-8 h-8 rounded-lg object-cover"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">
-            {p.sku?.slice(0, 2)}
-          </div>
-        )}
+      {/* Foto — upload con drag & drop */}
+      <td className="py-2 px-2" onClick={(e) => e.stopPropagation()}>
+        <ImageUpload
+          productoId={p.id}
+          productoNombre={p.nombre_display ?? p.nombre}
+          productoSku={p.sku}
+          imagenActual={p.imagen_url}
+        />
       </td>
 
       {/* Categoría */}
