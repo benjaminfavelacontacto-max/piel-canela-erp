@@ -22,8 +22,8 @@ interface Orden {
   total: number
   estatus: string | null
   cliente: string
-  unidadesCat: number
-  subtotalCat: number
+  unidadesCat?: number
+  subtotalCat?: number
 }
 
 export interface TipoData {
@@ -87,8 +87,8 @@ const ESTATUS_CONFIG: Record<
   },
 }
 
-const fmtMXN = (v: number) =>
-  v.toLocaleString("es-MX", {
+const fmtMXN = (v: number | undefined | null) =>
+  (Number(v) || 0).toLocaleString("es-MX", {
     style: "currency",
     currency: "MXN",
     maximumFractionDigits: 0,
@@ -689,13 +689,13 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                           border: `1px solid ${catColor}25`,
                         }}
                       >
-                        {orden.unidadesCat}
+                        {orden.unidadesCat ?? 0}
                         <span className="text-[9px] font-normal opacity-70">
                           uds
                         </span>
                       </span>
                       <p className="mt-0.5 text-[9.5px] tabular-nums text-gray-400">
-                        {fmtMXN(orden.subtotalCat)}
+                        {fmtMXN(orden.subtotalCat ?? 0)}
                       </p>
                     </div>
 
