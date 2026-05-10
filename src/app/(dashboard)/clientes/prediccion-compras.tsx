@@ -368,12 +368,6 @@ export function PrediccionCompras({
     lejano: "#94A3B8",
   } as const
 
-  // Top 3 estables (basados en clientesPanel sin filtrar)
-  const topIds = useMemo(
-    () => new Set(clientesPanel.slice(0, 3).map((c) => c.id)),
-    [clientesPanel],
-  )
-
   const filtrados = useMemo(() => {
     return clientesPanel.filter((c) => {
       const diasProx = c.proximaFecha
@@ -579,7 +573,6 @@ export function PrediccionCompras({
         {filtrados.map((cliente, i) => {
           const fechaInfo = fechaHumana(cliente.proximaFecha)
           const accion = accionRecomendada(cliente)
-          const isTop = filtro === "TODOS" && topIds.has(cliente.id)
           const isExp = expandido === cliente.id
           const tendencia =
             (cliente.ticketEsperado ?? 0) > (cliente.ticketAnterior ?? 0)
@@ -596,22 +589,8 @@ export function PrediccionCompras({
           return (
             <div
               key={cliente.id}
-              className="border-b border-[rgba(15,23,42,0.03)] transition-colors"
-              style={{
-                background: isTop
-                  ? "rgba(99,102,241,0.025)"
-                  : "white",
-                cursor: "pointer",
-              }}
+              className="cursor-pointer border-b border-[rgba(15,23,42,0.03)] bg-white transition-colors hover:bg-[rgba(15,23,42,0.02)]"
               onClick={() => setExpandido(isExp ? null : cliente.id)}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(15,23,42,0.02)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = isTop
-                  ? "rgba(99,102,241,0.025)"
-                  : "white")
-              }
             >
               <div
                 className="grid items-center gap-3 px-5 py-3"
@@ -621,15 +600,6 @@ export function PrediccionCompras({
               >
                 {/* Cliente */}
                 <div className="flex min-w-0 items-center gap-2.5">
-                  {isTop && (
-                    <span
-                      className="h-8 w-1 shrink-0 rounded-full"
-                      style={{
-                        background:
-                          "linear-gradient(180deg,#4F46E5,#047857)",
-                      }}
-                    />
-                  )}
                   <span
                     className="flex size-9 shrink-0 items-center justify-center rounded-[11px] text-[12px] font-bold text-white"
                     style={{
