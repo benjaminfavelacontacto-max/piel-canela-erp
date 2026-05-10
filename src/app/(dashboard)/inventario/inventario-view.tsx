@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import {
   Search,
   Package,
@@ -86,6 +86,21 @@ function categoriaClass(c: string): string {
   return categoriaBadgeColor[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
 }
 
+const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
+  ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
+  POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
+  CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
+  "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "#1D4ED8" },
+  "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "#7E22CE" },
+  EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "#0F766E" },
+  HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
+  "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
+  AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "#B91C1C" },
+  "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
+  SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "#BE185D" },
+  OTROS: { bg: "rgba(100,116,139,0.10)", text: "#475569" },
+}
+
 function norm(s: string): string {
   return s
     .normalize("NFD")
@@ -113,9 +128,16 @@ function fuzzyMatch(q: string, p: ProductoEnriquecido): boolean {
 type SortKey =
   | "nombre"
   | "categoria"
+  | "peso"
+  | "sku"
   | "stock_actual"
   | "stock_minimo"
   | "precio_publico"
+  | "precio_usd"
+  | "precio_mxn_calculado"
+  | "costo_total_usd"
+  | "costo_total_mxn"
+  | "profit_unitario"
   | "valor_inventario"
   | "unidades_vendidas"
   | "margen_pct"
@@ -151,8 +173,29 @@ export function InventarioView({
   const [categoriaF, setCategoriaF] = useState("")
   const [proveedorF, setProveedorF] = useState("")
   const [topSellersOnly, setTopSellersOnly] = useState(false)
-  const sortKey: SortKey = "nombre"
-  const sortDir: SortDir = "asc"
+  const [sortKey, setSortKey] = useState<SortKey>("nombre")
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const tableRef = useRef<HTMLElement>(null)
+  const handleCategoriaClick = (cat: string, isActive: boolean) => {
+    setCategoriaF(isActive ? "" : cat)
+    if (!isActive) {
+      // Si seleccionas una categoría, scroll a la tabla
+      setTimeout(() => {
+        tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
+    }
+  }
+  const toggleSort = (k: SortKey) => {
+    if (k === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    } else {
+      setSortKey(k)
+      // Default: numeric desc, alpha asc
+      setSortDir(
+        ["nombre", "categoria", "peso", "sku"].includes(k) ? "asc" : "desc",
+      )
+    }
+  }
 
   // Top sellers IDs (top 20 by unidades_vendidas)
   const topSellersSet = useMemo(() => {
@@ -240,6 +283,30 @@ export function InventarioView({
     }
   }, [productos])
 
+  // Sumatorias para tfoot (basadas en filas filtradas+ordenadas)
+  const totals = useMemo(() => {
+    let stock = 0,
+      ventas = 0,
+      costoUSD = 0,
+      costoMXN = 0,
+      costoEnvUSD = 0,
+      costoEnvMXN = 0,
+      profitTotal = 0
+    for (const p of filtered) {
+      const s = p.stock_actual ?? 0
+      const tc = p.tipo_cambio ?? 20.7
+      const pUsd = p.precio_usd ?? 0
+      stock += s
+      ventas += p.unidades_vendidas ?? 0
+      costoUSD += pUsd * s
+      costoMXN += pUsd * tc * s
+      costoEnvUSD += (p.costo_total_usd ?? 0) * s
+      costoEnvMXN += (p.costo_total_mxn ?? 0) * s
+      profitTotal += (p.profit_unitario ?? 0) * s
+    }
+    return { stock, ventas, costoUSD, costoMXN, costoEnvUSD, costoEnvMXN, profitTotal }
+  }, [filtered])
+
   // Categorías con conteo de SKUs (top primero)
   const categoriasConteo = useMemo(() => {
     const counts = new Map<string, number>()
@@ -250,6 +317,41 @@ export function InventarioView({
     return Array.from(counts.entries())
       .map(([nombre, count]) => ({ nombre, count }))
       .sort((a, b) => b.count - a.count)
+  }, [productos])
+
+  // Dashboard por tipo: stock + SKUs + costo invertido + profit por categoría
+  const stockPorCategoria = useMemo(() => {
+    type Agg = {
+      categoria: string
+      totalSKUs: number
+      skusConStock: number
+      stockTotal: number
+      costoMXN: number
+      profitTotal: number
+      vendidas: number
+    }
+    const map = new Map<string, Agg>()
+    for (const p of productos) {
+      const k = (p.categoria ?? "OTROS").toUpperCase()
+      const a = map.get(k) ?? {
+        categoria: k,
+        totalSKUs: 0,
+        skusConStock: 0,
+        stockTotal: 0,
+        costoMXN: 0,
+        profitTotal: 0,
+        vendidas: 0,
+      }
+      const stock = p.stock_actual ?? 0
+      a.totalSKUs += 1
+      if (stock > 0) a.skusConStock += 1
+      a.stockTotal += stock
+      a.costoMXN += (p.costo_total_mxn ?? 0) * stock
+      a.profitTotal += (p.profit_unitario ?? 0) * stock
+      a.vendidas += p.unidades_vendidas ?? 0
+      map.set(k, a)
+    }
+    return Array.from(map.values()).sort((a, b) => b.stockTotal - a.stockTotal)
   }, [productos])
 
   function clearFilters() {
@@ -291,7 +393,7 @@ export function InventarioView({
   }, [])
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6" style={{ padding: "28px 32px" }}>
       <PageHeader
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
@@ -318,6 +420,109 @@ export function InventarioView({
           {error}
         </div>
       )}
+
+      {/* Dashboard por tipo: stock por categoría */}
+      <section
+        className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-sm"
+        style={{ marginTop: 32 }}
+      >
+        <div
+          className="flex flex-wrap items-end justify-between gap-2"
+          style={{ marginBottom: 16 }}
+        >
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+              Stock por categoría
+            </h2>
+            <p className="text-[11.5px] text-[#64748B]">
+              Click en una categoría para filtrar la tabla · {stockPorCategoria.length} categorías
+            </p>
+          </div>
+          {categoriaF && (
+            <button
+              type="button"
+              onClick={() => setCategoriaF("")}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11.5px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+            >
+              ✕ Quitar filtro: {categoriaF}
+            </button>
+          )}
+        </div>
+        <div
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          style={{ marginTop: 16 }}
+        >
+          {stockPorCategoria.map((c) => {
+            const isActive = categoriaF === c.categoria
+            const palette = CATEGORIA_COLOR[c.categoria] ?? CATEGORIA_COLOR.OTROS
+            const pctSkusConStock =
+              c.totalSKUs > 0 ? (c.skusConStock / c.totalSKUs) * 100 : 0
+            return (
+              <button
+                key={c.categoria}
+                type="button"
+                onClick={() => handleCategoriaClick(c.categoria, isActive)}
+                className="group rounded-xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{
+                  borderColor: isActive ? palette.text : "rgba(15,23,42,0.06)",
+                  boxShadow: isActive
+                    ? `0 0 0 2px ${palette.bg}, 0 4px 12px rgba(15,23,42,0.04)`
+                    : "0 1px 2px rgba(15,23,42,0.03)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.04em]"
+                    style={{
+                      background: palette.bg,
+                      color: palette.text,
+                    }}
+                  >
+                    {c.categoria.length > 13
+                      ? c.categoria.slice(0, 12) + "…"
+                      : c.categoria}
+                  </span>
+                  <span className="text-[10px] text-gray-400 tabular-nums">
+                    {c.skusConStock}/{c.totalSKUs} SKUs
+                  </span>
+                </div>
+                <p
+                  className="mt-2 text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums"
+                  style={{
+                    color: c.stockTotal > 0 ? "#0F172A" : "#94A3B8",
+                  }}
+                >
+                  {c.stockTotal.toLocaleString("es-MX")}
+                </p>
+                <p className="mt-1 text-[10.5px] text-[#64748B]">unidades en stock</p>
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${pctSkusConStock}%`,
+                      background: palette.text,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex items-baseline justify-between gap-2">
+                  <span className="text-[10px] text-gray-400">invertido</span>
+                  <span className="text-[11px] font-semibold tabular-nums text-gray-700">
+                    {mxn.format(c.costoMXN)}
+                  </span>
+                </div>
+                {c.profitTotal > 0 && (
+                  <div className="mt-1 flex items-baseline justify-between gap-2">
+                    <span className="text-[10px] text-gray-400">profit pot.</span>
+                    <span className="text-[11px] font-semibold tabular-nums text-emerald-700">
+                      {mxn.format(c.profitTotal)}
+                    </span>
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
       {/* Search + filters */}
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -406,7 +611,39 @@ export function InventarioView({
       <TipoCambioNote tc={tcVigente} />
 
       {/* Table */}
-      <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <section
+        ref={tableRef}
+        className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden scroll-mt-6"
+      >
+        {categoriaF && (
+          <div
+            className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-3"
+            style={{
+              background:
+                (CATEGORIA_COLOR[categoriaF] ?? CATEGORIA_COLOR.OTROS).bg,
+            }}
+          >
+            <p
+              className="text-[12px] font-medium tabular-nums"
+              style={{
+                color:
+                  (CATEGORIA_COLOR[categoriaF] ?? CATEGORIA_COLOR.OTROS).text,
+              }}
+            >
+              Filtrando: <span className="font-bold">{categoriaF}</span>
+              <span className="ml-2 text-[11px] font-normal opacity-70">
+                · {sorted.length} de {productos.length} productos
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => setCategoriaF("")}
+              className="rounded-md bg-white/70 px-2.5 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-white"
+            >
+              ✕ Quitar filtro
+            </button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table
             className="border-collapse"
@@ -435,48 +672,20 @@ export function InventarioView({
                 <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Foto
                 </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Cat.
-                </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Peso
-                </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Producto
-                </th>
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  P. Público
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  USD
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  MXN calc.
-                </th>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Stock
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Costo USD
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Costo MXN
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  +Env USD
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  +Env MXN
-                </th>
-                <th className="py-3 px-2 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Profit
-                </th>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Vend.
-                </th>
+                <SortableTh align="left" k="categoria" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Cat.</SortableTh>
+                <SortableTh align="left" k="peso" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Peso</SortableTh>
+                <SortableTh align="left" k="nombre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Producto</SortableTh>
+                <SortableTh align="left" k="sku" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>SKU</SortableTh>
+                <SortableTh align="right" k="precio_publico" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>P. Público</SortableTh>
+                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>USD</SortableTh>
+                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>MXN calc.</SortableTh>
+                <SortableTh align="center" k="stock_actual" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Stock</SortableTh>
+                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Costo USD</SortableTh>
+                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Costo MXN</SortableTh>
+                <SortableTh align="right" k="costo_total_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>+Env USD</SortableTh>
+                <SortableTh align="right" k="costo_total_mxn" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>+Env MXN</SortableTh>
+                <SortableTh align="right" k="profit_unitario" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Profit</SortableTh>
+                <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Vend.</SortableTh>
                 <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                   Estatus
                 </th>
@@ -503,10 +712,80 @@ export function InventarioView({
                 ))
               )}
             </tbody>
+            {sorted.length > 0 && (
+              <tfoot>
+                <tr className="border-t-2 border-[#EEF1F4] bg-[#F9FAFB]">
+                  <td colSpan={5} className="py-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
+                    Totales · {filtered.length} SKUs
+                  </td>
+                  <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
+                  <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
+                  <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
+                  <td className="py-3 px-2 text-center text-xs font-bold text-gray-900 tabular-nums">
+                    {totals.stock.toLocaleString("es-MX")}
+                  </td>
+                  <td className="py-3 px-2 text-right text-xs font-semibold text-gray-700 tabular-nums whitespace-nowrap">
+                    ${totals.costoUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="py-3 px-2 text-right text-xs font-semibold text-gray-700 tabular-nums whitespace-nowrap">
+                    {mxn2.format(totals.costoMXN)}
+                  </td>
+                  <td className="py-3 px-2 text-right text-xs font-semibold text-orange-600 tabular-nums whitespace-nowrap">
+                    ${totals.costoEnvUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="py-3 px-2 text-right text-xs font-semibold text-orange-700 tabular-nums whitespace-nowrap">
+                    {mxn2.format(totals.costoEnvMXN)}
+                  </td>
+                  <td className="py-3 px-2 text-right text-xs font-bold text-emerald-600 tabular-nums whitespace-nowrap">
+                    {mxn2.format(totals.profitTotal)}
+                  </td>
+                  <td className="py-3 px-2 text-center text-xs font-bold text-gray-900 tabular-nums">
+                    {totals.ventas.toLocaleString("es-MX")}
+                  </td>
+                  <td className="py-3 px-2"></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </section>
     </div>
+  )
+}
+
+function SortableTh({
+  children,
+  k,
+  align,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  children: React.ReactNode
+  k: SortKey
+  align: "left" | "right" | "center"
+  sortKey: SortKey
+  sortDir: SortDir
+  onSort: (k: SortKey) => void
+}) {
+  const active = sortKey === k
+  const arrow = !active ? "" : sortDir === "asc" ? " ▲" : " ▼"
+  const justify =
+    align === "right"
+      ? "justify-end"
+      : align === "center"
+        ? "justify-center"
+        : "justify-start"
+  return (
+    <th
+      onClick={() => onSort(k)}
+      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"}`}
+    >
+      <span className={`inline-flex items-center gap-1 ${justify}`}>
+        {children}
+        <span className="text-[8px] tabular-nums">{arrow}</span>
+      </span>
+    </th>
   )
 }
 

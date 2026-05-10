@@ -18,7 +18,7 @@ const mxn2 = (v: number) =>
     maximumFractionDigits: 2,
   })
 
-const usd = (v: number, decimals = 2) =>
+const usd = (v: number, decimals = 0) =>
   `$${Number(v).toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -319,13 +319,13 @@ export default async function PedidoDetailPage({
                               {item.cantidad}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-indigo-700">
-                              {usd(item.precio_unitario_usd)}
+                              {usd(item.precio_unitario_usd, 2)}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-gray-600">
                               {mxn2(item.precio_unitario_mxn)}
                             </td>
                             <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-indigo-700">
-                              {usd(item.subtotal_usd)}
+                              {usd(item.subtotal_usd, 2)}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-amber-700">
                               {usd(item.envio_unitario_usd, 4)}

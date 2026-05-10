@@ -490,7 +490,7 @@ export default async function DashboardPage() {
         ]}
         actions={
           <>
-            <Link href="/ventas/nueva" className="pc-btn-primary">
+            <Link href="/ventas/nueva" className="pc-btn-secondary">
               <Plus className="size-4" />
               Nueva Venta
             </Link>

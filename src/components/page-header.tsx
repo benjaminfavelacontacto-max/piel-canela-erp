@@ -22,6 +22,10 @@ export interface PageHeaderKpi {
   }>
   /** Chip de moneda al lado del valor — pequeño, tipográfico. Ej. "USD", "MXN" */
   currency?: "USD" | "MXN"
+  /** Acento visual de la card — fondo gradient + border colorado. Útil para destacar 1 KPI. */
+  accent?: "emerald" | "indigo" | "amber" | "rose"
+  /** Badge pequeño debajo del valor — ej. "+15% ROI". Tonal con el accent. */
+  microBadge?: string
 }
 
 interface PageHeaderProps {
@@ -110,19 +114,63 @@ export function PageHeader({
   )
 }
 
+const ACCENT_STYLES: Record<
+  NonNullable<PageHeaderKpi["accent"]>,
+  { bg: string; border: string; valueColor: string; chipBg: string; chipColor: string; chipBorder: string }
+> = {
+  emerald: {
+    bg: "linear-gradient(135deg, rgba(5,150,105,0.06) 0%, rgba(5,150,105,0.02) 100%)",
+    border: "rgba(5,150,105,0.18)",
+    valueColor: "#047857",
+    chipBg: "rgba(5,150,105,0.08)",
+    chipColor: "#047857",
+    chipBorder: "rgba(5,150,105,0.20)",
+  },
+  indigo: {
+    bg: "linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(99,102,241,0.02) 100%)",
+    border: "rgba(99,102,241,0.18)",
+    valueColor: "#4F46E5",
+    chipBg: "rgba(99,102,241,0.08)",
+    chipColor: "#4F46E5",
+    chipBorder: "rgba(99,102,241,0.20)",
+  },
+  amber: {
+    bg: "linear-gradient(135deg, rgba(217,119,6,0.06) 0%, rgba(217,119,6,0.02) 100%)",
+    border: "rgba(217,119,6,0.18)",
+    valueColor: "#B45309",
+    chipBg: "rgba(217,119,6,0.08)",
+    chipColor: "#B45309",
+    chipBorder: "rgba(217,119,6,0.20)",
+  },
+  rose: {
+    bg: "linear-gradient(135deg, rgba(220,38,38,0.06) 0%, rgba(220,38,38,0.02) 100%)",
+    border: "rgba(220,38,38,0.18)",
+    valueColor: "#B91C1C",
+    chipBg: "rgba(220,38,38,0.08)",
+    chipColor: "#B91C1C",
+    chipBorder: "rgba(220,38,38,0.20)",
+  },
+}
+
 function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
   const featured = kpi.featured
+  const accent = kpi.accent ? ACCENT_STYLES[kpi.accent] : null
+  const customStyle = accent
+    ? {
+        background: accent.bg,
+        borderColor: accent.border,
+        boxShadow: `0 1px 2px rgba(15,23,42,0.03), 0 0 24px ${accent.border}`,
+      }
+    : featured
+      ? {
+          boxShadow:
+            "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+        }
+      : undefined
   return (
     <div
       className={`pc-kpi-card group ${featured ? "lg:col-span-2" : ""}`}
-      style={
-        featured
-          ? {
-              boxShadow:
-                "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
-            }
-          : undefined
-      }
+      style={customStyle}
     >
       {/* Top row — label + trend pill */}
       <div className="flex items-center justify-between gap-2">
@@ -148,7 +196,11 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
         <div className="flex items-baseline gap-1.5">
           <p
             className={`${featured ? "text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
-            style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+            style={{
+              fontFeatureSettings: '"tnum" 1, "ss01" 1',
+              color: accent?.valueColor,
+              letterSpacing: "-0.025em",
+            }}
           >
             {kpi.value}
           </p>
@@ -158,6 +210,20 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
           <Sparkline points={kpi.sparkline} />
         )}
       </div>
+
+      {/* Micro badge tonal (ROI, etc.) — usa accent si existe, si no default emerald */}
+      {kpi.microBadge && (
+        <span
+          className="mt-1.5 inline-block self-start rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]"
+          style={{
+            background: accent?.chipBg ?? "rgba(5,150,105,0.08)",
+            color: accent?.chipColor ?? "#047857",
+            border: `1px solid ${accent?.chipBorder ?? "rgba(5,150,105,0.20)"}`,
+          }}
+        >
+          {kpi.microBadge}
+        </span>
+      )}
 
       {/* Breakdown chips — mini-insights tonales */}
       {kpi.breakdown && kpi.breakdown.length > 0 && (

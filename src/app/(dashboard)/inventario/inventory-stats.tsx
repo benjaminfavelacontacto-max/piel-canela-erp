@@ -79,7 +79,7 @@ export function InventoryStats({
       label: "CAPITAL INVERTIDO",
       value: fmt(capitalInvertido),
       valueColor: "#0F172A",
-      sub: "costo total de compras",
+      sub: "costo total de compra de stock disponible",
       icon: <DollarSign style={{ width: 16, height: 16 }} />,
       iconBg: "rgba(197,164,126,0.18)",
       trend: {
@@ -124,40 +124,32 @@ export function InventoryStats({
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
         gap: 12,
-        marginBottom: 20,
+        marginBottom: 0,
       }}
     >
       {cards.map((card, i) => (
         <div
           key={i}
           style={{
-            background: "rgba(255,255,255,0.75)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            background: "white",
             border: "1px solid rgba(15,23,42,0.06)",
-            borderRadius: 20,
-            padding: 24,
+            borderRadius: 14,
+            padding: "14px 16px",
             display: "flex",
             flexDirection: "column",
             gap: 0,
-            boxShadow:
-              "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.6)",
-            minHeight: 160,
-            transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
+            boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
+            minHeight: 108,
+            transition: "all 0.18s cubic-bezier(0.4,0,0.2,1)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.92)"
-            e.currentTarget.style.borderColor = "rgba(15,23,42,0.10)"
-            e.currentTarget.style.transform = "translateY(-2px)"
+            e.currentTarget.style.transform = "translateY(-1px)"
             e.currentTarget.style.boxShadow =
-              "0 1px 2px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.7)"
+              "0 1px 2px rgba(15,23,42,0.04), 0 6px 16px rgba(15,23,42,0.04)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.75)"
-            e.currentTarget.style.borderColor = "rgba(15,23,42,0.06)"
             e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow =
-              "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.6)"
+            e.currentTarget.style.boxShadow = "0 1px 2px rgba(15,23,42,0.03)"
           }}
         >
           {/* LABEL + ICON */}
@@ -166,14 +158,15 @@ export function InventoryStats({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: 14,
+              marginBottom: 8,
+              gap: 8,
             }}
           >
             <p
               style={{
-                fontSize: 9,
+                fontSize: 10.5,
                 fontWeight: 600,
-                letterSpacing: "0.14em",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: "#64748B",
               }}
@@ -182,9 +175,9 @@ export function InventoryStats({
             </p>
             <div
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
                 background: card.iconBg,
                 display: "flex",
                 alignItems: "center",
@@ -202,17 +195,14 @@ export function InventoryStats({
             style={{
               fontSize:
                 typeof card.value === "string" && card.value.length > 9
-                  ? 22
-                  : 28,
+                  ? 20
+                  : 24,
               fontWeight: 700,
               letterSpacing: "-0.03em",
               color: card.valueColor || "#0F172A",
               fontVariantNumeric: "tabular-nums",
               lineHeight: 1,
-              marginBottom: 8,
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
+              marginBottom: 6,
             }}
           >
             {card.value}
@@ -224,8 +214,8 @@ export function InventoryStats({
               style={{
                 fontSize: 11,
                 color: "#64748B",
-                marginBottom: card.pills ? 8 : 0,
-                lineHeight: 1.4,
+                marginBottom: card.pills ? 6 : 0,
+                lineHeight: 1.35,
               }}
             >
               {card.sub}
