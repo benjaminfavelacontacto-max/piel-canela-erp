@@ -485,7 +485,7 @@ function HealthDot({ value }: { value: number }) {
   )
 }
 
-/** Fila CRM intelligence — avatar + nombre + cycle + score + ticket */
+/** Fila CRM intelligence — columnas separadas: cliente | fecha | score | monto */
 function ClienteRowCRM({
   cliente: c,
   onClick,
@@ -526,7 +526,7 @@ function ClienteRowCRM({
         </span>
       </div>
 
-      {/* Nombre + cycle */}
+      {/* Cliente — nombre + confianza badge + cycle info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p
@@ -541,22 +541,51 @@ function ClienteRowCRM({
         </div>
         <p className="text-[10.5px] tabular-nums text-[#64748B]">
           {c.ventas_count} compras · cada{" "}
-          {c.frecuencia_dias ? `${Math.round(c.frecuencia_dias)}d` : "—"} · próx{" "}
-          <span className="font-medium text-[#0F172A]">{fecha}</span>
+          {c.frecuencia_dias ? `${Math.round(c.frecuencia_dias)}d` : "—"}
         </p>
       </div>
 
-      {/* Score + ticket esperado */}
-      <div className="shrink-0 text-right">
-        <div className={`text-[15px] font-bold tabular-nums leading-none ${probColor}`} style={{ letterSpacing: "-0.02em" }}>
-          {(prob * 100).toFixed(0)}%
-        </div>
-        <div className="mt-0.5 text-[11px] font-medium tabular-nums text-[#0F766E]">
-          {mxn.format(c.pred.ingresoEstimadoProx)}
-        </div>
+      {/* Próx. fecha — columna propia */}
+      <div className="hidden w-[78px] shrink-0 text-right sm:block">
+        <p
+          className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]"
+        >
+          Próx
+        </p>
+        <p
+          className="mt-0.5 text-[12.5px] font-semibold tabular-nums text-[#0F172A]"
+          style={{ letterSpacing: "-0.01em" }}
+        >
+          {fecha}
+        </p>
       </div>
 
-      {/* Mini progress bar bottom */}
+      {/* Probabilidad — columna propia */}
+      <div className="w-[60px] shrink-0 text-right">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+          P(60d)
+        </p>
+        <p
+          className={`mt-0.5 text-[14px] font-bold tabular-nums leading-none ${probColor}`}
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          {(prob * 100).toFixed(0)}%
+        </p>
+      </div>
+
+      {/* Monto esperado — columna propia */}
+      <div className="w-[88px] shrink-0 text-right">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+          Ticket
+        </p>
+        <p
+          className="mt-0.5 text-[12.5px] font-bold tabular-nums text-[#0F766E]"
+          style={{ letterSpacing: "-0.01em", fontFeatureSettings: '"tnum" 1' }}
+        >
+          {mxn.format(c.pred.ingresoEstimadoProx)}
+        </p>
+      </div>
+
       {onClick && (
         <ChevronRight className="size-3.5 shrink-0 text-gray-300 transition-colors group-hover:text-gray-500" />
       )}
