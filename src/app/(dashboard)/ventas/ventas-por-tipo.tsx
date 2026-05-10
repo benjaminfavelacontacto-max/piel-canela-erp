@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   BarChart,
   Bar,
@@ -582,8 +583,31 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
             </div>
           </header>
 
+          {/* Header de columnas */}
+          <div
+            className="grid items-center gap-3 border-b border-[rgba(15,23,42,0.06)] px-6 py-2.5"
+            style={{ gridTemplateColumns: "200px 1fr 110px 130px 100px 36px" }}
+          >
+            {[
+              { label: "Orden", align: "left" },
+              { label: "Cliente", align: "left" },
+              { label: "Fecha", align: "left" },
+              { label: "Total venta", align: "right" },
+              { label: "Estatus", align: "center" },
+              { label: "", align: "left" },
+            ].map((h, i) => (
+              <p
+                key={i}
+                className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400"
+                style={{ textAlign: h.align as "left" | "right" | "center" }}
+              >
+                {h.label}
+              </p>
+            ))}
+          </div>
+
           {/* Lista órdenes */}
-          <div className="max-h-[320px] overflow-y-auto">
+          <div className="max-h-[360px] overflow-y-auto">
             {[...seleccionado.ordenes]
               .sort(
                 (a, b) =>
@@ -596,34 +620,62 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                   bg: "rgba(100,116,139,0.10)",
                   border: "rgba(100,116,139,0.20)",
                 }
+                const catColor = getColor(seleccionado.categoria)
                 return (
                   <div
                     key={orden.id}
-                    className="grid items-center gap-4 border-b border-[rgba(15,23,42,0.03)] px-6 py-3 transition-colors hover:bg-gray-50/60"
+                    className="grid items-center gap-3 border-b border-[rgba(15,23,42,0.03)] px-6 py-3 transition-colors hover:bg-gray-50/60"
                     style={{
-                      gridTemplateColumns: "100px 1fr 110px 130px 100px",
+                      gridTemplateColumns:
+                        "200px 1fr 110px 130px 100px 36px",
                     }}
                   >
-                    <p
-                      className="truncate text-[12px] font-semibold tabular-nums"
-                      style={{ color: getColor(seleccionado.categoria) }}
+                    {/* Número clickeable */}
+                    <Link
+                      href={`/ventas/${orden.id}`}
+                      className="inline-flex items-center gap-1.5 truncate text-[12px] font-semibold tabular-nums transition-opacity hover:opacity-70"
+                      style={{ color: catColor }}
+                      title={String(orden.numero ?? orden.id)}
                     >
-                      #{orden.numero ?? orden.id.slice(0, 8)}
-                    </p>
-                    <p className="truncate text-[12px] font-medium text-[#475569]">
+                      <span className="truncate">
+                        #{orden.numero ?? orden.id.slice(0, 8)}
+                      </span>
+                      <span
+                        className="shrink-0 rounded text-[8.5px] opacity-50"
+                        style={{
+                          border: "1px solid currentColor",
+                          padding: "0 4px",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        ↗
+                      </span>
+                    </Link>
+
+                    {/* Cliente */}
+                    <p
+                      className="truncate text-[12.5px] font-medium text-[#475569]"
+                      title={orden.cliente}
+                    >
                       {orden.cliente}
                     </p>
-                    <p className="text-[11px] text-gray-400 tabular-nums">
+
+                    {/* Fecha */}
+                    <p className="text-[11px] tabular-nums text-gray-400">
                       {new Date(orden.fecha).toLocaleDateString("es-MX", {
                         day: "numeric",
                         month: "short",
                         year: "2-digit",
                       })}
                     </p>
+
+                    {/* Total */}
                     <p className="text-right text-[13px] font-bold tabular-nums text-[#0F172A]">
                       {fmtMXN(Number(orden.total))}
                     </p>
-                    <div className="text-right">
+
+                    {/* Status */}
+                    <div className="text-center">
                       <span
                         className="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
                         style={{
@@ -635,6 +687,28 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                         {sc.label}
                       </span>
                     </div>
+
+                    {/* Botón ir */}
+                    <Link
+                      href={`/ventas/${orden.id}`}
+                      title={`Abrir orden ${orden.numero ?? ""}`}
+                      className="flex size-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 transition-all hover:-translate-y-0.5"
+                      style={{ fontSize: 14 }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget
+                        el.style.background = `${catColor}10`
+                        el.style.borderColor = `${catColor}40`
+                        el.style.color = catColor
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget
+                        el.style.background = "white"
+                        el.style.borderColor = "rgb(229 231 235)"
+                        el.style.color = "#9CA3AF"
+                      }}
+                    >
+                      ↗
+                    </Link>
                   </div>
                 )
               })}
