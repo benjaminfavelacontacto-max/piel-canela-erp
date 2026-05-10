@@ -200,79 +200,102 @@ export function PrediccionCompras({
   }, [predicciones, today])
 
   return (
-    <section className="space-y-4">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 via-pink-500 to-amber-500 text-white shadow-sm">
-            <Brain className="size-4" />
-          </span>
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900">
-              Predicción de compras
-            </h3>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              Modelos por cliente: CDF empírica · Bell curve · seasonality boost
-            </p>
-          </div>
-        </div>
-        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-700">
-          AI-ready
-        </span>
-      </header>
+    <section
+      className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] p-5"
+      style={{
+        background:
+          "radial-gradient(ellipse at top right, rgba(139,92,246,0.04), transparent 50%), radial-gradient(ellipse at bottom left, rgba(15,118,110,0.03), transparent 50%), white",
+        boxShadow:
+          "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-40"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%)",
+          filter: "blur(40px)",
+        }}
+        aria-hidden
+      />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <PredKpi
-          icon={<Target className="size-4" />}
-          label="Ingreso esperado · 60d"
-          value={mxn.format(kpis.ingreso60)}
-          sub={`30d ${mxn.format(kpis.ingreso30)} · 90d ${mxn.format(kpis.ingreso90)}`}
-          accent="text-[#0F766E]"
-          gradient="from-pink-50 via-white to-rose-50/50"
-          ring="ring-pink-100"
-        />
-        <PredKpi
-          icon={<Zap className="size-4" />}
-          label="Alta probabilidad recompra"
-          value={`${kpis.altaProb}`}
-          sub="P(60d) ≥ 60%"
-          accent="text-emerald-700"
-          gradient="from-emerald-50 via-white to-teal-50/50"
-          ring="ring-emerald-100"
-        />
-        <PredKpi
-          icon={<AlertTriangle className="size-4" />}
-          label="En riesgo de abandono"
-          value={`${kpis.enRiesgo}`}
-          sub="Riesgo ≥ 60%"
-          accent="text-rose-700"
-          gradient="from-rose-50 via-white to-pink-50/50"
-          ring="ring-rose-100"
-        />
-        <PredKpi
-          icon={<Crown className="size-4" />}
-          label="Valor futuro 12m total"
-          value={mxn.format(kpis.valorFuturoTotal)}
-          sub={
-            kpis.mejorPredicho
-              ? `Top: ${(kpis.mejorPredicho.nombre_negocio ?? kpis.mejorPredicho.nombre).slice(0, 22)}`
-              : ""
-          }
-          accent="text-amber-700"
-          gradient="from-amber-50 via-white to-orange-50/50"
-          ring="ring-amber-100"
-        />
-      </div>
+      <div className="relative space-y-4">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                boxShadow:
+                  "0 1px 2px rgba(139,92,246,0.2), 0 4px 12px rgba(139,92,246,0.15)",
+              }}
+            >
+              <Brain className="size-4" strokeWidth={1.75} />
+            </span>
+            <div>
+              <h3 className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F172A]">
+                AI Pattern Analysis
+              </h3>
+              <p className="mt-0.5 text-[11px] text-[#64748B]">
+                CDF empírica · Bell curve · seasonality boost
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 ring-1 ring-violet-200/40 backdrop-blur-sm">
+            <span className="relative flex size-1.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-violet-400 opacity-75" />
+              <span className="relative size-1.5 rounded-full bg-violet-500" />
+            </span>
+            AI-ready
+          </span>
+        </header>
+
+        {/* AI tiles compactos — superficie única */}
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/60 backdrop-blur-sm lg:grid-cols-4">
+          <AiTile
+            icon={<Target className="size-3.5" strokeWidth={1.75} />}
+            label="Ingreso 60d"
+            value={mxn.format(kpis.ingreso60)}
+            sub={`30d ${mxn.format(kpis.ingreso30)} · 90d ${mxn.format(kpis.ingreso90)}`}
+            tone="emerald"
+          />
+          <AiTile
+            icon={<Zap className="size-3.5" strokeWidth={1.75} />}
+            label="Alta probabilidad"
+            value={`${kpis.altaProb}`}
+            sub="P(60d) ≥ 60%"
+            tone="emerald"
+          />
+          <AiTile
+            icon={<AlertTriangle className="size-3.5" strokeWidth={1.75} />}
+            label="En riesgo"
+            value={`${kpis.enRiesgo}`}
+            sub="Riesgo ≥ 60%"
+            tone="rose"
+          />
+          <AiTile
+            icon={<Crown className="size-3.5" strokeWidth={1.75} />}
+            label="Valor futuro 12m"
+            value={mxn.format(kpis.valorFuturoTotal)}
+            sub={
+              kpis.mejorPredicho
+                ? `Top: ${(kpis.mejorPredicho.nombre_negocio ?? kpis.mejorPredicho.nombre).slice(0, 18)}`
+                : ""
+            }
+            tone="amber"
+          />
+        </div>
 
       {/* Timeline 6 meses */}
-      <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
         <header className="mb-3 flex items-center justify-between">
           <div>
-            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-              <Calendar className="size-4 text-violet-600" />
+            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-[#0F172A]">
+              <Calendar className="size-4 text-violet-600" strokeWidth={1.75} />
               Timeline predictivo · próximos 6 meses
             </h4>
-            <p className="mt-0.5 text-[11px] text-gray-500">
+            <p className="mt-0.5 text-[11px] text-[#64748B]">
               Ingreso esperado por mes = Σ (ticket × P de cada cliente para ese mes)
             </p>
           </div>
@@ -355,217 +378,313 @@ export function PrediccionCompras({
       </article>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Tabla próximas compras */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
-          <header className="mb-3">
-            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-              <Sparkles className="size-4 text-[#0F766E]" />
-              Próximas compras esperadas
-            </h4>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              Top 12 ordenado por (probabilidad × ticket esperado)
-            </p>
+        {/* Próximas compras — CRM intelligence list */}
+        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm lg:col-span-2">
+          <header className="mb-3 flex items-center justify-between">
+            <div>
+              <h4 className="flex items-center gap-1.5 text-sm font-semibold text-[#0F172A]">
+                <Sparkles className="size-4 text-[#0F766E]" strokeWidth={1.75} />
+                Próximas compras esperadas
+              </h4>
+              <p className="mt-0.5 text-[11px] text-[#64748B]">
+                Ordenado por probabilidad × ticket esperado
+              </p>
+            </div>
+            <span className="rounded-full bg-[#F3F5F7] px-2 py-0.5 text-[10px] font-medium text-[#64748B] tabular-nums">
+              Top {proximasCompras.length}
+            </span>
           </header>
           {proximasCompras.length === 0 ? (
-            <p className="py-8 text-center text-xs italic text-gray-400">
+            <p className="py-8 text-center text-xs italic text-[#94A3B8]">
               Sin patrones suficientes para predecir.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <Th align="left">Cliente</Th>
-                    <Th>Próx. fecha</Th>
-                    <Th>Ventana</Th>
-                    <Th align="right">P(60d)</Th>
-                    <Th align="right">Ticket esp.</Th>
-                    <Th>Confianza</Th>
-                    <Th align="right" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {proximasCompras.map((c) => {
-                    const conf = CONFIANZA_CONF[c.pred.confianza]
-                    const probColor =
-                      c.pred.probabilidadProx60 >= 0.7
-                        ? "text-emerald-700 bg-emerald-50"
-                        : c.pred.probabilidadProx60 >= 0.4
-                          ? "text-amber-700 bg-amber-50"
-                          : "text-gray-600 bg-gray-50"
-                    const ventanaLabel =
-                      c.pred.ventanaInicio && c.pred.ventanaFin
-                        ? `${fechaCorta.format(c.pred.ventanaInicio)} – ${fechaCorta.format(c.pred.ventanaFin)}`
-                        : "—"
-                    return (
-                      <tr
-                        key={c.id}
-                        onClick={() => onClienteClick?.(c)}
-                        className={`border-b border-gray-50 transition-colors ${onClienteClick ? "cursor-pointer hover:bg-[#F9FAFB]/40" : ""}`}
-                      >
-                        <td className="py-2 pr-2 font-semibold text-gray-900">
-                          <div className="truncate max-w-[200px]">
-                            {c.nombre_negocio ?? c.nombre}
-                          </div>
-                          <div className="text-[10px] font-normal text-gray-500">
-                            {c.ventas_count} compras · cada{" "}
-                            {c.frecuencia_dias
-                              ? `${Math.round(c.frecuencia_dias)}d`
-                              : "—"}
-                          </div>
-                        </td>
-                        <td className="py-2 text-center text-gray-700 tabular-nums">
-                          {c.pred.fechaProxima
-                            ? fechaCorta.format(c.pred.fechaProxima)
-                            : "—"}
-                        </td>
-                        <td className="py-2 text-center text-[10px] text-gray-500 tabular-nums">
-                          {ventanaLabel}
-                        </td>
-                        <td className="py-2 text-right">
-                          <span
-                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums ${probColor}`}
-                          >
-                            {(c.pred.probabilidadProx60 * 100).toFixed(0)}%
-                          </span>
-                        </td>
-                        <td className="py-2 text-right font-semibold text-[#0F766E] tabular-nums">
-                          {mxn.format(c.pred.ingresoEstimadoProx)}
-                        </td>
-                        <td className="py-2 text-center">
-                          <span
-                            className={`inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-medium ${conf.bg} ${conf.text}`}
-                          >
-                            {conf.label}
-                          </span>
-                        </td>
-                        <td className="py-2 text-right">
-                          {onClienteClick && (
-                            <ChevronRight className="ml-auto size-3 text-gray-400" />
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ul className="-mx-2 divide-y divide-[rgba(15,23,42,0.04)]">
+              {proximasCompras.map((c) => (
+                <ClienteRowCRM
+                  key={c.id}
+                  cliente={c}
+                  onClick={onClienteClick ? () => onClienteClick(c) : undefined}
+                />
+              ))}
+            </ul>
           )}
         </article>
 
         {/* Clientes en riesgo */}
-        <article className="rounded-2xl border border-rose-200/60 bg-gradient-to-br from-rose-50/40 to-white p-5 shadow-sm">
+        <article
+          className="relative overflow-hidden rounded-xl border border-rose-200/40 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+          style={{
+            background:
+              "radial-gradient(ellipse at top right, rgba(220,38,38,0.04), transparent 60%), white",
+          }}
+        >
           <header className="mb-3">
             <h4 className="flex items-center gap-1.5 text-sm font-semibold text-rose-700">
-              <TrendingDown className="size-4" />
+              <TrendingDown className="size-4" strokeWidth={1.75} />
               En riesgo de abandono
             </h4>
-            <p className="mt-0.5 text-[11px] text-rose-600/80">
+            <p className="mt-0.5 text-[11px] text-rose-600/70">
               Días sin compra &gt; frecuencia normal
             </p>
           </header>
           {enRiesgo.length === 0 ? (
-            <p className="py-6 text-center text-xs italic text-gray-400">
+            <p className="py-6 text-center text-xs italic text-[#94A3B8]">
               Ningún cliente en zona de riesgo. 🎉
             </p>
           ) : (
-            <ul className="space-y-2">
-              {enRiesgo.map((c) => {
-                const tone =
-                  c.pred.riesgoAbandono >= 0.85
-                    ? "from-rose-100 to-rose-50 ring-rose-300/60"
-                    : "from-amber-50 to-rose-50/50 ring-amber-200/60"
-                return (
-                  <li
-                    key={c.id}
-                    onClick={() => onClienteClick?.(c)}
-                    className={`cursor-pointer rounded-lg bg-gradient-to-r ${tone} p-2 ring-1 transition hover:scale-[1.01] hover:shadow-sm`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-xs font-semibold text-gray-900">
-                          {c.nombre_negocio ?? c.nombre}
-                        </div>
-                        <div className="mt-0.5 text-[10px] text-gray-600">
-                          Hace {c.dias_sin_compra}d · cycle{" "}
-                          {c.frecuencia_dias
-                            ? Math.round(c.frecuencia_dias)
-                            : "—"}
-                          d
-                        </div>
-                      </div>
-                      <span className="ml-2 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                        {(c.pred.riesgoAbandono * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/70">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-rose-500"
-                        style={{
-                          width: `${Math.min(100, c.pred.riesgoAbandono * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </li>
-                )
-              })}
+            <ul className="-mx-2 divide-y divide-[rgba(15,23,42,0.04)]">
+              {enRiesgo.map((c) => (
+                <RiesgoRow
+                  key={c.id}
+                  cliente={c}
+                  onClick={onClienteClick ? () => onClienteClick(c) : undefined}
+                />
+              ))}
             </ul>
           )}
         </article>
+      </div>
       </div>
     </section>
   )
 }
 
-function PredKpi({
+/** Iniciales (2) del cliente */
+function getInitials(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  )
+}
+
+/** Health dot — color según probabilidad */
+function HealthDot({ value }: { value: number }) {
+  const color =
+    value >= 0.7
+      ? "bg-emerald-500"
+      : value >= 0.4
+        ? "bg-amber-500"
+        : "bg-gray-400"
+  return (
+    <span className="relative flex size-2 shrink-0">
+      {value >= 0.7 && (
+        <span
+          aria-hidden
+          className="absolute inset-0 animate-ping rounded-full bg-emerald-400/50"
+          style={{ animationDuration: "2.4s" }}
+        />
+      )}
+      <span className={`relative size-2 rounded-full ${color}`} />
+    </span>
+  )
+}
+
+/** Fila CRM intelligence — avatar + nombre + cycle + score + ticket */
+function ClienteRowCRM({
+  cliente: c,
+  onClick,
+}: {
+  cliente: EnrichedConPred
+  onClick?: () => void
+}) {
+  const conf = CONFIANZA_CONF[c.pred.confianza]
+  const prob = c.pred.probabilidadProx60
+  const probColor =
+    prob >= 0.7
+      ? "text-emerald-700"
+      : prob >= 0.4
+        ? "text-amber-700"
+        : "text-[#64748B]"
+  const display = c.nombre_negocio ?? c.nombre
+  const fecha = c.pred.fechaProxima
+    ? fechaCorta.format(c.pred.fechaProxima)
+    : "—"
+  return (
+    <li
+      onClick={onClick}
+      className={`group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-180 ${onClick ? "cursor-pointer hover:bg-[rgba(15,118,110,0.03)]" : ""}`}
+    >
+      {/* Avatar + health dot */}
+      <div className="relative shrink-0">
+        <div
+          className="flex size-9 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ring-2 ring-white"
+          style={{
+            background:
+              "linear-gradient(135deg, #0F766E 0%, #115E59 100%)",
+          }}
+        >
+          {getInitials(display)}
+        </div>
+        <span className="absolute -right-0.5 -top-0.5">
+          <HealthDot value={prob} />
+        </span>
+      </div>
+
+      {/* Nombre + cycle */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p
+            className="truncate text-[13px] font-semibold tracking-[-0.01em] text-[#0F172A]"
+            title={display}
+          >
+            {display}
+          </p>
+          <span className={`shrink-0 rounded-md px-1 py-0.5 text-[9px] font-bold ${conf.bg} ${conf.text}`}>
+            {conf.label}
+          </span>
+        </div>
+        <p className="text-[10.5px] tabular-nums text-[#64748B]">
+          {c.ventas_count} compras · cada{" "}
+          {c.frecuencia_dias ? `${Math.round(c.frecuencia_dias)}d` : "—"} · próx{" "}
+          <span className="font-medium text-[#0F172A]">{fecha}</span>
+        </p>
+      </div>
+
+      {/* Score + ticket esperado */}
+      <div className="shrink-0 text-right">
+        <div className={`text-[15px] font-bold tabular-nums leading-none ${probColor}`} style={{ letterSpacing: "-0.02em" }}>
+          {(prob * 100).toFixed(0)}%
+        </div>
+        <div className="mt-0.5 text-[11px] font-medium tabular-nums text-[#0F766E]">
+          {mxn.format(c.pred.ingresoEstimadoProx)}
+        </div>
+      </div>
+
+      {/* Mini progress bar bottom */}
+      {onClick && (
+        <ChevronRight className="size-3.5 shrink-0 text-gray-300 transition-colors group-hover:text-gray-500" />
+      )}
+    </li>
+  )
+}
+
+/** Fila de riesgo — avatar + nombre + dias sin compra + score riesgo */
+function RiesgoRow({
+  cliente: c,
+  onClick,
+}: {
+  cliente: EnrichedConPred
+  onClick?: () => void
+}) {
+  const riesgo = c.pred.riesgoAbandono
+  const display = c.nombre_negocio ?? c.nombre
+  return (
+    <li
+      onClick={onClick}
+      className={`group flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-180 ${onClick ? "cursor-pointer hover:bg-[rgba(220,38,38,0.03)]" : ""}`}
+    >
+      <div className="relative shrink-0">
+        <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+          {getInitials(display)}
+        </div>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p
+          className="truncate text-[12.5px] font-semibold tracking-[-0.01em] text-[#0F172A]"
+          title={display}
+        >
+          {display}
+        </p>
+        <p className="text-[10.5px] tabular-nums text-[#64748B]">
+          Hace{" "}
+          <span className="font-medium text-rose-600">
+            {c.dias_sin_compra}d
+          </span>
+          {" · cycle "}
+          {c.frecuencia_dias ? `${Math.round(c.frecuencia_dias)}d` : "—"}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <div
+          className="text-[14px] font-bold tabular-nums leading-none text-rose-600"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          {(riesgo * 100).toFixed(0)}%
+        </div>
+        <div className="mt-1 h-[3px] w-16 overflow-hidden rounded-full bg-rose-100/50">
+          <div
+            className="h-[3px] rounded-full bg-gradient-to-r from-amber-500 to-rose-500"
+            style={{ width: `${Math.min(100, riesgo * 100)}%` }}
+          />
+        </div>
+      </div>
+    </li>
+  )
+}
+
+/**
+ * AI tile compacto — mismo patrón que EstimadoIngresos.
+ * Sin card visible, divisores invisibles, hover glow per-tone.
+ */
+function AiTile({
   icon,
   label,
   value,
   sub,
-  accent,
-  gradient,
-  ring,
+  tone = "emerald",
 }: {
   icon: React.ReactNode
   label: string
   value: string
   sub?: string
-  accent: string
-  gradient: string
-  ring: string
+  tone?: "emerald" | "violet" | "amber" | "rose"
 }) {
+  const iconColor =
+    tone === "violet"
+      ? "text-violet-600"
+      : tone === "amber"
+        ? "text-amber-600"
+        : tone === "rose"
+          ? "text-rose-600"
+          : "text-[#0F766E]"
+  const glowRgb =
+    tone === "violet"
+      ? "139,92,246"
+      : tone === "amber"
+        ? "245,158,11"
+        : tone === "rose"
+          ? "220,38,38"
+          : "15,118,110"
   return (
-    <article
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-4 ring-1 ${ring} shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+    <div
+      className="group relative px-4 py-3 transition-all duration-180 hover:bg-white/55"
+      style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `inset 1px 0 0 0 rgba(15,23,42,0.04), inset 0 -2px 0 0 rgba(${glowRgb},0.4), 0 4px 16px rgba(${glowRgb},0.06)`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "inset 1px 0 0 0 rgba(15,23,42,0.04)"
+      }}
     >
-      <header className={`flex items-center gap-1.5 ${accent}`}>
-        {icon}
-        <span className="text-[10.5px] font-semibold uppercase tracking-wider">
-          {label}
+      <div className="flex items-center gap-1.5">
+        <span
+          className={`${iconColor} transition-transform duration-180 group-hover:scale-110`}
+        >
+          {icon}
         </span>
-      </header>
-      <div className={`mt-2 text-lg font-bold tabular-nums ${accent}`}>
-        {value}
+        <p
+          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+          style={{ letterSpacing: "0.12em" }}
+        >
+          {label}
+        </p>
       </div>
-      {sub && <div className="mt-0.5 text-[10.5px] text-gray-600">{sub}</div>}
-    </article>
-  )
-}
-
-function Th({
-  children,
-  align = "center",
-}: {
-  children?: React.ReactNode
-  align?: "left" | "right" | "center"
-}) {
-  return (
-    <th
-      className="px-2 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
+      <p
+        className="mt-1.5 text-[20px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A]"
+        style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]">{sub}</p>
+      )}
+    </div>
   )
 }
 
