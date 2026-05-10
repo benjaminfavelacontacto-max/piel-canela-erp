@@ -166,7 +166,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
     <div className="space-y-3">
       <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
         {/* Header */}
-        <header className="flex items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
           <div>
             <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
               Análisis de Ventas
@@ -175,29 +175,47 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
               Ventas por Tipo de Producto
             </h2>
           </div>
-          <div className="text-right">
-            <p className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
-              Total general
-            </p>
-            <p
-              className="mt-0.5 text-[18px] font-bold tabular-nums text-[#0F172A]"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              {fmtMXN(totalGeneral)}
-            </p>
+          <div className="flex items-center gap-8">
+            <div className="text-right">
+              <p className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+                Total MXN
+              </p>
+              <p
+                className="mt-0.5 text-[16px] font-bold tabular-nums text-[#0F172A]"
+                style={{ letterSpacing: "-0.025em" }}
+              >
+                {fmtMXN(totalGeneral)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+                Total Unidades
+              </p>
+              <p
+                className="mt-0.5 text-[16px] font-bold tabular-nums text-[#0F172A]"
+                style={{ letterSpacing: "-0.025em" }}
+              >
+                {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
+              </p>
+            </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_260px]">
-          {/* Gráfica */}
-          <div className="px-5 py-5 lg:pr-3">
-            <ResponsiveContainer width="100%" height={280}>
+        {/* Body: 3 columnas [barras | dona | ranking] */}
+        <div
+          className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_280px_240px]"
+          style={{ minHeight: 320 }}
+        >
+          {/* COL 1: Barras */}
+          <div className="border-b border-[rgba(15,23,42,0.04)] px-5 pt-4 pb-3 lg:border-b-0 lg:border-r">
+            <p className="mb-3 text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+              Ingresos por categoría
+            </p>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart
                 data={data}
                 onClick={(e) => {
-                  const ap = (
-                    e as { activePayload?: { payload: TipoData }[] }
-                  )?.activePayload
+                  const ap = (e as { activePayload?: { payload: TipoData }[] })?.activePayload
                   if (ap?.[0]) {
                     const clicked = ap[0].payload
                     setSeleccionado((prev) =>
@@ -206,7 +224,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                   }
                 }}
                 style={{ cursor: "pointer" }}
-                margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                margin={{ top: 4, right: 8, bottom: 8, left: 0 }}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -223,22 +241,17 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                   }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v: string) =>
-                    v.length > 10 ? v.slice(0, 10) + "…" : v
-                  }
+                  tickFormatter={(v: string) => (v.length > 8 ? v.slice(0, 8) + "…" : v)}
                 />
                 <YAxis
                   tick={{ fontSize: 9, fill: "#94A3B8" }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}K`}
-                  width={42}
+                  width={38}
                 />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ fill: "rgba(15,23,42,0.03)" }}
-                />
-                <Bar dataKey="totalVentas" radius={[6, 6, 0, 0]} maxBarSize={52}>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.03)" }} />
+                <Bar dataKey="totalVentas" radius={[5, 5, 0, 0]} maxBarSize={44}>
                   {data.map((entry) => {
                     const isActive = seleccionado?.categoria === entry.categoria
                     const color = getColor(entry.categoria)
@@ -247,9 +260,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                         key={entry.categoria}
                         fill={isActive ? color : `${color}AA`}
                         style={{
-                          filter: isActive
-                            ? `drop-shadow(0 4px 8px ${color}40)`
-                            : "none",
+                          filter: isActive ? `drop-shadow(0 4px 8px ${color}40)` : "none",
                           transition: "all 0.2s",
                         }}
                       />
@@ -259,224 +270,174 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
               </BarChart>
             </ResponsiveContainer>
             <p className="mt-1 text-center text-[10px] text-gray-400">
-              Click en una barra para ver las órdenes de ese tipo
+              Click en una barra para ver las órdenes
             </p>
           </div>
 
-          {/* Ranking lateral */}
-          <div className="flex max-h-[340px] flex-col gap-2 overflow-y-auto border-t border-[rgba(15,23,42,0.04)] px-5 py-5 lg:border-l lg:border-t-0">
+          {/* COL 2: Dona */}
+          <div className="flex flex-col items-center border-b border-[rgba(15,23,42,0.04)] px-3 pt-4 pb-3 lg:border-b-0 lg:border-r">
+            <p className="mb-3 self-start pl-2 text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+              Unidades por categoría
+            </p>
+            <div className="relative flex w-full flex-1 items-center justify-center">
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={data.filter((d) => d.totalUnidades > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={62}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="totalUnidades"
+                    nameKey="categoria"
+                    onClick={(entry) => {
+                      const e = entry as unknown as TipoData
+                      setSeleccionado((prev) =>
+                        prev?.categoria === e.categoria ? null : e,
+                      )
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {data
+                      .filter((d) => d.totalUnidades > 0)
+                      .map((entry) => {
+                        const color = getColor(entry.categoria)
+                        const isActive = seleccionado?.categoria === entry.categoria
+                        return (
+                          <Cell
+                            key={entry.categoria}
+                            fill={isActive ? color : `${color}AA`}
+                            stroke={isActive ? color : "white"}
+                            strokeWidth={2}
+                            style={{
+                              filter: isActive
+                                ? `drop-shadow(0 4px 8px ${color}40)`
+                                : "none",
+                              transition: "all 0.2s",
+                            }}
+                          />
+                        )
+                      })}
+                  </Pie>
+                  <Tooltip
+                    content={(props: unknown) => {
+                      const { active, payload } = props as {
+                        active?: boolean
+                        payload?: ReadonlyArray<{ payload: TipoData }>
+                      }
+                      if (!active || !payload?.length) return null
+                      const d = payload[0].payload
+                      const total = data.reduce((s, x) => s + x.totalUnidades, 0)
+                      const pct = total > 0
+                        ? ((d.totalUnidades / total) * 100).toFixed(1)
+                        : "0"
+                      return (
+                        <div
+                          style={{
+                            background: "white",
+                            border: `1px solid ${getColor(d.categoria)}40`,
+                            borderRadius: 12,
+                            padding: "10px 14px",
+                            boxShadow:
+                              "0 1px 2px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.10)",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              color: getColor(d.categoria),
+                              marginBottom: 6,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {d.categoria}
+                          </p>
+                          <p
+                            style={{
+                              fontSize: 18,
+                              fontWeight: 700,
+                              color: "#0F172A",
+                              letterSpacing: "-0.025em",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {d.totalUnidades.toLocaleString("es-MX")} uds
+                          </p>
+                          <p style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>
+                            {pct}% · {d.ordenes.length} órdenes
+                          </p>
+                          <p style={{ fontSize: 9, color: "#94A3B8", marginTop: 4 }}>
+                            Click para ver detalle →
+                          </p>
+                        </div>
+                      )
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Label central */}
+              <div
+                className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
+              >
+                {seleccionado ? (
+                  <>
+                    <p
+                      className="text-[18px] font-bold leading-none tabular-nums"
+                      style={{
+                        color: getColor(seleccionado.categoria),
+                        letterSpacing: "-0.025em",
+                      }}
+                    >
+                      {seleccionado.totalUnidades.toLocaleString("es-MX")}
+                    </p>
+                    <p
+                      className="mt-1 text-[9px] uppercase text-gray-400"
+                      style={{ letterSpacing: "0.10em" }}
+                    >
+                      uds
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      className="text-[20px] font-bold leading-none tabular-nums text-[#0F172A]"
+                      style={{ letterSpacing: "-0.025em" }}
+                    >
+                      {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
+                    </p>
+                    <p
+                      className="mt-1 text-[9px] uppercase text-gray-400"
+                      style={{ letterSpacing: "0.10em" }}
+                    >
+                      total uds
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            <p className="mt-1 text-center text-[10px] text-gray-400">
+              Click en un sector para ver las órdenes
+            </p>
+          </div>
+
+          {/* COL 3: Ranking combinado */}
+          <div
+            className="flex flex-col gap-1.5 overflow-y-auto px-4 py-4"
+            style={{ maxHeight: 320 }}
+          >
             <p className="mb-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
               Ranking
             </p>
-            {data.map((tipo, i) => {
-              const pct =
-                totalGeneral > 0
+            {[...data]
+              .sort((a, b) => b.totalVentas - a.totalVentas)
+              .map((tipo, i) => {
+                const pctMXN = totalGeneral > 0
                   ? Math.round((tipo.totalVentas / totalGeneral) * 100)
                   : 0
-              const isSelected = seleccionado?.categoria === tipo.categoria
-              const color = getColor(tipo.categoria)
-              return (
-                <button
-                  key={tipo.categoria}
-                  type="button"
-                  onClick={() =>
-                    setSeleccionado((prev) =>
-                      prev?.categoria === tipo.categoria ? null : tipo,
-                    )
-                  }
-                  className="rounded-xl border bg-white p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
-                  style={{
-                    borderColor: isSelected ? color : "rgba(15,23,42,0.06)",
-                    boxShadow: isSelected ? `0 0 0 2px ${color}20` : undefined,
-                    background: isSelected ? `${color}08` : "white",
-                  }}
-                >
-                  <div className="mb-1.5 flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="min-w-[14px] text-[9px] font-bold text-gray-400 tabular-nums">
-                        #{i + 1}
-                      </span>
-                      <span
-                        className="text-[10.5px] font-semibold"
-                        style={{
-                          color: isSelected ? color : "#475569",
-                          letterSpacing: "0.02em",
-                        }}
-                      >
-                        {tipo.categoria.length > 14
-                          ? tipo.categoria.slice(0, 13) + "…"
-                          : tipo.categoria}
-                      </span>
-                    </div>
-                    <span className="text-[10.5px] font-bold text-gray-700 tabular-nums">
-                      {pct}%
-                    </span>
-                  </div>
-                  <div className="h-[3px] overflow-hidden rounded-full bg-gray-100">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, background: color }}
-                    />
-                  </div>
-                  <p className="mt-1.5 text-[10px] text-gray-500 tabular-nums">
-                    {fmtMXN(tipo.totalVentas)} · {tipo.ordenes.length} órdenes
-                  </p>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Donut: Unidades por Categoría */}
-      <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
-        <header className="flex items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
-          <div>
-            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-              Distribución
-            </p>
-            <h2 className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
-              Unidades Vendidas por Tipo
-            </h2>
-          </div>
-          <div className="text-right">
-            <p className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
-              Total unidades
-            </p>
-            <p
-              className="mt-0.5 text-[18px] font-bold tabular-nums text-[#0F172A]"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
-            </p>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_280px]">
-          {/* Donut */}
-          <div className="flex items-center justify-center px-5 py-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={data.filter((d) => d.totalUnidades > 0)}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={120}
-                  paddingAngle={2}
-                  dataKey="totalUnidades"
-                  nameKey="categoria"
-                  onClick={(entry) => {
-                    const e = entry as unknown as TipoData
-                    setSeleccionado((prev) =>
-                      prev?.categoria === e.categoria ? null : e,
-                    )
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  {data
-                    .filter((d) => d.totalUnidades > 0)
-                    .map((entry) => {
-                      const color = getColor(entry.categoria)
-                      const isActive =
-                        seleccionado?.categoria === entry.categoria
-                      return (
-                        <Cell
-                          key={entry.categoria}
-                          fill={isActive ? color : `${color}AA`}
-                          stroke={isActive ? color : "white"}
-                          strokeWidth={2}
-                          style={{
-                            filter: isActive
-                              ? `drop-shadow(0 4px 8px ${color}40)`
-                              : "none",
-                            transition: "all 0.2s",
-                          }}
-                        />
-                      )
-                    })}
-                </Pie>
-                <Tooltip
-                  content={(props: unknown) => {
-                    const { active, payload } = props as {
-                      active?: boolean
-                      payload?: ReadonlyArray<{ payload: TipoData }>
-                    }
-                    if (!active || !payload?.length) return null
-                    const d = payload[0].payload
-                    const total = data.reduce((s, x) => s + x.totalUnidades, 0)
-                    const pct =
-                      total > 0
-                        ? ((d.totalUnidades / total) * 100).toFixed(1)
-                        : "0"
-                    return (
-                      <div
-                        style={{
-                          background: "white",
-                          border: `1px solid ${getColor(d.categoria)}40`,
-                          borderRadius: 12,
-                          padding: "12px 16px",
-                          boxShadow:
-                            "0 1px 2px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.10)",
-                          minWidth: 160,
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            letterSpacing: "0.10em",
-                            textTransform: "uppercase",
-                            color: getColor(d.categoria),
-                            marginBottom: 8,
-                          }}
-                        >
-                          {d.categoria}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 22,
-                            fontWeight: 700,
-                            color: "#0F172A",
-                            letterSpacing: "-0.025em",
-                            fontVariantNumeric: "tabular-nums",
-                            marginBottom: 4,
-                          }}
-                        >
-                          {d.totalUnidades.toLocaleString("es-MX")}
-                        </p>
-                        <p style={{ fontSize: 11, color: "#64748B" }}>
-                          {pct}% del total
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 10,
-                            color: "#94A3B8",
-                            marginTop: 6,
-                          }}
-                        >
-                          Click para ver órdenes →
-                        </p>
-                      </div>
-                    )
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Lista lateral */}
-          <div className="flex max-h-[340px] flex-col justify-center gap-2 overflow-y-auto border-t border-[rgba(15,23,42,0.04)] px-5 py-5 lg:border-l lg:border-t-0">
-            <p className="mb-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-              Distribución
-            </p>
-            {[...data]
-              .filter((d) => d.totalUnidades > 0)
-              .sort((a, b) => b.totalUnidades - a.totalUnidades)
-              .map((tipo) => {
-                const total = data.reduce((s, d) => s + d.totalUnidades, 0)
-                const pct =
-                  total > 0 ? (tipo.totalUnidades / total) * 100 : 0
                 const isSelected = seleccionado?.categoria === tipo.categoria
                 const color = getColor(tipo.categoria)
                 return (
@@ -488,37 +449,53 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                         prev?.categoria === tipo.categoria ? null : tipo,
                       )
                     }
-                    className="flex items-center gap-2.5 rounded-lg border bg-white px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                    className="rounded-xl border bg-white px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
                     style={{
                       borderColor: isSelected ? color : "rgba(15,23,42,0.06)",
                       background: isSelected ? `${color}08` : "white",
                     }}
                   >
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{
-                        background: color,
-                        boxShadow: isSelected
-                          ? `0 0 8px ${color}80`
-                          : "none",
-                      }}
-                    />
-                    <span
-                      className="flex-1 truncate text-[11px] font-medium"
-                      style={{
-                        color: isSelected ? color : "#475569",
-                      }}
-                    >
-                      {tipo.categoria.length > 14
-                        ? tipo.categoria.slice(0, 13) + "…"
-                        : tipo.categoria}
-                    </span>
-                    <div className="shrink-0 text-right">
-                      <span className="block text-[12px] font-bold tabular-nums text-[#0F172A]">
-                        {tipo.totalUnidades.toLocaleString("es-MX")}
+                    <div className="mb-1 flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="size-1.5 shrink-0 rounded-full"
+                          style={{
+                            background: color,
+                            boxShadow: isSelected ? `0 0 6px ${color}80` : "none",
+                          }}
+                        />
+                        <span
+                          className="truncate text-[10.5px] font-semibold"
+                          style={{
+                            color: isSelected ? color : "#475569",
+                            maxWidth: 110,
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          {tipo.categoria}
+                        </span>
+                      </div>
+                      <span className="text-[9.5px] font-bold text-gray-400 tabular-nums">
+                        #{i + 1}
                       </span>
-                      <span className="text-[9.5px] tabular-nums text-gray-400">
-                        {pct.toFixed(1)}%
+                    </div>
+                    <div className="mb-1 h-[2px] overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pctMXN}%`, background: color }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9.5px] tabular-nums text-gray-500">
+                        {fmtMXN(tipo.totalVentas)}
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1 text-[9.5px] font-semibold text-gray-500"
+                      >
+                        <span style={{ color, opacity: 0.9 }}>
+                          {tipo.totalUnidades}u
+                        </span>
+                        · {pctMXN}%
                       </span>
                     </div>
                   </button>
