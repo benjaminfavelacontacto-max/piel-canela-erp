@@ -585,16 +585,16 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
           {/* Header de columnas */}
           <div
-            className="grid items-center gap-3 border-b border-[rgba(15,23,42,0.06)] px-6 py-2.5"
-            style={{ gridTemplateColumns: "200px 1fr 110px 130px 100px 36px" }}
+            className="grid items-center gap-6 border-b border-[rgba(15,23,42,0.06)] px-8 py-3"
+            style={{ gridTemplateColumns: "1fr 180px 110px 130px 100px 40px" }}
           >
             {[
               { label: "Orden", align: "left" },
               { label: "Cliente", align: "left" },
-              { label: "Fecha", align: "left" },
+              { label: "Fecha", align: "center" },
               { label: "Total venta", align: "right" },
               { label: "Estatus", align: "center" },
-              { label: "", align: "left" },
+              { label: "", align: "center" },
             ].map((h, i) => (
               <p
                 key={i}
@@ -624,17 +624,22 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 return (
                   <div
                     key={orden.id}
-                    className="grid items-center gap-3 border-b border-[rgba(15,23,42,0.03)] px-6 py-3 transition-colors hover:bg-gray-50/60"
+                    className="grid items-center gap-6 overflow-hidden border-b border-[rgba(15,23,42,0.03)] px-8 py-3.5 transition-colors hover:bg-gray-50/60"
                     style={{
                       gridTemplateColumns:
-                        "200px 1fr 110px 130px 100px 36px",
+                        "1fr 180px 110px 130px 100px 40px",
                     }}
                   >
                     {/* Número clickeable */}
                     <Link
                       href={`/ventas/${orden.id}`}
-                      className="inline-flex items-center gap-1.5 truncate text-[12px] font-semibold tabular-nums transition-opacity hover:opacity-70"
-                      style={{ color: catColor }}
+                      className="flex items-center gap-1.5 overflow-hidden text-[12px] font-semibold tabular-nums transition-opacity hover:opacity-70"
+                      style={{
+                        color: catColor,
+                        minWidth: 0,
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}
                       title={String(orden.numero ?? orden.id)}
                     >
                       <span className="truncate">
@@ -661,7 +666,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     </p>
 
                     {/* Fecha */}
-                    <p className="text-[11px] tabular-nums text-gray-400">
+                    <p className="text-center text-[11px] tabular-nums text-gray-400">
                       {new Date(orden.fecha).toLocaleDateString("es-MX", {
                         day: "numeric",
                         month: "short",
@@ -692,7 +697,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     <Link
                       href={`/ventas/${orden.id}`}
                       title={`Abrir orden ${orden.numero ?? ""}`}
-                      className="flex size-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 transition-all hover:-translate-y-0.5"
+                      className="mx-auto flex size-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 transition-all hover:-translate-y-0.5"
                       style={{ fontSize: 14 }}
                       onMouseEnter={(e) => {
                         const el = e.currentTarget
