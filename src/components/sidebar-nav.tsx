@@ -35,7 +35,7 @@ export function SidebarNav() {
             className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200"
             style={{
               background: active ? "rgba(255,255,255,0.85)" : "transparent",
-              color: active ? "#1B3022" : "rgba(0,0,0,0.55)",
+              color: active ? "#1E1A33" : "rgba(0,0,0,0.55)",
               fontWeight: active ? 600 : 400,
               letterSpacing: active ? "-0.01em" : "0",
               boxShadow: active
@@ -59,16 +59,16 @@ export function SidebarNav() {
               <span
                 aria-hidden
                 className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
-                style={{ background: "#2D5A43" }}
+                style={{ background: "#8B5CF6" }}
               />
             )}
             <Icon
               className="size-4 shrink-0 transition-all"
               strokeWidth={active ? 2 : 1.75}
               style={{
-                color: active ? "#2D5A43" : "rgba(0,0,0,0.4)",
+                color: active ? "#8B5CF6" : "rgba(0,0,0,0.4)",
                 filter: active
-                  ? "drop-shadow(0 0 4px rgba(45,90,67,0.3))"
+                  ? "drop-shadow(0 0 6px rgba(139,92,246,0.4))"
                   : "none",
               }}
             />

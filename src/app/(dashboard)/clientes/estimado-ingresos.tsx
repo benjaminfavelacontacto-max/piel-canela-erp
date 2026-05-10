@@ -335,11 +335,22 @@ export function EstimadoIngresos({
             </div>
           </div>
           <span
-            className="inline-flex items-center gap-1.5 rounded-full bg-violet-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700 ring-1 ring-violet-200/40 backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5"
+            style={{
+              background: "rgba(139,92,246,0.10)",
+              color: "#7C3AED",
+              border: "1px solid rgba(139,92,246,0.25)",
+              padding: "2px 8px",
+              borderRadius: "9999px",
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
           >
             <span className="relative flex size-1.5">
-              <span className="absolute inset-0 animate-ping rounded-full bg-violet-400 opacity-75" />
-              <span className="relative size-1.5 rounded-full bg-violet-500" />
+              <span className="absolute inset-0 animate-ping rounded-full opacity-75" style={{ background: "#8B5CF6" }} />
+              <span className="relative size-1.5 rounded-full" style={{ background: "#8B5CF6" }} />
             </span>
             Predictivo
           </span>
@@ -348,24 +359,27 @@ export function EstimadoIngresos({
         {/* Hero alert: temporada alta — fondo blanco con acento quirúrgico ámbar */}
         {seasonalInsights.proxTempAlta && (
           <div
-            className="relative flex items-start gap-4 overflow-hidden rounded-xl p-4"
+            className="relative flex items-start gap-4 overflow-hidden"
             style={{
               background: "white",
-              border: "1px solid #f1f5f9",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              border: "none",
+              boxShadow:
+                "0 4px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.03)",
+              borderRadius: "16px",
+              padding: "16px",
             }}
           >
             <span
               className="relative flex size-11 shrink-0 items-center justify-center rounded-xl"
               style={{
-                background: "#fffbeb",
-                border: "1px solid #fde68a",
+                background: "rgba(197,164,126,0.10)",
+                border: "1px solid rgba(197,164,126,0.25)",
               }}
             >
               <Sun
                 className="relative size-5"
                 strokeWidth={1.75}
-                style={{ color: "#f59e0b" }}
+                style={{ color: "#C5A47E" }}
               />
             </span>
             <div className="relative flex-1 min-w-0">
@@ -383,8 +397,9 @@ export function EstimadoIngresos({
                   className="inline-flex items-center gap-0.5"
                   title={`Intensidad: ×${seasonalInsights.proxTempAlta.factor.toFixed(2)}`}
                   style={{
-                    background: "#fff7ed",
-                    color: "#c2410c",
+                    background: "rgba(197,164,126,0.12)",
+                    color: "#C5A47E",
+                    border: "1px solid rgba(197,164,126,0.25)",
                     padding: "2px 8px",
                     borderRadius: "9999px",
                     fontSize: "10px",
@@ -404,8 +419,8 @@ export function EstimadoIngresos({
                         style={{
                           background:
                             i < bars
-                              ? "linear-gradient(180deg, #F59E0B, #EA580C)"
-                              : "rgba(245,158,11,0.18)",
+                              ? "linear-gradient(180deg, #C5A47E, #A8895F)"
+                              : "rgba(197,164,126,0.18)",
                         }}
                       />
                     ))

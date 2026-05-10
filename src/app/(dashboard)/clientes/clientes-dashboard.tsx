@@ -905,7 +905,7 @@ export function ClientesDashboard({
             <section
               style={{
                 background:
-                  "linear-gradient(90deg, #1B3022 0%, #2D5A43 100%)",
+                  "linear-gradient(90deg, #1E1A33 0%, #2A244A 100%)",
               }}
             >
               <div className="px-6 pt-6 pb-6 space-y-5">
@@ -915,10 +915,10 @@ export function ClientesDashboard({
                     <p
                       className="mb-1"
                       style={{
-                        color: "rgba(255,255,255,0.45)",
+                        color: "rgba(255,255,255,0.40)",
                         fontSize: "10px",
-                        fontWeight: 500,
-                        letterSpacing: "0.18em",
+                        fontWeight: 400,
+                        letterSpacing: "0.22em",
                         textTransform: "uppercase",
                         fontVariantNumeric: "tabular-nums",
                       }}
@@ -1030,7 +1030,7 @@ export function ClientesDashboard({
                 trend={dActivos}
                 sub={`${cur?.nuevos ?? 0} nuevos este mes`}
                 sparkline={monthlyKpi.map((m) => m.activosCum)}
-                sparkColor="rgba(255,255,255,0.5)"
+                sparkColor="rgba(233,213,255,0.7)"
               />
               <HeroMetric
                 label="Recurrentes"
@@ -1038,7 +1038,7 @@ export function ClientesDashboard({
                 trend={dNuevos}
                 sub="≥3 compras"
                 sparkline={monthlyKpi.map((m) => m.nuevos)}
-                sparkColor="rgba(197,164,126,0.7)"
+                sparkColor="rgba(197,164,126,0.8)"
               />
               <HeroMetric
                 label="LTV total"
@@ -1046,7 +1046,7 @@ export function ClientesDashboard({
                 trend={dLtv}
                 sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
                 sparkline={monthlyKpi.map((m) => m.ltvGanado)}
-                sparkColor="rgba(134,239,172,0.6)"
+                sparkColor="rgba(167,243,208,0.6)"
               />
               <BestClienteMetric
                 cliente={kpis.mejor ?? null}
@@ -1453,7 +1453,7 @@ function MicroSpark({
     >
       <defs>
         <linearGradient id={`spark-${gradId}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={stroke} stopOpacity={0.25} />
+          <stop offset="0%" stopColor={stroke} stopOpacity={0.2} />
           <stop offset="100%" stopColor={stroke} stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -1496,13 +1496,15 @@ function HeroMetric({
 }) {
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl px-5 py-4 transition-all duration-180 hover:-translate-y-0.5"
+      className="group relative overflow-hidden transition-all duration-180 hover:-translate-y-0.5"
       style={{
-        background: "rgba(255,255,255,0.05)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+        background: "rgba(255,255,255,0.03)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+        borderRadius: "16px",
+        padding: "16px",
       }}
     >
       <div className="relative">
@@ -1566,16 +1568,18 @@ function BestClienteMetric({
   pctRevenue: number
 }) {
   const glassStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.03)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+    borderRadius: "16px",
+    padding: "16px",
   }
   if (!cliente) {
     return (
       <div
-        className="group relative overflow-hidden rounded-2xl px-5 py-4"
+        className="group relative overflow-hidden"
         style={glassStyle}
       >
         <p
@@ -1607,7 +1611,7 @@ function BestClienteMetric({
   const isTop = pctRevenue >= 25
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl px-5 py-4 transition-all duration-180 hover:-translate-y-0.5"
+      className="group relative overflow-hidden transition-all duration-180 hover:-translate-y-0.5"
       style={glassStyle}
     >
       <div className="flex items-center justify-between gap-2 mb-3">

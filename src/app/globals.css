@@ -507,3 +507,17 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   color: white;
 }
+
+/* ─────────────────────────────────────────────────────────
+ * Paleta IA Amatista — módulo Clientes
+ * Tokens consultables desde componentes vía var(--am-*)
+ * ───────────────────────────────────────────────────────── */
+:root {
+  --am-deep: #1e1a33;
+  --am-medium: #2a244a;
+  --am-purple: #8b5cf6;
+  --am-lavender: #e9d5ff;
+  --am-canela: #c5a47e;
+  --am-glass: rgba(255, 255, 255, 0.03);
+  --am-border: rgba(255, 255, 255, 0.10);
+}

@@ -33,6 +33,21 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - Bordes: rounded-2xl, sombras suaves
 - NO usar colores oklch o lab en PDFs (usar hex hardcodeado)
 
+## Paleta actual: IA Amatista (módulo Clientes)
+- Header banner: `linear-gradient(90deg, #1E1A33, #2A244A)`
+- Acento principal: `#8B5CF6` (púrpura eléctrico)
+- Acento secundario: `#E9D5FF` (lavanda pálido) — usar solo sobre dark bg; en blanco usar `#7C3AED` para legibilidad
+- Acento marca: `#C5A47E` (canela/oro) — Sun icon, HEAT badge
+- Glass cards (sobre dark banner): `rgba(255,255,255,0.03)` + `blur(12px)` + `border-radius: 16px`
+- Sidebar activo (todas las rutas): bar + icon `#8B5CF6` con `drop-shadow(0 0 6px rgba(139,92,246,0.4))`
+- Tokens CSS disponibles en `globals.css`: `--am-deep`, `--am-medium`, `--am-purple`, `--am-lavender`, `--am-canela`
+
+## Para revertir paleta a verde Lujo Silencioso
+```
+git checkout v-pre-amatista -- "src/app/(dashboard)/clientes/" src/components/sidebar-nav.tsx
+git commit -m "revert: paleta amatista → verde original"
+```
+
 ## Estructura de rutas
 - /dashboard → página principal con KPIs
 - /ventas → lista + dashboard financiero
