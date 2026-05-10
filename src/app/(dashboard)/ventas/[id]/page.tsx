@@ -67,7 +67,7 @@ export default async function VentaDetailPage({
       .from("venta_items")
       .select(
         `cantidad, precio_unitario, costo_unitario, subtotal, costo_total, sort_order,
-         productos(id, sku, nombre, nombre_display, imagen_url)`,
+         productos(id, sku, nombre, nombre_display, imagen_url, categorias(nombre))`,
       )
       .eq("venta_id", id)
       .order("sort_order", { ascending: true }),
@@ -93,6 +93,7 @@ export default async function VentaDetailPage({
       nombre: string
       nombre_display: string | null
       imagen_url: string | null
+      categorias: { nombre: string } | null
     } | null
   }
 
@@ -119,6 +120,41 @@ export default async function VentaDetailPage({
   const cliente = (venta.clientes as unknown as Cliente | null) ?? null
   const { metodo, notas } = parseNotas(venta.notas)
   const estatus = venta.estatus as Estatus
+
+  // Desglose por categoría
+  const desgloseMap = new Map<
+    string,
+    { unidades: number; subtotal: number }
+  >()
+  for (const it of items) {
+    const cat = it.productos?.categorias?.nombre?.toUpperCase() ?? "OTROS"
+    const e = desgloseMap.get(cat) ?? { unidades: 0, subtotal: 0 }
+    e.unidades += Number(it.cantidad ?? 0)
+    e.subtotal += Number(it.subtotal ?? 0)
+    desgloseMap.set(cat, e)
+  }
+  const desgloseArray = Array.from(desgloseMap.entries())
+    .map(([categoria, d]) => ({ categoria, ...d }))
+    .sort((a, b) => b.subtotal - a.subtotal)
+  const totalUds = desgloseArray.reduce((s, d) => s + d.unidades, 0)
+
+  const COLORES_CAT: Record<string, { bg: string; text: string }> = {
+    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
+    ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
+    POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
+    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
+    "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "#7E22CE" },
+    "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "#1D4ED8" },
+    "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
+    EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "#0F766E" },
+    HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
+    "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
+    AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "#B91C1C" },
+    SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "#BE185D" },
+    SOMBRILLA: { bg: "rgba(197,164,126,0.12)", text: "#A8895F" },
+    OTROS: { bg: "rgba(100,116,139,0.10)", text: "#475569" },
+  }
+  const getColorCat = (cat: string) => COLORES_CAT[cat] ?? COLORES_CAT.OTROS
 
   return (
     <div className="p-4">
@@ -365,6 +401,93 @@ export default async function VentaDetailPage({
               />
             </div>
           </div>
+
+          {/* DESGLOSE POR TIPO */}
+          {desgloseArray.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Tipos de Producto
+                </h2>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums text-gray-500"
+                  style={{ background: "rgba(15,23,42,0.05)" }}
+                >
+                  {desgloseArray.length}{" "}
+                  {desgloseArray.length === 1 ? "tipo" : "tipos"}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1 px-2 py-2">
+                {desgloseArray.map((item) => {
+                  const palette = getColorCat(item.categoria)
+                  const pct =
+                    totalUds > 0
+                      ? Math.round((item.unidades / totalUds) * 100)
+                      : 0
+                  return (
+                    <div
+                      key={item.categoria}
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-gray-50/60"
+                    >
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{
+                          background: palette.text,
+                          boxShadow: `0 0 6px ${palette.text}50`,
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className="truncate text-[11px] font-semibold"
+                            style={{
+                              color: palette.text,
+                              letterSpacing: "0.02em",
+                            }}
+                            title={item.categoria}
+                          >
+                            {item.categoria.length > 16
+                              ? item.categoria.slice(0, 15) + "…"
+                              : item.categoria}
+                          </span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span className="text-[11px] font-bold tabular-nums text-[#0F172A]">
+                              {item.unidades}u
+                            </span>
+                            <span className="text-[9.5px] tabular-nums text-gray-400">
+                              {pct}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-1 h-[2px] overflow-hidden rounded-full bg-gray-100">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${pct}%`,
+                              background: palette.text,
+                            }}
+                          />
+                        </div>
+                        <p className="mt-1 text-[10px] tabular-nums text-gray-400">
+                          {mxn.format(item.subtotal)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-gray-100 px-5 py-2.5">
+                <span className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+                  Total unidades
+                </span>
+                <span className="text-[13px] font-bold tabular-nums text-[#0F172A]">
+                  {totalUds}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
