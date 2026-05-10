@@ -526,7 +526,7 @@ function ClienteRowCRM({
         </span>
       </div>
 
-      {/* Cliente — nombre + confianza badge + cycle info */}
+      {/* Cliente — nombre + confianza badge + total compras */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p
@@ -540,8 +540,23 @@ function ClienteRowCRM({
           </span>
         </div>
         <p className="text-[10.5px] tabular-nums text-[#64748B]">
-          {c.ventas_count} compras · cada{" "}
-          {c.frecuencia_dias ? `${Math.round(c.frecuencia_dias)}d` : "—"}
+          {c.ventas_count}{" "}
+          {c.ventas_count === 1 ? "compra" : "compras"}
+        </p>
+      </div>
+
+      {/* Frecuencia — columna propia */}
+      <div className="hidden w-[68px] shrink-0 text-right md:block">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+          Frec.
+        </p>
+        <p
+          className="mt-0.5 text-[12.5px] font-semibold tabular-nums text-[#0F172A]"
+          style={{ letterSpacing: "-0.01em" }}
+        >
+          {c.frecuencia_dias
+            ? `${Math.round(c.frecuencia_dias)}d`
+            : "—"}
         </p>
       </div>
 
