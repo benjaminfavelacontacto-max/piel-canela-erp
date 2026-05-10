@@ -242,13 +242,15 @@ export function PrediccionCompras({
     })
   }, [predicciones, ticketAnteriorMap])
 
-  const fmtMXNAbbr = (v: number) =>
-    v >= 1000
-      ? `$${(v / 1000).toFixed(0)}K`
-      : `$${v.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
+  const fmtMXNAbbr = (v: number | undefined | null): string => {
+    const n = Number(v) || 0
+    if (n === 0) return "—"
+    if (n >= 1000) return "$" + (n / 1000).toFixed(0) + "K"
+    return "$" + n.toLocaleString("es-MX", { maximumFractionDigits: 0 })
+  }
 
   const fechaHumana = (
-    fecha: Date | null,
+    fecha: Date | null | undefined,
   ): {
     label: string
     sub: string
@@ -261,12 +263,15 @@ export function PrediccionCompras({
     f.setHours(0, 0, 0, 0)
     const diff = Math.round((f.getTime() - h.getTime()) / 86400000)
     const sub = fechaCorta.format(f)
-    if (diff < 0) return { label: `Atrasado ${Math.abs(diff)}d`, sub, urgencia: "pasado" }
+    if (diff < 0) {
+      const dias = Math.abs(diff)
+      return { label: "Atrasado " + dias + "d", sub, urgencia: "pasado" }
+    }
     if (diff === 0) return { label: "Hoy", sub, urgencia: "hoy" }
     if (diff === 1) return { label: "Mañana", sub, urgencia: "hoy" }
-    if (diff <= 7) return { label: `En ${diff} días`, sub, urgencia: "pronto" }
-    if (diff <= 30) return { label: `${diff}d`, sub, urgencia: "normal" }
-    return { label: `${diff}d`, sub, urgencia: "lejano" }
+    if (diff <= 7) return { label: "En " + diff + " días", sub, urgencia: "pronto" }
+    if (diff <= 30) return { label: diff + "d", sub, urgencia: "normal" }
+    return { label: diff + "d", sub, urgencia: "lejano" }
   }
 
   type AccionInfo = { label: string; color: string; bg: string; border: string; icon: string }
@@ -549,9 +554,9 @@ export function PrediccionCompras({
           const isTop = i < 3 && filtro === "TODOS"
           const isExp = expandido === cliente.id
           const tendencia =
-            cliente.ticketEsperado > cliente.ticketAnterior
+            (cliente.ticketEsperado ?? 0) > (cliente.ticketAnterior ?? 0)
               ? "↑"
-              : cliente.ticketEsperado < cliente.ticketAnterior
+              : (cliente.ticketEsperado ?? 0) < (cliente.ticketAnterior ?? 0)
                 ? "↓"
                 : "→"
           const tendColor =
