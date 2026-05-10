@@ -13,6 +13,13 @@ export interface PageHeaderKpi {
   sparkline?: number[]
   /** Hero KPI dominante — span 2 columnas + número más grande */
   featured?: boolean
+  /** Mini-insights: chips tonales con label + value, renderizados debajo del número */
+  breakdown?: Array<{
+    label: string
+    value: string
+    /** Tono del chip — afecta bg/border/texto. Default: slate */
+    tone?: "slate" | "amber" | "emerald" | "violet" | "rose" | "teal"
+  }>
 }
 
 interface PageHeaderProps {
@@ -147,6 +154,15 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
         )}
       </div>
 
+      {/* Breakdown chips — mini-insights tonales */}
+      {kpi.breakdown && kpi.breakdown.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {kpi.breakdown.map((b, i) => (
+            <BreakdownChip key={`${b.label}-${i}`} item={b} />
+          ))}
+        </div>
+      )}
+
       {/* Sub — metadata secundaria, compacta */}
       {kpi.sub && (
         <p className="mt-auto text-[11px] leading-tight text-[#64748B]">
@@ -154,6 +170,75 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
         </p>
       )}
     </div>
+  )
+}
+
+const BREAKDOWN_TONES: Record<
+  NonNullable<NonNullable<PageHeaderKpi["breakdown"]>[number]["tone"]>,
+  { bg: string; border: string; text: string; dot: string }
+> = {
+  slate: {
+    bg: "rgba(100,116,139,0.06)",
+    border: "rgba(100,116,139,0.14)",
+    text: "#475569",
+    dot: "#94A3B8",
+  },
+  amber: {
+    bg: "rgba(217,119,6,0.07)",
+    border: "rgba(217,119,6,0.18)",
+    text: "#B45309",
+    dot: "#D97706",
+  },
+  emerald: {
+    bg: "rgba(5,150,105,0.07)",
+    border: "rgba(5,150,105,0.18)",
+    text: "#047857",
+    dot: "#059669",
+  },
+  teal: {
+    bg: "rgba(15,118,110,0.07)",
+    border: "rgba(15,118,110,0.18)",
+    text: "#0F766E",
+    dot: "#0F766E",
+  },
+  violet: {
+    bg: "rgba(139,92,246,0.07)",
+    border: "rgba(139,92,246,0.18)",
+    text: "#7C3AED",
+    dot: "#8B5CF6",
+  },
+  rose: {
+    bg: "rgba(220,38,38,0.07)",
+    border: "rgba(220,38,38,0.18)",
+    text: "#B91C1C",
+    dot: "#DC2626",
+  },
+}
+
+function BreakdownChip({
+  item,
+}: {
+  item: NonNullable<PageHeaderKpi["breakdown"]>[number]
+}) {
+  const tone = BREAKDOWN_TONES[item.tone ?? "slate"]
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-medium tabular-nums"
+      style={{
+        background: tone.bg,
+        border: `1px solid ${tone.border}`,
+        color: tone.text,
+        fontFeatureSettings: '"tnum" 1',
+      }}
+    >
+      <span
+        aria-hidden
+        className="size-1 rounded-full"
+        style={{ background: tone.dot }}
+      />
+      <span style={{ opacity: 0.78 }}>{item.label}</span>
+      <span className="font-semibold">{item.value}</span>
+    </span>
   )
 }
 

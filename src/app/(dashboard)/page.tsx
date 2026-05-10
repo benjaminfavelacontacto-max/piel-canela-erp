@@ -490,17 +490,11 @@ export default async function DashboardPage() {
         ]}
         actions={
           <>
-            <Link
-              href="/ventas/nueva"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/30"
-            >
+            <Link href="/ventas/nueva" className="pc-btn-primary">
               <Plus className="size-4" />
               Nueva Venta
             </Link>
-            <Link
-              href="/cotizaciones/nueva"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#0f2d0f] transition-all hover:bg-white/90"
-            >
+            <Link href="/cotizaciones/nueva" className="pc-btn-primary">
               <Plus className="size-4" />
               Cotización
             </Link>

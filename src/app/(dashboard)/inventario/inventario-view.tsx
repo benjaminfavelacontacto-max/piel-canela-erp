@@ -298,34 +298,20 @@ export function InventarioView({
         icon={<Package className="size-5" />}
       />
 
-      {/* Dark glass KPI strip — contraste necesario para la versión dark luxury */}
-      <section
-        className="rounded-3xl"
-        style={{
-          background:
-            "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F172A 100%)",
-          padding: "20px 20px 4px 20px",
-          boxShadow:
-            "0 1px 2px rgba(15,23,42,0.06), 0 24px 48px rgba(15,23,42,0.12)",
-        }}
-      >
-        <InventoryStats
-          totalProductos={kpis.totalProds}
-          totalSkus={kpis.skusConStock}
-          valorInventario={kpis.valor}
-          capitalInvertido={kpis.capital}
-          utilidadPotencial={kpis.utilidadPotencial}
-          margenPct={
-            kpis.valor > 0
-              ? (kpis.utilidadPotencial / kpis.valor) * 100
-              : 0
-          }
-          stockCritico={kpis.agotados + kpis.criticos}
-          agotados={kpis.agotados}
-          stockBajo={kpis.criticos}
-          categorias={categoriasConteo}
-        />
-      </section>
+      <InventoryStats
+        totalProductos={kpis.totalProds}
+        totalSkus={kpis.skusConStock}
+        valorInventario={kpis.valor}
+        capitalInvertido={kpis.capital}
+        utilidadPotencial={kpis.utilidadPotencial}
+        margenPct={
+          kpis.valor > 0 ? (kpis.utilidadPotencial / kpis.valor) * 100 : 0
+        }
+        stockCritico={kpis.agotados + kpis.criticos}
+        agotados={kpis.agotados}
+        stockBajo={kpis.criticos}
+        categorias={categoriasConteo}
+      />
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

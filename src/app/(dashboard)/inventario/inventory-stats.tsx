@@ -52,22 +52,23 @@ export function InventoryStats({
 
   const topCats = categorias.slice(0, 3)
 
+  // Pills tonales sobre fondo claro — tonos saturados con bg suave
   const pillColors: Record<string, { bg: string; text: string }> = {
-    ACTIVADORES: { bg: "rgba(52,211,153,0.12)", text: "#34D399" },
-    CINTAS: { bg: "rgba(251,191,36,0.12)", text: "#FBBF24" },
-    POTENCIADORES: { bg: "rgba(129,140,248,0.12)", text: "#818CF8" },
-    OXIGENANTES: { bg: "rgba(56,189,248,0.12)", text: "#38BDF8" },
-    OTROS: { bg: "rgba(255,255,255,0.08)", text: "rgba(255,255,255,0.5)" },
+    ACTIVADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
+    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
+    POTENCIADORES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
+    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
+    OTROS: { bg: "rgba(100,116,139,0.08)", text: "#475569" },
   }
 
   const cards: StatCard[] = [
     {
       label: "VALOR INVENTARIO",
       value: fmt(valorInventario),
-      valueColor: "rgba(255,255,255,0.92)",
+      valueColor: "#0F172A",
       sub: `${totalSkus} SKUs activos`,
       icon: <Package style={{ width: 16, height: 16 }} />,
-      iconBg: "rgba(129,140,248,0.15)",
+      iconBg: "rgba(99,102,241,0.10)",
       pills: topCats.map((c) => ({
         label: c.nombre,
         count: c.count,
@@ -77,10 +78,10 @@ export function InventoryStats({
     {
       label: "CAPITAL INVERTIDO",
       value: fmt(capitalInvertido),
-      valueColor: "rgba(255,255,255,0.92)",
+      valueColor: "#0F172A",
       sub: "costo total de compras",
       icon: <DollarSign style={{ width: 16, height: 16 }} />,
-      iconBg: "rgba(197,164,126,0.15)",
+      iconBg: "rgba(197,164,126,0.18)",
       trend: {
         value: `${margenPct.toFixed(1)}% margen`,
         positive: margenPct > 50,
@@ -89,10 +90,10 @@ export function InventoryStats({
     {
       label: "UTILIDAD POTENCIAL",
       value: fmt(utilidadPotencial),
-      valueColor: "#34D399",
+      valueColor: "#047857",
       sub: "si se vende todo el stock",
       icon: <TrendingUp style={{ width: 16, height: 16 }} />,
-      iconBg: "rgba(52,211,153,0.15)",
+      iconBg: "rgba(5,150,105,0.10)",
       trend: { value: `${margenPct.toFixed(1)}% margen neto`, positive: true },
     },
     {
@@ -100,16 +101,16 @@ export function InventoryStats({
       value: stockCritico,
       valueColor:
         stockCritico > 10
-          ? "#F87171"
+          ? "#B91C1C"
           : stockCritico > 5
-            ? "#FBBF24"
-            : "#34D399",
+            ? "#B45309"
+            : "#047857",
       sub: `${agotados} agotados · ${stockBajo} bajos`,
       icon: <AlertTriangle style={{ width: 16, height: 16 }} />,
       iconBg:
         stockCritico > 10
-          ? "rgba(248,113,113,0.15)"
-          : "rgba(251,191,36,0.15)",
+          ? "rgba(220,38,38,0.10)"
+          : "rgba(217,119,6,0.10)",
       trend:
         stockCritico === 0
           ? { value: "Todo en orden ✓", positive: true }
@@ -130,33 +131,33 @@ export function InventoryStats({
         <div
           key={i}
           style={{
-            background: "rgba(255,255,255,0.04)",
-            backdropFilter: "blur(24px) saturate(180%)",
-            WebkitBackdropFilter: "blur(24px) saturate(180%)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.75)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            border: "1px solid rgba(15,23,42,0.06)",
             borderRadius: 20,
             padding: 24,
             display: "flex",
             flexDirection: "column",
             gap: 0,
             boxShadow:
-              "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)",
+              "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.6)",
             minHeight: 160,
             transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"
+            e.currentTarget.style.background = "rgba(255,255,255,0.92)"
+            e.currentTarget.style.borderColor = "rgba(15,23,42,0.10)"
             e.currentTarget.style.transform = "translateY(-2px)"
             e.currentTarget.style.boxShadow =
-              "0 16px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)"
+              "0 1px 2px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.7)"
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)"
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"
+            e.currentTarget.style.background = "rgba(255,255,255,0.75)"
+            e.currentTarget.style.borderColor = "rgba(15,23,42,0.06)"
             e.currentTarget.style.transform = "translateY(0)"
             e.currentTarget.style.boxShadow =
-              "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)"
+              "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.6)"
           }}
         >
           {/* LABEL + ICON */}
@@ -174,7 +175,7 @@ export function InventoryStats({
                 fontWeight: 600,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                color: "rgba(255,255,255,0.30)",
+                color: "#64748B",
               }}
             >
               {card.label}
@@ -188,7 +189,7 @@ export function InventoryStats({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "rgba(255,255,255,0.6)",
+                color: "#475569",
                 flexShrink: 0,
               }}
             >
@@ -205,7 +206,7 @@ export function InventoryStats({
                   : 28,
               fontWeight: 700,
               letterSpacing: "-0.03em",
-              color: card.valueColor || "rgba(255,255,255,0.92)",
+              color: card.valueColor || "#0F172A",
               fontVariantNumeric: "tabular-nums",
               lineHeight: 1,
               marginBottom: 8,
@@ -222,7 +223,7 @@ export function InventoryStats({
             <p
               style={{
                 fontSize: 11,
-                color: "rgba(255,255,255,0.30)",
+                color: "#64748B",
                 marginBottom: card.pills ? 8 : 0,
                 lineHeight: 1.4,
               }}
@@ -280,13 +281,13 @@ export function InventoryStats({
                   fontSize: 10,
                   fontWeight: 600,
                   background: card.trend.positive
-                    ? "rgba(52,211,153,0.12)"
-                    : "rgba(248,113,113,0.12)",
-                  color: card.trend.positive ? "#34D399" : "#F87171",
+                    ? "rgba(5,150,105,0.10)"
+                    : "rgba(220,38,38,0.10)",
+                  color: card.trend.positive ? "#047857" : "#B91C1C",
                   border: `1px solid ${
                     card.trend.positive
-                      ? "rgba(52,211,153,0.2)"
-                      : "rgba(248,113,113,0.2)"
+                      ? "rgba(5,150,105,0.20)"
+                      : "rgba(220,38,38,0.20)"
                   }`,
                 }}
               >
