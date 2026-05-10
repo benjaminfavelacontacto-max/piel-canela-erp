@@ -20,6 +20,8 @@ export interface PageHeaderKpi {
     /** Tono del chip — afecta bg/border/texto. Default: slate */
     tone?: "slate" | "amber" | "emerald" | "violet" | "rose" | "teal"
   }>
+  /** Chip de moneda al lado del valor — pequeño, tipográfico. Ej. "USD", "MXN" */
+  currency?: "USD" | "MXN"
 }
 
 interface PageHeaderProps {
@@ -143,12 +145,15 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
 
       {/* Middle row — big number + sparkline al lado */}
       <div className="flex items-end justify-between gap-3">
-        <p
-          className={`${featured ? "text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
-          style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
-        >
-          {kpi.value}
-        </p>
+        <div className="flex items-baseline gap-1.5">
+          <p
+            className={`${featured ? "text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+            style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
+          >
+            {kpi.value}
+          </p>
+          {kpi.currency && <CurrencyChip code={kpi.currency} />}
+        </div>
         {kpi.sparkline && kpi.sparkline.length > 1 && (
           <Sparkline points={kpi.sparkline} />
         )}
@@ -213,6 +218,23 @@ const BREAKDOWN_TONES: Record<
     text: "#B91C1C",
     dot: "#DC2626",
   },
+}
+
+const CURRENCY_TONE: Record<"USD" | "MXN", { bg: string; text: string }> = {
+  USD: { bg: "rgba(5,150,105,0.08)", text: "#047857" },
+  MXN: { bg: "rgba(197,164,126,0.10)", text: "#A8895F" },
+}
+
+function CurrencyChip({ code }: { code: "USD" | "MXN" }) {
+  const t = CURRENCY_TONE[code]
+  return (
+    <span
+      className="inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[9.5px] font-bold tracking-[0.06em]"
+      style={{ background: t.bg, color: t.text }}
+    >
+      {code}
+    </span>
+  )
 }
 
 function BreakdownChip({

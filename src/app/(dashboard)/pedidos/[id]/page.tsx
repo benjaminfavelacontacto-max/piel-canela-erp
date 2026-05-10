@@ -419,8 +419,14 @@ function Kpi({
         {valueMXN}
       </p>
       {valueUSD && (
-        <p className="mt-1.5 text-[11.5px] tabular-nums text-gray-500">
+        <p className="mt-1.5 inline-flex items-baseline gap-1 text-[11.5px] tabular-nums text-gray-500">
           {valueUSD}
+          <span
+            className="rounded-md px-1 py-0.5 text-[8.5px] font-bold tracking-[0.06em]"
+            style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
+          >
+            USD
+          </span>
         </p>
       )}
       {sub && <p className="mt-1.5 text-[11px] text-gray-400">{sub}</p>}
@@ -466,8 +472,15 @@ function PartnerCard({
       <p className="mt-2 text-[24px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900">
         {mxn(amount)}
       </p>
-      <p className="mt-1.5 text-[11.5px] tabular-nums text-gray-500">
-        {usd(usdValue)} @ TC {tc.toFixed(2)}
+      <p className="mt-1.5 inline-flex items-baseline gap-1 text-[11.5px] tabular-nums text-gray-500">
+        {usd(usdValue)}
+        <span
+          className="rounded-md px-1 py-0.5 text-[8.5px] font-bold tracking-[0.06em]"
+          style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
+        >
+          USD
+        </span>
+        <span className="text-gray-400">@ TC {tc.toFixed(2)}</span>
       </p>
       <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-gray-100">
         <div

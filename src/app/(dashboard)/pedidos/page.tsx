@@ -14,7 +14,7 @@ const usd = (v: number) =>
   `$${Number(v).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })} USD`
+  })}`
 
 interface PedidoItem {
   id: string
@@ -88,6 +88,14 @@ export default async function PedidosPage() {
       ) ?? 0),
     0,
   )
+  const totalProductosUSD = list.reduce(
+    (s, p) => s + Number(p.subtotal_usd ?? 0),
+    0,
+  )
+  const totalEnvioUSD = list.reduce(
+    (s, p) => s + Number(p.costo_envio_usd ?? 0),
+    0,
+  )
 
   return (
     <div className="p-6 space-y-6">
@@ -97,24 +105,41 @@ export default async function PedidosPage() {
         icon={<Package className="size-5" />}
         kpis={[
           {
-            label: "Invertido USD",
-            value: usd(totalInvUSD),
-            sub: "ambos socios",
+            label: "Productos",
+            value: usd(totalProductosUSD),
+            currency: "USD",
+            sub: `${totalUnidades.toLocaleString("es-MX")} unidades`,
+            color: "text-indigo-600",
           },
           {
-            label: "Invertido MXN",
+            label: "Envío",
+            value: usd(totalEnvioUSD),
+            currency: "USD",
+            sub: "Brasil → MXN + flete",
+            color: "text-amber-700",
+          },
+          {
+            label: "Invertido",
+            value: usd(totalInvUSD),
+            currency: "USD",
+            sub: "ambos socios (con envío)",
+          },
+          {
+            label: "Invertido",
             value: mxn(totalInvMXN),
+            currency: "MXN",
             sub: "snapshot al TC del pedido",
             color: "text-[#C5A47E]",
           },
           {
-            label: "Unidades compradas",
+            label: "Unidades",
             value: totalUnidades.toLocaleString("es-MX"),
-            sub: "histórico",
+            sub: `${list.reduce((s, p) => s + (p.pedido_compra_items?.length ?? 0), 0)} SKUs`,
           },
           {
             label: "Profit potencial",
             value: mxn(totalProfit),
+            currency: "MXN",
             sub: "si se vende todo el stock",
             color: "text-emerald-600",
           },
