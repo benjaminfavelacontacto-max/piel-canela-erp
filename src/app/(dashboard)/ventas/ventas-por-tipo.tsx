@@ -10,6 +10,8 @@ import {
   ResponsiveContainer,
   Cell,
   CartesianGrid,
+  PieChart,
+  Pie,
 } from "recharts"
 
 interface Orden {
@@ -322,6 +324,206 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 </button>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Donut: Unidades por Categoría */}
+      <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
+        <header className="flex items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
+          <div>
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+              Distribución
+            </p>
+            <h2 className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+              Unidades Vendidas por Tipo
+            </h2>
+          </div>
+          <div className="text-right">
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
+              Total unidades
+            </p>
+            <p
+              className="mt-0.5 text-[18px] font-bold tabular-nums text-[#0F172A]"
+              style={{ letterSpacing: "-0.025em" }}
+            >
+              {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
+            </p>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_280px]">
+          {/* Donut */}
+          <div className="flex items-center justify-center px-5 py-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={data.filter((d) => d.totalUnidades > 0)}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={75}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="totalUnidades"
+                  nameKey="categoria"
+                  onClick={(entry) => {
+                    const e = entry as unknown as TipoData
+                    setSeleccionado((prev) =>
+                      prev?.categoria === e.categoria ? null : e,
+                    )
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {data
+                    .filter((d) => d.totalUnidades > 0)
+                    .map((entry) => {
+                      const color = getColor(entry.categoria)
+                      const isActive =
+                        seleccionado?.categoria === entry.categoria
+                      return (
+                        <Cell
+                          key={entry.categoria}
+                          fill={isActive ? color : `${color}AA`}
+                          stroke={isActive ? color : "white"}
+                          strokeWidth={2}
+                          style={{
+                            filter: isActive
+                              ? `drop-shadow(0 4px 8px ${color}40)`
+                              : "none",
+                            transition: "all 0.2s",
+                          }}
+                        />
+                      )
+                    })}
+                </Pie>
+                <Tooltip
+                  content={(props: unknown) => {
+                    const { active, payload } = props as {
+                      active?: boolean
+                      payload?: ReadonlyArray<{ payload: TipoData }>
+                    }
+                    if (!active || !payload?.length) return null
+                    const d = payload[0].payload
+                    const total = data.reduce((s, x) => s + x.totalUnidades, 0)
+                    const pct =
+                      total > 0
+                        ? ((d.totalUnidades / total) * 100).toFixed(1)
+                        : "0"
+                    return (
+                      <div
+                        style={{
+                          background: "white",
+                          border: `1px solid ${getColor(d.categoria)}40`,
+                          borderRadius: 12,
+                          padding: "12px 16px",
+                          boxShadow:
+                            "0 1px 2px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.10)",
+                          minWidth: 160,
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            letterSpacing: "0.10em",
+                            textTransform: "uppercase",
+                            color: getColor(d.categoria),
+                            marginBottom: 8,
+                          }}
+                        >
+                          {d.categoria}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 22,
+                            fontWeight: 700,
+                            color: "#0F172A",
+                            letterSpacing: "-0.025em",
+                            fontVariantNumeric: "tabular-nums",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {d.totalUnidades.toLocaleString("es-MX")}
+                        </p>
+                        <p style={{ fontSize: 11, color: "#64748B" }}>
+                          {pct}% del total
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 10,
+                            color: "#94A3B8",
+                            marginTop: 6,
+                          }}
+                        >
+                          Click para ver órdenes →
+                        </p>
+                      </div>
+                    )
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Lista lateral */}
+          <div className="flex max-h-[340px] flex-col justify-center gap-2 overflow-y-auto border-t border-[rgba(15,23,42,0.04)] px-5 py-5 lg:border-l lg:border-t-0">
+            <p className="mb-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+              Distribución
+            </p>
+            {[...data]
+              .filter((d) => d.totalUnidades > 0)
+              .sort((a, b) => b.totalUnidades - a.totalUnidades)
+              .map((tipo) => {
+                const total = data.reduce((s, d) => s + d.totalUnidades, 0)
+                const pct =
+                  total > 0 ? (tipo.totalUnidades / total) * 100 : 0
+                const isSelected = seleccionado?.categoria === tipo.categoria
+                const color = getColor(tipo.categoria)
+                return (
+                  <button
+                    key={tipo.categoria}
+                    type="button"
+                    onClick={() =>
+                      setSeleccionado((prev) =>
+                        prev?.categoria === tipo.categoria ? null : tipo,
+                      )
+                    }
+                    className="flex items-center gap-2.5 rounded-lg border bg-white px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                    style={{
+                      borderColor: isSelected ? color : "rgba(15,23,42,0.06)",
+                      background: isSelected ? `${color}08` : "white",
+                    }}
+                  >
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{
+                        background: color,
+                        boxShadow: isSelected
+                          ? `0 0 8px ${color}80`
+                          : "none",
+                      }}
+                    />
+                    <span
+                      className="flex-1 truncate text-[11px] font-medium"
+                      style={{
+                        color: isSelected ? color : "#475569",
+                      }}
+                    >
+                      {tipo.categoria.length > 14
+                        ? tipo.categoria.slice(0, 13) + "…"
+                        : tipo.categoria}
+                    </span>
+                    <div className="shrink-0 text-right">
+                      <span className="block text-[12px] font-bold tabular-nums text-[#0F172A]">
+                        {tipo.totalUnidades.toLocaleString("es-MX")}
+                      </span>
+                      <span className="text-[9.5px] tabular-nums text-gray-400">
+                        {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
           </div>
         </div>
       </section>
