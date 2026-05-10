@@ -546,9 +546,9 @@ function ClienteRowCRM({
       </div>
 
       {/* Frecuencia — columna propia */}
-      <div className="hidden w-[68px] shrink-0 text-right md:block">
+      <div className="hidden w-[110px] shrink-0 text-right md:block">
         <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
-          Frec.
+          Frecuencia
         </p>
         <p
           className="mt-0.5 text-[12.5px] font-semibold tabular-nums text-[#0F172A]"
@@ -560,12 +560,10 @@ function ClienteRowCRM({
         </p>
       </div>
 
-      {/* Próx. fecha — columna propia */}
-      <div className="hidden w-[78px] shrink-0 text-right sm:block">
-        <p
-          className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]"
-        >
-          Próx
+      {/* Próxima fecha — columna propia */}
+      <div className="hidden w-[110px] shrink-0 text-right sm:block">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+          Próxima fecha
         </p>
         <p
           className="mt-0.5 text-[12.5px] font-semibold tabular-nums text-[#0F172A]"
@@ -576,9 +574,9 @@ function ClienteRowCRM({
       </div>
 
       {/* Probabilidad — columna propia */}
-      <div className="w-[60px] shrink-0 text-right">
+      <div className="w-[110px] shrink-0 text-right">
         <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
-          P(60d)
+          Probabilidad
         </p>
         <p
           className={`mt-0.5 text-[14px] font-bold tabular-nums leading-none ${probColor}`}
@@ -588,10 +586,10 @@ function ClienteRowCRM({
         </p>
       </div>
 
-      {/* Monto esperado — columna propia */}
-      <div className="w-[88px] shrink-0 text-right">
+      {/* Ticket esperado — columna propia */}
+      <div className="w-[110px] shrink-0 text-right">
         <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
-          Ticket
+          Ticket esperado
         </p>
         <p
           className="mt-0.5 text-[12.5px] font-bold tabular-nums text-[#0F766E]"
