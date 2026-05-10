@@ -376,48 +376,49 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                       )
                     }}
                   />
+                  {/* Label central como SVG <text> — debajo del tooltip HTML */}
+                  <text
+                    x="50%"
+                    y="47%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={
+                      seleccionado
+                        ? getColor(seleccionado.categoria)
+                        : "#0F172A"
+                    }
+                    fontSize={seleccionado ? 18 : 20}
+                    fontWeight={700}
+                    fontFamily="inherit"
+                    style={{
+                      pointerEvents: "none",
+                      transition: "all 0.2s",
+                      letterSpacing: "-0.025em",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {seleccionado
+                      ? seleccionado.totalUnidades.toLocaleString("es-MX")
+                      : data
+                          .reduce((s, d) => s + d.totalUnidades, 0)
+                          .toLocaleString("es-MX")}
+                  </text>
+                  <text
+                    x="50%"
+                    y="58%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill="#94A3B8"
+                    fontSize={9}
+                    fontWeight={600}
+                    fontFamily="inherit"
+                    letterSpacing="0.10em"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {seleccionado ? "UDS" : "TOTAL UDS"}
+                  </text>
                 </PieChart>
               </ResponsiveContainer>
-
-              {/* Label central */}
-              <div
-                className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
-              >
-                {seleccionado ? (
-                  <>
-                    <p
-                      className="text-[18px] font-bold leading-none tabular-nums"
-                      style={{
-                        color: getColor(seleccionado.categoria),
-                        letterSpacing: "-0.025em",
-                      }}
-                    >
-                      {seleccionado.totalUnidades.toLocaleString("es-MX")}
-                    </p>
-                    <p
-                      className="mt-1 text-[9px] uppercase text-gray-400"
-                      style={{ letterSpacing: "0.10em" }}
-                    >
-                      uds
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p
-                      className="text-[20px] font-bold leading-none tabular-nums text-[#0F172A]"
-                      style={{ letterSpacing: "-0.025em" }}
-                    >
-                      {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
-                    </p>
-                    <p
-                      className="mt-1 text-[9px] uppercase text-gray-400"
-                      style={{ letterSpacing: "0.10em" }}
-                    >
-                      total uds
-                    </p>
-                  </>
-                )}
-              </div>
             </div>
             <p className="mt-1 text-center text-[10px] text-gray-400">
               Click en un sector para ver las órdenes
