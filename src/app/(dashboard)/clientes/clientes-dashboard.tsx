@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useState, useTransition } from "react"
+import { Fragment, useId, useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -870,7 +870,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="space-y-4 pb-6">
       {/* ─── Header ejecutivo (custom) ─── */}
       {(() => {
         const len = monthlyKpi.length
@@ -901,88 +901,136 @@ export function ClientesDashboard({
 
         return (
           <>
-            {/* Title row */}
-            <header className="flex flex-wrap items-end justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-[#0F172A]">
-                  Clientes
-                </h1>
-                <p
-                  className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-[#64748B] tabular-nums"
-                  style={{ letterSpacing: "-0.005em" }}
-                >
-                  <span>
-                    <span className="font-semibold text-[#0F172A]">
-                      {kpis.total}
-                    </span>{" "}
-                    clientes
-                  </span>
-                  <span className="text-gray-300">·</span>
-                  <span>
-                    <span className="font-semibold text-[#0F172A]">
-                      {kpis.activos}
-                    </span>{" "}
-                    activos
-                  </span>
-                  <span className="text-gray-300">·</span>
-                  <span>
-                    <span className="font-semibold text-[#0F172A]">
-                      {mxn.format(kpis.ltvTotal)}
-                    </span>{" "}
-                    LTV
-                  </span>
-                  <span className="text-gray-300">·</span>
-                  <span
-                    className={
-                      trimChange >= 0
-                        ? "font-semibold text-emerald-600"
-                        : "font-semibold text-rose-600"
-                    }
-                  >
-                    {trimChange >= 0 ? "+" : ""}
-                    {trimChange.toFixed(1)}% este mes
-                  </span>
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.06)] bg-white/70 px-2.5 py-1 text-[11px] font-medium text-[#64748B] backdrop-blur">
-                  Últimos 12 meses
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.06)] bg-white/70 px-2.5 py-1 text-[11px] font-medium text-[#64748B] backdrop-blur">
-                  <span className="relative flex size-1.5">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative size-1.5 rounded-full bg-emerald-500" />
-                  </span>
-                  Live
-                </span>
-                <Link
-                  href="/clientes/nuevo"
-                  className="inline-flex h-[36px] items-center gap-2 rounded-[12px] bg-[#0F766E] px-4 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
-                >
-                  <UserPlus className="size-4" strokeWidth={1.75} />
-                  Nuevo cliente
-                </Link>
-              </div>
-            </header>
-
-            {/* Hero strip — superficie glass única con divisores invisibles */}
+            {/* ═══ HERO BANNER · Lujo Silencioso ═══ */}
             <section
-              className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] lg:grid-cols-4"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62))",
-                backdropFilter: "blur(18px)",
-                WebkitBackdropFilter: "blur(18px)",
-                boxShadow:
-                  "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
+                  "linear-gradient(90deg, #1B3022 0%, #2D5A43 100%)",
               }}
             >
+              <div className="px-6 pt-6 pb-6 space-y-5">
+                {/* Title row */}
+                <header className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p
+                      className="mb-1"
+                      style={{
+                        color: "rgba(255,255,255,0.45)",
+                        fontSize: "10px",
+                        fontWeight: 500,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      Base de Clientes · Piel Canela
+                    </p>
+                    <h1
+                      className="text-[26px] font-medium leading-tight tracking-[-0.02em] text-white"
+                    >
+                      Clientes
+                    </h1>
+                    <p
+                      className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] tabular-nums"
+                      style={{
+                        color: "rgba(255,255,255,0.7)",
+                        letterSpacing: "-0.005em",
+                      }}
+                    >
+                      <span>
+                        <span className="font-semibold text-white">
+                          {kpis.total}
+                        </span>{" "}
+                        clientes
+                      </span>
+                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
+                      <span>
+                        <span className="font-semibold text-white">
+                          {kpis.activos}
+                        </span>{" "}
+                        activos
+                      </span>
+                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
+                      <span>
+                        <span
+                          className="font-semibold"
+                          style={{ color: "#C5A47E" }}
+                        >
+                          {mxn.format(kpis.ltvTotal)}
+                        </span>{" "}
+                        LTV
+                      </span>
+                      <span style={{ color: "rgba(255,255,255,0.25)" }}>·</span>
+                      <span
+                        className="font-semibold"
+                        style={{
+                          color:
+                            trimChange >= 0
+                              ? "rgba(167,243,208,0.95)"
+                              : "rgba(252,165,165,0.95)",
+                        }}
+                      >
+                        {trimChange >= 0 ? "+" : ""}
+                        {trimChange.toFixed(1)}% este mes
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: "rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      Últimos 12 meses
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: "rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      <span className="relative flex size-1.5">
+                        <span
+                          className="absolute inset-0 animate-ping rounded-full opacity-75"
+                          style={{ background: "rgba(167,243,208,0.9)" }}
+                        />
+                        <span
+                          className="relative size-1.5 rounded-full"
+                          style={{ background: "rgba(167,243,208,1)" }}
+                        />
+                      </span>
+                      Live
+                    </span>
+                    <Link
+                      href="/clientes/nuevo"
+                      className="inline-flex h-[38px] items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all hover:-translate-y-0.5"
+                      style={{
+                        background: "rgba(255,255,255,0.12)",
+                        color: "white",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <UserPlus className="size-4" strokeWidth={1.75} />
+                      Nuevo cliente
+                    </Link>
+                  </div>
+                </header>
+
+            {/* Hero strip — 4 glass cards individuales sobre el dark banner */}
+            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <HeroMetric
                 label="Total clientes"
                 value={kpis.total.toString()}
                 trend={dActivos}
                 sub={`${cur?.nuevos ?? 0} nuevos este mes`}
                 sparkline={monthlyKpi.map((m) => m.activosCum)}
+                sparkColor="rgba(255,255,255,0.5)"
               />
               <HeroMetric
                 label="Recurrentes"
@@ -990,6 +1038,7 @@ export function ClientesDashboard({
                 trend={dNuevos}
                 sub="≥3 compras"
                 sparkline={monthlyKpi.map((m) => m.nuevos)}
+                sparkColor="rgba(197,164,126,0.7)"
               />
               <HeroMetric
                 label="LTV total"
@@ -997,12 +1046,18 @@ export function ClientesDashboard({
                 trend={dLtv}
                 sub={`${mxn.format(cur?.ltvGanado ?? 0)} este mes`}
                 sparkline={monthlyKpi.map((m) => m.ltvGanado)}
+                sparkColor="rgba(134,239,172,0.6)"
               />
               <BestClienteMetric
                 cliente={kpis.mejor ?? null}
                 pctRevenue={concentrado}
               />
             </section>
+              </div>
+            </section>
+
+            {/* ═══ Resto del contenido sobre fondo light ═══ */}
+            <div className="px-6 space-y-4">
 
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -1039,8 +1094,15 @@ export function ClientesDashboard({
               />
             </section>
 
-            {/* Insights pills — mini-badges editoriales */}
-            <section className="flex flex-wrap gap-2">
+            {/* Insights pills — contenedor unificado editorial */}
+            <section
+              className="flex flex-wrap gap-2"
+              style={{
+                padding: "10px 12px",
+                background: "#f8fafc",
+                borderRadius: "12px",
+              }}
+            >
               {kpis.mejor && concentrado > 30 && (
                 <InsightPill tone="amber">
                   <span className="font-semibold">{kpis.mejor.nombre_negocio ?? kpis.mejor.nombre}</span>{" "}
@@ -1072,27 +1134,29 @@ export function ClientesDashboard({
                 </InsightPill>
               )}
             </section>
+            </div>
           </>
         )
       })()}
 
-      {/* Estimado de ingresos predictivo */}
-      <EstimadoIngresos clientes={enriched} ventas={ventas} />
+      <div className="px-6 space-y-4">
+        {/* Estimado de ingresos predictivo */}
+        <EstimadoIngresos clientes={enriched} ventas={ventas} />
 
-      {/* Predicción de compras por cliente (CDF empírica + bell + seasonality) */}
-      <PrediccionCompras
-        clientes={enriched}
-        ventas={ventas}
-        onClienteClick={setSelectedCliente}
-      />
+        {/* Predicción de compras por cliente (CDF empírica + bell + seasonality) */}
+        <PrediccionCompras
+          clientes={enriched}
+          ventas={ventas}
+          onClienteClick={setSelectedCliente}
+        />
 
-      {/* Recurrencia analytics con heatmap interactivo */}
-      <RecurrenciaAnalytics
-        clientes={enriched}
-        ventas={ventas}
-        cotizaciones={cotizaciones}
-        venta_items={venta_items}
-      />
+        {/* Recurrencia analytics con heatmap interactivo */}
+        <RecurrenciaAnalytics
+          clientes={enriched}
+          ventas={ventas}
+          cotizaciones={cotizaciones}
+          venta_items={venta_items}
+        />
 
       {/* Tabla */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -1326,6 +1390,7 @@ export function ClientesDashboard({
           </div>
         </footer>
       </section>
+      </div>
 
       {/* Drawer */}
       <ClienteDrawer
@@ -1340,50 +1405,77 @@ export function ClientesDashboard({
   )
 }
 
-/** Micro-sparkline individual — solo detrás del número, ultra-tenue */
-function MicroSpark({ points }: { points: number[] }) {
+/**
+ * Micro-sparkline individual con área degradada — Lujo Silencioso.
+ * Línea fina (1.5px) + gradiente vertical 25%→0% para profundidad atmosférica.
+ */
+function MicroSpark({
+  points,
+  dark = false,
+  color,
+}: {
+  points: number[]
+  dark?: boolean
+  color?: string
+}) {
   if (points.length < 2) return null
-  const w = 80
-  const h = 22
+  const w = 64
+  const h = 28
+  const pad = 3
   const min = Math.min(...points)
   const max = Math.max(...points)
   const range = max - min || 1
-  const step = w / (points.length - 1)
-  const path = points
-    .map((v, i) => {
-      const x = i * step
-      const y = h - ((v - min) / range) * h
-      return `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`
-    })
+  const pts = points.map((v, i) => ({
+    x: (i / (points.length - 1)) * w,
+    y: h - pad - ((v - min) / range) * (h - pad * 2),
+  }))
+  const linePath = pts
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
     .join(" ")
+  const areaPath = [
+    ...pts.map(
+      (p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`,
+    ),
+    `L ${w} ${h}`,
+    "L 0 " + h,
+    "Z",
+  ].join(" ")
+  const stroke = color ?? (dark ? "rgba(255,255,255,0.5)" : "#0F766E")
+  const gradId = useId().replace(/:/g, "")
   return (
     <svg
-      className="pointer-events-none absolute -bottom-0.5 right-3 transition-opacity duration-180 group-hover:opacity-100"
+      className="pointer-events-none absolute bottom-0 right-3"
       width={w}
       height={h}
       viewBox={`0 0 ${w} ${h}`}
       fill="none"
       aria-hidden
-      style={{ opacity: 0.55 }}
     >
+      <defs>
+        <linearGradient id={`spark-${gradId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={stroke} stopOpacity={0.25} />
+          <stop offset="100%" stopColor={stroke} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#spark-${gradId})`} />
       <path
-        d={path}
-        stroke="#0F766E"
-        strokeWidth="1.25"
+        d={linePath}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity="0.7"
       />
     </svg>
   )
 }
 
 /**
- * Métrica del hero strip premium.
- * - Surface glass única (no cards visibles)
- * - Micro-sparkline solo detrás del número (top-right del bloque)
- * - Hover glow sutil + translateY
- * - Tipografía: label tracking 0.12em opacity baja, número 28px font-700
+ * Métrica del hero — glass card sobre dark banner ("Lujo Silencioso").
+ * - Background rgba(255,255,255,0.08) + backdrop-blur 12px + border 12% white
+ * - Texto blanco con jerarquía de opacity (label 0.5, sub 0.35)
+ * - Hover: bg 0.12, ligero translateY
+ * - Sparkline atmosférica al fondo (white/40)
  */
 function HeroMetric({
   label,
@@ -1392,6 +1484,7 @@ function HeroMetric({
   sub,
   truncate,
   sparkline,
+  sparkColor,
 }: {
   label: string
   value: string
@@ -1399,24 +1492,32 @@ function HeroMetric({
   sub?: string
   truncate?: boolean
   sparkline?: number[]
+  sparkColor?: string
 }) {
   return (
     <div
-      className="group relative overflow-hidden px-6 py-4 transition-all duration-180 hover:bg-[rgba(255,255,255,0.55)]"
+      className="group relative overflow-hidden rounded-2xl px-5 py-4 transition-all duration-180 hover:-translate-y-0.5"
       style={{
-        boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)",
+        background: "rgba(255,255,255,0.05)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
       }}
     >
       <div className="relative">
         <p
-          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
-          style={{ letterSpacing: "0.14em" }}
+          className="text-[10px] font-medium uppercase mb-3"
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            letterSpacing: "0.14em",
+          }}
         >
           {label}
         </p>
-        <div className="mt-1.5 flex items-baseline justify-between gap-2">
+        <div className="flex items-baseline justify-between gap-2">
           <p
-            className={`text-[28px] font-semibold leading-none tracking-[-0.035em] tabular-nums text-[#0F172A] ${truncate ? "truncate" : ""}`}
+            className={`text-[26px] font-medium leading-none tracking-[-0.03em] tabular-nums text-white ${truncate ? "truncate" : ""}`}
             title={truncate ? value : undefined}
             style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
           >
@@ -1424,9 +1525,13 @@ function HeroMetric({
           </p>
           {trend !== undefined && (
             <span
-              className={`inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold tabular-nums ${
-                trend >= 0 ? "text-emerald-600" : "text-rose-600"
-              }`}
+              className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold tabular-nums"
+              style={{
+                color:
+                  trend >= 0
+                    ? "rgba(167,243,208,0.95)"
+                    : "rgba(252,165,165,0.95)",
+              }}
             >
               <span aria-hidden className="text-[7px]">
                 {trend >= 0 ? "▲" : "▼"}
@@ -1436,19 +1541,22 @@ function HeroMetric({
           )}
         </div>
         {sub && (
-          <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]/80">
+          <p
+            className="mt-1.5 text-[10.5px] leading-tight"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+          >
             {sub}
           </p>
         )}
-        {sparkline && <MicroSpark points={sparkline} />}
+        {sparkline && <MicroSpark points={sparkline} dark color={sparkColor} />}
       </div>
     </div>
   )
 }
 
 /**
- * Mejor cliente — celda especial del hero strip con avatar + Top badge
- * + % revenue. Más editorial que un HeroMetric genérico.
+ * Mejor cliente — glass card sobre dark banner con avatar + Top badge champagne
+ * (#C5A47E) + % revenue. Estilo "Lujo Silencioso".
  */
 function BestClienteMetric({
   cliente,
@@ -1457,19 +1565,32 @@ function BestClienteMetric({
   cliente: EnrichedCliente | null
   pctRevenue: number
 }) {
+  const glassStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.05)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+  }
   if (!cliente) {
     return (
       <div
-        className="group relative overflow-hidden px-6 py-4 transition-all duration-180"
-        style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)" }}
+        className="group relative overflow-hidden rounded-2xl px-5 py-4"
+        style={glassStyle}
       >
         <p
-          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
-          style={{ letterSpacing: "0.14em" }}
+          className="text-[10px] font-medium uppercase mb-3"
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            letterSpacing: "0.14em",
+          }}
         >
           Mejor cliente
         </p>
-        <p className="mt-1.5 text-[18px] font-semibold leading-none tracking-[-0.025em] text-[#94A3B8]">
+        <p
+          className="text-[18px] font-medium leading-none tracking-[-0.025em]"
+          style={{ color: "rgba(255,255,255,0.45)" }}
+        >
           Sin ventas
         </p>
       </div>
@@ -1486,51 +1607,72 @@ function BestClienteMetric({
   const isTop = pctRevenue >= 25
   return (
     <div
-      className="group relative overflow-hidden px-6 py-4 transition-all duration-180 hover:bg-[rgba(255,255,255,0.55)]"
-      style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.5)" }}
+      className="group relative overflow-hidden rounded-2xl px-5 py-4 transition-all duration-180 hover:-translate-y-0.5"
+      style={glassStyle}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <p
-          className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
-          style={{ letterSpacing: "0.14em" }}
+          className="text-[10px] font-medium uppercase"
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            letterSpacing: "0.14em",
+          }}
         >
           Mejor cliente
         </p>
         {isTop && (
           <span
-            className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200/50"
+            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
             title="Top cliente — concentra >25% del LTV"
+            style={{
+              background: "rgba(197,164,126,0.18)",
+              color: "#C5A47E",
+              border: "1px solid rgba(197,164,126,0.3)",
+            }}
           >
             ★ Top
           </span>
         )}
       </div>
-      <div className="mt-1.5 flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <div
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ring-2 ring-white"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
           style={{
             background:
-              "linear-gradient(135deg, #0F766E 0%, #115E59 100%)",
+              "linear-gradient(135deg, #C5A47E 0%, #A8895F 100%)",
+            boxShadow:
+              "0 1px 2px rgba(197,164,126,0.3), 0 4px 12px rgba(197,164,126,0.15)",
           }}
         >
           {initials}
         </div>
         <div className="min-w-0 flex-1">
           <p
-            className="truncate text-[14px] font-semibold leading-tight tracking-[-0.02em] text-[#0F172A]"
+            className="truncate text-[14px] font-medium leading-tight tracking-[-0.02em] text-white"
             title={display}
           >
             {display}
           </p>
           <p
-            className="text-[11px] tabular-nums text-[#64748B]"
-            style={{ fontFeatureSettings: '"tnum" 1' }}
+            className="text-[11px] tabular-nums"
+            style={{
+              color: "rgba(255,255,255,0.55)",
+              fontFeatureSettings: '"tnum" 1',
+            }}
           >
             {mxn.format(cliente.ltv)}
             {pctRevenue > 0 && (
               <>
-                <span className="mx-1 text-gray-300">·</span>
-                <span className="font-semibold text-[#0F766E]">
+                <span
+                  className="mx-1"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  ·
+                </span>
+                <span
+                  className="font-semibold"
+                  style={{ color: "#C5A47E" }}
+                >
                   {pctRevenue.toFixed(0)}%
                 </span>{" "}
                 revenue

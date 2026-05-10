@@ -345,53 +345,53 @@ export function EstimadoIngresos({
           </span>
         </header>
 
-        {/* Hero alert: temporada alta detectada */}
+        {/* Hero alert: temporada alta — fondo blanco con acento quirúrgico ámbar */}
         {seasonalInsights.proxTempAlta && (
           <div
-            className="relative flex items-start gap-4 overflow-hidden rounded-xl border border-amber-200/40 p-4"
+            className="relative flex items-start gap-4 overflow-hidden rounded-xl p-4"
             style={{
-              background:
-                "linear-gradient(135deg, rgba(254,243,199,0.6) 0%, rgba(254,215,170,0.3) 50%, rgba(255,255,255,0.5) 100%)",
-              boxShadow: "0 4px 12px rgba(245,158,11,0.06)",
+              background: "white",
+              border: "1px solid #f1f5f9",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
             }}
           >
-            <div
-              className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full opacity-60"
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(245,158,11,0.10), transparent 70%)",
-                filter: "blur(20px)",
-              }}
-              aria-hidden
-            />
             <span
-              className="relative flex size-11 shrink-0 items-center justify-center rounded-xl text-white"
+              className="relative flex size-11 shrink-0 items-center justify-center rounded-xl"
               style={{
-                background:
-                  "linear-gradient(135deg, #F59E0B 0%, #EA580C 100%)",
-                boxShadow:
-                  "0 1px 2px rgba(245,158,11,0.25), 0 6px 20px rgba(245,158,11,0.20)",
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
               }}
             >
-              {/* Pulse ring sutil */}
-              <span
-                aria-hidden
-                className="absolute inset-0 animate-ping rounded-xl bg-amber-400/40"
-                style={{ animationDuration: "2.4s" }}
+              <Sun
+                className="relative size-5"
+                strokeWidth={1.75}
+                style={{ color: "#f59e0b" }}
               />
-              <Sun className="relative size-5" strokeWidth={1.75} />
             </span>
             <div className="relative flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-[15px] font-semibold tracking-[-0.015em] text-[#78350F]">
+                <p
+                  className="text-[15px] tracking-[-0.015em]"
+                  style={{ color: "#111827", fontWeight: 500 }}
+                >
                   {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
                     seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
                   es temporada alta
                 </p>
-                {/* Heat intensity indicator */}
+                {/* Heat intensity badge — único acento ámbar */}
                 <span
-                  className="inline-flex items-center gap-0.5 rounded-full bg-white/60 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.1em] text-amber-700 ring-1 ring-amber-200/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-0.5"
                   title={`Intensidad: ×${seasonalInsights.proxTempAlta.factor.toFixed(2)}`}
+                  style={{
+                    background: "#fff7ed",
+                    color: "#c2410c",
+                    padding: "2px 8px",
+                    borderRadius: "9999px",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
                 >
                   {(() => {
                     const f = seasonalInsights.proxTempAlta.factor
@@ -404,7 +404,7 @@ export function EstimadoIngresos({
                         style={{
                           background:
                             i < bars
-                              ? `linear-gradient(180deg, #F59E0B, #EA580C)`
+                              ? "linear-gradient(180deg, #F59E0B, #EA580C)"
                               : "rgba(245,158,11,0.18)",
                         }}
                       />
@@ -413,9 +413,15 @@ export function EstimadoIngresos({
                   <span className="ml-1">Heat</span>
                 </span>
               </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-amber-800/80">
+              <p
+                className="mt-1 text-[12px] leading-relaxed"
+                style={{ color: "#64748b" }}
+              >
                 Históricamente{" "}
-                <span className="font-semibold tabular-nums text-amber-900">
+                <span
+                  className="font-semibold tabular-nums"
+                  style={{ color: "#111827" }}
+                >
                   +
                   {Math.round(
                     (seasonalInsights.proxTempAlta.factor - 1) * 100,
@@ -427,14 +433,25 @@ export function EstimadoIngresos({
             </div>
             {seasonalInsights.junioPromedio > 0 && (
               <div
-                className="relative shrink-0 rounded-lg border border-amber-200/50 bg-white/60 px-3 py-2 backdrop-blur-sm"
+                className="relative shrink-0 rounded-lg px-3 py-2"
+                style={{
+                  background: "#f8fafc",
+                  border: "1px solid #f1f5f9",
+                }}
               >
-                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-amber-700/80">
+                <p
+                  className="text-[9px] font-semibold uppercase"
+                  style={{ color: "#64748b", letterSpacing: "0.1em" }}
+                >
                   Promedio histórico
                 </p>
                 <p
-                  className="mt-0.5 text-base font-bold tabular-nums tracking-[-0.025em] text-amber-900"
-                  style={{ fontFeatureSettings: '"tnum" 1' }}
+                  className="mt-0.5 text-base tabular-nums tracking-[-0.025em]"
+                  style={{
+                    color: "#111827",
+                    fontWeight: 500,
+                    fontFeatureSettings: '"tnum" 1',
+                  }}
                 >
                   {mxn.format(seasonalInsights.junioPromedio)}
                 </p>
