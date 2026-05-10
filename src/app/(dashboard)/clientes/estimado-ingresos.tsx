@@ -10,92 +10,17 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react"
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ReferenceArea,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
 import type { EnrichedCliente, VentaSummaryRow } from "./clientes-dashboard"
+import {
+  GraficaHistoricoProyeccion,
+  type DataPoint,
+} from "./chart-historico-proyeccion"
 
 const MESES_ABBR = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
 function formatMesLabel(mesStr: string) {
   const [year, month] = mesStr.split("-")
   return `${MESES_ABBR[parseInt(month, 10) - 1]} ${year.slice(2)}`
 }
-function formatMXN(v: number | null | undefined) {
-  if (v == null) return "—"
-  return v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
-}
-function formatYAxis(value: number) {
-  if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`
-  return `$${value}`
-}
-
-type TooltipPayloadEntry = {
-  name?: string
-  value?: number | null
-  fill?: string
-  color?: string
-}
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: TooltipPayloadEntry[]
-  label?: string | number
-}) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="min-w-[200px] rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
-      <p className="mb-3 border-b border-gray-100 pb-2 font-semibold text-gray-800">
-        {label}
-      </p>
-      {payload.map(
-        (p, i) =>
-          p.value != null && (
-            <div
-              key={`${p.name ?? i}`}
-              className="mb-1.5 flex items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="size-2.5 rounded-full"
-                  style={{ backgroundColor: p.fill ?? p.color ?? "#9ca3af" }}
-                />
-                <span className="text-sm text-gray-600">
-                  {p.name === "real"
-                    ? "Vendido real"
-                    : p.name === "estimado"
-                      ? "Proyectado"
-                      : p.name === "ganancia"
-                        ? "Ganancia neta"
-                        : (p.name ?? "")}
-                </span>
-              </div>
-              <span className="font-bold tabular-nums text-gray-900">
-                {formatMXN(p.value)}
-              </span>
-            </div>
-          ),
-      )}
-    </div>
-  )
-}
-
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
@@ -107,11 +32,6 @@ const mxn2 = new Intl.NumberFormat("es-MX", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const monthLong = new Intl.DateTimeFormat("es-MX", {
-  month: "long",
-  year: "numeric",
-})
-
 export function EstimadoIngresos({
   clientes,
   ventas,
@@ -315,6 +235,20 @@ export function EstimadoIngresos({
     ]
   }, [historico, proyecciones, indiceEstacional])
 
+  // ─── Adaptador para GraficaHistoricoProyeccion (Stripe/Vercel style) ─
+  const dataPoints: DataPoint[] = useMemo(() => {
+    return dataGrafica.map((d) => ({
+      mes: d.mes,
+      label: d.label,
+      ventas: d.esProyeccion ? null : (d.real ?? d.realAlta),
+      ganancia: d.esProyeccion ? null : d.ganancia,
+      proyeccion: d.esProyeccion ? (d.estimado ?? d.estimadoAlta) : null,
+      proyeccionGanancia: d.esProyeccion ? d.ganancia : null,
+      esFuturo: d.esProyeccion,
+      esTemporadaAlta: d.esTemporadaAlta,
+    }))
+  }, [dataGrafica])
+
   // ─── Clientes "probable recompra" ─────────────────────────────────
   // Si dias_sin_compra está cerca (o por encima) de su frecuencia_dias,
   // es alta probabilidad de recompra inminente.
@@ -353,9 +287,6 @@ export function EstimadoIngresos({
     (s, c) => s + (c.estimado * c.score) / 100,
     0,
   )
-
-  const proxMes = new Date(today.getFullYear(), today.getMonth() + 1, 1)
-  const proxMesLabel = monthLong.format(proxMes)
 
   return (
     <section
@@ -554,147 +485,11 @@ export function EstimadoIngresos({
         </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Bar chart histórico + estimado proyectado */}
-        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm lg:col-span-2">
-          <header className="mb-3 flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900">
-                Histórico vs Proyección
-              </h4>
-              <p className="mt-0.5 text-[11px] text-gray-500">
-                12 meses + 3 proyectados (rosa = real, violeta = estimado)
-              </p>
-            </div>
-          </header>
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart
-              data={dataGrafica}
-              margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="gradHistReal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#94A3B8" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#CBD5E1" stopOpacity={0.7} />
-                </linearGradient>
-                <linearGradient id="gradHistAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FDE68A" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#FEF3C7" stopOpacity={0.6} />
-                </linearGradient>
-                <linearGradient id="gradProy" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.85} />
-                  <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.55} />
-                </linearGradient>
-                <linearGradient id="gradProyAlta" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.65} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(148,163,184,0.12)"
-                vertical={false}
-              />
-              {/* Forecast zone — área shaded violet sobre los meses proyectados */}
-              {dataGrafica.length > historico.length && (
-                <ReferenceArea
-                  x1={dataGrafica[historico.length]?.label}
-                  x2={dataGrafica[dataGrafica.length - 1]?.label}
-                  fill="#8B5CF6"
-                  fillOpacity={0.04}
-                  stroke="none"
-                  ifOverflow="extendDomain"
-                />
-              )}
-              {/* Línea vertical "Hoy" entre histórico y proyección */}
-              {historico.length > 0 && proyecciones.length > 0 && (
-                <ReferenceLine
-                  x={dataGrafica[historico.length - 1]?.label}
-                  stroke="#8B5CF6"
-                  strokeOpacity={0.35}
-                  strokeDasharray="2 4"
-                  label={{
-                    value: "Hoy",
-                    position: "insideTopRight",
-                    fill: "#8B5CF6",
-                    fontSize: 9,
-                    offset: 6,
-                  }}
-                />
-              )}
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tickFormatter={formatYAxis}
-                tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-                width={50}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend content={<HistVsProyLegend />} />
-              <Bar
-                dataKey="real"
-                name="Ventas reales"
-                fill="url(#gradHistReal)"
-                stroke="#94A3B8"
-                radius={[6, 6, 0, 0]}
-                animationDuration={800}
-                legendType="square"
-              />
-              <Bar
-                dataKey="realAlta"
-                name="Temp. alta histórica"
-                fill="url(#gradHistAlta)"
-                stroke="#FDE68A"
-                radius={[6, 6, 0, 0]}
-                animationDuration={800}
-                legendType="square"
-              />
-              <Bar
-                dataKey="estimado"
-                name="Proyección"
-                fill="url(#gradProy)"
-                stroke="#8B5CF6"
-                strokeOpacity={0.4}
-                strokeDasharray="3 3"
-                radius={[6, 6, 0, 0]}
-                animationDuration={1000}
-                legendType="square"
-              />
-              <Bar
-                dataKey="estimadoAlta"
-                name="Proyección temp. alta"
-                fill="url(#gradProyAlta)"
-                stroke="#7C3AED"
-                strokeOpacity={0.6}
-                strokeDasharray="3 3"
-                radius={[6, 6, 0, 0]}
-                animationDuration={1000}
-                legendType="square"
-              />
-              <Line
-                dataKey="ganancia"
-                name="Ganancia neta"
-                stroke="#0F766E"
-                strokeWidth={2.5}
-                dot={{ r: 5, fill: "#0F766E", stroke: "white", strokeWidth: 2 }}
-                activeDot={{ r: 7, fill: "#0F766E" }}
-                connectNulls
-                animationDuration={1200}
-                legendType="circle"
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-          {/* Nota explicativa de la fórmula (la leyenda visual va dentro del chart) */}
-          <p className="mt-3 border-t border-gray-50 pt-3 text-[10.5px] italic text-gray-400">
-            estimado = prom. últ. 3 meses × índice estacional × confianza ·
-            proyección 6 meses · 🌞 = temporada alta histórica
-          </p>
-        </article>
+        {/* Chart histórico vs proyección — Stripe/Vercel Analytics style */}
+        <div className="lg:col-span-2">
+          <GraficaHistoricoProyeccion data={dataPoints} />
+        </div>
+
 
         {/* Lista de clientes probable recompra */}
         <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
@@ -769,38 +564,6 @@ export function EstimadoIngresos({
       </div>
       </div>
     </section>
-  )
-}
-
-// Leyenda custom: garantiza colores correctos (Recharts pinta dots negros
-// cuando se usa <Cell> con fill por defecto undefined en el Bar padre).
-function HistVsProyLegend() {
-  const items: Array<{ color: string; label: string; shape: "square" | "circle" }> = [
-    { color: "#CBD5E1", label: "Ventas reales", shape: "square" },
-    { color: "#FEF3C7", label: "Temp. alta histórica 🌞", shape: "square" },
-    { color: "#A78BFA", label: "Proyección", shape: "square" },
-    { color: "#7C3AED", label: "Proyección temp. alta 🌞", shape: "square" },
-    { color: "#0F766E", label: "Ganancia neta", shape: "circle" },
-  ]
-  return (
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-gray-600">
-      {items.map((it) => (
-        <div key={it.label} className="flex items-center gap-1.5">
-          {it.shape === "circle" ? (
-            <span
-              className="inline-block size-3 shrink-0 rounded-full ring-2 ring-white"
-              style={{ backgroundColor: it.color }}
-            />
-          ) : (
-            <span
-              className="inline-block size-3 shrink-0 rounded-sm"
-              style={{ backgroundColor: it.color }}
-            />
-          )}
-          <span>{it.label}</span>
-        </div>
-      ))}
-    </div>
   )
 }
 
