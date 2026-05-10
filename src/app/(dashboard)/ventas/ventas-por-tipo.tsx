@@ -404,7 +404,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
           {/* Lista órdenes */}
           <div className="max-h-[320px] overflow-y-auto">
-            {seleccionado.ordenes
+            {[...seleccionado.ordenes]
               .sort(
                 (a, b) =>
                   new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
