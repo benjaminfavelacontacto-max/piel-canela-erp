@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Users,
   TrendingUp,
+  ShoppingCart,
 } from "lucide-react"
 
 const items = [
@@ -17,6 +18,7 @@ const items = [
   { href: "/cotizaciones", label: "Cotizaciones", icon: FileText },
   { href: "/ventas", label: "Ventas", icon: ShoppingBag },
   { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/pedidos", label: "Pedidos", icon: ShoppingCart },
   { href: "/finanzas", label: "Finanzas", icon: TrendingUp },
 ]
 
