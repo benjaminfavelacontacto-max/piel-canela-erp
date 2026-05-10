@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { PageHeader } from "@/components/page-header"
+import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
 
 export type ProductoSales = {
@@ -208,6 +209,17 @@ export function InventarioView({
       0,
     )
     const utilidadPotencial = valor - capital
+    const itemsDisponibles = productos.reduce(
+      (s, p) => s + (p.stock_actual ?? 0),
+      0,
+    )
+    const skusConStock = productos.filter((p) => p.stock_actual > 0).length
+    const itemsCintas = productos.reduce(
+      (s, p) =>
+        s + (p.categoria.toUpperCase() === "CINTAS" ? p.stock_actual ?? 0 : 0),
+      0,
+    )
+    const itemsOtros = itemsDisponibles - itemsCintas
     const agotados = productos.filter((p) => p.estatus === "agotado").length
     const criticos = productos.filter((p) => p.estatus === "bajo").length
     const sinMovimiento = productos.filter(
@@ -218,10 +230,26 @@ export function InventarioView({
       valor,
       capital,
       utilidadPotencial,
+      itemsDisponibles,
+      skusConStock,
+      itemsCintas,
+      itemsOtros,
       agotados,
       criticos,
       sinMovimiento,
     }
+  }, [productos])
+
+  // Categorías con conteo de SKUs (top primero)
+  const categoriasConteo = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of productos) {
+      const k = (p.categoria ?? "OTROS").toUpperCase()
+      counts.set(k, (counts.get(k) ?? 0) + 1)
+    }
+    return Array.from(counts.entries())
+      .map(([nombre, count]) => ({ nombre, count }))
+      .sort((a, b) => b.count - a.count)
   }, [productos])
 
   function clearFilters() {
@@ -268,37 +296,36 @@ export function InventarioView({
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
         icon={<Package className="size-5" />}
-        kpis={[
-          {
-            label: "Valor inventario",
-            value: mxn.format(kpis.valor),
-            sub: `${kpis.totalProds} SKUs activos`,
-          },
-          {
-            label: "Capital invertido",
-            value: mxn.format(kpis.capital),
-            sub: "costo prom. de ventas",
-          },
-          {
-            label: "Utilidad potencial",
-            value: mxn.format(kpis.utilidadPotencial),
-            sub:
-              kpis.valor > 0
-                ? `${((kpis.utilidadPotencial / kpis.valor) * 100).toFixed(1)}% margen`
-                : "—",
-            color: "text-emerald-300",
-          },
-          {
-            label: "Stock crítico",
-            value: `${kpis.agotados + kpis.criticos}`,
-            sub: `${kpis.agotados} agotados · ${kpis.criticos} bajos`,
-            color:
-              kpis.agotados + kpis.criticos > 0
-                ? "text-red-300"
-                : "text-emerald-300",
-          },
-        ]}
       />
+
+      {/* Dark glass KPI strip — contraste necesario para la versión dark luxury */}
+      <section
+        className="rounded-3xl"
+        style={{
+          background:
+            "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F172A 100%)",
+          padding: "20px 20px 4px 20px",
+          boxShadow:
+            "0 1px 2px rgba(15,23,42,0.06), 0 24px 48px rgba(15,23,42,0.12)",
+        }}
+      >
+        <InventoryStats
+          totalProductos={kpis.totalProds}
+          totalSkus={kpis.skusConStock}
+          valorInventario={kpis.valor}
+          capitalInvertido={kpis.capital}
+          utilidadPotencial={kpis.utilidadPotencial}
+          margenPct={
+            kpis.valor > 0
+              ? (kpis.utilidadPotencial / kpis.valor) * 100
+              : 0
+          }
+          stockCritico={kpis.agotados + kpis.criticos}
+          agotados={kpis.agotados}
+          stockBajo={kpis.criticos}
+          categorias={categoriasConteo}
+        />
+      </section>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
