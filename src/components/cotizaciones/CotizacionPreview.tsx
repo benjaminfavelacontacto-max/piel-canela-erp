@@ -80,13 +80,27 @@ export function CotizacionPreview({
 
   const grupos = groupByCategoria(data.items)
 
-  // Conteo de unidades por tipo: Cintas vs resto de productos
-  const unidadesCintas = data.items
-    .filter((it) => it.categoria === "CINTAS")
-    .reduce((s, i) => s + Number(i.cantidad), 0)
-  const unidadesProductos = data.items
-    .filter((it) => it.categoria !== "CINTAS")
-    .reduce((s, i) => s + Number(i.cantidad), 0)
+  // Resumen por tipo: Cintas vs resto de productos
+  const itemsCintas = data.items.filter((it) => it.categoria === "CINTAS")
+  const itemsProductos = data.items.filter((it) => it.categoria !== "CINTAS")
+  const unidadesCintas = itemsCintas.reduce(
+    (s, i) => s + Number(i.cantidad),
+    0,
+  )
+  const unidadesProductos = itemsProductos.reduce(
+    (s, i) => s + Number(i.cantidad),
+    0,
+  )
+  const subtotalCintas = itemsCintas.reduce(
+    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
+    0,
+  )
+  const subtotalProductos = itemsProductos.reduce(
+    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
+    0,
+  )
+  const totalUnidades = unidadesCintas + unidadesProductos
+  const subtotalAll = subtotalCintas + subtotalProductos
 
   return (
     <div
@@ -224,7 +238,7 @@ export function CotizacionPreview({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 44px 88px 88px",
+          gridTemplateColumns: "1fr 70px 44px 88px 88px",
           padding: "8px 24px",
           background: TEAL_BG,
           borderBottom: `1px solid ${TEAL_LINE}`,
@@ -236,6 +250,7 @@ export function CotizacionPreview({
         }}
       >
         <span>Producto</span>
+        <span style={{ textAlign: "center" }}>Medida</span>
         <span style={{ textAlign: "center" }}>Cant.</span>
         <span style={{ textAlign: "right" }}>P. Unit.</span>
         <span style={{ textAlign: "right" }}>Total</span>
@@ -278,14 +293,13 @@ export function CotizacionPreview({
               </div>
             )}
             {g.items.map((it, i) => {
-              const peso = it.peso ?? extractPesoMl(it.nombre)
-              const subline = [it.sku, peso].filter(Boolean).join(" · ")
+              const medida = it.peso ?? extractPesoMl(it.nombre) ?? ""
               return (
                 <div
                   key={`${gi}-${i}`}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 44px 88px 88px",
+                    gridTemplateColumns: "1fr 70px 44px 88px 88px",
                     alignItems: "center",
                     padding: "7px 24px",
                     borderBottom: "1px solid #f0f0f0",
@@ -312,7 +326,7 @@ export function CotizacionPreview({
                       >
                         {it.nombre}
                       </p>
-                      {subline && (
+                      {it.sku && (
                         <p
                           style={{
                             fontSize: 11,
@@ -321,11 +335,20 @@ export function CotizacionPreview({
                             margin: "1px 0 0 0",
                           }}
                         >
-                          {subline}
+                          {it.sku}
                         </p>
                       )}
                     </div>
                   </div>
+                  <span
+                    style={{
+                      textAlign: "center",
+                      fontSize: 12,
+                      color: "#555",
+                    }}
+                  >
+                    {medida || "—"}
+                  </span>
                   <span
                     style={{
                       textAlign: "center",
@@ -364,60 +387,188 @@ export function CotizacionPreview({
         ))
       )}
 
-      {/* ─── DESGLOSE por tipo: Productos · Cintas · Total ─── */}
-      {(unidadesCintas > 0 || unidadesProductos > 0) && (
+      {/* ─── RESUMEN: Tipo / Unidades / Subtotal ─── */}
+      {totalUnidades > 0 && (
         <div
           style={{
             padding: "10px 24px",
             borderTop: "1px solid #e8e8e8",
             display: "flex",
             justifyContent: "flex-end",
-            gap: 24,
-            alignItems: "center",
           }}
         >
-          {unidadesProductos > 0 && (
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#000",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                margin: 0,
-              }}
-            >
-              Productos ({unidadesProductos} uds)
-            </p>
-          )}
-          {unidadesCintas > 0 && (
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#000",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                margin: 0,
-              }}
-            >
-              Cintas ({unidadesCintas} uds)
-            </p>
-          )}
-          <p
+          <table
             style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#000",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              margin: 0,
-              paddingLeft: 16,
-              borderLeft: "1px solid #ddd",
+              borderCollapse: "collapse",
+              fontSize: 12,
+              width: "auto",
             }}
           >
-            Total ({unidadesProductos + unidadesCintas} uds)
-          </p>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #e8e8e8" }}>
+                <th
+                  style={{
+                    fontSize: 9,
+                    color: "#aaa",
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    padding: "3px 16px 3px 0",
+                    textAlign: "left",
+                  }}
+                >
+                  Tipo
+                </th>
+                <th
+                  style={{
+                    fontSize: 9,
+                    color: "#aaa",
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    padding: "3px 16px",
+                    textAlign: "center",
+                  }}
+                >
+                  Unidades
+                </th>
+                <th
+                  style={{
+                    fontSize: 9,
+                    color: "#aaa",
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    padding: "3px 0 3px 16px",
+                    textAlign: "right",
+                  }}
+                >
+                  Subtotal
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {unidadesProductos > 0 && (
+                <tr style={{ borderBottom: "1px solid #f5f5f5" }}>
+                  <td
+                    style={{
+                      padding: "5px 16px 5px 0",
+                      color: "#333",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Productos
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px 16px",
+                      textAlign: "center",
+                      color: "#555",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {unidadesProductos} uds
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px 0 5px 16px",
+                      textAlign: "right",
+                      color: "#333",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {subtotalProductos.toLocaleString("es-MX", {
+                      style: "currency",
+                      currency: "MXN",
+                      maximumFractionDigits: 0,
+                    })}
+                  </td>
+                </tr>
+              )}
+              {unidadesCintas > 0 && (
+                <tr style={{ borderBottom: "1px solid #f5f5f5" }}>
+                  <td
+                    style={{
+                      padding: "5px 16px 5px 0",
+                      color: TEAL,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Cintas
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px 16px",
+                      textAlign: "center",
+                      color: TEAL,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {unidadesCintas} uds
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px 0 5px 16px",
+                      textAlign: "right",
+                      color: TEAL,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {subtotalCintas.toLocaleString("es-MX", {
+                      style: "currency",
+                      currency: "MXN",
+                      maximumFractionDigits: 0,
+                    })}
+                  </td>
+                </tr>
+              )}
+              <tr
+                style={{
+                  borderTop: `1.5px solid ${TEAL_LINE}`,
+                  background: TEAL_BG,
+                }}
+              >
+                <td
+                  style={{
+                    padding: "6px 16px 6px 0",
+                    color: TEAL,
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  Total
+                </td>
+                <td
+                  style={{
+                    padding: "6px 16px",
+                    textAlign: "center",
+                    color: TEAL,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {totalUnidades} uds
+                </td>
+                <td
+                  style={{
+                    padding: "6px 0 6px 16px",
+                    textAlign: "right",
+                    color: TEAL,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {subtotalAll.toLocaleString("es-MX", {
+                    style: "currency",
+                    currency: "MXN",
+                    maximumFractionDigits: 0,
+                  })}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
 
