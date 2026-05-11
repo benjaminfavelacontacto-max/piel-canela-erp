@@ -80,25 +80,13 @@ export function CotizacionPreview({
 
   const grupos = groupByCategoria(data.items)
 
-  // Subtotales por tipo: Cintas vs resto de productos
-  const itemsCintas = data.items.filter((it) => it.categoria === "CINTAS")
-  const itemsProductos = data.items.filter((it) => it.categoria !== "CINTAS")
-  const totalCintas = itemsCintas.reduce(
-    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
-    0,
-  )
-  const unidadesCintas = itemsCintas.reduce(
-    (s, i) => s + Number(i.cantidad),
-    0,
-  )
-  const totalProductos = itemsProductos.reduce(
-    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
-    0,
-  )
-  const unidadesProductos = itemsProductos.reduce(
-    (s, i) => s + Number(i.cantidad),
-    0,
-  )
+  // Conteo de unidades por tipo: Cintas vs resto de productos
+  const unidadesCintas = data.items
+    .filter((it) => it.categoria === "CINTAS")
+    .reduce((s, i) => s + Number(i.cantidad), 0)
+  const unidadesProductos = data.items
+    .filter((it) => it.categoria !== "CINTAS")
+    .reduce((s, i) => s + Number(i.cantidad), 0)
 
   return (
     <div
@@ -391,30 +379,15 @@ export function CotizacionPreview({
             <div style={{ textAlign: "right" }}>
               <p
                 style={{
-                  fontSize: 9,
-                  color: "#aaa",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#000",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   margin: 0,
-                  marginBottom: 2,
                 }}
               >
                 Productos ({unidadesProductos} uds)
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "#333",
-                  fontVariantNumeric: "tabular-nums",
-                  margin: 0,
-                }}
-              >
-                {totalProductos.toLocaleString("es-MX", {
-                  style: "currency",
-                  currency: "MXN",
-                  maximumFractionDigits: 0,
-                })}
               </p>
             </div>
           )}
@@ -422,30 +395,15 @@ export function CotizacionPreview({
             <div style={{ textAlign: "right" }}>
               <p
                 style={{
-                  fontSize: 9,
-                  color: TEAL,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#000",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   margin: 0,
-                  marginBottom: 2,
                 }}
               >
                 Cintas ({unidadesCintas} uds)
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: TEAL,
-                  fontVariantNumeric: "tabular-nums",
-                  margin: 0,
-                }}
-              >
-                {totalCintas.toLocaleString("es-MX", {
-                  style: "currency",
-                  currency: "MXN",
-                  maximumFractionDigits: 0,
-                })}
               </p>
             </div>
           )}
