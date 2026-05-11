@@ -516,19 +516,17 @@ export function CotizacionPreview({
               ))}
             </div>
 
-            {/* COLUMNA DERECHA — Subtotal/IVA + bloque verde TOTAL */}
+            {/* COLUMNA DERECHA — Subtotal/IVA + bloque verde TOTAL
+                NO usar flex: html2canvas tiene quirks con flex layouts
+                que desplazan el centrado. Block puro es bulletproof. */}
             <div
               style={{
                 padding: "12px 16px",
                 borderLeft: `1px solid ${TEAL_LINE}`,
                 background: "#fafdfc",
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                alignItems: "stretch",
               }}
             >
-              <div style={{ textAlign: "right" }}>
+              <div style={{ textAlign: "right", marginBottom: 10 }}>
                 <p
                   style={{
                     fontSize: 10,
@@ -614,14 +612,11 @@ export function CotizacionPreview({
                   color: "#ffffff",
                   padding: "12px 20px",
                   borderRadius: 8,
-                  width: "100%",
-                  boxSizing: "border-box",
                   textAlign: "center",
                 }}
               >
                 <div
                   style={{
-                    display: "block",
                     fontSize: 9,
                     opacity: 0.85,
                     letterSpacing: "0.10em",
@@ -635,7 +630,6 @@ export function CotizacionPreview({
                 </div>
                 <div
                   style={{
-                    display: "block",
                     fontSize: 18,
                     fontWeight: 700,
                     textAlign: "center",
