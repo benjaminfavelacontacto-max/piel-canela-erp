@@ -352,7 +352,7 @@ export function NotificationBell() {
 
         {open && (
           <div
-            className="absolute border border-[rgba(15,23,42,0.06)] bg-white"
+            className="absolute"
             style={{
               position: "absolute",
               bottom: "100%",
@@ -365,6 +365,8 @@ export function NotificationBell() {
               zIndex: 100,
               marginBottom: 8,
               borderRadius: 12,
+              background: "#0f172a",
+              border: "1px solid rgba(255,255,255,0.12)",
               boxShadow: "0 -4px 24px rgba(0,0,0,0.3)",
             }}
           >
