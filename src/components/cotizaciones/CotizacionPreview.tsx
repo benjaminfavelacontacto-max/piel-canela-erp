@@ -1,5 +1,8 @@
-import type { CotizacionData } from "@/lib/cotizacion-types"
+import type { CotizacionData, CotizacionItem } from "@/lib/cotizacion-types"
 
+const TEAL = "#1a8f72"
+const TEAL_BG = "#f8fdfb"
+const TEAL_LINE = "#d0ece4"
 const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
 
 const mxn = new Intl.NumberFormat("es-MX", {
@@ -21,14 +24,15 @@ function fmtFecha(s: string | null | undefined): string {
 
 function extractPesoMl(nombre: string): string {
   const m = nombre.match(/(\d+(?:\.\d+)?)\s*(ML|L|LT|KG|G|GR)\b/i)
-  if (!m) return "—"
+  if (!m) return ""
   let unit = m[2].toUpperCase()
   if (unit === "GR") unit = "G"
   if (unit === "LT") unit = "L"
   return `${m[1]}${unit}`
 }
 
-function initials(name: string): string {
+function initials(name: string | null | undefined): string {
+  if (!name) return "?"
   return (
     name
       .trim()
@@ -37,6 +41,24 @@ function initials(name: string): string {
       .map((w) => w[0]?.toUpperCase() ?? "")
       .join("") || "?"
   )
+}
+
+function groupByCategoria(
+  items: CotizacionItem[],
+): { categoria: string | null; items: CotizacionItem[] }[] {
+  const hasAny = items.some((it) => it.categoria)
+  if (!hasAny) return [{ categoria: null, items }]
+  const map = new Map<string, CotizacionItem[]>()
+  for (const it of items) {
+    const cat = it.categoria ?? "Otros"
+    const arr = map.get(cat) ?? []
+    arr.push(it)
+    map.set(cat, arr)
+  }
+  return Array.from(map.entries()).map(([categoria, list]) => ({
+    categoria,
+    items: list,
+  }))
 }
 
 export function CotizacionPreview({
@@ -48,44 +70,62 @@ export function CotizacionPreview({
 }) {
   const c = data.cliente
   const clienteNombre = c?.nombre_negocio ?? c?.nombre ?? "—"
-  const clienteSecundario = c?.nombre_negocio ? c.nombre : null
-  const clienteDireccion = c
-    ? [
-        c.direccion,
-        c.colonia,
-        c.codigo_postal ? `C.P. ${c.codigo_postal}` : null,
-        c.ciudad,
-        c.estado,
-      ]
-        .filter(Boolean)
-        .join(", ") || "—"
-    : "—"
+  const clienteSubLine = [
+    [c?.direccion, c?.ciudad].filter(Boolean).join(", "),
+    c?.telefono,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+  const avatarInitials = initials(clienteNombre)
+
+  const grupos = groupByCategoria(data.items)
 
   return (
     <div
       ref={innerRef}
-      className="bg-[#ffffff] text-[#111827] font-sans"
       style={{
         width: 816,
         minHeight: 1056,
         boxSizing: "border-box",
+        background: "#ffffff",
+        color: "#222222",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontSize: 11,
+        lineHeight: 1.4,
       }}
     >
-      <div className="px-10 pt-8 pb-6">
-        <header className="flex items-start justify-between gap-6">
+      {/* ─── HEADER teal preservado ─── */}
+      <div style={{ padding: "24px 24px 18px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 20,
+          }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
             alt="Piel Canela"
-            className="h-28 w-auto"
-            style={{ objectFit: "contain" }}
+            style={{ height: 84, width: "auto", objectFit: "contain" }}
           />
-          <div className="text-right text-[#111827]">
-            <div className="text-lg font-bold leading-tight">PIEL CANELA</div>
-            <div className="text-sm font-semibold text-[#0d9488]">
+          <div style={{ textAlign: "right" }}>
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#222",
+                lineHeight: 1.1,
+              }}
+            >
+              PIEL CANELA
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: TEAL }}>
               Spa &amp; Bronceado
             </div>
-            <div className="mt-1 text-xs text-[#374151] leading-snug">
+            <div style={{ marginTop: 4, fontSize: 10, color: "#666" }}>
               Av Guadalupe 6304, Jardines de Chapalita
               <br />
               CP 45010, Guadalajara, Jalisco
@@ -93,293 +133,479 @@ export function CotizacionPreview({
               WhatsApp: +52 33 3250 8073
             </div>
           </div>
-        </header>
-      </div>
-
-      <SectionHeader>COTIZACIÓN</SectionHeader>
-      <div className="px-10 py-3">
-        <InfoTable
-          rows={[
-            { label: "Fecha", value: fmtFecha(data.fecha) },
-            { label: "Número de orden", value: data.numero || "—", mono: true },
-            {
-              label: "Validez",
-              value: "30 días (Precios sin IVA) No incluye envío",
-            },
-          ]}
-        />
-      </div>
-
-      <SectionHeader>DATOS DE CLIENTE</SectionHeader>
-      <div className="px-10 py-3">
-        <InfoTable
-          rows={[
-            {
-              label: "Nombre",
-              value: clienteSecundario
-                ? `${clienteNombre} — ${clienteSecundario}`
-                : clienteNombre,
-            },
-            { label: "Dirección", value: clienteDireccion },
-            { label: "Teléfono", value: c?.telefono ?? "—" },
-            { label: "Email", value: c?.email ?? "—" },
-          ]}
-        />
-      </div>
-
-      <SectionHeader>LISTA DE PRECIOS</SectionHeader>
-      <div className="px-10 py-3">
-        <table
-          className="w-full border-collapse text-sm"
-          style={{ tableLayout: "fixed" }}
-        >
-          <colgroup>
-            <col style={{ width: 64 }} />
-            <col />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 60 }} />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 110 }} />
-          </colgroup>
-          <thead>
-            <tr className="bg-[#f9fafb] text-[#374151]">
-              <Th>Imagen</Th>
-              <Th align="left">Descripción</Th>
-              <Th>Peso/ml</Th>
-              <Th>Código</Th>
-              <Th>Cant.</Th>
-              <Th align="right">P. Unit.</Th>
-              <Th align="right">Total</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.items.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="border border-[#e5e7eb] py-8 text-center text-[#6b7280]"
-                >
-                  Sin productos.
-                </td>
-              </tr>
-            ) : (
-              data.items.map((it, i) => (
-                <tr
-                  key={`${it.producto_id}-${i}`}
-                  className={i % 2 === 1 ? "bg-[#fafafa]" : "bg-[#ffffff]"}
-                >
-                  <Td>
-                    <ProductImage
-                      src={it.imagen_url}
-                      name={it.nombre}
-                    />
-                  </Td>
-                  <Td align="left">
-                    <div className="font-semibold text-[#111827]">
-                      {it.nombre}
-                    </div>
-                  </Td>
-                  <Td>{it.peso ?? extractPesoMl(it.nombre)}</Td>
-                  <Td>
-                    <span className="font-mono text-xs text-[#374151]">
-                      {it.sku ?? "—"}
-                    </span>
-                  </Td>
-                  <Td>{it.cantidad}</Td>
-                  <Td align="right">{mxn.format(it.precio_unitario)}</Td>
-                  <Td align="right" bold>
-                    {mxn.format(it.subtotal)}
-                  </Td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex justify-end px-10 py-3">
-        <div className="w-72 text-sm">
-          <TotalRow label="Subtotal" value={mxn.format(data.subtotal)} />
-          {data.descuento > 0 && (
-            <TotalRow
-              label="Descuento"
-              value={`-${mxn.format(data.descuento)}`}
-              valueClass="text-[#059669]"
-            />
-          )}
-          {data.ivaActivo && (
-            <TotalRow label="IVA 16%" value={mxn.format(data.iva)} />
-          )}
-          <div className="mt-2 flex items-center justify-between rounded-md bg-[#0d9488] px-4 py-2.5 text-[#ffffff]">
-            <span className="text-sm font-bold">TOTAL</span>
-            <span
-              className="text-lg font-bold"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {mxn.format(data.total)}
-            </span>
-          </div>
         </div>
       </div>
 
-      {data.notas && (
-        <div className="px-10 py-2">
-          <div className="rounded-md border border-[#e5e7eb] bg-[#f9fafb] p-3 text-xs text-[#374151]">
-            <div className="mb-1 font-semibold text-[#111827]">Notas</div>
-            {data.notas}
+      {/* ─── BANNER COTIZACIÓN (verde teal) ─── */}
+      <div
+        style={{
+          background: TEAL,
+          color: "#ffffff",
+          padding: "8px 24px",
+          textAlign: "center",
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+        }}
+      >
+        COTIZACIÓN
+      </div>
+
+      {/* ─── FRANJA DE ORDEN: 3-col horizontal ─── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          padding: "10px 24px",
+          background: TEAL_BG,
+          borderBottom: `1px solid ${TEAL_LINE}`,
+          fontSize: 10.5,
+        }}
+      >
+        <FranjaCell label="Número de orden" value={data.numero || "—"} mono />
+        <FranjaCell label="Fecha" value={fmtFecha(data.fecha)} />
+        <FranjaCell
+          label="Validez"
+          value={
+            data.valida_hasta ? fmtFecha(data.valida_hasta) : "30 días"
+          }
+        />
+      </div>
+
+      {/* ─── CLIENTE: avatar + 2 líneas ─── */}
+      <div
+        style={{
+          padding: "12px 24px",
+          borderBottom: `1px solid ${TEAL_LINE}`,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            background: TEAL,
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {avatarInitials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "#222" }}>
+            {clienteNombre}
           </div>
+          {clienteSubLine && (
+            <div style={{ fontSize: 11, color: "#888", marginTop: 1 }}>
+              {clienteSubLine}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ─── TABLA DE PRODUCTOS ─── */}
+      {/* Header columnas */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 44px 88px 88px",
+          padding: "8px 24px",
+          background: TEAL_BG,
+          borderBottom: `1px solid ${TEAL_LINE}`,
+          fontSize: 9.5,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: TEAL,
+        }}
+      >
+        <span>Producto</span>
+        <span style={{ textAlign: "center" }}>Cant.</span>
+        <span style={{ textAlign: "right" }}>P. Unit.</span>
+        <span style={{ textAlign: "right" }}>Total</span>
+      </div>
+
+      {/* Filas agrupadas por categoría */}
+      {data.items.length === 0 ? (
+        <div
+          style={{
+            padding: "32px 24px",
+            textAlign: "center",
+            color: "#aaa",
+            fontSize: 11,
+          }}
+        >
+          Sin productos.
+        </div>
+      ) : (
+        grupos.map((g, gi) => (
+          <div key={`grupo-${gi}`}>
+            {g.categoria && (
+              <div
+                style={{
+                  background: TEAL_BG,
+                  borderBottom: `1px solid ${TEAL_LINE}`,
+                  padding: "6px 24px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: TEAL,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    fontWeight: 500,
+                  }}
+                >
+                  {g.categoria}
+                </span>
+              </div>
+            )}
+            {g.items.map((it, i) => {
+              const peso = it.peso ?? extractPesoMl(it.nombre)
+              const subline = [it.sku, peso].filter(Boolean).join(" · ")
+              return (
+                <div
+                  key={`${gi}-${i}`}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 44px 88px 88px",
+                    alignItems: "center",
+                    padding: "7px 24px",
+                    borderBottom: "1px solid #f0f0f0",
+                    minHeight: 34,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      minWidth: 0,
+                    }}
+                  >
+                    <ProductThumb src={it.imagen_url} sku={it.sku} />
+                    <div style={{ minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          color: "#222",
+                          lineHeight: 1.2,
+                          margin: 0,
+                        }}
+                      >
+                        {it.nombre}
+                      </p>
+                      {subline && (
+                        <p
+                          style={{
+                            fontSize: 11,
+                            color: "#888",
+                            lineHeight: 1.2,
+                            margin: "1px 0 0 0",
+                          }}
+                        >
+                          {subline}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      textAlign: "center",
+                      fontSize: 12,
+                      color: "#444",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {it.cantidad}
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "right",
+                      fontSize: 12,
+                      color: "#444",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {mxn.format(it.precio_unitario)}
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "right",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#222",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {mxn.format(it.subtotal)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        ))
+      )}
+
+      {/* ─── TOTALES: subtotal/IVA + bloque verde TOTAL compacto ─── */}
+      <div
+        style={{
+          borderTop: `1.5px solid ${TEAL}`,
+          padding: "12px 24px",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 32,
+          alignItems: "center",
+        }}
+      >
+        <div style={{ textAlign: "right" }}>
+          <p
+            style={{ fontSize: 11, color: "#888", margin: 0, lineHeight: 1.3 }}
+          >
+            Subtotal
+          </p>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#444",
+              margin: 0,
+              fontVariantNumeric: "tabular-nums",
+              lineHeight: 1.3,
+            }}
+          >
+            {mxn.format(data.subtotal)}
+          </p>
+          {data.descuento > 0 && (
+            <>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#888",
+                  margin: "4px 0 0 0",
+                  lineHeight: 1.3,
+                }}
+              >
+                Descuento
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#059669",
+                  margin: 0,
+                  fontVariantNumeric: "tabular-nums",
+                  lineHeight: 1.3,
+                }}
+              >
+                − {mxn.format(data.descuento)}
+              </p>
+            </>
+          )}
+          {data.ivaActivo && (
+            <>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#888",
+                  margin: "4px 0 0 0",
+                  lineHeight: 1.3,
+                }}
+              >
+                IVA
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#444",
+                  margin: 0,
+                  fontVariantNumeric: "tabular-nums",
+                  lineHeight: 1.3,
+                }}
+              >
+                {mxn.format(data.iva)}
+              </p>
+            </>
+          )}
+        </div>
+
+        <div
+          style={{
+            background: TEAL,
+            color: "#ffffff",
+            padding: "10px 20px",
+            borderRadius: 8,
+            textAlign: "center",
+            minWidth: 130,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 10,
+              opacity: 0.85,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              margin: 0,
+              marginBottom: 2,
+            }}
+          >
+            TOTAL
+          </p>
+          <p
+            style={{
+              fontSize: 20,
+              fontWeight: 600,
+              margin: 0,
+              fontVariantNumeric: "tabular-nums",
+              lineHeight: 1,
+            }}
+          >
+            {mxn.format(data.total)}
+          </p>
+        </div>
+      </div>
+
+      {/* ─── NOTAS si existen ─── */}
+      {data.notas && (
+        <div
+          style={{
+            margin: "0 24px 12px",
+            padding: "8px 12px",
+            borderRadius: 6,
+            background: TEAL_BG,
+            border: `1px solid ${TEAL_LINE}`,
+            fontSize: 10.5,
+            color: "#555",
+            lineHeight: 1.5,
+          }}
+        >
+          <span style={{ fontWeight: 600, color: "#222", marginRight: 6 }}>
+            Notas:
+          </span>
+          {data.notas}
         </div>
       )}
 
-      <footer className="mt-4 border-t border-[#e5e7eb] px-10 py-4 text-center text-xs text-[#6b7280]">
-        <div>Precios en MXN. No incluye gastos de envío.</div>
-        <div className="mt-1">
-          <a
-            href={INSTAGRAM_URL}
-            className="text-[#0d9488] font-semibold no-underline"
-          >
-            @pielcanela_spabronceado
-          </a>
-        </div>
-      </footer>
+      {/* ─── FOOTER una línea ─── */}
+      <div
+        style={{
+          padding: "8px 24px",
+          borderTop: "1px solid #e8e8e8",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <p style={{ fontSize: 10, color: "#aaa", margin: 0 }}>
+          Precios en MXN · No incluye gastos de envío
+        </p>
+        <a
+          href={INSTAGRAM_URL}
+          style={{
+            fontSize: 10,
+            color: TEAL,
+            fontWeight: 500,
+            textDecoration: "none",
+          }}
+        >
+          @pielcanela_spabronceado
+        </a>
+      </div>
     </div>
   )
 }
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function FranjaCell({
+  label,
+  value,
+  mono,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
   return (
-    <div className="bg-[#0d9488] px-10 py-2 text-center">
-      <span className="text-sm font-bold tracking-wide text-[#ffffff]">
-        {children}
-      </span>
+    <div>
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 600,
+          letterSpacing: "0.10em",
+          textTransform: "uppercase",
+          color: TEAL,
+          marginBottom: 2,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          color: "#222",
+          fontWeight: 500,
+          fontFamily: mono
+            ? "ui-monospace, SFMono-Regular, Menlo, monospace"
+            : undefined,
+        }}
+      >
+        {value}
+      </div>
     </div>
   )
 }
 
-function InfoTable({
-  rows,
-}: {
-  rows: { label: string; value: string; mono?: boolean }[]
-}) {
-  return (
-    <table
-      className="w-full border-collapse text-sm"
-      style={{ tableLayout: "fixed" }}
-    >
-      <colgroup>
-        <col style={{ width: 180 }} />
-        <col />
-      </colgroup>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.label}>
-            <td className="border border-[#e5e7eb] bg-[#f9fafb] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#374151]">
-              {r.label}
-            </td>
-            <td
-              className={`border border-[#e5e7eb] bg-[#ffffff] px-3 py-2 text-[#111827] ${
-                r.mono ? "font-mono text-sm" : "text-sm"
-              }`}
-            >
-              {r.value}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-function Th({
-  children,
-  align = "center",
-}: {
-  children: React.ReactNode
-  align?: "left" | "center" | "right"
-}) {
-  return (
-    <th
-      className="border border-[#e5e7eb] px-2 py-2 text-xs font-semibold uppercase tracking-wide"
-      style={{ textAlign: align }}
-    >
-      {children}
-    </th>
-  )
-}
-
-function Td({
-  children,
-  align = "center",
-  bold = false,
-}: {
-  children: React.ReactNode
-  align?: "left" | "center" | "right"
-  bold?: boolean
-}) {
-  return (
-    <td
-      className={`border border-[#e5e7eb] px-2 py-2 text-sm ${bold ? "font-semibold" : ""}`}
-      style={{ textAlign: align, verticalAlign: "middle" }}
-    >
-      {children}
-    </td>
-  )
-}
-
-function ProductImage({
+function ProductThumb({
   src,
-  name,
+  sku,
 }: {
   src: string | null
-  name: string
+  sku: string | null
 }) {
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
-        alt={name}
+        alt=""
         crossOrigin="anonymous"
-        className="rounded border border-[#e5e7eb]"
         style={{
-          width: 40,
-          height: 40,
+          width: 28,
+          height: 28,
+          borderRadius: 4,
           objectFit: "cover",
-          display: "block",
-          margin: "0 auto",
+          flexShrink: 0,
+          background: "#f5f5f5",
         }}
       />
     )
   }
+  // Sin imagen → iniciales del SKU en placeholder gris
+  const ini = sku ? sku.replace(/[^A-Z0-9]/gi, "").slice(0, 2).toUpperCase() : "?"
   return (
     <div
-      className="flex items-center justify-center rounded border border-[#e5e7eb] bg-[#f3f4f6] text-xs font-semibold text-[#6b7280]"
-      style={{ width: 40, height: 40, margin: "0 auto" }}
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: 4,
+        background: "#f0f0f0",
+        color: "#999",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 9,
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+        flexShrink: 0,
+      }}
     >
-      {initials(name)}
-    </div>
-  )
-}
-
-function TotalRow({
-  label,
-  value,
-  valueClass,
-}: {
-  label: string
-  value: string
-  valueClass?: string
-}) {
-  return (
-    <div className="flex justify-between py-1 text-[#374151]">
-      <span>{label}</span>
-      <span
-        className={`font-medium text-[#111827] ${valueClass ?? ""}`}
-        style={{ fontVariantNumeric: "tabular-nums" }}
-      >
-        {value}
-      </span>
+      {ini}
     </div>
   )
 }
