@@ -614,34 +614,35 @@ export function CotizacionPreview({
                   color: "#ffffff",
                   padding: "12px 20px",
                   borderRadius: 8,
+                  width: "100%",
+                  boxSizing: "border-box",
                   textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
                 }}
               >
                 <p
                   style={{
-                    fontSize: 10,
+                    fontSize: 9,
                     opacity: 0.85,
                     letterSpacing: "0.10em",
                     textTransform: "uppercase",
                     textAlign: "center",
-                    margin: 0,
+                    width: "100%",
+                    margin: "0 0 3px 0",
+                    color: "#ffffff",
                   }}
                 >
                   TOTAL
                 </p>
                 <p
                   style={{
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: 700,
                     textAlign: "center",
+                    width: "100%",
                     margin: 0,
                     fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1,
+                    lineHeight: 1.1,
+                    color: "#ffffff",
                   }}
                 >
                   {mxn.format(data.total)}
