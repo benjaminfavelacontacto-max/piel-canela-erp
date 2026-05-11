@@ -614,6 +614,7 @@ export function CotizacionPreview({
                   color: "#ffffff",
                   padding: "12px 20px",
                   borderRadius: 8,
+                  textAlign: "center",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -627,6 +628,7 @@ export function CotizacionPreview({
                     opacity: 0.85,
                     letterSpacing: "0.10em",
                     textTransform: "uppercase",
+                    textAlign: "center",
                     margin: 0,
                   }}
                 >
@@ -636,6 +638,7 @@ export function CotizacionPreview({
                   style={{
                     fontSize: 20,
                     fontWeight: 700,
+                    textAlign: "center",
                     margin: 0,
                     fontVariantNumeric: "tabular-nums",
                     lineHeight: 1,
