@@ -352,16 +352,20 @@ export function NotificationBell() {
 
         {open && (
           <div
-            className="absolute rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_24px_48px_rgba(15,23,42,0.10),0_4px_12px_rgba(15,23,42,0.08)]"
+            className="absolute border border-[rgba(15,23,42,0.06)] bg-white"
             style={{
-              top: "100%",
-              right: 0,
-              left: "auto",
-              width: 380,
-              maxHeight: "80vh",
+              position: "absolute",
+              bottom: "100%",
+              top: "auto",
+              left: 0,
+              right: "auto",
+              width: 280,
+              maxHeight: "70vh",
               overflowY: "auto",
               zIndex: 100,
-              marginTop: 8,
+              marginBottom: 8,
+              borderRadius: 12,
+              boxShadow: "0 -4px 24px rgba(0,0,0,0.3)",
             }}
           >
             <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] px-4 py-3">
