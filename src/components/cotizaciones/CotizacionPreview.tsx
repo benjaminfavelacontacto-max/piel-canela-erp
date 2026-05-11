@@ -80,27 +80,32 @@ export function CotizacionPreview({
 
   const grupos = groupByCategoria(data.items)
 
-  // Resumen por tipo: Cintas vs resto de productos
-  const itemsCintas = data.items.filter((it) => it.categoria === "CINTAS")
-  const itemsProductos = data.items.filter((it) => it.categoria !== "CINTAS")
-  const unidadesCintas = itemsCintas.reduce(
-    (s, i) => s + Number(i.cantidad),
-    0,
+  // Resumen por categoría (líneas / piezas / subtotal)
+  type ResumenCat = {
+    categoria: string
+    lineas: number
+    piezas: number
+    subtotal: number
+  }
+  const resumenMap = new Map<string, ResumenCat>()
+  for (const it of data.items) {
+    const cat = it.categoria ?? "Otros"
+    const cur = resumenMap.get(cat) ?? {
+      categoria: cat,
+      lineas: 0,
+      piezas: 0,
+      subtotal: 0,
+    }
+    cur.lineas += 1
+    cur.piezas += Number(it.cantidad)
+    cur.subtotal += Number(it.precio_unitario) * Number(it.cantidad)
+    resumenMap.set(cat, cur)
+  }
+  const resumenCats = Array.from(resumenMap.values()).sort(
+    (a, b) => b.subtotal - a.subtotal,
   )
-  const unidadesProductos = itemsProductos.reduce(
-    (s, i) => s + Number(i.cantidad),
-    0,
-  )
-  const subtotalCintas = itemsCintas.reduce(
-    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
-    0,
-  )
-  const subtotalProductos = itemsProductos.reduce(
-    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
-    0,
-  )
-  const totalUnidades = unidadesCintas + unidadesProductos
-  const subtotalAll = subtotalCintas + subtotalProductos
+  const totalLineas = data.items.length
+  const totalPiezas = data.items.reduce((s, i) => s + Number(i.cantidad), 0)
 
   return (
     <div
@@ -387,311 +392,244 @@ export function CotizacionPreview({
         ))
       )}
 
-      {/* ─── RESUMEN: Tipo / Unidades / Subtotal ─── */}
-      {totalUnidades > 0 && (
+      {/* ─── TARJETA UNIFICADA: Resumen del pedido + Totales ─── */}
+      {totalPiezas > 0 && (
         <div
           style={{
-            padding: "10px 24px",
-            borderTop: "1px solid #e8e8e8",
-            display: "flex",
-            justifyContent: "flex-end",
+            margin: "12px 24px 0",
+            border: `1px solid ${TEAL_LINE}`,
+            borderRadius: 8,
+            overflow: "hidden",
           }}
         >
-          <table
+          {/* Header del bloque */}
+          <div
             style={{
-              borderCollapse: "collapse",
-              fontSize: 12,
-              width: "auto",
+              background: TEAL_BG,
+              padding: "8px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: `1px solid ${TEAL_LINE}`,
             }}
           >
-            <thead>
-              <tr style={{ borderBottom: "1px solid #e8e8e8" }}>
-                <th
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                color: TEAL,
+              }}
+            >
+              Resumen del pedido
+            </span>
+            <span
+              style={{
+                fontSize: 10.5,
+                color: "#666",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {totalLineas} {totalLineas === 1 ? "ítem" : "ítems"} ·{" "}
+              {totalPiezas} pzs
+            </span>
+          </div>
+
+          {/* Cuerpo: 2 columnas (desglose por categoría · subtotal + TOTAL) */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 220px",
+            }}
+          >
+            {/* COLUMNA IZQUIERDA — desglose por categoría */}
+            <div style={{ padding: "10px 16px" }}>
+              {resumenCats.map((r) => (
+                <div
+                  key={r.categoria}
                   style={{
-                    fontSize: 9,
-                    color: "#aaa",
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    padding: "3px 16px 3px 0",
-                    textAlign: "left",
+                    display: "grid",
+                    gridTemplateColumns: "1fr 60px 60px 100px",
+                    alignItems: "center",
+                    padding: "5px 0",
+                    borderBottom: "1px solid #f5f5f5",
+                    fontSize: 12,
                   }}
                 >
-                  Tipo
-                </th>
-                <th
+                  <span style={{ color: "#333", fontWeight: 500 }}>
+                    {r.categoria}
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "center",
+                      color: "#777",
+                      fontSize: 11,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {r.lineas} {r.lineas === 1 ? "ítem" : "ítems"}
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "center",
+                      color: "#777",
+                      fontSize: 11,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {r.piezas} pzs
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "right",
+                      color: "#222",
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {r.subtotal.toLocaleString("es-MX", {
+                      style: "currency",
+                      currency: "MXN",
+                      maximumFractionDigits: 0,
+                    })}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* COLUMNA DERECHA — Subtotal/IVA + bloque verde TOTAL */}
+            <div
+              style={{
+                padding: "12px 16px",
+                borderLeft: `1px solid ${TEAL_LINE}`,
+                background: "#fafdfc",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                alignItems: "stretch",
+              }}
+            >
+              <div style={{ textAlign: "right" }}>
+                <p
                   style={{
-                    fontSize: 9,
-                    color: "#aaa",
-                    fontWeight: 500,
-                    textTransform: "uppercase",
+                    fontSize: 10,
+                    color: "#888",
                     letterSpacing: "0.06em",
-                    padding: "3px 16px",
-                    textAlign: "center",
-                  }}
-                >
-                  Unidades
-                </th>
-                <th
-                  style={{
-                    fontSize: 9,
-                    color: "#aaa",
-                    fontWeight: 500,
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    padding: "3px 0 3px 16px",
-                    textAlign: "right",
+                    margin: 0,
                   }}
                 >
                   Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {unidadesProductos > 0 && (
-                <tr style={{ borderBottom: "1px solid #f5f5f5" }}>
-                  <td
-                    style={{
-                      padding: "5px 16px 5px 0",
-                      color: "#333",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Productos
-                  </td>
-                  <td
-                    style={{
-                      padding: "5px 16px",
-                      textAlign: "center",
-                      color: "#555",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {unidadesProductos} uds
-                  </td>
-                  <td
-                    style={{
-                      padding: "5px 0 5px 16px",
-                      textAlign: "right",
-                      color: "#333",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {subtotalProductos.toLocaleString("es-MX", {
-                      style: "currency",
-                      currency: "MXN",
-                      maximumFractionDigits: 0,
-                    })}
-                  </td>
-                </tr>
-              )}
-              {unidadesCintas > 0 && (
-                <tr style={{ borderBottom: "1px solid #f5f5f5" }}>
-                  <td
-                    style={{
-                      padding: "5px 16px 5px 0",
-                      color: TEAL,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Cintas
-                  </td>
-                  <td
-                    style={{
-                      padding: "5px 16px",
-                      textAlign: "center",
-                      color: TEAL,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {unidadesCintas} uds
-                  </td>
-                  <td
-                    style={{
-                      padding: "5px 0 5px 16px",
-                      textAlign: "right",
-                      color: TEAL,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {subtotalCintas.toLocaleString("es-MX", {
-                      style: "currency",
-                      currency: "MXN",
-                      maximumFractionDigits: 0,
-                    })}
-                  </td>
-                </tr>
-              )}
-              <tr
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#333",
+                    margin: 0,
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {mxn.format(data.subtotal)}
+                </p>
+                {data.descuento > 0 && (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: "#888",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        margin: "4px 0 0 0",
+                      }}
+                    >
+                      Descuento
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#059669",
+                        margin: 0,
+                        fontVariantNumeric: "tabular-nums",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      − {mxn.format(data.descuento)}
+                    </p>
+                  </>
+                )}
+                {data.ivaActivo && (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: "#888",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        margin: "4px 0 0 0",
+                      }}
+                    >
+                      IVA
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#333",
+                        margin: 0,
+                        fontVariantNumeric: "tabular-nums",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {mxn.format(data.iva)}
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div
                 style={{
-                  borderTop: `1.5px solid ${TEAL_LINE}`,
-                  background: TEAL_BG,
+                  background: TEAL,
+                  color: "#ffffff",
+                  padding: "10px 16px",
+                  borderRadius: 8,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
                 }}
               >
-                <td
+                <p
                   style={{
-                    padding: "6px 16px 6px 0",
-                    color: TEAL,
-                    fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: 10,
+                    opacity: 0.85,
+                    letterSpacing: "0.10em",
+                    textTransform: "uppercase",
+                    margin: 0,
                   }}
                 >
-                  Total
-                </td>
-                <td
+                  TOTAL
+                </p>
+                <p
                   style={{
-                    padding: "6px 16px",
-                    textAlign: "center",
-                    color: TEAL,
-                    fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: 20,
+                    fontWeight: 700,
+                    margin: 0,
                     fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1,
                   }}
                 >
-                  {totalUnidades} uds
-                </td>
-                <td
-                  style={{
-                    padding: "6px 0 6px 16px",
-                    textAlign: "right",
-                    color: TEAL,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {subtotalAll.toLocaleString("es-MX", {
-                    style: "currency",
-                    currency: "MXN",
-                    maximumFractionDigits: 0,
-                  })}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  {mxn.format(data.total)}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-
-      {/* ─── TOTALES: subtotal/IVA + bloque verde TOTAL compacto ─── */}
-      <div
-        style={{
-          borderTop: `1.5px solid ${TEAL}`,
-          padding: "12px 24px",
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 32,
-          alignItems: "center",
-        }}
-      >
-        <div style={{ textAlign: "right" }}>
-          <p
-            style={{ fontSize: 11, color: "#888", margin: 0, lineHeight: 1.3 }}
-          >
-            Subtotal
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#444",
-              margin: 0,
-              fontVariantNumeric: "tabular-nums",
-              lineHeight: 1.3,
-            }}
-          >
-            {mxn.format(data.subtotal)}
-          </p>
-          {data.descuento > 0 && (
-            <>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "#888",
-                  margin: "4px 0 0 0",
-                  lineHeight: 1.3,
-                }}
-              >
-                Descuento
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#059669",
-                  margin: 0,
-                  fontVariantNumeric: "tabular-nums",
-                  lineHeight: 1.3,
-                }}
-              >
-                − {mxn.format(data.descuento)}
-              </p>
-            </>
-          )}
-          {data.ivaActivo && (
-            <>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "#888",
-                  margin: "4px 0 0 0",
-                  lineHeight: 1.3,
-                }}
-              >
-                IVA
-              </p>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#444",
-                  margin: 0,
-                  fontVariantNumeric: "tabular-nums",
-                  lineHeight: 1.3,
-                }}
-              >
-                {mxn.format(data.iva)}
-              </p>
-            </>
-          )}
-        </div>
-
-        <div
-          style={{
-            background: TEAL,
-            color: "#ffffff",
-            padding: "10px 20px",
-            borderRadius: 8,
-            textAlign: "center",
-            minWidth: 130,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 10,
-              opacity: 0.85,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              margin: 0,
-              marginBottom: 2,
-            }}
-          >
-            TOTAL
-          </p>
-          <p
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              margin: 0,
-              fontVariantNumeric: "tabular-nums",
-              lineHeight: 1,
-            }}
-          >
-            {mxn.format(data.total)}
-          </p>
-        </div>
-      </div>
 
       {/* ─── NOTAS si existen ─── */}
       {data.notas && (
