@@ -63,7 +63,10 @@ export async function downloadCotizacionPdf(
       },
     },
     jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    // Solo respeta el CSS explícito (`page-break-inside: avoid` que ponemos
+    // en el card del resumen). `avoid-all` empujaba todo el contenido a la
+    // página 2 dejando una hoja en blanco al inicio.
+    pagebreak: { mode: ["css", "legacy"] },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 
