@@ -1,8 +1,7 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { guardarUrlImagenProducto } from "./actions"
+import { subirImagenProducto, eliminarImagenProducto } from "./actions"
 
 interface ImageUploadProps {
   productoId: string
@@ -31,7 +30,6 @@ export function ImageUpload({
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const procesarArchivo = (archivo: File) => {
     setError(null)
@@ -51,48 +49,19 @@ export function ImageUpload({
     reader.onload = (e) => setImagen(e.target?.result as string)
     reader.readAsDataURL(archivo)
 
+    const fd = new FormData()
+    fd.append("imagen", archivo)
+
     startTransition(async () => {
-      try {
-        const extension = (archivo.name.split(".").pop() ?? "jpg").toLowerCase()
-        const nombreArchivo = `producto-${productoId}-${Date.now()}.${extension}`
-
-        console.log("[ImageUpload] subiendo:", nombreArchivo, archivo.size, "bytes")
-
-        // Upload DIRECTO desde cliente a Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from("productos")
-          .upload(nombreArchivo, archivo, {
-            contentType: archivo.type,
-            upsert: true,
-          })
-
-        if (uploadError) {
-          console.error("[ImageUpload] upload error:", uploadError)
-          setError("Error al subir: " + uploadError.message)
-          setImagen(imagenActual ?? null)
-          return
-        }
-
-        // Obtener URL pública
-        const { data: urlData } = supabase.storage
-          .from("productos")
-          .getPublicUrl(nombreArchivo)
-        const publicUrl = urlData.publicUrl
-        console.log("[ImageUpload] URL pública:", publicUrl)
-
-        // Guardar URL en BD vía Server Action
-        const result = await guardarUrlImagenProducto(productoId, publicUrl)
-        if (result.success) {
-          setImagen(publicUrl)
-          setSuccess(true)
-          setTimeout(() => setSuccess(false), 2500)
-        } else {
-          setError(result.error ?? "Error al guardar URL")
-          setImagen(imagenActual ?? null)
-        }
-      } catch (err) {
-        console.error("[ImageUpload] error inesperado:", err)
-        setError("Error inesperado al subir")
+      console.log("[ImageUpload] enviando al server action:", archivo.name, archivo.size)
+      const result = await subirImagenProducto(productoId, fd)
+      console.log("[ImageUpload] respuesta:", result)
+      if (result.success) {
+        setSuccess(true)
+        if (result.url) setImagen(result.url)
+        setTimeout(() => setSuccess(false), 2500)
+      } else {
+        setError(result.error ?? "Error al subir")
         setImagen(imagenActual ?? null)
       }
     })
@@ -109,26 +78,9 @@ export function ImageUpload({
   const handleEliminar = () => {
     if (!imagen) return
     startTransition(async () => {
-      try {
-        // Extraer path después de /productos/
-        const idx = imagen.indexOf("/productos/")
-        const path = idx >= 0 ? imagen.slice(idx + "/productos/".length) : null
-        if (path) {
-          const { error: rmError } = await supabase.storage
-            .from("productos")
-            .remove([path])
-          if (rmError) console.warn("[ImageUpload] remove warning:", rmError)
-        }
-        const result = await guardarUrlImagenProducto(productoId, null)
-        if (result.success) {
-          setImagen(null)
-        } else {
-          setError(result.error ?? "Error al eliminar")
-        }
-      } catch (err) {
-        console.error("[ImageUpload] error al eliminar:", err)
-        setError("Error al eliminar")
-      }
+      const result = await eliminarImagenProducto(productoId, imagen)
+      if (result.success) setImagen(null)
+      else setError(result.error ?? "Error al eliminar")
     })
   }
 
