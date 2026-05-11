@@ -3,8 +3,14 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Bell, X, ShoppingCart, Package, Wallet } from "lucide-react"
+import { Bell, X, ShoppingCart } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+
+const mxn0 = new Intl.NumberFormat("es-MX", {
+  style: "currency",
+  currency: "MXN",
+  maximumFractionDigits: 0,
+})
 
 type NotifTipo = "pedido_portal" | "stock_bajo" | "pago_pendiente" | string
 
@@ -31,12 +37,6 @@ interface Notificacion {
   datos: NotifDatos
   leida: boolean
   created_at: string
-}
-
-function tipoIcon(tipo: NotifTipo) {
-  if (tipo === "pedido_portal") return ShoppingCart
-  if (tipo === "stock_bajo") return Package
-  return Wallet
 }
 
 function formatPhoneIntl(tel: string | undefined): string {
@@ -95,11 +95,41 @@ export function NotificationBell() {
   const [notifs, setNotifs] = useState<Notificacion[]>([])
   const [open, setOpen] = useState(false)
   const [toast, setToast] = useState<Notificacion | null>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
   const router = useRouter()
   const panelRef = useRef<HTMLDivElement>(null)
+  const bellRef = useRef<HTMLButtonElement>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const nuevas = notifs.length
+
+  // Calcula posición del panel relativa al viewport (fixed)
+  // basado en el bounding rect del bell button
+  function recalcPos() {
+    const el = bellRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setPos({ top: r.top, left: r.left })
+  }
+
+  function togglePanel() {
+    setOpen((prev) => {
+      if (!prev) recalcPos()
+      return !prev
+    })
+  }
+
+  // Recalc on window resize while open
+  useEffect(() => {
+    if (!open) return
+    const onScrollOrResize = () => recalcPos()
+    window.addEventListener("resize", onScrollOrResize)
+    window.addEventListener("scroll", onScrollOrResize, true)
+    return () => {
+      window.removeEventListener("resize", onScrollOrResize)
+      window.removeEventListener("scroll", onScrollOrResize, true)
+    }
+  }, [open])
 
   useEffect(() => {
     const supabase = createClient()
@@ -337,8 +367,9 @@ export function NotificationBell() {
       {/* ─── BELL + PANEL ─── */}
       <div className="relative" ref={panelRef}>
         <button
+          ref={bellRef}
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={togglePanel}
           className="relative rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-[rgba(15,23,42,0.04)] hover:text-gray-900"
           aria-label="Notificaciones"
         >
@@ -352,131 +383,279 @@ export function NotificationBell() {
 
         {open && (
           <div
-            className="absolute"
+            data-notif-panel
             style={{
-              position: "absolute",
-              bottom: "100%",
-              top: "auto",
-              left: 0,
-              right: "auto",
-              width: 280,
-              maxHeight: "70vh",
+              position: "fixed",
+              top: Math.max(8, pos.top - 300),
+              left: pos.left,
+              width: 360,
+              maxHeight: 480,
               overflowY: "auto",
-              zIndex: 100,
-              marginBottom: 8,
-              borderRadius: 12,
-              background: "#0f172a",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 -4px 24px rgba(0,0,0,0.3)",
+              background: "rgba(11,17,32,0.96)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 20,
+              boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
+              zIndex: 99999,
             }}
           >
-            <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] px-4 py-3">
-              <h3 className="text-sm font-semibold text-gray-900">
-                Notificaciones
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "16px 20px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.87)",
+                    margin: 0,
+                  }}
+                >
+                  Notificaciones
+                </p>
                 {nuevas > 0 && (
-                  <span className="ml-2 rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
-                    {nuevas} {nuevas === 1 ? "nueva" : "nuevas"}
+                  <span
+                    style={{
+                      background: "rgba(52,211,153,0.15)",
+                      color: "#34D399",
+                      border: "1px solid rgba(52,211,153,0.25)",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 9999,
+                    }}
+                  >
+                    {nuevas} nuevas
                   </span>
                 )}
-              </h3>
-              {notifs.length > 0 && (
+              </div>
+              {nuevas > 0 && (
                 <button
                   type="button"
                   onClick={marcarTodasLeidas}
-                  className="text-xs text-gray-400 transition-colors hover:text-gray-700"
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255,255,255,0.35)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "rgba(255,255,255,0.70)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "rgba(255,255,255,0.35)")
+                  }
                 >
                   Marcar todas leídas
                 </button>
               )}
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
-              {notifs.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Bell className="mx-auto mb-2 size-6 text-gray-300" />
-                  <p className="text-sm text-gray-400">
-                    Sin notificaciones nuevas
-                  </p>
-                </div>
-              ) : (
-                notifs.map((notif) => {
-                  const Icon = tipoIcon(notif.tipo)
-                  const wp = whatsappUrl(notif)
-                  return (
+            {/* Lista */}
+            {notifs.length === 0 ? (
+              <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.25)",
+                    margin: 0,
+                  }}
+                >
+                  Sin notificaciones
+                </p>
+              </div>
+            ) : (
+              notifs.map((n) => {
+                const wp = whatsappUrl(n)
+                const onClickRow = () => {
+                  if (!n.leida) void marcarLeida(n.id)
+                }
+                return (
+                  <div
+                    key={n.id}
+                    onClick={onClickRow}
+                    style={{
+                      padding: "14px 20px",
+                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                      background: n.leida
+                        ? "transparent"
+                        : "rgba(52,211,153,0.03)",
+                      cursor: n.leida ? "default" : "pointer",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.03)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = n.leida
+                        ? "transparent"
+                        : "rgba(52,211,153,0.03)")
+                    }
+                  >
+                    {/* Fila superior: título + tiempo */}
                     <div
-                      key={notif.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => irACotizacion(notif)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") irACotizacion(notif)
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: 4,
+                        gap: 8,
                       }}
-                      className="cursor-pointer border-b border-[rgba(15,23,42,0.04)] px-4 py-3 transition-colors hover:bg-[rgba(15,118,110,0.03)]"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#DFF7F4] text-[#0F766E]">
-                          <Icon className="size-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-gray-900">
-                            {notif.titulo}
-                          </p>
-                          <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
-                            {notif.mensaje}
-                          </p>
-                          {notif.datos?.cliente_telefono && (
-                            <p className="mt-1 text-xs text-[#0F766E]">
-                              📱 {notif.datos.cliente_telefono}
-                            </p>
-                          )}
-                          <p className="mt-1 text-[10px] text-gray-400">
-                            {timeAgo(notif.created_at)}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            void marcarLeida(notif.id)
-                          }}
-                          className="shrink-0 text-gray-300 transition-colors hover:text-gray-500"
-                          aria-label="Marcar como leída"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
-                      {notif.tipo === "pedido_portal" && (
-                        <div className="ml-11 mt-2 flex gap-2">
-                          <span className="rounded-md bg-[#DFF7F4] px-2 py-1 text-[10px] font-semibold text-[#0F766E]">
-                            Ver cotización →
-                          </span>
-                          {wp && (
-                            <a
-                              href={wp}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
-                            >
-                              💬 WhatsApp
-                            </a>
-                          )}
-                        </div>
-                      )}
+                      <p
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: n.leida
+                            ? "rgba(255,255,255,0.45)"
+                            : "rgba(255,255,255,0.87)",
+                          margin: 0,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {n.titulo}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(255,255,255,0.25)",
+                          margin: 0,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {timeAgo(n.created_at)}
+                      </p>
                     </div>
-                  )
-                })
-              )}
-            </div>
 
+                    {/* Mensaje */}
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "rgba(255,255,255,0.45)",
+                        margin: "0 0 8px 0",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {n.mensaje}
+                    </p>
+
+                    {/* Subtotal si existe */}
+                    {typeof n.datos?.subtotal === "number" && (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#34D399",
+                          margin: "0 0 8px 0",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {mxn0.format(n.datos.subtotal)}
+                      </p>
+                    )}
+
+                    {/* Botones de acción */}
+                    {(n.datos?.cotizacion_id || wp) && (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {n.datos?.cotizacion_id && (
+                          <Link
+                            href={
+                              n.datos.url ??
+                              `/cotizaciones/${n.datos.cotizacion_id}`
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOpen(false)
+                            }}
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              color: "#34D399",
+                              background: "rgba(52,211,153,0.10)",
+                              border: "1px solid rgba(52,211,153,0.20)",
+                              padding: "4px 10px",
+                              borderRadius: 8,
+                              textDecoration: "none",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            Ver cotización →
+                          </Link>
+                        )}
+                        {wp && (
+                          <a
+                            href={wp}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              color: "#25D366",
+                              background: "rgba(37,211,102,0.10)",
+                              border: "1px solid rgba(37,211,102,0.20)",
+                              padding: "4px 10px",
+                              borderRadius: 8,
+                              textDecoration: "none",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            💬 WhatsApp
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+
+            {/* Footer */}
             {notifs.length > 0 && (
-              <Link
-                href="/cotizaciones?filtro=portal"
-                onClick={() => setOpen(false)}
-                className="block border-t border-[rgba(15,23,42,0.04)] px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 transition-colors hover:bg-[rgba(15,23,42,0.02)] hover:text-gray-900"
+              <div
+                style={{
+                  padding: "12px 20px",
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                  textAlign: "center",
+                }}
               >
-                Ver todas las cotizaciones del portal
-              </Link>
+                <Link
+                  href="/cotizaciones"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255,255,255,0.30)",
+                    textDecoration: "none",
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "rgba(255,255,255,0.60)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "rgba(255,255,255,0.30)")
+                  }
+                >
+                  Ver todas las cotizaciones →
+                </Link>
+              </div>
             )}
           </div>
         )}
