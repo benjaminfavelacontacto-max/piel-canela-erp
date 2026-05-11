@@ -612,10 +612,11 @@ export function CotizacionPreview({
                     display: "inline-block",
                     background: TEAL,
                     color: "#ffffff",
-                    padding: "8px 16px",
+                    padding: "10px 16px",
                     borderRadius: 6,
                     minWidth: 160,
                     textAlign: "center",
+                    overflow: "visible",
                   }}
                 >
                   <div
@@ -633,12 +634,12 @@ export function CotizacionPreview({
                   </div>
                   <div
                     style={{
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: 700,
                       textAlign: "center",
                       color: "#ffffff",
                       fontVariantNumeric: "tabular-nums",
-                      lineHeight: 1.1,
+                      lineHeight: 1.2,
                     }}
                   >
                     {mxn.format(data.total)}
