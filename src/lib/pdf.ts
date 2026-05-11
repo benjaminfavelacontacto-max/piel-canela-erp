@@ -44,25 +44,28 @@ export async function downloadCotizacionPdf(
 
   const filename = `PC_${safeFilenamePart(numeroOrden)}_${safeFilenamePart(nombreCliente)}.pdf`
 
-  await html2pdf()
-    .from(element)
-    .set({
-      margin: 0,
-      filename,
-      image: { type: "jpeg", quality: 1 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        width: 816,
-        windowWidth: 816,
-        onclone: (doc: Document) => {
-          const style = doc.createElement("style")
-          style.textContent = PDF_RESET_CSS
-          doc.head.appendChild(style)
-        },
+  // `pagebreak` no está en los tipos de html2pdf.js pero sí existe en runtime
+  // y respeta `page-break-inside: avoid` para evitar cortes entre páginas.
+  const opts = {
+    margin: 0,
+    filename,
+    image: { type: "jpeg", quality: 1 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      width: 816,
+      windowWidth: 816,
+      onclone: (doc: Document) => {
+        const style = doc.createElement("style")
+        style.textContent = PDF_RESET_CSS
+        doc.head.appendChild(style)
       },
-      jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
-    })
-    .save()
+    },
+    jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+
+  await html2pdf().from(element).set(opts).save()
 }

@@ -261,11 +261,12 @@ export function CotizacionPreview({
       </div>
 
       {/* ─── TABLA DE PRODUCTOS ─── */}
-      {/* Header columnas */}
+      {/* Header columnas: imagen 32px · producto 1fr · medida · cant · p.unit · total */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 70px 44px 88px 88px",
+          gridTemplateColumns: "32px 1fr 70px 44px 88px 88px",
+          gap: 8,
           padding: "8px 24px",
           background: TEAL_BG,
           borderBottom: `1px solid ${TEAL_LINE}`,
@@ -276,6 +277,7 @@ export function CotizacionPreview({
           color: TEAL,
         }}
       >
+        <span></span>
         <span>Producto</span>
         <span style={{ textAlign: "center" }}>Medida</span>
         <span style={{ textAlign: "center" }}>Cant.</span>
@@ -326,46 +328,38 @@ export function CotizacionPreview({
                   key={`${gi}-${i}`}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 70px 44px 88px 88px",
+                    gridTemplateColumns: "32px 1fr 70px 44px 88px 88px",
+                    gap: 8,
                     alignItems: "center",
                     padding: "7px 24px",
                     borderBottom: "1px solid #f0f0f0",
                     minHeight: 34,
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      minWidth: 0,
-                    }}
-                  >
-                    <ProductThumb src={it.imagen_url} sku={it.sku} />
-                    <div style={{ minWidth: 0 }}>
+                  <ProductThumb src={it.imagen_url} sku={it.sku} />
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: "#222",
+                        lineHeight: 1.2,
+                        margin: 0,
+                      }}
+                    >
+                      {it.nombre}
+                    </p>
+                    {it.sku && (
                       <p
                         style={{
-                          fontSize: 13,
-                          color: "#222",
+                          fontSize: 11,
+                          color: "#888",
                           lineHeight: 1.2,
-                          margin: 0,
+                          margin: "1px 0 0 0",
                         }}
                       >
-                        {it.nombre}
+                        {it.sku}
                       </p>
-                      {it.sku && (
-                        <p
-                          style={{
-                            fontSize: 11,
-                            color: "#888",
-                            lineHeight: 1.2,
-                            margin: "1px 0 0 0",
-                          }}
-                        >
-                          {it.sku}
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
                   <span
                     style={{
@@ -422,6 +416,8 @@ export function CotizacionPreview({
             border: `1px solid ${TEAL_LINE}`,
             borderRadius: 8,
             overflow: "hidden",
+            pageBreakInside: "avoid",
+            breakInside: "avoid",
           }}
         >
           {/* Header del bloque */}
