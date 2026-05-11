@@ -144,7 +144,12 @@ export function NotificationBell() {
           console.error("[NotificationBell] error cargando:", error.message)
           return
         }
-        if (data) setNotifs(data as Notificacion[])
+        const arr = (data ?? []) as Notificacion[]
+        console.log(
+          `[NotificationBell] 🔔 carga inicial: ${arr.length} no leída(s)`,
+          arr.map((n) => ({ id: n.id, tipo: n.tipo, created: n.created_at })),
+        )
+        setNotifs(arr)
       } catch (e) {
         console.error("[NotificationBell] excepción cargando:", e)
       }
