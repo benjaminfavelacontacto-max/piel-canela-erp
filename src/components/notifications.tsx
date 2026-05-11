@@ -104,14 +104,14 @@ export function NotificationBell() {
 
   const nuevas = notifs.length
 
-  // Calcula posición del panel relativa al viewport (fixed)
-  // - top: alineado al borde superior del bell button
-  // - left: a la DERECHA del sidebar (rect.right + 12px de aire)
+  // Calcula posición del panel relativa al viewport (fixed).
+  // Anclado al borde izquierdo del bell para abrir hacia ARRIBA
+  // (el bell vive al fondo del sidebar, no hay espacio abajo).
   function recalcPos() {
     const el = bellRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    setPos({ top: r.top, left: r.right + 12 })
+    setPos({ top: r.top, left: r.left })
   }
 
   function togglePanel() {
@@ -391,20 +391,15 @@ export function NotificationBell() {
             data-notif-panel
             style={{
               position: "fixed",
-              top: pos.top,
+              top: Math.max(8, pos.top - 300),
               left: pos.left,
               width: 360,
-              maxHeight: Math.min(
-                500,
-                (typeof window !== "undefined" ? window.innerHeight : 800) -
-                  pos.top -
-                  20,
-              ),
+              maxHeight: 480,
               overflowY: "auto",
               background: "#0d1526",
-              border: "1px solid rgba(255,255,255,0.10)",
-              borderRadius: 16,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.80)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 20,
+              boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
               zIndex: 99999,
               isolation: "isolate",
             }}
