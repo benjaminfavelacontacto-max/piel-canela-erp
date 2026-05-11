@@ -351,7 +351,19 @@ export function NotificationBell() {
         </button>
 
         {open && (
-          <div className="absolute bottom-full right-0 z-50 mb-2 w-96 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_24px_48px_rgba(15,23,42,0.10),0_4px_12px_rgba(15,23,42,0.08)]">
+          <div
+            className="absolute rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_24px_48px_rgba(15,23,42,0.10),0_4px_12px_rgba(15,23,42,0.08)]"
+            style={{
+              top: "100%",
+              right: 0,
+              left: "auto",
+              width: 380,
+              maxHeight: "80vh",
+              overflowY: "auto",
+              zIndex: 100,
+              marginTop: 8,
+            }}
+          >
             <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] px-4 py-3">
               <h3 className="text-sm font-semibold text-gray-900">
                 Notificaciones
