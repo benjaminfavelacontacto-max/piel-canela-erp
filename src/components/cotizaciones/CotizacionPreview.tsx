@@ -606,44 +606,47 @@ export function CotizacionPreview({
                 )}
               </div>
 
-              <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  display: "block",
+                  background: TEAL,
+                  color: "#ffffff",
+                  padding: 10,
+                  borderRadius: 6,
+                  width: 180,
+                  boxSizing: "border-box",
+                  marginLeft: "auto",
+                  textAlign: "center",
+                }}
+              >
                 <div
                   style={{
-                    display: "inline-block",
-                    background: TEAL,
-                    color: "#ffffff",
-                    padding: "10px 16px",
-                    borderRadius: 6,
-                    minWidth: 160,
+                    fontSize: 9,
+                    opacity: 0.85,
+                    letterSpacing: "0.10em",
+                    textTransform: "uppercase",
                     textAlign: "center",
-                    overflow: "visible",
+                    color: "#ffffff",
+                    marginBottom: 4,
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 9,
-                      opacity: 0.85,
-                      letterSpacing: "0.10em",
-                      textTransform: "uppercase",
-                      textAlign: "center",
-                      color: "#ffffff",
-                      marginBottom: 3,
-                    }}
-                  >
-                    TOTAL
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      textAlign: "center",
-                      color: "#ffffff",
-                      fontVariantNumeric: "tabular-nums",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {mxn.format(data.total)}
-                  </div>
+                  TOTAL
+                </div>
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    textAlign: "center",
+                    color: "#ffffff",
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {Number(data.total ?? 0).toLocaleString("es-MX", {
+                    style: "currency",
+                    currency: "MXN",
+                    minimumFractionDigits: 2,
+                  })}
                 </div>
               </div>
             </div>
