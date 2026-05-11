@@ -364,7 +364,7 @@ export function CotizacionPreview({
         ))
       )}
 
-      {/* ─── DESGLOSE por tipo: Cintas vs Productos ─── */}
+      {/* ─── DESGLOSE por tipo: Productos · Cintas · Total ─── */}
       {(unidadesCintas > 0 || unidadesProductos > 0) && (
         <div
           style={{
@@ -373,40 +373,51 @@ export function CotizacionPreview({
             display: "flex",
             justifyContent: "flex-end",
             gap: 24,
+            alignItems: "center",
           }}
         >
           {unidadesProductos > 0 && (
-            <div style={{ textAlign: "right" }}>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#000",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  margin: 0,
-                }}
-              >
-                Productos ({unidadesProductos} uds)
-              </p>
-            </div>
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#000",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                margin: 0,
+              }}
+            >
+              Productos ({unidadesProductos} uds)
+            </p>
           )}
           {unidadesCintas > 0 && (
-            <div style={{ textAlign: "right" }}>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#000",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  margin: 0,
-                }}
-              >
-                Cintas ({unidadesCintas} uds)
-              </p>
-            </div>
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#000",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                margin: 0,
+              }}
+            >
+              Cintas ({unidadesCintas} uds)
+            </p>
           )}
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#000",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              margin: 0,
+              paddingLeft: 16,
+              borderLeft: "1px solid #ddd",
+            }}
+          >
+            Total ({unidadesProductos + unidadesCintas} uds)
+          </p>
         </div>
       )}
 
