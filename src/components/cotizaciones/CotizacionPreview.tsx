@@ -606,39 +606,43 @@ export function CotizacionPreview({
                 )}
               </div>
 
-              <div
-                style={{
-                  background: TEAL,
-                  color: "#ffffff",
-                  padding: "12px 20px",
-                  borderRadius: 8,
-                  textAlign: "center",
-                }}
-              >
+              <div style={{ textAlign: "right" }}>
                 <div
                   style={{
-                    fontSize: 9,
-                    opacity: 0.85,
-                    letterSpacing: "0.10em",
-                    textTransform: "uppercase",
-                    textAlign: "center",
+                    display: "inline-block",
+                    background: TEAL,
                     color: "#ffffff",
-                    marginBottom: 4,
+                    padding: "8px 16px",
+                    borderRadius: 6,
+                    minWidth: 160,
+                    textAlign: "center",
                   }}
                 >
-                  TOTAL
-                </div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 700,
-                    textAlign: "center",
-                    color: "#ffffff",
-                    fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {mxn.format(data.total)}
+                  <div
+                    style={{
+                      fontSize: 9,
+                      opacity: 0.85,
+                      letterSpacing: "0.10em",
+                      textTransform: "uppercase",
+                      textAlign: "center",
+                      color: "#ffffff",
+                      marginBottom: 3,
+                    }}
+                  >
+                    TOTAL
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      textAlign: "center",
+                      color: "#ffffff",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {mxn.format(data.total)}
+                  </div>
                 </div>
               </div>
             </div>
