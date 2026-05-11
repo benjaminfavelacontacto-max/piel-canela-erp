@@ -213,9 +213,9 @@ export function NotificationBell() {
       }
     }
 
-    // FALLBACK: polling cada 10s — cubre si Realtime se cae o si la
+    // FALLBACK: polling cada 8s — cubre si Realtime se cae o si la
     // tabla no está en la publication supabase_realtime
-    const polling = setInterval(refetchNuevas, 10000)
+    const polling = setInterval(refetchNuevas, 8000)
 
     // Refetch inmediato al volver a la pestaña (browsers pausan setInterval
     // en background; visibilitychange evita lag al recuperar el foco)

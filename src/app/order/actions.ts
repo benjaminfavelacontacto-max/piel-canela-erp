@@ -175,7 +175,8 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   const negocio = input.cliente.negocio.trim()
   const nombre = input.cliente.nombre.trim()
   const cliLabel = negocio ? `${nombre} · ${negocio}` : nombre
-  const { error: notifError } = await supabase
+  console.log("[submitOrder] insertando notificación para", numero)
+  const { data: notifData, error: notifError } = await supabase
     .from("notificaciones")
     .insert({
       tipo: "pedido_portal",
@@ -195,13 +196,18 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
         url: `/cotizaciones/${cotizacion.id}/confirmar`,
       },
     })
+    .select("id")
+    .single()
   if (notifError) {
     console.error(
       "[submitOrder] notificación NO insertada:",
       JSON.stringify(notifError, null, 2),
     )
   } else {
-    console.log("[submitOrder] notificación insertada OK")
+    console.log(
+      "[submitOrder] notificación insertada OK id:",
+      notifData?.id,
+    )
   }
 
   return {
