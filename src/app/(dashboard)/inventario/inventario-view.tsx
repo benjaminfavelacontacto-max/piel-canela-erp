@@ -176,6 +176,37 @@ export function InventarioView({
   const [topSellersOnly, setTopSellersOnly] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>("nombre")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+
+  // ── Anchos manuales de columna (persistidos en localStorage) ──
+  const DEFAULT_COL_WIDTHS = [50, 100, 55, 160, 110, 100, 75, 90, 70, 85, 90, 80, 90, 90, 55, 75]
+  const COL_WIDTHS_KEY = "inventario-col-widths-v1"
+  const MIN_COL_WIDTH = 40
+  const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(COL_WIDTHS_KEY)
+      if (!raw) return
+      const arr = JSON.parse(raw)
+      if (Array.isArray(arr) && arr.length === DEFAULT_COL_WIDTHS.length) {
+        setColWidths(arr.map((n) => Math.max(MIN_COL_WIDTH, Number(n) || 0)))
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const persistColWidths = (next: number[]) => {
+    setColWidths(next)
+    try { localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(next)) } catch {}
+  }
+  const setColWidth = (i: number, w: number) => {
+    const next = [...colWidths]
+    next[i] = Math.max(MIN_COL_WIDTH, w)
+    persistColWidths(next)
+  }
+  const resetColWidth = (i: number) => {
+    const next = [...colWidths]
+    next[i] = DEFAULT_COL_WIDTHS[i]
+    persistColWidths(next)
+  }
   const tableRef = useRef<HTMLElement>(null)
   const handleCategoriaClick = (cat: string, isActive: boolean) => {
     setCategoriaF(isActive ? "" : cat)
@@ -651,44 +682,33 @@ export function InventarioView({
             style={{ minWidth: "1400px", width: "max-content" }}
           >
             <colgroup>
-              <col style={{ width: "50px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "55px" }} />
-              <col style={{ width: "160px" }} />
-              <col style={{ width: "110px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "75px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "70px" }} />
-              <col style={{ width: "85px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "80px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "55px" }} />
-              <col style={{ width: "75px" }} />
+              {colWidths.map((w, i) => (
+                <col key={i} style={{ width: `${w}px` }} />
+              ))}
             </colgroup>
             <thead>
               <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative">
                   Foto
+                  <ResizeHandle colIndex={0} setColWidth={setColWidth} resetColWidth={resetColWidth} />
                 </th>
-                <SortableTh align="left" k="categoria" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Cat.</SortableTh>
-                <SortableTh align="left" k="peso" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Peso</SortableTh>
-                <SortableTh align="left" k="nombre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Producto</SortableTh>
-                <SortableTh align="left" k="sku" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>SKU</SortableTh>
-                <SortableTh align="right" k="precio_publico" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>P. Público</SortableTh>
-                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>USD</SortableTh>
-                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>MXN calc.</SortableTh>
-                <SortableTh align="center" k="stock_actual" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Stock</SortableTh>
-                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Costo USD</SortableTh>
-                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Costo MXN</SortableTh>
-                <SortableTh align="right" k="costo_total_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>+Env USD</SortableTh>
-                <SortableTh align="right" k="costo_total_mxn" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>+Env MXN</SortableTh>
-                <SortableTh align="right" k="profit_unitario" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Profit</SortableTh>
-                <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort}>Vend.</SortableTh>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <SortableTh align="left" k="categoria" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={1} setColWidth={setColWidth} resetColWidth={resetColWidth}>Cat.</SortableTh>
+                <SortableTh align="left" k="peso" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={2} setColWidth={setColWidth} resetColWidth={resetColWidth}>Peso</SortableTh>
+                <SortableTh align="left" k="nombre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={3} setColWidth={setColWidth} resetColWidth={resetColWidth}>Producto</SortableTh>
+                <SortableTh align="left" k="sku" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={4} setColWidth={setColWidth} resetColWidth={resetColWidth}>SKU</SortableTh>
+                <SortableTh align="right" k="precio_publico" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={5} setColWidth={setColWidth} resetColWidth={resetColWidth}>P. Público</SortableTh>
+                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={6} setColWidth={setColWidth} resetColWidth={resetColWidth}>USD</SortableTh>
+                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={7} setColWidth={setColWidth} resetColWidth={resetColWidth}>MXN calc.</SortableTh>
+                <SortableTh align="center" k="stock_actual" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={8} setColWidth={setColWidth} resetColWidth={resetColWidth}>Stock</SortableTh>
+                <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={9} setColWidth={setColWidth} resetColWidth={resetColWidth}>Costo USD</SortableTh>
+                <SortableTh align="right" k="precio_mxn_calculado" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={10} setColWidth={setColWidth} resetColWidth={resetColWidth}>Costo MXN</SortableTh>
+                <SortableTh align="right" k="costo_total_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={11} setColWidth={setColWidth} resetColWidth={resetColWidth}>+Env USD</SortableTh>
+                <SortableTh align="right" k="costo_total_mxn" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={12} setColWidth={setColWidth} resetColWidth={resetColWidth}>+Env MXN</SortableTh>
+                <SortableTh align="right" k="profit_unitario" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={13} setColWidth={setColWidth} resetColWidth={resetColWidth}>Profit</SortableTh>
+                <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={14} setColWidth={setColWidth} resetColWidth={resetColWidth}>Vend.</SortableTh>
+                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative">
                   Estatus
+                  <ResizeHandle colIndex={15} setColWidth={setColWidth} resetColWidth={resetColWidth} />
                 </th>
               </tr>
             </thead>
@@ -761,6 +781,9 @@ function SortableTh({
   sortKey,
   sortDir,
   onSort,
+  colIndex,
+  setColWidth,
+  resetColWidth,
 }: {
   children: React.ReactNode
   k: SortKey
@@ -768,6 +791,9 @@ function SortableTh({
   sortKey: SortKey
   sortDir: SortDir
   onSort: (k: SortKey) => void
+  colIndex: number
+  setColWidth: (i: number, w: number) => void
+  resetColWidth: (i: number) => void
 }) {
   const active = sortKey === k
   const arrow = !active ? "" : sortDir === "asc" ? " ▲" : " ▼"
@@ -780,13 +806,71 @@ function SortableTh({
   return (
     <th
       onClick={() => onSort(k)}
-      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"}`}
+      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"}`}
     >
       <span className={`inline-flex items-center gap-1 ${justify}`}>
         {children}
         <span className="text-[8px] tabular-nums">{arrow}</span>
       </span>
+      <ResizeHandle colIndex={colIndex} setColWidth={setColWidth} resetColWidth={resetColWidth} />
     </th>
+  )
+}
+
+function ResizeHandle({
+  colIndex,
+  setColWidth,
+  resetColWidth,
+}: {
+  colIndex: number
+  setColWidth: (i: number, w: number) => void
+  resetColWidth: (i: number) => void
+}) {
+  const [active, setActive] = useState(false)
+  const startXRef = useRef(0)
+  const startWRef = useRef(0)
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const th = (e.currentTarget as HTMLElement).parentElement as HTMLElement | null
+    if (!th) return
+    startXRef.current = e.clientX
+    startWRef.current = th.getBoundingClientRect().width
+    setActive(true)
+    document.body.style.cursor = "col-resize"
+    document.body.style.userSelect = "none"
+
+    const onMove = (ev: MouseEvent) => {
+      const next = startWRef.current + (ev.clientX - startXRef.current)
+      setColWidth(colIndex, next)
+    }
+    const onUp = () => {
+      setActive(false)
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
+      window.removeEventListener("mousemove", onMove)
+      window.removeEventListener("mouseup", onUp)
+    }
+    window.addEventListener("mousemove", onMove)
+    window.addEventListener("mouseup", onUp)
+  }
+
+  return (
+    <span
+      role="separator"
+      aria-orientation="vertical"
+      title="Arrastra para redimensionar · Doble click para resetear"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={onMouseDown}
+      onDoubleClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        resetColWidth(colIndex)
+      }}
+      className="absolute right-0 top-0 z-10 h-full w-1.5 cursor-col-resize transition-colors hover:bg-emerald-400/60"
+      style={{ background: active ? "rgba(5,150,105,0.7)" : undefined }}
+    />
   )
 }
 
