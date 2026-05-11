@@ -151,7 +151,7 @@ export function CotizacionPreview({
         <img
           src="/logo_pielcanela2.png"
           alt="Piel Canela"
-          style={{ width: 80, height: "auto", objectFit: "contain" }}
+          style={{ width: 110, height: "auto", objectFit: "contain" }}
         />
         <div style={{ textAlign: "right" }}>
           <p
