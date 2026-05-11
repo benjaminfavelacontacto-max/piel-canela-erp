@@ -58,7 +58,14 @@ export function ImageUpload({
       console.log("[ImageUpload] respuesta:", result)
       if (result.success) {
         setSuccess(true)
-        if (result.url) setImagen(result.url)
+        // El server action guarda solo el filename. Construimos la URL pública
+        // para el preview inmediato (después de refresh, page.tsx hará lo mismo).
+        if (result.filename) {
+          setImagen(
+            "https://szjzaajjpuomvpnghvzu.supabase.co/storage/v1/object/public/productos/" +
+              encodeURIComponent(result.filename),
+          )
+        }
         setTimeout(() => setSuccess(false), 2500)
       } else {
         setError(result.error ?? "Error al subir")
@@ -78,7 +85,7 @@ export function ImageUpload({
   const handleEliminar = () => {
     if (!imagen) return
     startTransition(async () => {
-      const result = await eliminarImagenProducto(productoId, imagen)
+      const result = await eliminarImagenProducto(productoId)
       if (result.success) setImagen(null)
       else setError(result.error ?? "Error al eliminar")
     })

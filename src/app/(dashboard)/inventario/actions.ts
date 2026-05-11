@@ -14,7 +14,7 @@ const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 export async function subirImagenProducto(
   productoId: string,
   formData: FormData,
-): Promise<{ success: boolean; url?: string; error?: string }> {
+): Promise<{ success: boolean; filename?: string; error?: string }> {
   const archivo = formData.get("imagen") as File | null
 
   console.log(
@@ -36,14 +36,26 @@ export async function subirImagenProducto(
     return { success: false, error: "La imagen pesa más de 5MB" }
   }
 
-  // File → Uint8Array (necesario para que .upload() reciba bytes reales en SA)
+  // File → Uint8Array (Server Actions necesitan bytes reales)
   const buffer = new Uint8Array(await archivo.arrayBuffer())
 
   const extension = (archivo.name.split(".").pop() ?? "jpg").toLowerCase()
   const nombreArchivo = `producto-${productoId}-${Date.now()}.${extension}`
 
-  // Admin client → service role key → bypassea RLS de storage.objects
   const admin = createAdminClient()
+
+  // Borrar imagen previa del bucket (si existe) para no acumular huérfanos
+  const { data: prev } = await admin
+    .from("productos")
+    .select("imagen_url")
+    .eq("id", productoId)
+    .maybeSingle()
+  const prevFilename = prev?.imagen_url as string | null | undefined
+  if (prevFilename && !prevFilename.startsWith("http")) {
+    await admin.storage.from("productos").remove([prevFilename])
+  }
+
+  // Upload nuevo
   const { error: uploadError } = await admin.storage
     .from("productos")
     .upload(nombreArchivo, buffer, {
@@ -55,13 +67,11 @@ export async function subirImagenProducto(
     return { success: false, error: uploadError.message }
   }
 
-  const {
-    data: { publicUrl },
-  } = admin.storage.from("productos").getPublicUrl(nombreArchivo)
-
+  // IMPORTANTE: BD guarda SOLO el filename. `buildProductoImageUrl()` en
+  // src/lib/storage-images.ts antepone el prefijo público al renderizar.
   const { error: updateError } = await admin
     .from("productos")
-    .update({ imagen_url: publicUrl })
+    .update({ imagen_url: nombreArchivo })
     .eq("id", productoId)
   if (updateError) {
     console.error("[subirImagenProducto] update BD error:", updateError)
@@ -71,24 +81,28 @@ export async function subirImagenProducto(
     }
   }
 
-  console.log("[subirImagenProducto] OK:", publicUrl)
+  console.log("[subirImagenProducto] OK:", nombreArchivo)
   revalidatePath("/inventario")
-  return { success: true, url: publicUrl }
+  return { success: true, filename: nombreArchivo }
 }
 
 export async function eliminarImagenProducto(
   productoId: string,
-  imagenUrl: string,
 ): Promise<{ success: boolean; error?: string }> {
   const admin = createAdminClient()
 
-  // Extraer path después de /productos/ en la URL pública
-  const idx = imagenUrl.indexOf("/productos/")
-  const path = idx >= 0 ? imagenUrl.slice(idx + "/productos/".length) : null
-  if (path) {
+  // Leer filename actual de BD
+  const { data: row } = await admin
+    .from("productos")
+    .select("imagen_url")
+    .eq("id", productoId)
+    .maybeSingle()
+  const filename = row?.imagen_url as string | null | undefined
+
+  if (filename && !filename.startsWith("http")) {
     const { error: rmError } = await admin.storage
       .from("productos")
-      .remove([path])
+      .remove([filename])
     if (rmError) console.warn("[eliminarImagenProducto] remove warning:", rmError)
   }
 
