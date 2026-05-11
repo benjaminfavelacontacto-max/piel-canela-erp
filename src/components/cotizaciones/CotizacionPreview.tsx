@@ -89,7 +89,8 @@ export function CotizacionPreview({
   }
   const resumenMap = new Map<string, ResumenCat>()
   for (const it of data.items) {
-    const cat = it.categoria ?? "Otros"
+    // Solo 2 grupos: Cintas y Otros
+    const cat = it.categoria === "CINTAS" ? "Cintas" : "Otros"
     const cur = resumenMap.get(cat) ?? {
       categoria: cat,
       lineas: 0,
@@ -134,7 +135,7 @@ export function CotizacionPreview({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo_pielcanela2.png"
             alt="Piel Canela"
             style={{ height: 160, width: "auto", objectFit: "contain" }}
           />
