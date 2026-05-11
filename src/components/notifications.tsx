@@ -406,6 +406,7 @@ export function NotificationBell() {
               borderRadius: 16,
               boxShadow: "0 20px 60px rgba(0,0,0,0.80)",
               zIndex: 99999,
+              isolation: "isolate",
             }}
           >
             {/* Header */}
