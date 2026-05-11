@@ -18,6 +18,7 @@ import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { formatMXNshort } from "@/lib/utils"
 import { PageHeader } from "@/components/page-header"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
+import { PortalBadge, type PortalCotizacion } from "./portal-badge"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
@@ -136,6 +137,7 @@ export default async function DashboardPage() {
     proximaCotRes,
     todasCotsRecRes,
     todasVentasRecRes,
+    cotizacionesPortalRes,
   ] = await Promise.all([
     supabase
       .from("ventas")
@@ -203,6 +205,16 @@ export default async function DashboardPage() {
       .select(
         "id, numero, total, fecha, created_at, cliente_id, clientes(nombre, nombre_negocio)",
       )
+      .order("created_at", { ascending: false })
+      .limit(20),
+    // Cotizaciones del portal pendientes de revisar (estatus borrador + suffix -P-Portal)
+    admin
+      .from("cotizaciones")
+      .select(
+        "id, numero, total, created_at, clientes(nombre, nombre_negocio, telefono)",
+      )
+      .eq("estatus", "borrador")
+      .ilike("numero", "%-P-Portal")
       .order("created_at", { ascending: false })
       .limit(20),
   ])
@@ -312,6 +324,30 @@ export default async function DashboardPage() {
   const totalClientes = clientesCountRes.count ?? 0
   const cotPendCount = cotizacionesPendCountRes.count ?? 0
   const stockBajoCount = inventarioBajo.length
+
+  // Cotizaciones del portal pendientes — para badge + dropdown
+  type CotPortalRaw = {
+    id: string
+    numero: string
+    total: number | null
+    created_at: string
+    clientes: {
+      nombre: string | null
+      nombre_negocio: string | null
+      telefono: string | null
+    } | null
+  }
+  const cotizacionesPortal: PortalCotizacion[] = (
+    (cotizacionesPortalRes.data ?? []) as unknown as CotPortalRaw[]
+  ).map((c) => ({
+    id: c.id,
+    numero: c.numero,
+    total: Number(c.total ?? 0),
+    created_at: c.created_at,
+    cliente_nombre:
+      c.clientes?.nombre_negocio ?? c.clientes?.nombre ?? null,
+    cliente_telefono: c.clientes?.telefono ?? null,
+  }))
 
   // ─── Monthly chart series (12 últimos meses) ─────────────────────
   const monthly: Map<string, { mes: string; total: number; ganancia: number; count: number }> = new Map()
@@ -510,14 +546,16 @@ export default async function DashboardPage() {
           value={totalClientes.toLocaleString("es-MX")}
           sub="En la base de datos"
         />
-        <Kpi
-          icon={
-            <FileText className="size-4 text-amber-600" strokeWidth={1.75} />
-          }
-          label="Cotizaciones pendientes"
-          value={cotPendCount.toLocaleString("es-MX")}
-          sub="Estatus: enviada"
-        />
+        <PortalBadge cotizaciones={cotizacionesPortal}>
+          <Kpi
+            icon={
+              <FileText className="size-4 text-amber-600" strokeWidth={1.75} />
+            }
+            label="Cotizaciones pendientes"
+            value={cotPendCount.toLocaleString("es-MX")}
+            sub="Estatus: enviada"
+          />
+        </PortalBadge>
         <Kpi
           icon={
             <Package className="size-4 text-rose-500" strokeWidth={1.75} />
