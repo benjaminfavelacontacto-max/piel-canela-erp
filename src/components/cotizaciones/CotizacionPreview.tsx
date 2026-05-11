@@ -43,6 +43,21 @@ function initials(name: string | null | undefined): string {
   )
 }
 
+function esCinta(it: CotizacionItem): boolean {
+  const sku = (it.sku ?? "").toUpperCase().trim()
+  const categoria = (it.categoria ?? "").toUpperCase().trim()
+  const nombre = (it.nombre ?? "").toUpperCase().trim()
+  // SKU CN-XXX → más confiable
+  if (sku.startsWith("CN-")) return true
+  // Categoría con cualquier variante de "CINTA"
+  if (categoria.includes("CINTA")) return true
+  // Fallback por nombre
+  if (nombre.startsWith("CINTA ")) return true
+  if (nombre.includes("CORTADA")) return true
+  if (nombre.includes("ENTERA") && !nombre.includes("ML")) return true
+  return false
+}
+
 function groupByCategoria(
   items: CotizacionItem[],
 ): { categoria: string | null; items: CotizacionItem[] }[] {
@@ -89,9 +104,8 @@ export function CotizacionPreview({
   }
   const resumenMap = new Map<string, ResumenCat>()
   for (const it of data.items) {
-    // Solo 2 grupos: Cintas y Otros (case-insensitive + trim defensivo)
-    const cat =
-      it.categoria?.toUpperCase().trim() === "CINTAS" ? "Cintas" : "Otros"
+    // Solo 2 grupos: Cintas y Otros (detección por SKU + categoria + nombre)
+    const cat = esCinta(it) ? "Cintas" : "Otros"
     const cur = resumenMap.get(cat) ?? {
       categoria: cat,
       lineas: 0,
@@ -124,44 +138,50 @@ export function CotizacionPreview({
         lineHeight: 1.4,
       }}
     >
-      {/* ─── HEADER teal preservado ─── */}
-      <div style={{ padding: "20px 24px 8px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 20,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo_pielcanela2.png"
-            alt="Piel Canela"
-            style={{ height: 160, width: "auto", objectFit: "contain" }}
-          />
-          <div style={{ textAlign: "right" }}>
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 700,
-                color: "#222",
-                lineHeight: 1.1,
-              }}
-            >
-              PIEL CANELA
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: TEAL }}>
-              Spa &amp; Bronceado
-            </div>
-            <div style={{ marginTop: 4, fontSize: 10, color: "#666" }}>
-              Av Guadalupe 6304, Jardines de Chapalita
-              <br />
-              CP 45010, Guadalajara, Jalisco
-              <br />
-              WhatsApp: +52 33 3250 8073
-            </div>
-          </div>
+      {/* ─── HEADER teal — logo 80x80 simétrico ─── */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 24px",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo_pielcanela2.png"
+          alt="Piel Canela"
+          style={{ width: 80, height: 80, objectFit: "contain" }}
+        />
+        <div style={{ textAlign: "right" }}>
+          <p
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: "#222",
+              margin: 0,
+              lineHeight: 1.1,
+            }}
+          >
+            PIEL CANELA
+          </p>
+          <p
+            style={{
+              fontSize: 12,
+              color: TEAL,
+              fontWeight: 500,
+              margin: "2px 0 4px 0",
+            }}
+          >
+            Spa &amp; Bronceado
+          </p>
+          <p style={{ fontSize: 11, color: "#666", lineHeight: 1.6, margin: 0 }}>
+            Av Guadalupe 6304, Jardines de Chapalita
+            <br />
+            CP 45010, Guadalajara, Jalisco
+            <br />
+            WhatsApp: +52 33 3250 8073
+          </p>
         </div>
       </div>
 
