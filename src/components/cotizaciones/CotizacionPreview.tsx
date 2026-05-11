@@ -80,6 +80,26 @@ export function CotizacionPreview({
 
   const grupos = groupByCategoria(data.items)
 
+  // Subtotales por tipo: Cintas vs resto de productos
+  const itemsCintas = data.items.filter((it) => it.categoria === "CINTAS")
+  const itemsProductos = data.items.filter((it) => it.categoria !== "CINTAS")
+  const totalCintas = itemsCintas.reduce(
+    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
+    0,
+  )
+  const unidadesCintas = itemsCintas.reduce(
+    (s, i) => s + Number(i.cantidad),
+    0,
+  )
+  const totalProductos = itemsProductos.reduce(
+    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
+    0,
+  )
+  const unidadesProductos = itemsProductos.reduce(
+    (s, i) => s + Number(i.cantidad),
+    0,
+  )
+
   return (
     <div
       ref={innerRef}
@@ -96,7 +116,7 @@ export function CotizacionPreview({
       }}
     >
       {/* ─── HEADER teal preservado ─── */}
-      <div style={{ padding: "24px 24px 18px" }}>
+      <div style={{ padding: "20px 24px 8px" }}>
         <div
           style={{
             display: "flex",
@@ -156,7 +176,7 @@ export function CotizacionPreview({
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
-          padding: "10px 24px",
+          padding: "8px 24px",
           background: TEAL_BG,
           borderBottom: `1px solid ${TEAL_LINE}`,
           fontSize: 10.5,
@@ -356,6 +376,82 @@ export function CotizacionPreview({
         ))
       )}
 
+      {/* ─── DESGLOSE por tipo: Cintas vs Productos ─── */}
+      {(unidadesCintas > 0 || unidadesProductos > 0) && (
+        <div
+          style={{
+            padding: "10px 24px",
+            borderTop: "1px solid #e8e8e8",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 24,
+          }}
+        >
+          {unidadesProductos > 0 && (
+            <div style={{ textAlign: "right" }}>
+              <p
+                style={{
+                  fontSize: 9,
+                  color: "#aaa",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  margin: 0,
+                  marginBottom: 2,
+                }}
+              >
+                Productos ({unidadesProductos} uds)
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "#333",
+                  fontVariantNumeric: "tabular-nums",
+                  margin: 0,
+                }}
+              >
+                {totalProductos.toLocaleString("es-MX", {
+                  style: "currency",
+                  currency: "MXN",
+                  maximumFractionDigits: 0,
+                })}
+              </p>
+            </div>
+          )}
+          {unidadesCintas > 0 && (
+            <div style={{ textAlign: "right" }}>
+              <p
+                style={{
+                  fontSize: 9,
+                  color: TEAL,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  margin: 0,
+                  marginBottom: 2,
+                }}
+              >
+                Cintas ({unidadesCintas} uds)
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: TEAL,
+                  fontVariantNumeric: "tabular-nums",
+                  margin: 0,
+                }}
+              >
+                {totalCintas.toLocaleString("es-MX", {
+                  style: "currency",
+                  currency: "MXN",
+                  maximumFractionDigits: 0,
+                })}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── TOTALES: subtotal/IVA + bloque verde TOTAL compacto ─── */}
       <div
         style={{
@@ -444,6 +540,11 @@ export function CotizacionPreview({
             borderRadius: 8,
             textAlign: "center",
             minWidth: 130,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
           }}
         >
           <p
