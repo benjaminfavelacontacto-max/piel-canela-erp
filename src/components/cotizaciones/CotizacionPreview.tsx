@@ -612,13 +612,13 @@ export function CotizacionPreview({
                 style={{
                   background: TEAL,
                   color: "#ffffff",
-                  padding: "10px 16px",
+                  padding: "12px 20px",
                   borderRadius: 8,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 2,
+                  gap: 4,
                 }}
               >
                 <p
