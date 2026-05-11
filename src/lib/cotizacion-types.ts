@@ -32,7 +32,6 @@ export type CotizacionItem = {
   nombre: string
   imagen_url: string | null
   peso: string | null
-  categoria?: string | null
   cantidad: number
   precio_unitario: number
   costo_unitario: number
