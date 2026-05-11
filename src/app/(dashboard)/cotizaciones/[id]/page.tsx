@@ -42,8 +42,7 @@ export default async function CotizacionDetailPage({
     .from("cotizacion_items")
     .select(
       `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-       productos(id, sku, nombre, nombre_display, imagen_url, peso,
-         categorias(nombre))`,
+       productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
     )
     .eq("cotizacion_id", id)
     .order("sort_order", { ascending: true })
@@ -62,7 +61,6 @@ export default async function CotizacionDetailPage({
       nombre_display: string | null
       imagen_url: string | null
       peso: string | null
-      categorias: { nombre: string } | null
     } | null
   }
 
@@ -74,7 +72,6 @@ export default async function CotizacionDetailPage({
       nombre: display,
       imagen_url: findImageFor(display, r.productos?.imagen_url ?? null, imageMap),
       peso: r.productos?.peso ?? null,
-      categoria: r.productos?.categorias?.nombre ?? null,
       cantidad: r.cantidad,
       precio_unitario: r.precio_unitario,
       costo_unitario: r.costo_unitario,
