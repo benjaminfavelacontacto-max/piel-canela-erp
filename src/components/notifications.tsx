@@ -179,9 +179,9 @@ export function NotificationBell() {
         }
       })
 
-    // FALLBACK: polling cada 15s — cubre si Realtime se cae o si la
-    // tabla no está en la publication supabase_realtime
-    const polling = setInterval(async () => {
+    // Función reusable para fetch+merge: usada por polling Y por
+    // visibilitychange para responder rápido cuando vuelven a la pestaña
+    async function refetchNuevas() {
       try {
         const { data, error } = await supabase
           .from("notificaciones")
@@ -191,7 +191,7 @@ export function NotificationBell() {
           .limit(20)
         if (error) {
           if (!isSchemaCacheError(error.message)) {
-            console.error("[NotificationBell] polling error:", error.message)
+            console.error("[NotificationBell] refetch error:", error.message)
           }
           return
         }
@@ -203,15 +203,26 @@ export function NotificationBell() {
           )
           if (nuevasNotifs.length === 0) return prev
           console.log(
-            `[NotificationBell] 📊 polling detectó ${nuevasNotifs.length} nuevas`,
+            `[NotificationBell] 📊 refetch detectó ${nuevasNotifs.length} nuevas`,
           )
           if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
           return data as Notificacion[]
         })
       } catch (e) {
-        console.error("[NotificationBell] excepción polling:", e)
+        console.error("[NotificationBell] excepción refetch:", e)
       }
-    }, 15000)
+    }
+
+    // FALLBACK: polling cada 10s — cubre si Realtime se cae o si la
+    // tabla no está en la publication supabase_realtime
+    const polling = setInterval(refetchNuevas, 10000)
+
+    // Refetch inmediato al volver a la pestaña (browsers pausan setInterval
+    // en background; visibilitychange evita lag al recuperar el foco)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refetchNuevas()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     // Cerrar panel al click fuera
     const handleClick = (e: MouseEvent) => {
@@ -227,6 +238,7 @@ export function NotificationBell() {
       clearInterval(polling)
       if (retryTimer) clearTimeout(retryTimer)
       document.removeEventListener("mousedown", handleClick)
+      document.removeEventListener("visibilitychange", onVisibility)
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
   }, [])
