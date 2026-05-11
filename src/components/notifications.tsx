@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Bell, X, ShoppingCart } from "lucide-react"
@@ -104,12 +105,13 @@ export function NotificationBell() {
   const nuevas = notifs.length
 
   // Calcula posición del panel relativa al viewport (fixed)
-  // basado en el bounding rect del bell button
+  // - top: alineado al borde superior del bell button
+  // - left: a la DERECHA del sidebar (rect.right + 12px de aire)
   function recalcPos() {
     const el = bellRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    setPos({ top: r.top, left: r.left })
+    setPos({ top: r.top, left: r.right + 12 })
   }
 
   function togglePanel() {
@@ -259,11 +261,14 @@ export function NotificationBell() {
     }
     document.addEventListener("visibilitychange", onVisibility)
 
-    // Cerrar panel al click fuera
+    // Cerrar panel al click fuera. Con createPortal el panel ya NO es
+    // hijo DOM del bellRef wrapper, así que `panelRef.contains` falla.
+    // Detectamos por el atributo data-notif-panel + bellRef.
     const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const target = e.target as HTMLElement
+      if (target.closest("[data-notif-panel]")) return
+      if (bellRef.current && bellRef.current.contains(target)) return
+      setOpen(false)
     }
     document.addEventListener("mousedown", handleClick)
 
@@ -381,22 +386,25 @@ export function NotificationBell() {
           )}
         </button>
 
-        {open && (
+        {open && typeof document !== "undefined" && createPortal(
           <div
             data-notif-panel
             style={{
               position: "fixed",
-              top: Math.max(8, pos.top - 300),
+              top: pos.top,
               left: pos.left,
               width: 360,
-              maxHeight: 480,
+              maxHeight: Math.min(
+                500,
+                (typeof window !== "undefined" ? window.innerHeight : 800) -
+                  pos.top -
+                  20,
+              ),
               overflowY: "auto",
-              background: "rgba(11,17,32,0.96)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 20,
-              boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
+              background: "#0d1526",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: 16,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.80)",
               zIndex: 99999,
             }}
           >
@@ -657,7 +665,8 @@ export function NotificationBell() {
                 </Link>
               </div>
             )}
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     </>
