@@ -89,8 +89,9 @@ export function CotizacionPreview({
   }
   const resumenMap = new Map<string, ResumenCat>()
   for (const it of data.items) {
-    // Solo 2 grupos: Cintas y Otros
-    const cat = it.categoria === "CINTAS" ? "Cintas" : "Otros"
+    // Solo 2 grupos: Cintas y Otros (case-insensitive + trim defensivo)
+    const cat =
+      it.categoria?.toUpperCase().trim() === "CINTAS" ? "Cintas" : "Otros"
     const cur = resumenMap.get(cat) ?? {
       categoria: cat,
       lineas: 0,
