@@ -7,8 +7,10 @@ import {
   Sparkles,
   RefreshCw,
   X,
+  Pencil,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
+import { ProductEditModal } from "./product-edit-modal"
 import { PageHeader } from "@/components/page-header"
 import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
@@ -169,6 +171,11 @@ export function InventarioView({
     () => productos.find((p) => p.sku === selectedSku) ?? null,
     [productos, selectedSku],
   )
+  const [editSku, setEditSku] = useState<string | null>(null)
+  const editing = useMemo(
+    () => productos.find((p) => p.sku === editSku) ?? null,
+    [productos, editSku],
+  )
   const [search, setSearch] = useState("")
   const [estatusF, setEstatusF] = useState("")
   const [categoriaF, setCategoriaF] = useState("")
@@ -178,8 +185,8 @@ export function InventarioView({
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
   // ── Anchos manuales de columna (persistidos en localStorage) ──
-  const DEFAULT_COL_WIDTHS = [50, 100, 55, 160, 110, 100, 75, 90, 70, 85, 90, 80, 90, 90, 55, 75]
-  const COL_WIDTHS_KEY = "inventario-col-widths-v1"
+  const DEFAULT_COL_WIDTHS = [50, 100, 55, 160, 110, 100, 75, 90, 70, 85, 90, 80, 90, 90, 55, 96]
+  const COL_WIDTHS_KEY = "inventario-col-widths-v2"
   const MIN_COL_WIDTH = 40
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS)
   useEffect(() => {
@@ -637,6 +644,18 @@ export function InventarioView({
         producto={selected}
         sales={selected ? sales[selected.sku] : undefined}
         onClose={() => setSelectedSku(null)}
+        onEdit={() => {
+          if (selected) {
+            setEditSku(selected.sku)
+            setSelectedSku(null)
+          }
+        }}
+      />
+
+      <ProductEditModal
+        key={editing?.id ?? "closed"}
+        producto={editing}
+        onClose={() => setEditSku(null)}
       />
 
       {/* Tipo de cambio note */}
@@ -729,6 +748,7 @@ export function InventarioView({
                     p={p}
                     isTop={topSellersSet.has(p.sku)}
                     onClick={() => setSelectedSku(p.sku)}
+                    onEdit={() => setEditSku(p.sku)}
                   />
                 ))
               )}
@@ -878,10 +898,12 @@ function ProductRow({
   p,
   isTop: _isTop,
   onClick,
+  onEdit,
 }: {
   p: ProductoEnriquecido
   isTop: boolean
   onClick: () => void
+  onEdit: () => void
 }) {
   void _isTop
   const tc = p.tipo_cambio ?? 20.7
@@ -1018,13 +1040,27 @@ function ProductRow({
         {p.unidades_vendidas || 0}
       </td>
 
-      {/* Estatus */}
-      <td className="py-2 px-2 text-center">
-        <span
-          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${estatusBadge}`}
-        >
-          {estatusLabel}
-        </span>
+      {/* Estatus + Editar */}
+      <td className="py-2 px-2">
+        <div className="flex items-center justify-center gap-1.5">
+          <span
+            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${estatusBadge}`}
+          >
+            {estatusLabel}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+            title="Editar producto"
+            aria-label="Editar producto"
+            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        </div>
       </td>
     </tr>
   )

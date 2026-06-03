@@ -11,7 +11,7 @@ import {
   Wallet,
   Layers,
   Truck,
-  ArrowRight,
+  Pencil,
 } from "lucide-react"
 import {
   Bar,
@@ -68,10 +68,12 @@ export function ProductDrawer({
   producto,
   sales,
   onClose,
+  onEdit,
 }: {
   producto: ProductoEnriquecido | null
   sales: ProductoSales | undefined
   onClose: () => void
+  onEdit: () => void
 }) {
   // Esc cierra
   useEffect(() => {
@@ -414,12 +416,12 @@ export function ProductDrawer({
             </Link>
             <button
               type="button"
-              disabled
-              title="Próximamente — commit 3"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-400 cursor-not-allowed"
+              onClick={onEdit}
+              title="Editar stock, precios y costos"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-700 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
             >
-              <ArrowRight className="size-3.5" />
-              Ajustar stock
+              <Pencil className="size-3.5" />
+              Editar producto
             </button>
           </section>
         </div>
