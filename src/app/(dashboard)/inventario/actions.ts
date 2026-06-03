@@ -159,7 +159,9 @@ export async function actualizarProducto(
     if (error) return { ok: false, error: `productos: ${error.message}` }
   }
 
-  // 2) Tabla inventario (stock) — 1 fila por producto. Recalcula estatus.
+  // 2) Tabla inventario (stock) — 1 fila por producto.
+  // OJO: inventario.estatus es GENERATED (la BD lo recalcula desde el stock) —
+  // NUNCA escribirla, igual que ventas.total.
   if ("stock_actual" in data || "stock_minimo" in data) {
     const { data: invRow } = await admin
       .from("inventario")
@@ -174,9 +176,7 @@ export async function actualizarProducto(
       "stock_minimo" in data
         ? Math.max(0, Math.round(Number(data.stock_minimo ?? 0)))
         : Number(invRow?.stock_minimo ?? 0)
-    const estatus =
-      stockActual <= 0 ? "agotado" : stockActual <= stockMinimo ? "bajo" : "ok"
-    const invPatch = { stock_actual: stockActual, stock_minimo: stockMinimo, estatus }
+    const invPatch = { stock_actual: stockActual, stock_minimo: stockMinimo }
     if (invRow?.id) {
       const { error } = await admin
         .from("inventario")
@@ -184,9 +184,14 @@ export async function actualizarProducto(
         .eq("id", invRow.id)
       if (error) return { ok: false, error: `inventario: ${error.message}` }
     } else {
+      // Fila nueva: stock_inicial es NOT NULL → lo igualamos al stock actual.
       const { error } = await admin
         .from("inventario")
-        .insert({ producto_id: productoId, ...invPatch })
+        .insert({
+          producto_id: productoId,
+          stock_inicial: stockActual,
+          ...invPatch,
+        })
       if (error) return { ok: false, error: `inventario: ${error.message}` }
     }
   }

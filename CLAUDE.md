@@ -17,6 +17,9 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - cotizaciones.total es columna GENERATED — NUNCA insertarla
 - ventas.total, ventas.ganancia, ventas.saldo_pendiente son GENERATED — NUNCA insertarlas
 - venta_items.subtotal es GENERATED — NUNCA insertarla
+- inventario.estatus es GENERATED (se calcula del stock: ok/bajo/agotado) — NUNCA insertarla/actualizarla
+- inventario.stock_inicial es NOT NULL sin default — al crear fila nueva, igualarlo a stock_actual
+- No todos los productos tienen fila en `inventario`; `vista_inventario` sintetiza stock 0 vía LEFT JOIN. Al editar stock: UPDATE si existe, INSERT si no
 - RLS está DESACTIVADO en todas las tablas (sistema interno)
 - RLS en `storage.objects` SÍ está activo → usar `createAdminClient()` (service_role_key) para uploads
 - Usar createClient() de @/lib/supabase/server en server components/actions
