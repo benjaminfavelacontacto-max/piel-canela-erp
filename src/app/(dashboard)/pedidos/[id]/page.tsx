@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Package } from "lucide-react"
+import { ArrowLeft, Package, Pencil } from "lucide-react"
 import { AgregarProductosPedido } from "./agregar-productos"
 
 const mxn = (v: number) =>
@@ -120,6 +120,18 @@ export default async function PedidoDetailPage({
     precio_usd: number | null
   }[]
 
+  // Categorías/proveedores para crear un producto nuevo desde el pedido
+  const [{ data: catData }, { data: provData }] = await Promise.all([
+    supabase.from("categorias").select("id, nombre").order("nombre"),
+    supabase.from("proveedores").select("id, nombre").order("nombre"),
+  ])
+  const categoriaOptions = ((catData ?? []) as { id: string; nombre: string }[]).filter(
+    (c) => c.nombre,
+  )
+  const proveedorOptions = ((provData ?? []) as { id: string; nombre: string }[]).filter(
+    (p) => p.nombre,
+  )
+
   const items = (pedido.pedido_compra_items ?? []).sort(
     (a, b) => a.sort_order - b.sort_order,
   )
@@ -181,10 +193,23 @@ export default async function PedidoDetailPage({
             )}
           </p>
         </div>
+        <Link
+          href={`/pedidos/${pedido.id}/editar`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+        >
+          <Pencil className="size-4" />
+          Editar pedido
+        </Link>
       </div>
 
       {/* Agregar productos (entrada de inventario) */}
-      <AgregarProductosPedido pedidoId={pedido.id} productos={productosBuscador} />
+      <AgregarProductosPedido
+        pedidoId={pedido.id}
+        productos={productosBuscador}
+        categoriaOptions={categoriaOptions}
+        proveedorOptions={proveedorOptions}
+        defaultTc={Number(pedido.tipo_cambio) || 20.7}
+      />
 
       {/* KPI strip — totales del pedido */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">

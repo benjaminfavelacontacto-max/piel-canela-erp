@@ -4,6 +4,11 @@ import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, PackagePlus, X, Loader2, Boxes } from "lucide-react"
 import { agregarItemsPedido } from "../actions"
+import {
+  ProductCreateModal,
+  type Opcion,
+  type ProductoCreado,
+} from "../../inventario/product-create-modal"
 
 type ProductoBase = {
   id: string
@@ -25,16 +30,40 @@ const usd = (v: number) => `$${v.toFixed(2)}`
 export function AgregarProductosPedido({
   pedidoId,
   productos,
+  categoriaOptions,
+  proveedorOptions,
+  defaultTc,
 }: {
   pedidoId: string
   productos: ProductoBase[]
+  categoriaOptions: Opcion[]
+  proveedorOptions: Opcion[]
+  defaultTc: number
 }) {
   const router = useRouter()
   const [abierto, setAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState("")
   const [filas, setFilas] = useState<Fila[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [crearOpen, setCrearOpen] = useState(false)
   const [pending, startTransition] = useTransition()
+
+  const onProductoCreado = (p: ProductoCreado) => {
+    setFilas((prev) =>
+      prev.some((f) => f.producto_id === p.id)
+        ? prev
+        : [
+            ...prev,
+            {
+              producto_id: p.id,
+              sku: p.sku,
+              nombre: p.nombre,
+              cantidad: 1,
+              precio_usd: Number(p.precio_usd ?? 0),
+            },
+          ],
+    )
+  }
 
   const filtrados = useMemo(() => {
     if (!busqueda.trim()) return []
@@ -168,6 +197,15 @@ export function AgregarProductosPedido({
         )}
       </div>
 
+      <button
+        type="button"
+        onClick={() => setCrearOpen(true)}
+        className="mb-3 inline-flex items-center gap-1.5 text-[12px] font-medium text-teal-700 transition-colors hover:text-teal-800"
+      >
+        <Plus className="size-3.5" />
+        ¿No está en la lista? Crear producto nuevo
+      </button>
+
       {/* Filas */}
       {filas.length > 0 ? (
         <div className="overflow-x-auto">
@@ -253,6 +291,16 @@ export function AgregarProductosPedido({
           {pending ? "Guardando…" : "Guardar entradas"}
         </button>
       </div>
+
+      {crearOpen && (
+        <ProductCreateModal
+          onClose={() => setCrearOpen(false)}
+          categoriaOptions={categoriaOptions}
+          proveedorOptions={proveedorOptions}
+          defaultTc={defaultTc}
+          onCreated={onProductoCreado}
+        />
+      )}
     </section>
   )
 }

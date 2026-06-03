@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { sumarStockEntrada } from "../actions"
+import {
+  ProductCreateModal,
+  type ProductoCreado,
+} from "../../inventario/product-create-modal"
 
 interface ItemPedido {
   producto_id: string
@@ -62,7 +66,9 @@ export default function NuevoPedidoPage() {
 
   const [productos, setProductos] = useState<ProductoBase[]>([])
   const [proveedores, setProveedores] = useState<ProveedorBase[]>([])
+  const [categorias, setCategorias] = useState<{ id: string; nombre: string }[]>([])
   const [busqueda, setBusqueda] = useState("")
+  const [crearOpen, setCrearOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [nombre, setNombre] = useState("")
@@ -79,7 +85,7 @@ export default function NuevoPedidoPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: prods }, { data: provs }] = await Promise.all([
+      const [{ data: prods }, { data: provs }, { data: cats }] = await Promise.all([
         supabase
           .from("productos")
           .select(
@@ -91,9 +97,11 @@ export default function NuevoPedidoPage() {
           .eq("activo", true)
           .order("nombre"),
         supabase.from("proveedores").select("id, nombre"),
+        supabase.from("categorias").select("id, nombre").order("nombre"),
       ])
       setProductos((prods ?? []) as unknown as ProductoBase[])
       setProveedores((provs ?? []) as ProveedorBase[])
+      setCategorias((cats ?? []) as { id: string; nombre: string }[])
     }
     load()
   }, [supabase])
@@ -169,6 +177,38 @@ export default function NuevoPedidoPage() {
       },
     ])
     setBusqueda("")
+  }
+
+  // Agregar al pedido un producto recién creado desde el modal
+  const agregarProductoCreado = (p: ProductoCreado) => {
+    if (items.find((i) => i.producto_id === p.id)) return
+    const precioPublico = p.precio_publico
+    const precioUSD = p.precio_usd
+    const totalUnidades = items.reduce((s, i) => s + i.cantidad, 0) + 1
+    const envioUnit = totalUnidades > 0 ? envioTotalUSD / totalUnidades : 0
+    const costoTotalUSD = precioUSD + envioUnit
+    const costoTotalMXN = costoTotalUSD * tc
+    const profitUnit = precioPublico - costoTotalMXN
+    setItems((prev) => [
+      ...prev,
+      {
+        producto_id: p.id,
+        sku: p.sku,
+        nombre: p.nombre,
+        cantidad: 1,
+        precio_usd: precioUSD,
+        precio_mxn: precioUSD * tc,
+        subtotal_usd: precioUSD,
+        subtotal_mxn: precioUSD * tc,
+        envio_unit_usd: envioUnit,
+        envio_unit_mxn: envioUnit * tc,
+        costo_total_usd: costoTotalUSD,
+        costo_total_mxn: costoTotalMXN,
+        precio_publico: precioPublico,
+        profit_unit: profitUnit,
+        profit_total: profitUnit,
+      },
+    ])
   }
 
   const updateItem = (
@@ -435,6 +475,25 @@ export default function NuevoPedidoPage() {
                 </div>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setCrearOpen(true)}
+              className="mb-3 inline-flex items-center gap-1.5 text-[12px] font-medium text-teal-700 transition-colors hover:text-teal-800"
+            >
+              <Plus className="size-3.5" />
+              ¿No está? Crear producto nuevo
+            </button>
+
+            {crearOpen && (
+              <ProductCreateModal
+                onClose={() => setCrearOpen(false)}
+                categoriaOptions={categorias}
+                proveedorOptions={proveedores}
+                defaultTc={tc}
+                onCreated={agregarProductoCreado}
+              />
+            )}
 
             {items.length > 0 ? (
               <div className="overflow-x-auto">

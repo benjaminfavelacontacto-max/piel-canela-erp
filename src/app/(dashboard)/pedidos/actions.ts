@@ -253,3 +253,134 @@ export async function agregarItemsPedido(
   revalidatePath("/inventario")
   return { ok: true }
 }
+
+export type EditarPedidoPayload = {
+  nombre: string
+  fecha: string
+  proveedor_id: string | null
+  tipo: string
+  tipo_cambio: number
+  envio_total_usd: number
+  notas: string | null
+  sandra_usd: number
+  benjamin_usd: number
+  items: { producto_id: string; cantidad: number; precio_usd: number }[]
+}
+
+/**
+ * Edita un pedido COMPLETO: datos generales + ítems (editar/quitar/agregar).
+ * Reconcilia el stock por delta (newQty − oldQty por producto), re-prorratea
+ * el envío y re-snapshotea los costos. Borra y reinserta los ítems.
+ */
+export async function editarPedido(
+  pedidoId: string,
+  payload: EditarPedidoPayload,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!pedidoId) return { ok: false, error: "Falta el pedido" }
+  const items = (payload.items ?? []).filter((i) => i.producto_id && i.cantidad > 0)
+  if (items.length === 0)
+    return { ok: false, error: "El pedido necesita al menos un producto" }
+
+  const admin = createAdminClient()
+  const tc = Number(payload.tipo_cambio) || 0
+  const envioTotal = Number(payload.envio_total_usd) || 0
+
+  // 1) Ítems actuales → cantidades por producto (para el delta de stock)
+  const { data: viejos } = await admin
+    .from("pedido_compra_items")
+    .select("producto_id, cantidad")
+    .eq("pedido_id", pedidoId)
+  const oldByProd = new Map<string, number>()
+  for (const v of viejos ?? []) {
+    const k = v.producto_id as string
+    oldByProd.set(k, (oldByProd.get(k) ?? 0) + Number(v.cantidad))
+  }
+
+  // 2) Nuevas cantidades por producto (suma duplicados) + precio por producto
+  const newByProd = new Map<string, number>()
+  const precioByProd = new Map<string, number>()
+  for (const it of items) {
+    const c = Math.round(it.cantidad)
+    newByProd.set(it.producto_id, (newByProd.get(it.producto_id) ?? 0) + c)
+    if (!precioByProd.has(it.producto_id))
+      precioByProd.set(it.producto_id, Number(it.precio_usd) || 0)
+  }
+
+  // 3) Delta de stock por producto (unión viejos ∪ nuevos)
+  for (const pid of new Set([...oldByProd.keys(), ...newByProd.keys()])) {
+    const delta = (newByProd.get(pid) ?? 0) - (oldByProd.get(pid) ?? 0)
+    if (delta !== 0) await sumarStock(admin, pid, delta)
+  }
+
+  // 4) Precio público (Pública MXN) para profit
+  const pubByProd = new Map<string, number>()
+  const { data: lista } = await admin
+    .from("listas_precios")
+    .select("id")
+    .eq("nombre", "Pública MXN")
+    .maybeSingle()
+  if (lista?.id) {
+    const { data: precios } = await admin
+      .from("precios_producto")
+      .select("producto_id, precio")
+      .eq("lista_id", lista.id)
+      .in("producto_id", [...newByProd.keys()])
+    for (const p of precios ?? [])
+      pubByProd.set(p.producto_id as string, Number(p.precio))
+  }
+
+  // 5) Re-prorrateo + reescritura de ítems (borra y reinserta)
+  const totalUnidades = [...newByProd.values()].reduce((s, c) => s + c, 0)
+  const envioUnit = totalUnidades > 0 ? envioTotal / totalUnidades : 0
+  await admin.from("pedido_compra_items").delete().eq("pedido_id", pedidoId)
+
+  let sort = 0
+  let subtotalUsd = 0
+  for (const [pid, cant] of newByProd) {
+    const precio = precioByProd.get(pid) ?? 0
+    const pub = pubByProd.get(pid) ?? null
+    const fields = itemFields(precio, cant, envioUnit, tc, pub)
+    const { error } = await admin.from("pedido_compra_items").insert({
+      pedido_id: pedidoId,
+      producto_id: pid,
+      cantidad: cant,
+      precio_publico_mxn: pub,
+      sort_order: sort++,
+      ...fields,
+    })
+    if (error) return { ok: false, error: `item: ${error.message}` }
+    await snapshotProducto(admin, pid, precio, envioUnit, tc)
+    subtotalUsd += precio * cant
+  }
+
+  // 6) Header
+  const totalUsd = subtotalUsd + envioTotal
+  const sandraUsd = Number(payload.sandra_usd) || 0
+  const benjaminUsd = Number(payload.benjamin_usd) || 0
+  const { error: hErr } = await admin
+    .from("pedidos_compra")
+    .update({
+      nombre: payload.nombre,
+      fecha: payload.fecha,
+      proveedor_id: payload.proveedor_id || null,
+      tipo: payload.tipo,
+      tipo_cambio: tc,
+      subtotal_usd: subtotalUsd,
+      costo_envio_usd: envioTotal,
+      costo_envio_mxn: envioTotal * tc,
+      total_usd: totalUsd,
+      total_mxn: totalUsd * tc,
+      inversion_sandra_usd: sandraUsd,
+      inversion_benjamin_usd: benjaminUsd,
+      inversion_sandra_mxn: sandraUsd * tc,
+      inversion_benjamin_mxn: benjaminUsd * tc,
+      notas: payload.notas || null,
+    })
+    .eq("id", pedidoId)
+  if (hErr) return { ok: false, error: `header: ${hErr.message}` }
+
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${pedidoId}`)
+  revalidatePath("/inventario")
+  return { ok: true }
+}

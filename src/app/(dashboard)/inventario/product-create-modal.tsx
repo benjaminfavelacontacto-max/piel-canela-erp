@@ -36,16 +36,27 @@ function parseNum(s: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+export type ProductoCreado = {
+  id: string
+  sku: string
+  nombre: string
+  precio_usd: number
+  precio_publico: number
+}
+
 export function ProductCreateModal({
   onClose,
   categoriaOptions,
   proveedorOptions,
   defaultTc,
+  onCreated,
 }: {
   onClose: () => void
   categoriaOptions: Opcion[]
   proveedorOptions: Opcion[]
   defaultTc: number
+  /** Si se pasa, se llama con el producto recién creado (para agregarlo a un pedido). */
+  onCreated?: (p: ProductoCreado) => void
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => ({
@@ -104,6 +115,13 @@ export function ProductCreateModal({
         setError(res.error)
         return
       }
+      onCreated?.({
+        id: res.id,
+        sku: form.sku.trim().toUpperCase(),
+        nombre: form.nombre.trim(),
+        precio_usd: parseNum(form.precio_usd) ?? 0,
+        precio_publico: parseNum(form.precio_publico) ?? 0,
+      })
       router.refresh()
       onClose()
     })
