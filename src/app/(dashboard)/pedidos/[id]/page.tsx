@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Package } from "lucide-react"
+import { AgregarProductosPedido } from "./agregar-productos"
 
 const mxn = (v: number) =>
   v.toLocaleString("es-MX", {
@@ -106,6 +107,19 @@ export default async function PedidoDetailPage({
   if (!data) notFound()
   const pedido = data as unknown as Pedido
 
+  // Productos para el buscador de "Agregar productos"
+  const { data: productosData } = await supabase
+    .from("productos")
+    .select("id, sku, nombre, precio_usd")
+    .eq("activo", true)
+    .order("nombre")
+  const productosBuscador = (productosData ?? []) as {
+    id: string
+    sku: string
+    nombre: string
+    precio_usd: number | null
+  }[]
+
   const items = (pedido.pedido_compra_items ?? []).sort(
     (a, b) => a.sort_order - b.sort_order,
   )
@@ -168,6 +182,9 @@ export default async function PedidoDetailPage({
           </p>
         </div>
       </div>
+
+      {/* Agregar productos (entrada de inventario) */}
+      <AgregarProductosPedido pedidoId={pedido.id} productos={productosBuscador} />
 
       {/* KPI strip — totales del pedido */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">

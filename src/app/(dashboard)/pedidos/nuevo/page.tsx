@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
+import { sumarStockEntrada } from "../actions"
 
 interface ItemPedido {
   producto_id: string
@@ -282,6 +283,11 @@ export default function NuevoPedidoPage() {
           })
           .eq("id", item.producto_id),
       ),
+    )
+
+    // El pedido es una entrada real → suma el stock al inventario
+    await sumarStockEntrada(
+      items.map((i) => ({ producto_id: i.producto_id, cantidad: i.cantidad })),
     )
 
     toast.success(`Pedido "${nombre}" guardado`)
