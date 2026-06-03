@@ -223,6 +223,7 @@ export async function actualizarProducto(
             producto_id: productoId,
             lista_id: listaId,
             precio: data.precio_publico,
+            vigente_desde: new Date().toISOString().slice(0, 10), // NOT NULL
           })
         if (error) return { ok: false, error: `precio: ${error.message}` }
       }
