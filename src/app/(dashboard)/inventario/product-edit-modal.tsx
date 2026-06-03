@@ -22,7 +22,6 @@ type FormState = {
   precio_publico: string
   precio_usd: string
   costo_envio_usd: string
-  costo_envio_mxn: string
   tipo_cambio: string
 }
 
@@ -34,7 +33,6 @@ const EMPTY: FormState = {
   precio_publico: "",
   precio_usd: "",
   costo_envio_usd: "",
-  costo_envio_mxn: "",
   tipo_cambio: "",
 }
 
@@ -49,7 +47,6 @@ function initForm(p: ProductoEnriquecido | null): FormState {
     precio_publico: s(p.precio_publico),
     precio_usd: s(p.precio_usd),
     costo_envio_usd: s(p.costo_envio_usd),
-    costo_envio_mxn: s(p.costo_envio_mxn),
     tipo_cambio: s(p.tipo_cambio),
   }
 }
@@ -107,7 +104,6 @@ export function ProductEditModal({
         precio_publico: parseNum(form.precio_publico),
         precio_usd: parseNum(form.precio_usd),
         costo_envio_usd: parseNum(form.costo_envio_usd),
-        costo_envio_mxn: parseNum(form.costo_envio_mxn),
         tipo_cambio: parseNum(form.tipo_cambio),
       })
       if (!res.ok) {
@@ -226,9 +222,10 @@ export function ProductEditModal({
               </Field>
             </Group>
 
-            {/* Costos importación */}
-            <Group icon={<Truck className="size-3.5" />} title="Costo + envío (importación)">
-              <Field label="Costo + envío (USD)">
+            {/* Envío de importación (porción prorrateada por unidad).
+                El inventario deriva el MXN = envío USD × TC; el stored mxn se ignora. */}
+            <Group icon={<Truck className="size-3.5" />} title="Envío de importación / unidad">
+              <Field label="Envío / unidad (USD)">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -237,16 +234,7 @@ export function ProductEditModal({
                   className={inputCls}
                 />
               </Field>
-              <Field label="Costo + envío (MXN)">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={form.costo_envio_mxn}
-                  onChange={(e) => set("costo_envio_mxn", e.target.value)}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Tipo de cambio (MXN/USD)" className="col-span-2">
+              <Field label="Tipo de cambio (MXN/USD)">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -255,6 +243,20 @@ export function ProductEditModal({
                   className={inputCls}
                 />
               </Field>
+              <p className="col-span-2 -mt-1 text-[11px] text-gray-400">
+                Envío en MXN ={" "}
+                {(() => {
+                  const u = parseNum(form.costo_envio_usd)
+                  const tc = parseNum(form.tipo_cambio)
+                  return u != null && tc != null
+                    ? (u * tc).toLocaleString("es-MX", {
+                        style: "currency",
+                        currency: "MXN",
+                      })
+                    : "—"
+                })()}{" "}
+                · lo calcula el inventario automáticamente
+              </p>
             </Group>
 
             {error && (

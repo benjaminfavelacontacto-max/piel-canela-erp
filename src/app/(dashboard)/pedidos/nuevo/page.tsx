@@ -266,7 +266,10 @@ export default function NuevoPedidoPage() {
       return
     }
 
-    // Snapshot costos en productos (TC + envio + costo MXN)
+    // Snapshot de costos en productos → alimenta el inventario (vista_inventario).
+    // costo_envio_usd = envío prorrateado por unidad. La vista DERIVA el resto:
+    // costo_envio_mxn = costo_envio_usd × TC, costo_total = precio + costo_envio,
+    // profit = precio_publico − costo_total_mxn. Solo hace falta costo_envio_usd + TC.
     await Promise.all(
       items.map((item) =>
         supabase

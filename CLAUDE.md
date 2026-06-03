@@ -211,16 +211,18 @@ Para fechas y labels generados dinámicamente (especialmente cuando vienen de Py
 ## Regla: Costos USD/MXN y tipo de cambio (inventario)
 - `productos` tiene 4 columnas dolarizadas:
   - `precio_usd` — precio público referencial en USD por SKU
-  - `costo_envio_usd` — costo unitario + envío en USD (lo que pagamos importando)
-  - `costo_envio_mxn` — costo unitario + envío en MXN (snapshot al tipo de cambio del momento)
+  - `costo_envio_usd` — SOLO la porción de ENVÍO por unidad en USD (envío prorrateado del pedido, NO incluye el precio del producto). Es el ÚNICO costo de envío que importa escribir
+  - `costo_envio_mxn` — columna VESTIGIAL: `vista_inventario` la IGNORA y la deriva (= `costo_envio_usd × tipo_cambio`). Verificado: escribir 500 ahí y la vista igual muestra usd×TC. No vale la pena escribirla
   - `tipo_cambio` — MXN/USD vigente, default `17.50` en BD pero TC actual sincronizado con el Sheet es **$20.70** (segundo pedido)
-- `vista_inventario` recalcula campos derivados:
+- `vista_inventario` recalcula campos derivados (verificado contra datos, OJO: NO son × stock):
   - `precio_mxn_calculado = precio_usd × tipo_cambio`
-  - `costo_total_usd = costo_envio_usd × stock_actual`
-  - `costo_total_mxn = costo_envio_mxn × stock_actual`
-  - `profit_unitario = precio_publico − costo_envio_mxn`
+  - `costo_envio_mxn = costo_envio_usd × tipo_cambio` (DERIVADO, ignora el stored)
+  - `costo_total_usd = precio_usd + costo_envio_usd` (costo landed por unidad)
+  - `costo_total_mxn = costo_total_usd × tipo_cambio`
+  - `profit_unitario = precio_publico − costo_total_mxn`
   - `unidades_vendidas` agregado desde venta_items
-- El TC es referencial: el costo_envio_mxn real se snapshotea al momento del envío, NO se recalcula automáticamente cuando cambia `tipo_cambio`
+- Para alimentar el inventario desde un pedido basta escribir en `productos`: `precio_usd`, `costo_envio_usd`, `tipo_cambio`. ⚠️ Pedidos cargados por script/import que NO corren ese snapshot dejan el `costo_envio_usd` viejo (pasó con el Pedido 3 → script `scripts/fix-pedido-3.py`)
+- El TC es referencial: NO se recalcula automáticamente cuando cambia `tipo_cambio` masivamente vía el botón, salvo que se reescriba `costo_envio_usd`
 - Botón "Actualizar TC" en la pestaña Inventario actualiza `productos.tipo_cambio` masivamente vía server action `actualizarTipoCambio()`
 - En la UI mostrar siempre el TC vigente como badge: "TC referencial: $XX.XX MXN/USD"
 

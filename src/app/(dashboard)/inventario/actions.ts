@@ -122,7 +122,6 @@ export type ProductoEditPayload = {
   precio_publico?: number | null
   precio_usd?: number | null
   costo_envio_usd?: number | null
-  costo_envio_mxn?: number | null
   tipo_cambio?: number | null
   stock_actual?: number | null
   stock_minimo?: number | null
@@ -148,8 +147,8 @@ export async function actualizarProducto(
     prodPatch.nombre_display = data.nombre_display?.trim() || null
   if ("peso" in data) prodPatch.peso = data.peso?.trim() || null
   if ("precio_usd" in data) prodPatch.precio_usd = data.precio_usd
+  // costo_envio_mxn NO se escribe: vista_inventario lo deriva = costo_envio_usd × tipo_cambio
   if ("costo_envio_usd" in data) prodPatch.costo_envio_usd = data.costo_envio_usd
-  if ("costo_envio_mxn" in data) prodPatch.costo_envio_mxn = data.costo_envio_mxn
   if ("tipo_cambio" in data) prodPatch.tipo_cambio = data.tipo_cambio
   if (Object.keys(prodPatch).length > 0) {
     const { error } = await admin
