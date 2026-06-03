@@ -233,6 +233,105 @@ export async function actualizarProducto(
   return { ok: true }
 }
 
+export type ProductoCreatePayload = {
+  sku: string
+  nombre: string
+  nombre_display?: string | null
+  peso?: string | null
+  categoria_id: string
+  proveedor_id?: string | null
+  precio_publico?: number | null
+  precio_usd?: number | null
+  costo_envio_usd?: number | null
+  tipo_cambio?: number | null
+  stock_actual?: number | null
+  stock_minimo?: number | null
+}
+
+/**
+ * Crea un producto nuevo desde cero: fila en `productos` + `inventario`
+ * (+ `precios_producto` si se da precio público). costo_envio_mxn NO se escribe
+ * (vista_inventario lo deriva = costo_envio_usd × tipo_cambio).
+ */
+export async function crearProducto(
+  data: ProductoCreatePayload,
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const sku = data.sku?.trim()
+  const nombre = data.nombre?.trim()
+  if (!sku) return { ok: false, error: "El SKU es obligatorio" }
+  if (!nombre) return { ok: false, error: "El nombre es obligatorio" }
+  if (!data.categoria_id) return { ok: false, error: "La categoría es obligatoria" }
+
+  const admin = createAdminClient()
+
+  // SKU único
+  const { data: dup } = await admin
+    .from("productos")
+    .select("id")
+    .eq("sku", sku)
+    .maybeSingle()
+  if (dup?.id) return { ok: false, error: `Ya existe un producto con SKU "${sku}"` }
+
+  // costo (NOT NULL) = costo landed en MXN = (precio + envío) × TC
+  const tc = data.tipo_cambio ?? 0
+  const costo = ((data.precio_usd ?? 0) + (data.costo_envio_usd ?? 0)) * tc
+
+  // 1) productos
+  const { data: created, error: prodErr } = await admin
+    .from("productos")
+    .insert({
+      sku,
+      nombre,
+      nombre_display: data.nombre_display?.trim() || nombre,
+      peso: data.peso?.trim() || null,
+      categoria_id: data.categoria_id,
+      proveedor_id: data.proveedor_id || null,
+      precio_usd: data.precio_usd ?? null,
+      costo_envio_usd: data.costo_envio_usd ?? null,
+      tipo_cambio: data.tipo_cambio ?? null,
+      costo,
+      activo: true,
+    })
+    .select("id")
+    .single()
+  if (prodErr || !created) {
+    return { ok: false, error: `productos: ${prodErr?.message ?? "no se pudo crear"}` }
+  }
+  const productoId = created.id as string
+
+  // 2) inventario — stock_inicial NOT NULL, estatus GENERATED (no escribir)
+  const stockActual = Math.max(0, Math.round(Number(data.stock_actual ?? 0)))
+  const stockMinimo = Math.max(0, Math.round(Number(data.stock_minimo ?? 0)))
+  const { error: invErr } = await admin.from("inventario").insert({
+    producto_id: productoId,
+    stock_actual: stockActual,
+    stock_minimo: stockMinimo,
+    stock_inicial: stockActual,
+  })
+  if (invErr) return { ok: false, error: `inventario: ${invErr.message}` }
+
+  // 3) precio público (lista 'Pública MXN')
+  if (data.precio_publico != null) {
+    const { data: lista } = await admin
+      .from("listas_precios")
+      .select("id")
+      .eq("nombre", "Pública MXN")
+      .maybeSingle()
+    if (lista?.id) {
+      const { error: precioErr } = await admin.from("precios_producto").insert({
+        producto_id: productoId,
+        lista_id: lista.id,
+        precio: data.precio_publico,
+        vigente_desde: new Date().toISOString().slice(0, 10), // NOT NULL
+      })
+      if (precioErr) return { ok: false, error: `precio: ${precioErr.message}` }
+    }
+  }
+
+  revalidatePath("/inventario")
+  return { ok: true, id: productoId }
+}
+
 export async function actualizarTipoCambio(nuevoTC: number) {
   if (!Number.isFinite(nuevoTC) || nuevoTC <= 0) {
     return { ok: false as const, error: "Valor inválido" }

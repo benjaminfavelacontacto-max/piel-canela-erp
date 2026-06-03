@@ -8,9 +8,11 @@ import {
   RefreshCw,
   X,
   Pencil,
+  Plus,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { ProductEditModal } from "./product-edit-modal"
+import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
 import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
@@ -157,12 +159,16 @@ export function InventarioView({
   productos,
   categorias,
   proveedores,
+  categoriaOptions,
+  proveedorOptions,
   sales,
   error,
 }: {
   productos: ProductoEnriquecido[]
   categorias: string[]
   proveedores: string[]
+  categoriaOptions: Opcion[]
+  proveedorOptions: Opcion[]
   sales: Record<string, ProductoSales>
   error: string | null
 }) {
@@ -176,6 +182,7 @@ export function InventarioView({
     () => productos.find((p) => p.sku === editSku) ?? null,
     [productos, editSku],
   )
+  const [createOpen, setCreateOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [estatusF, setEstatusF] = useState("")
   const [categoriaF, setCategoriaF] = useState("")
@@ -437,6 +444,16 @@ export function InventarioView({
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
         icon={<Package className="size-5" />}
+        actions={
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c]"
+          >
+            <Plus className="size-4" />
+            Nuevo producto
+          </button>
+        }
       />
 
       <InventoryStats
@@ -657,6 +674,15 @@ export function InventarioView({
         producto={editing}
         onClose={() => setEditSku(null)}
       />
+
+      {createOpen && (
+        <ProductCreateModal
+          onClose={() => setCreateOpen(false)}
+          categoriaOptions={categoriaOptions}
+          proveedorOptions={proveedorOptions}
+          defaultTc={tcVigente}
+        />
+      )}
 
       {/* Tipo de cambio note */}
       <TipoCambioNote tc={tcVigente} />

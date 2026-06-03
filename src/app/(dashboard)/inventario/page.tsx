@@ -249,6 +249,12 @@ export default async function InventarioPage() {
   const proveedores = ((proveedoresRes.data ?? []) as { nombre: string }[])
     .map((p) => p.nombre)
     .filter(Boolean)
+  const categoriaOptions = ((categoriasRes.data ?? []) as { id: string; nombre: string }[])
+    .filter((c) => c.nombre)
+    .map((c) => ({ id: c.id, nombre: c.nombre }))
+  const proveedorOptions = ((proveedoresRes.data ?? []) as { id: string; nombre: string }[])
+    .filter((p) => p.nombre)
+    .map((p) => ({ id: p.id, nombre: p.nombre }))
 
   const error =
     vistaRes.error?.message ??
@@ -260,6 +266,8 @@ export default async function InventarioPage() {
       productos={productos}
       categorias={categorias}
       proveedores={proveedores}
+      categoriaOptions={categoriaOptions}
+      proveedorOptions={proveedorOptions}
       sales={salesObj}
       error={error}
     />
