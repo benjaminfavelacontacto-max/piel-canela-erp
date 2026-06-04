@@ -16,6 +16,7 @@ type ProductoBase = {
   sku: string
   nombre: string
   precio_usd: number | null
+  proveedor_id: string | null
 }
 
 export type ItemInicial = {
@@ -24,6 +25,7 @@ export type ItemInicial = {
   nombre: string
   cantidad: number
   precio_usd: number
+  proveedor_id: string | null
 }
 
 export type PedidoInicial = {
@@ -100,7 +102,13 @@ export function EditarPedidoForm({
       .slice(0, 8)
   }, [busqueda, productos])
 
-  const agregar = (p: { id: string; sku: string; nombre: string; precio_usd: number | null }) => {
+  const agregar = (p: {
+    id: string
+    sku: string
+    nombre: string
+    precio_usd: number | null
+    proveedor_id?: string | null
+  }) => {
     if (items.some((i) => i.producto_id === p.id)) return
     setItems((prev) => [
       ...prev,
@@ -110,16 +118,28 @@ export function EditarPedidoForm({
         nombre: p.nombre,
         cantidad: 1,
         precio_usd: Number(p.precio_usd ?? 0),
+        proveedor_id: p.proveedor_id ?? null,
       },
     ])
     setBusqueda("")
   }
 
   const onProductoCreado = (p: ProductoCreado) =>
-    agregar({ id: p.id, sku: p.sku, nombre: p.nombre, precio_usd: p.precio_usd })
+    agregar({
+      id: p.id,
+      sku: p.sku,
+      nombre: p.nombre,
+      precio_usd: p.precio_usd,
+      proveedor_id: p.proveedor_id,
+    })
 
   const setItem = (i: number, campo: "cantidad" | "precio_usd", v: number) =>
     setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [campo]: v } : it)))
+
+  const setItemProveedor = (i: number, v: string) =>
+    setItems((prev) =>
+      prev.map((it, idx) => (idx === i ? { ...it, proveedor_id: v || null } : it)),
+    )
 
   const quitar = (i: number) =>
     setItems((prev) => prev.filter((_, idx) => idx !== i))
@@ -143,6 +163,7 @@ export function EditarPedidoForm({
           producto_id: i.producto_id,
           cantidad: Math.max(1, Math.round(i.cantidad || 0)),
           precio_usd: Number(i.precio_usd) || 0,
+          proveedor_id: i.proveedor_id ?? null,
         })),
       })
       if (!res.ok) {
@@ -259,6 +280,7 @@ export function EditarPedidoForm({
                   <thead>
                     <tr className="border-b border-gray-100 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">
                       <th className="px-2 py-2 text-left">Producto</th>
+                      <th className="px-2 py-2 text-left">Proveedor</th>
                       <th className="px-2 py-2 text-center">Cant.</th>
                       <th className="px-2 py-2 text-right">Precio USD</th>
                       <th className="px-2 py-2 text-right">Subtotal</th>
@@ -271,6 +293,20 @@ export function EditarPedidoForm({
                         <td className="px-2 py-2">
                           <p className="font-medium text-gray-900">{it.nombre}</p>
                           <p className="text-[10px] text-gray-400">{it.sku}</p>
+                        </td>
+                        <td className="px-2 py-2">
+                          <select
+                            value={it.proveedor_id ?? ""}
+                            onChange={(e) => setItemProveedor(i, e.target.value)}
+                            className="h-8 w-36 rounded-lg border border-gray-200 px-2 text-[12px]"
+                          >
+                            <option value="">— Sin proveedor —</option>
+                            {proveedorOptions.map((pr) => (
+                              <option key={pr.id} value={pr.id}>
+                                {pr.nombre}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-2 py-2 text-center">
                           <input

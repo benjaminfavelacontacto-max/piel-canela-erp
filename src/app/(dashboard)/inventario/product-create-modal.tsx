@@ -42,6 +42,7 @@ export type ProductoCreado = {
   nombre: string
   precio_usd: number
   precio_publico: number
+  proveedor_id: string | null
 }
 
 export function ProductCreateModal({
@@ -121,6 +122,7 @@ export function ProductCreateModal({
         nombre: form.nombre.trim(),
         precio_usd: parseNum(form.precio_usd) ?? 0,
         precio_publico: parseNum(form.precio_publico) ?? 0,
+        proveedor_id: form.proveedor_id || null,
       })
       router.refresh()
       onClose()

@@ -42,12 +42,14 @@ interface Item {
   profit_unitario: number
   profit_total: number
   sort_order: number
+  proveedor_id: string | null
   productos: {
     sku: string
     nombre: string
     peso: string | null
     categorias: { nombre: string } | null
   } | null
+  proveedores: { nombre: string } | null
 }
 
 interface Pedido {
@@ -92,8 +94,9 @@ export default async function PedidoDetailPage({
         costo_total_unitario_usd, costo_total_unitario_mxn,
         subtotal_usd, subtotal_mxn,
         total_con_envio_usd, total_con_envio_mxn,
-        precio_publico_mxn, profit_unitario, profit_total, sort_order,
-        productos(sku, nombre, peso, categorias(nombre))
+        precio_publico_mxn, profit_unitario, profit_total, sort_order, proveedor_id,
+        productos(sku, nombre, peso, categorias(nombre)),
+        proveedores(nombre)
       )
     `,
     )
@@ -149,6 +152,17 @@ export default async function PedidoDetailPage({
   }, {})
   const categories = Object.keys(grouped).sort()
 
+  // Proveedores involucrados (derivados de los ítems)
+  const proveedoresInvolucrados = Array.from(
+    new Set(
+      items.map((it) => it.proveedores?.nombre).filter((n): n is string => !!n),
+    ),
+  )
+  const proveedoresLabel =
+    proveedoresInvolucrados.length > 0
+      ? proveedoresInvolucrados.join(" · ")
+      : (pedido.proveedores?.nombre ?? null)
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -185,10 +199,10 @@ export default async function PedidoDetailPage({
             </span>
             <span className="text-gray-300">·</span>
             <span className="capitalize">{pedido.tipo ?? "—"}</span>
-            {pedido.proveedores?.nombre && (
+            {proveedoresLabel && (
               <>
                 <span className="text-gray-300">·</span>
-                <span>{pedido.proveedores.nombre}</span>
+                <span>{proveedoresLabel}</span>
               </>
             )}
           </p>

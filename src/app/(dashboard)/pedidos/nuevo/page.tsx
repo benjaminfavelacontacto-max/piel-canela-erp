@@ -28,6 +28,7 @@ interface ItemPedido {
   precio_publico: number
   profit_unit: number
   profit_total: number
+  proveedor_id: string | null
 }
 
 interface ProductoBase {
@@ -36,6 +37,7 @@ interface ProductoBase {
   nombre: string
   precio_usd: number | null
   costo_envio_usd: number | null
+  proveedor_id: string | null
   precios_producto:
     | Array<{
         precio: number
@@ -90,7 +92,7 @@ export default function NuevoPedidoPage() {
           .from("productos")
           .select(
             `
-              id, sku, nombre, precio_usd, costo_envio_usd,
+              id, sku, nombre, precio_usd, costo_envio_usd, proveedor_id,
               precios_producto(precio, listas_precios(nombre))
             `,
           )
@@ -174,6 +176,7 @@ export default function NuevoPedidoPage() {
         precio_publico: precioPublico,
         profit_unit: profitUnit,
         profit_total: profitUnit,
+        proveedor_id: prod.proveedor_id ?? (proveedorId || null),
       },
     ])
     setBusqueda("")
@@ -207,9 +210,15 @@ export default function NuevoPedidoPage() {
         precio_publico: precioPublico,
         profit_unit: profitUnit,
         profit_total: profitUnit,
+        proveedor_id: p.proveedor_id ?? (proveedorId || null),
       },
     ])
   }
+
+  const setItemProveedor = (idx: number, v: string) =>
+    setItems((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, proveedor_id: v || null } : item)),
+    )
 
   const updateItem = (
     idx: number,
@@ -297,6 +306,7 @@ export default function NuevoPedidoPage() {
           precio_publico_mxn: item.precio_publico,
           profit_unitario: item.profit_unit,
           profit_total: item.profit_total,
+          proveedor_id: item.proveedor_id,
           sort_order: idx,
         })),
       )
@@ -502,6 +512,7 @@ export default function NuevoPedidoPage() {
                     <tr className="border-b border-gray-100">
                       {[
                         "Producto",
+                        "Proveedor",
                         "Cant.",
                         "P. USD",
                         "Sub USD",
@@ -533,6 +544,20 @@ export default function NuevoPedidoPage() {
                               : item.nombre}
                           </p>
                           <p className="text-[10px] text-gray-400">{item.sku}</p>
+                        </td>
+                        <td className="px-1 py-2.5">
+                          <select
+                            value={item.proveedor_id ?? ""}
+                            onChange={(e) => setItemProveedor(idx, e.target.value)}
+                            className="h-8 w-32 rounded-lg border border-gray-200 px-2 text-[11.5px]"
+                          >
+                            <option value="">— Sin —</option>
+                            {proveedores.map((pr) => (
+                              <option key={pr.id} value={pr.id}>
+                                {pr.nombre}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-1 py-2.5">
                           <input

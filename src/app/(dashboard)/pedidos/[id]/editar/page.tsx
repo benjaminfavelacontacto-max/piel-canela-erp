@@ -17,7 +17,7 @@ export default async function EditarPedidoPage({
       id, nombre, fecha, proveedor_id, tipo, tipo_cambio, costo_envio_usd,
       inversion_sandra_usd, inversion_benjamin_usd, notas,
       pedido_compra_items(
-        producto_id, cantidad, precio_unitario_usd, sort_order,
+        producto_id, cantidad, precio_unitario_usd, proveedor_id, sort_order,
         productos(sku, nombre)
       )
     `,
@@ -35,6 +35,7 @@ export default async function EditarPedidoPage({
     producto_id: string
     cantidad: number
     precio_unitario_usd: number
+    proveedor_id: string | null
     sort_order: number | null
     productos: { sku: string; nombre: string } | null
   }
@@ -60,6 +61,7 @@ export default async function EditarPedidoPage({
       nombre: it.productos?.nombre ?? "",
       cantidad: Number(it.cantidad),
       precio_usd: Number(it.precio_unitario_usd),
+      proveedor_id: it.proveedor_id ?? null,
     }))
 
   const inicial: PedidoInicial = {
@@ -78,7 +80,7 @@ export default async function EditarPedidoPage({
   const [{ data: prods }, { data: provs }, { data: cats }] = await Promise.all([
     supabase
       .from("productos")
-      .select("id, sku, nombre, precio_usd")
+      .select("id, sku, nombre, precio_usd, proveedor_id")
       .eq("activo", true)
       .order("nombre"),
     supabase.from("proveedores").select("id, nombre").order("nombre"),
@@ -90,6 +92,7 @@ export default async function EditarPedidoPage({
     sku: string
     nombre: string
     precio_usd: number | null
+    proveedor_id: string | null
   }[]
   const proveedorOptions = ((provs ?? []) as { id: string; nombre: string }[]).filter(
     (p) => p.nombre,

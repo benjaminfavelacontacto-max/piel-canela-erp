@@ -156,6 +156,15 @@ export async function agregarItemsPedido(
     }
   }
 
+  // Proveedor por defecto de cada producto nuevo (para heredarlo al ítem)
+  const provByProd = new Map<string, string | null>()
+  const { data: prodsProv } = await admin
+    .from("productos")
+    .select("id, proveedor_id")
+    .in("id", nuevosIds)
+  for (const p of prodsProv ?? [])
+    provByProd.set(p.id as string, (p.proveedor_id as string | null) ?? null)
+
   // Merge: producto_id → { cantidad, precioUsd, pubMxn, itemId?, oldCantidad }
   type Entry = {
     cantidad: number
@@ -214,6 +223,7 @@ export async function agregarItemsPedido(
         producto_id: productoId,
         cantidad: e.cantidad,
         precio_publico_mxn: e.pubMxn,
+        proveedor_id: provByProd.get(productoId) ?? null,
         sort_order: e.sort,
         ...fields,
       })
@@ -264,7 +274,12 @@ export type EditarPedidoPayload = {
   notas: string | null
   sandra_usd: number
   benjamin_usd: number
-  items: { producto_id: string; cantidad: number; precio_usd: number }[]
+  items: {
+    producto_id: string
+    cantidad: number
+    precio_usd: number
+    proveedor_id: string | null
+  }[]
 }
 
 /**
@@ -296,14 +311,17 @@ export async function editarPedido(
     oldByProd.set(k, (oldByProd.get(k) ?? 0) + Number(v.cantidad))
   }
 
-  // 2) Nuevas cantidades por producto (suma duplicados) + precio por producto
+  // 2) Nuevas cantidades por producto (suma duplicados) + precio/proveedor por producto
   const newByProd = new Map<string, number>()
   const precioByProd = new Map<string, number>()
+  const provByProd = new Map<string, string | null>()
   for (const it of items) {
     const c = Math.round(it.cantidad)
     newByProd.set(it.producto_id, (newByProd.get(it.producto_id) ?? 0) + c)
     if (!precioByProd.has(it.producto_id))
       precioByProd.set(it.producto_id, Number(it.precio_usd) || 0)
+    if (!provByProd.has(it.producto_id))
+      provByProd.set(it.producto_id, it.proveedor_id ?? null)
   }
 
   // 3) Delta de stock por producto (unión viejos ∪ nuevos)
@@ -345,6 +363,7 @@ export async function editarPedido(
       producto_id: pid,
       cantidad: cant,
       precio_publico_mxn: pub,
+      proveedor_id: provByProd.get(pid) ?? null,
       sort_order: sort++,
       ...fields,
     })
