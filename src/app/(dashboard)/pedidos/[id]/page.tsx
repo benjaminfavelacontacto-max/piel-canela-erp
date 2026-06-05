@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Package, Pencil } from "lucide-react"
+import { buildProductoImageUrl } from "@/lib/storage-images"
 import { AgregarProductosPedido } from "./agregar-productos"
 
 const mxn = (v: number) =>
@@ -47,6 +48,7 @@ interface Item {
     sku: string
     nombre: string
     peso: string | null
+    imagen_url: string | null
     categorias: { nombre: string } | null
   } | null
   proveedores: { nombre: string } | null
@@ -95,7 +97,7 @@ export default async function PedidoDetailPage({
         subtotal_usd, subtotal_mxn,
         total_con_envio_usd, total_con_envio_mxn,
         precio_publico_mxn, profit_unitario, profit_total, sort_order, proveedor_id,
-        productos(sku, nombre, peso, categorias(nombre)),
+        productos(sku, nombre, peso, imagen_url, categorias(nombre)),
         proveedores(nombre)
       )
     `,
@@ -330,6 +332,7 @@ export default async function PedidoDetailPage({
                     <thead>
                       <tr className="border-b border-gray-50">
                         {[
+                          ["Foto", "left"],
                           ["Producto", "left"],
                           ["Peso", "left"],
                           ["Cant.", "right"],
@@ -360,6 +363,20 @@ export default async function PedidoDetailPage({
                             key={item.id}
                             className="border-b border-gray-50 transition-colors hover:bg-gray-50/50"
                           >
+                            <td className="px-3 py-2.5">
+                              {prod?.imagen_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={buildProductoImageUrl(prod.imagen_url) ?? ""}
+                                  alt={prod.nombre ?? ""}
+                                  className="size-10 rounded-lg border border-gray-100 object-cover"
+                                />
+                              ) : (
+                                <div className="flex size-10 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-300">
+                                  <Package className="size-4" />
+                                </div>
+                              )}
+                            </td>
                             <td className="px-3 py-2.5">
                               <p className="font-medium text-gray-900">
                                 {prod?.nombre ?? "—"}
