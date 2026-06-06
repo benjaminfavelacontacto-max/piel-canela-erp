@@ -163,6 +163,7 @@ export function InventarioView({
   proveedorOptions,
   sales,
   error,
+  initialSku = null,
 }: {
   productos: ProductoEnriquecido[]
   categorias: string[]
@@ -171,8 +172,10 @@ export function InventarioView({
   proveedorOptions: Opcion[]
   sales: Record<string, ProductoSales>
   error: string | null
+  initialSku?: string | null
 }) {
-  const [selectedSku, setSelectedSku] = useState<string | null>(null)
+  // Deep-link: ?producto=<sku> abre el drawer de ese producto al entrar
+  const [selectedSku, setSelectedSku] = useState<string | null>(initialSku)
   const selected = useMemo(
     () => productos.find((p) => p.sku === selectedSku) ?? null,
     [productos, selectedSku],

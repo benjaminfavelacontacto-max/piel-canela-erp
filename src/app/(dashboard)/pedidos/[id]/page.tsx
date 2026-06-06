@@ -478,12 +478,25 @@ export default async function PedidoDetailPage({
                               )}
                             </td>
                             <td className="px-3 py-2.5">
-                              <p className="font-medium text-gray-900">
-                                {prod?.nombre ?? "—"}
-                              </p>
-                              <p className="text-[10px] text-gray-400">
-                                {prod?.sku ?? "—"}
-                              </p>
+                              {prod?.sku ? (
+                                <Link
+                                  href={`/inventario?producto=${encodeURIComponent(prod.sku)}`}
+                                  className="group/prod block"
+                                  title="Ver detalle del producto"
+                                >
+                                  <p className="font-medium text-gray-900 underline-offset-2 group-hover/prod:text-teal-700 group-hover/prod:underline">
+                                    {prod.nombre ?? "—"}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">{prod.sku}</p>
+                                </Link>
+                              ) : (
+                                <>
+                                  <p className="font-medium text-gray-900">
+                                    {prod?.nombre ?? "—"}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">—</p>
+                                </>
+                              )}
                             </td>
                             <td className="px-3 py-2.5 text-[11.5px] text-gray-500">
                               {prod?.peso ?? "—"}

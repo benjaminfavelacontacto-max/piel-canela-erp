@@ -4,7 +4,12 @@ import { buildProductoImageUrl } from "@/lib/storage-images"
 import { InventarioView } from "./inventario-view"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 
-export default async function InventarioPage() {
+export default async function InventarioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ producto?: string }>
+}) {
+  const { producto: initialSku } = await searchParams
   const supabase = await createClient()
   const admin = createAdminClient()
 
@@ -270,6 +275,7 @@ export default async function InventarioPage() {
       proveedorOptions={proveedorOptions}
       sales={salesObj}
       error={error}
+      initialSku={initialSku ?? null}
     />
   )
 }
