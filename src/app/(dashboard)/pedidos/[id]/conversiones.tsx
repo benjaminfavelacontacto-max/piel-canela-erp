@@ -39,12 +39,10 @@ const EMPTY = {
 export function Conversiones({
   pedidoId,
   conversiones,
-  pedidoTotalUsd,
   pedidoTotalMxn,
 }: {
   pedidoId: string
   conversiones: Conversion[]
-  pedidoTotalUsd: number
   pedidoTotalMxn: number
 }) {
   const router = useRouter()
@@ -57,8 +55,6 @@ export function Conversiones({
   const totUsdt = conversiones.reduce((s, c) => s + Number(c.usdt_recibido || 0), 0)
   const totComision = conversiones.reduce((s, c) => s + Number(c.comision_mxn || 0), 0)
   const tcEfectivo = totUsdt > 0 ? totMxn / totUsdt : 0
-  const cobertura = pedidoTotalUsd > 0 ? (totUsdt / pedidoTotalUsd) * 100 : 0
-  const faltante = Math.max(0, pedidoTotalUsd - totUsdt)
   const costoConComision = pedidoTotalMxn + totComision
 
   const setF = (k: keyof typeof EMPTY, v: string) =>
@@ -106,8 +102,8 @@ export function Conversiones({
             Conversiones MXN → USDT
           </h3>
           <p className="text-[11.5px] text-gray-500">
-            Los pesos convertidos a dólares para pagar al proveedor, con sus
-            comisiones — define el costo real del pedido.
+            Compras de dólares (MXN→USDT) con su comisión — definen el costo real
+            en pesos. Los envíos al proveedor van arriba en <b>Pagos</b>.
           </p>
         </div>
         <button
@@ -276,42 +272,8 @@ export function Conversiones({
         </p>
       )}
 
-      {/* Progreso de conversión a USDT */}
-      <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/40 p-4">
-        <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700">
-              Progreso de conversión a USDT
-            </p>
-            <p className="mt-1 text-[12.5px] text-gray-600">
-              <span className="font-bold tabular-nums text-gray-900">{num(totUsdt)}</span> comprado
-              <span className="mx-1 text-gray-300">·</span>
-              <span className="font-semibold tabular-nums">{num(pedidoTotalUsd)}</span> requerido
-              <span className="mx-1 text-gray-300">·</span>
-              faltan{" "}
-              <span className="font-semibold tabular-nums text-rose-600">{num(faltante)}</span> USDT
-            </p>
-          </div>
-          <span
-            className="text-[24px] font-bold leading-none tabular-nums"
-            style={{ color: cobertura >= 99.5 ? "#047857" : "#7C3AED" }}
-          >
-            {cobertura.toFixed(0)}%
-          </span>
-        </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-violet-100">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${Math.min(100, cobertura)}%`,
-              background: cobertura >= 99.5 ? "#059669" : "#8B5CF6",
-            }}
-          />
-        </div>
-      </div>
-
       {/* Resumen de costo real */}
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Summary label="Comisiones totales" value={mxn(totComision)} tone="amber" />
         <Summary
           label="Costo total con comisiones"

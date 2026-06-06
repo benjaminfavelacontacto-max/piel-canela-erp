@@ -459,3 +459,50 @@ export async function eliminarConversion(
   revalidatePath(`/pedidos/${pedidoId}`)
   return { ok: true }
 }
+
+export type PagoInput = {
+  fecha: string
+  usdt_enviado: number
+  destinatario?: string | null
+  mensaje?: string | null
+}
+
+/**
+ * Registra un PAGO (transfer de USDT) enviado al proveedor de un pedido.
+ * Distinto de una conversión: aquí solo salen dólares (sin comisión MXN).
+ * Alimenta la barra "Pagado al proveedor".
+ */
+export async function agregarPago(
+  pedidoId: string,
+  p: PagoInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!pedidoId) return { ok: false, error: "Falta el pedido" }
+  const usdt = Number(p.usdt_enviado) || 0
+  if (usdt <= 0) return { ok: false, error: "Captura los USDT enviados" }
+
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_pagos").insert({
+    pedido_id: pedidoId,
+    fecha: p.fecha || new Date().toISOString(),
+    usdt_enviado: usdt,
+    destinatario: p.destinatario || null,
+    mensaje: p.mensaje || null,
+  })
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarPago(
+  pedidoId: string,
+  pagoId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!pagoId) return { ok: false, error: "Falta el pago" }
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_pagos").delete().eq("id", pagoId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}

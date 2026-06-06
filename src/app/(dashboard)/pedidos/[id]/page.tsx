@@ -20,6 +20,7 @@ import {
 import { buildProductoImageUrl } from "@/lib/storage-images"
 import { AgregarProductosPedido } from "./agregar-productos"
 import { Conversiones } from "./conversiones"
+import { Pagos } from "./pagos"
 
 const mxn = (v: number) =>
   v.toLocaleString("es-MX", {
@@ -169,6 +170,20 @@ export default async function PedidoDetailPage({
     tipo_cambio: number
     comision_mxn: number
     notas: string | null
+  }[]
+
+  // Pagos (transfers USDT) al proveedor (tolerante si la tabla aún no existe)
+  const { data: pagosData } = await supabase
+    .from("pedido_pagos")
+    .select("id, fecha, usdt_enviado, destinatario, mensaje")
+    .eq("pedido_id", id)
+    .order("fecha", { ascending: true })
+  const pagos = (pagosData ?? []) as {
+    id: string
+    fecha: string
+    usdt_enviado: number
+    destinatario: string | null
+    mensaje: string | null
   }[]
 
   const items = (pedido.pedido_compra_items ?? []).sort(
@@ -351,11 +366,13 @@ export default async function PedidoDetailPage({
         </div>
       </section>
 
-      {/* ═══ Bloque 3 — Conversiones MXN → USDT (costo real con comisiones) ═══ */}
+      {/* ═══ Pagos al proveedor (USDT enviado) ═══ */}
+      <Pagos pedidoId={pedido.id} pagos={pagos} pedidoTotalUsd={totalUSD} />
+
+      {/* ═══ Conversiones MXN → USDT (comisiones → costo real) ═══ */}
       <Conversiones
         pedidoId={pedido.id}
         conversiones={conversiones}
-        pedidoTotalUsd={totalUSD}
         pedidoTotalMxn={totalMXN}
       />
 
