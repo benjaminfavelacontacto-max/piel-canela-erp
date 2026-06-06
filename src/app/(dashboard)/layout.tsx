@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { NotificationBell } from "@/components/notifications"
+import { LogoutButton } from "@/components/logout-button"
 
 export default function DashboardLayout({
   children,
@@ -140,7 +141,10 @@ export default function DashboardLayout({
               Benjamín
             </span>
           </div>
-          <NotificationBell />
+          <div className="flex shrink-0 items-center gap-1">
+            <NotificationBell />
+            <LogoutButton />
+          </div>
         </div>
       </aside>
 

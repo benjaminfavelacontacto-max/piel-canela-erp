@@ -1,6 +1,8 @@
 "use server"
 
+import { headers } from "next/headers"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { checkRateLimit, clientIp } from "@/lib/rate-limit"
 
 type OrderInput = {
   cliente: {
@@ -35,11 +37,32 @@ type OrderResult =
  * Usa admin client (service role) para bypassear RLS si llegara a activarse.
  */
 export async function submitOrder(input: OrderInput): Promise<OrderResult> {
+  // Límite anti-spam del portal público: 10 pedidos por IP cada hora.
+  const ip = clientIp(await headers())
+  const rl = checkRateLimit(`order:${ip}`, 10, 60 * 60 * 1000)
+  if (!rl.allowed) {
+    return {
+      success: false,
+      error: "Has enviado demasiados pedidos. Inténtalo de nuevo más tarde.",
+    }
+  }
+
   if (!input.cliente.nombre.trim() || !input.cliente.telefono.trim()) {
     return { success: false, error: "Nombre y teléfono son requeridos" }
   }
   if (input.items.length === 0) {
     return { success: false, error: "El pedido está vacío" }
+  }
+  // Límites de tamaño: rechazar payloads absurdos (anti-abuso).
+  if (input.items.length > 50) {
+    return { success: false, error: "El pedido tiene demasiados productos." }
+  }
+  if (
+    input.items.some(
+      (i) => !Number.isFinite(i.cantidad) || i.cantidad <= 0 || i.cantidad > 10_000,
+    )
+  ) {
+    return { success: false, error: "Cantidad inválida en algún producto." }
   }
 
   const supabase = createAdminClient()
@@ -175,8 +198,7 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   const negocio = input.cliente.negocio.trim()
   const nombre = input.cliente.nombre.trim()
   const cliLabel = negocio ? `${nombre} · ${negocio}` : nombre
-  console.log("[submitOrder] insertando notificación para", numero)
-  const { data: notifData, error: notifError } = await supabase
+  const { error: notifError } = await supabase
     .from("notificaciones")
     .insert({
       tipo: "pedido_portal",
@@ -200,13 +222,8 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
     .single()
   if (notifError) {
     console.error(
-      "[submitOrder] notificación NO insertada:",
-      JSON.stringify(notifError, null, 2),
-    )
-  } else {
-    console.log(
-      "[submitOrder] notificación insertada OK id:",
-      notifData?.id,
+      "[submitOrder] notificación no insertada:",
+      notifError.message,
     )
   }
 
