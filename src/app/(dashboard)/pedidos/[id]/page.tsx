@@ -438,6 +438,7 @@ export default async function PedidoDetailPage({
                           ["Total MXN", "right"],
                           ["P. Público", "right"],
                           ["Profit", "right"],
+                          ["Margen %", "right"],
                         ].map(([h, align]) => (
                           <th
                             key={h}
@@ -452,6 +453,11 @@ export default async function PedidoDetailPage({
                       {catItems.map((item) => {
                         const prod = item.productos
                         const profitPositive = item.profit_unitario >= 0
+                        // Margen sobre el precio público (cuánto del precio de venta es ganancia)
+                        const margen =
+                          item.precio_publico_mxn > 0
+                            ? (item.profit_unitario / item.precio_publico_mxn) * 100
+                            : null
                         return (
                           <tr
                             key={item.id}
@@ -517,6 +523,14 @@ export default async function PedidoDetailPage({
                               {item.precio_publico_mxn > 0
                                 ? mxn(item.profit_total)
                                 : "—"}
+                            </td>
+                            <td
+                              className="px-3 py-2.5 text-right font-semibold tabular-nums"
+                              style={{
+                                color: profitPositive ? "#047857" : "#B91C1C",
+                              }}
+                            >
+                              {margen != null ? `${margen.toFixed(1)}%` : "—"}
                             </td>
                           </tr>
                         )
