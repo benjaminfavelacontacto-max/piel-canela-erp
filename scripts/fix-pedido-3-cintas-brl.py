@@ -16,9 +16,12 @@ Contexto / decisiones (sesión 2026-06-06):
 - 5 cintas SIN precio en la lista, deducidas por analogía de tipo (estampada 7/8, lisa 6/7):
     CN-CORA, CN-VCEB, CN-ACEB, CN-VE, CN-AZC, CN-AZR
 - Solo se tocan cintas que YA están en el Pedido 3 (no se agrega nada nuevo).
-- ENVÍO: estaba disparejo (243 u cargaban $7.59/u y 449 u cargaban $0). Por decisión
-  del dueño se re-prorratea PAREJO: envío_total $1,843.50 / 692 u = $2.664/u para
-  TODOS los ítems (mismo criterio que editarPedido()/agregarItemsPedido()).
+- TOTAL REAL = $4,484.94 USD (productos + envío), validado contra los 2 transfers
+  Bitso de USDT al proveedor (Julio Ayarza Delgado): 753 (29 dic 2025) + 3,731.94
+  (19 abr 2026). El ENVÍO se DERIVA = TARGET_TOTAL − subtotal_productos y absorbe el
+  ajuste (mis estimados BRL/envío quedaban ~$651 arriba de lo realmente pagado).
+  Los precios de productos NO se tocan (no-cintas vienen de factura USD real).
+- ENVÍO re-prorrateado PAREJO sobre las 692 u (mismo criterio que editarPedido()).
 - Snapshot de costo a productos → alimenta vista_inventario (no se escribe
   costo_envio_mxn: la vista lo deriva = costo_envio_usd × TC).
 Idempotente: recalcula desde el mapa BRL + las cantidades actuales; re-correr no duplica.
@@ -33,7 +36,8 @@ BASE_H = {"apikey": KEY, "Authorization": "Bearer " + KEY, "Content-Type": "appl
 PEDIDO_ID = "778a43ad-7cd6-4078-86a9-b572373a2c83"
 TC = 17.60               # MXN/USD real (conversión MXN->USDT 19 abr 2026)
 FACTOR = 0.1743          # BRL -> USD (1 / 5.7377), independiente del TC
-ENVIO_TOTAL_USD = 1843.50
+TARGET_TOTAL_USD = 4484.94   # productos+envío REAL = suma transfers Bitso al proveedor
+#                              753 (29 dic 2025) + 3,731.94 (19 abr 2026)
 
 # preço lista (BRL) por SKU
 BRL = {
@@ -107,41 +111,54 @@ faltan = skus_pedido - set(BRL)
 assert not faltan, f"Cintas sin precio en el mapa BRL: {sorted(faltan)}"
 
 total_units = sum(int(it["cantidad"]) for it in items)
-envio_unit = ENVIO_TOTAL_USD / total_units
-print(f"Unidades={total_units}  envío_unit={envio_unit:.6f} USD\n")
 
-cambiadas = 0
+# Pre-pass: precio por ítem (cintas = BRL×FACTOR, no-cintas intacto) + subtotal productos
+precio_por_item = {}
 subtotal_usd = 0.0
+cambiadas = 0
 for it in items:
     sku = (it.get("productos") or {}).get("sku", "")
     cant = int(it["cantidad"])
-    pub = float(it["precio_publico_mxn"]) if it.get("precio_publico_mxn") is not None else None
     if sku in BRL:
         precio = r2(BRL[sku] * FACTOR)
         cambiadas += 1
     else:
-        precio = float(it["precio_unitario_usd"])   # no-cinta: precio intacto
+        precio = float(it["precio_unitario_usd"])   # no-cinta: precio intacto (factura USD)
+    precio_por_item[it["id"]] = precio
+    subtotal_usd += precio * cant
+
+# Envío DERIVADO del pago real: absorbe el ajuste (productos no se tocan)
+envio_total_usd = round(TARGET_TOTAL_USD - subtotal_usd, 2)
+envio_unit = envio_total_usd / total_units
+print(f"Unidades={total_units}  subtotal=${subtotal_usd:,.2f}  "
+      f"envío=${envio_total_usd:,.2f}  envío_unit={envio_unit:.6f} USD\n")
+
+# Patch ítems + snapshot a productos
+for it in items:
+    cant = int(it["cantidad"])
+    pub = float(it["precio_publico_mxn"]) if it.get("precio_publico_mxn") is not None else None
+    precio = precio_por_item[it["id"]]
     req("PATCH", f"pedido_compra_items?id=eq.{it['id']}", item_fields(precio, cant, envio_unit, TC, pub))
     req("PATCH", f"productos?id=eq.{it['producto_id']}", {
         "precio_usd": precio, "costo_envio_usd": envio_unit, "tipo_cambio": TC,
         "costo": (precio + envio_unit) * TC,
     })
-    subtotal_usd += precio * cant
 
 # Header — preserva el ratio de inversión por socio
 hdr = req("GET", f"pedidos_compra?id=eq.{PEDIDO_ID}&select=total_usd,inversion_sandra_usd,inversion_benjamin_usd")[0]
 old_total = float(hdr["total_usd"]) or 0
 rs = (float(hdr["inversion_sandra_usd"]) / old_total) if old_total else 0.5
 rb = (float(hdr["inversion_benjamin_usd"]) / old_total) if old_total else 0.5
-total_usd = subtotal_usd + ENVIO_TOTAL_USD
+total_usd = subtotal_usd + envio_total_usd
 s_usd, b_usd = total_usd * rs, total_usd * rb
 req("PATCH", f"pedidos_compra?id=eq.{PEDIDO_ID}", {
     "tipo_cambio": TC,
-    "subtotal_usd": subtotal_usd, "costo_envio_usd": ENVIO_TOTAL_USD, "costo_envio_mxn": ENVIO_TOTAL_USD * TC,
+    "subtotal_usd": subtotal_usd, "costo_envio_usd": envio_total_usd, "costo_envio_mxn": envio_total_usd * TC,
     "total_usd": total_usd, "total_mxn": total_usd * TC,
     "inversion_sandra_usd": s_usd, "inversion_benjamin_usd": b_usd,
     "inversion_sandra_mxn": s_usd * TC, "inversion_benjamin_mxn": b_usd * TC,
 })
 print(f"Ítems={len(items)}  cintas reescritas={cambiadas}/46")
-print(f"Header: subtotal=${subtotal_usd:,.2f}  total=${total_usd:,.2f} USD / ${total_usd*TC:,.2f} MXN")
+print(f"Header: subtotal=${subtotal_usd:,.2f}  envío=${envio_total_usd:,.2f}  "
+      f"total=${total_usd:,.2f} USD / ${total_usd*TC:,.2f} MXN")
 print("✓ OK")
