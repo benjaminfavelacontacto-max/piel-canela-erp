@@ -1,7 +1,22 @@
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Package, Pencil } from "lucide-react"
+import {
+  ArrowLeft,
+  Package,
+  Pencil,
+  Boxes,
+  Tag,
+  Coins,
+  Truck,
+  Wallet,
+  TrendingUp,
+  Percent,
+  Target,
+  DollarSign,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { buildProductoImageUrl } from "@/lib/storage-images"
 import { AgregarProductosPedido } from "./agregar-productos"
 import { Conversiones } from "./conversiones"
@@ -26,6 +41,8 @@ const usd = (v: number, decimals = 0) =>
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })}`
+
+const pct = (v: number) => `${(Number(v) || 0).toFixed(1)}%`
 
 interface Item {
   id: string
@@ -159,7 +176,6 @@ export default async function PedidoDetailPage({
   )
   const totalUnidades = items.reduce((s, i) => s + Number(i.cantidad), 0)
   const totalProfit = items.reduce((s, i) => s + Number(i.profit_total ?? 0), 0)
-  const envioUnitUSD = items[0]?.envio_unitario_usd ?? 0
   const envioUnitMXN = items[0]?.envio_unitario_mxn ?? 0
 
   // Group by categoría
@@ -181,6 +197,22 @@ export default async function PedidoDetailPage({
     proveedoresInvolucrados.length > 0
       ? proveedoresInvolucrados.join(" · ")
       : (pedido.proveedores?.nombre ?? null)
+
+  // ── Métricas financieras del pedido ──
+  const tc = Number(pedido.tipo_cambio) || 0
+  const valorProductosMXN = Number(pedido.subtotal_usd) * tc
+  const envioMXN = Number(pedido.costo_envio_mxn)
+  const totalMXN = Number(pedido.total_mxn)
+  const totalUSD = Number(pedido.total_usd)
+  const envioPctPedido = totalMXN > 0 ? (envioMXN / totalMXN) * 100 : 0
+  const envioPorSkuMXN = items.length > 0 ? envioMXN / items.length : 0
+  // Rentabilidad (profit = precio_público − costo con envío)
+  const ingresoEsperadoMXN = totalMXN + totalProfit
+  const margenPct = ingresoEsperadoMXN > 0 ? (totalProfit / ingresoEsperadoMXN) * 100 : 0
+  const roiPct = totalMXN > 0 ? (totalProfit / totalMXN) * 100 : 0
+  // Conversiones MXN→USDT → costo real con comisiones (el detalle de progreso lo calcula <Conversiones/>)
+  const totComisionMXN = conversiones.reduce((s, c) => s + Number(c.comision_mxn || 0), 0)
+  const costoRealMXN = totalMXN + totComisionMXN
 
   return (
     <div className="p-6 space-y-6">
@@ -244,67 +276,87 @@ export default async function PedidoDetailPage({
         defaultTc={Number(pedido.tipo_cambio) || 20.7}
       />
 
-      {/* KPI strip — totales del pedido */}
+      {/* ═══ KPI Principal — Costo real del pedido ═══ */}
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 shadow-sm"
+        style={{ background: "linear-gradient(120deg, #1e293b 0%, #0f172a 100%)" }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-5">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/55">
+              <DollarSign className="size-3.5" />
+              Costo real del pedido
+            </p>
+            <p className="mt-2 text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
+              {mxn(costoRealMXN)}
+            </p>
+            <p className="mt-2.5 text-[12px] text-white/55">
+              Productos {mxn(valorProductosMXN)}
+              <span className="mx-1.5 text-white/25">+</span>Envío {mxn(envioMXN)}
+              <span className="mx-1.5 text-white/25">+</span>Comisiones {mxn(totComisionMXN)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right backdrop-blur">
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-white/45">
+              USD enviado al proveedor
+            </p>
+            <p className="mt-1 text-[22px] font-bold tabular-nums text-white">{usd(totalUSD, 2)}</p>
+            <p className="mt-0.5 text-[10.5px] text-white/45">@ TC {tc.toFixed(2)} MXN/USD</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ Bloque 1 — Resumen del pedido ═══ */}
+      <section className="rounded-2xl border border-gray-100 bg-white px-5 py-5 shadow-sm">
+        <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+          <ResumenMetric icon={Boxes} tone="slate" value={totalUnidades.toLocaleString("es-MX")} label="Unidades pedidas" />
+          <ResumenMetric icon={Tag} tone="slate" value={String(items.length)} label="SKUs distintos" />
+          <ResumenMetric icon={Coins} tone="indigo" value={mxn(valorProductosMXN)} label="Valor productos" />
+          <ResumenMetric icon={Truck} tone="amber" value={mxn(envioMXN)} label="Costo envío" />
+          <ResumenMetric icon={Wallet} tone="emerald" value={mxn(totalMXN)} label="Inversión total" />
+        </div>
+      </section>
+
+      {/* ═══ Bloque 5 — Rentabilidad (KPIs destacadas) ═══ */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi
-          label="Subtotal productos"
-          valueUSD={usd(pedido.subtotal_usd)}
-          valueMXN={mxn(pedido.subtotal_usd * pedido.tipo_cambio)}
-          tone="indigo"
-        />
-        <Kpi
-          label="Costo envío"
-          valueUSD={usd(pedido.costo_envio_usd)}
-          valueMXN={mxn(pedido.costo_envio_mxn)}
-          tone="amber"
-          sub={
-            envioUnitUSD > 0
-              ? `${usd(envioUnitUSD, 4)} / ${mxn2(envioUnitMXN)} por unidad`
-              : undefined
-          }
-        />
-        <Kpi
-          label="Total invertido"
-          valueUSD={usd(pedido.total_usd)}
-          valueMXN={mxn(pedido.total_mxn)}
-          tone="champagne"
-          sub={`${totalUnidades} unidades · ${items.length} SKUs`}
-        />
-        <Kpi
-          label="Profit potencial"
-          valueUSD={undefined}
-          valueMXN={mxn(totalProfit)}
-          tone="emerald"
-          sub="si se vende todo el stock"
-        />
+        <KpiCard icon={Wallet} tone="slate" label="Inversión total" value={mxn(totalMXN)} sub={`${usd(totalUSD, 2)} USD`} />
+        <KpiCard icon={TrendingUp} tone="emerald" label="Profit potencial" value={mxn(totalProfit)} sub="si se vende todo" big />
+        <KpiCard icon={Percent} tone="emerald" label="Margen esperado" value={pct(margenPct)} sub="sobre la venta" />
+        <KpiCard icon={Target} tone="indigo" label="ROI esperado" value={pct(roiPct)} sub="sobre la inversión" big />
       </section>
 
-      {/* Inversión por socio */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <PartnerCard
-          name="Sandra"
-          mxn={pedido.inversion_sandra_mxn}
-          usdValue={pedido.inversion_sandra_usd}
-          tc={pedido.tipo_cambio}
-          tone="rose"
-          totalMXN={pedido.total_mxn}
-        />
-        <PartnerCard
-          name="Benjamin"
-          mxn={pedido.inversion_benjamin_mxn}
-          usdValue={pedido.inversion_benjamin_usd}
-          tc={pedido.tipo_cambio}
-          tone="indigo"
-          totalMXN={pedido.total_mxn}
-        />
+      {/* ═══ Bloque 2 (Logística) + Bloque 4 (Inversionistas) ═══ */}
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-1.5 text-[13px] font-semibold text-gray-900">
+            <Truck className="size-4 text-amber-600" />
+            Logística del envío
+          </h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <StatBlock tone="amber" label="Costo total" value={mxn(envioMXN)} />
+            <StatBlock tone="slate" label="Por unidad" value={mxn2(envioUnitMXN)} />
+            <StatBlock tone="slate" label="Por SKU" value={mxn(envioPorSkuMXN)} />
+            <StatBlock tone="amber" label="Representa del pedido" value={pct(envioPctPedido)} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-1.5 text-[13px] font-semibold text-gray-900">
+            <Users className="size-4 text-gray-500" />
+            Participación de socios
+          </h3>
+          <div className="space-y-3.5">
+            <PartnerRow name="Sandra" amount={Number(pedido.inversion_sandra_mxn)} usdValue={Number(pedido.inversion_sandra_usd)} totalMXN={totalMXN} tone="rose" />
+            <PartnerRow name="Benjamin" amount={Number(pedido.inversion_benjamin_mxn)} usdValue={Number(pedido.inversion_benjamin_usd)} totalMXN={totalMXN} tone="indigo" />
+          </div>
+        </div>
       </section>
 
-      {/* Conversiones MXN → USDT (costo real con comisiones) */}
+      {/* ═══ Bloque 3 — Conversiones MXN → USDT (costo real con comisiones) ═══ */}
       <Conversiones
         pedidoId={pedido.id}
         conversiones={conversiones}
-        pedidoTotalUsd={Number(pedido.total_usd)}
-        pedidoTotalMxn={Number(pedido.total_mxn)}
+        pedidoTotalUsd={totalUSD}
+        pedidoTotalMxn={totalMXN}
       />
 
       {/* Items por categoría */}
@@ -475,116 +527,144 @@ export default async function PedidoDetailPage({
   )
 }
 
-const KPI_TONES: Record<
-  "indigo" | "amber" | "champagne" | "emerald",
-  { bg: string; border: string; text: string }
+const TONES: Record<
+  "slate" | "indigo" | "amber" | "emerald" | "rose",
+  { bg: string; border: string; text: string; bar: string }
 > = {
-  indigo: { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.16)", text: "#4F46E5" },
-  amber: { bg: "rgba(217,119,6,0.06)", border: "rgba(217,119,6,0.16)", text: "#B45309" },
-  champagne: { bg: "rgba(197,164,126,0.08)", border: "rgba(197,164,126,0.20)", text: "#A8895F" },
-  emerald: { bg: "rgba(5,150,105,0.06)", border: "rgba(5,150,105,0.16)", text: "#047857" },
+  slate: { bg: "rgba(71,85,105,0.06)", border: "rgba(71,85,105,0.16)", text: "#475569", bar: "#64748B" },
+  indigo: { bg: "rgba(99,102,241,0.07)", border: "rgba(99,102,241,0.18)", text: "#4F46E5", bar: "#6366F1" },
+  amber: { bg: "rgba(217,119,6,0.07)", border: "rgba(217,119,6,0.18)", text: "#B45309", bar: "#D97706" },
+  emerald: { bg: "rgba(5,150,105,0.07)", border: "rgba(5,150,105,0.18)", text: "#047857", bar: "#059669" },
+  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.16)", text: "#B91C1C", bar: "#DC2626" },
 }
 
-function Kpi({
-  label,
-  valueUSD,
-  valueMXN,
+// Bloque 1 — métrica de resumen (icono + número grande + etiqueta)
+function ResumenMetric({
+  icon: Icon,
   tone,
-  sub,
+  value,
+  label,
 }: {
+  icon: LucideIcon
+  tone: keyof typeof TONES
+  value: string
   label: string
-  valueUSD?: string
-  valueMXN: string
-  tone: keyof typeof KPI_TONES
-  sub?: string
 }) {
-  const t = KPI_TONES[tone]
+  const t = TONES[tone]
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: t.bg, color: t.text }}
+      >
+        <Icon className="size-[18px]" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[20px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900">
+          {value}
+        </p>
+        <p className="mt-1 text-[10.5px] font-medium uppercase tracking-[0.04em] text-gray-400">
+          {label}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// Bloque 5 — KPI destacada (con icono; `big` resalta con fondo de color)
+function KpiCard({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  sub,
+  big,
+}: {
+  icon: LucideIcon
+  tone: keyof typeof TONES
+  label: string
+  value: string
+  sub?: string
+  big?: boolean
+}) {
+  const t = TONES[tone]
   return (
     <div
       className="rounded-2xl border bg-white p-4 shadow-sm"
-      style={{ borderColor: t.border }}
+      style={{ borderColor: t.border, background: big ? t.bg : undefined }}
     >
-      <p
-        className="text-[10px] font-semibold uppercase tracking-[0.10em]"
-        style={{ color: t.text }}
-      >
-        {label}
-      </p>
-      <p
-        className="mt-2 text-[22px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900"
-        style={{ fontFeatureSettings: '"tnum" 1' }}
-      >
-        {valueMXN}
-      </p>
-      {valueUSD && (
-        <p className="mt-1.5 inline-flex items-baseline gap-1 text-[11.5px] tabular-nums text-gray-500">
-          {valueUSD}
-          <span
-            className="rounded-md px-1 py-0.5 text-[8.5px] font-bold tracking-[0.06em]"
-            style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
-          >
-            USD
-          </span>
+      <div className="flex items-center gap-1.5">
+        <Icon className="size-3.5" style={{ color: t.text }} />
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: t.text }}>
+          {label}
         </p>
-      )}
+      </div>
+      <p className="mt-2 text-[26px] font-bold leading-none tracking-[-0.03em] tabular-nums text-gray-900">
+        {value}
+      </p>
       {sub && <p className="mt-1.5 text-[11px] text-gray-400">{sub}</p>}
     </div>
   )
 }
 
-function PartnerCard({
-  name,
-  mxn: amount,
-  usdValue,
-  tc,
+// Bloque 2 — stat de logística (etiqueta + valor)
+function StatBlock({
   tone,
+  label,
+  value,
+}: {
+  tone: keyof typeof TONES
+  label: string
+  value: string
+}) {
+  const t = TONES[tone]
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: t.text }}>
+        {label}
+      </p>
+      <p className="mt-1 text-[18px] font-bold leading-none tracking-[-0.02em] tabular-nums text-gray-900">
+        {value}
+      </p>
+    </div>
+  )
+}
+
+// Bloque 4 — fila compacta de participación de socio
+function PartnerRow({
+  name,
+  amount,
+  usdValue,
   totalMXN,
+  tone,
 }: {
   name: string
-  mxn: number
+  amount: number
   usdValue: number
-  tc: number
-  tone: "rose" | "indigo"
   totalMXN: number
+  tone: keyof typeof TONES
 }) {
-  const pct = totalMXN > 0 ? (amount / totalMXN) * 100 : 0
-  const colors =
-    tone === "rose"
-      ? { bg: "rgba(220,38,38,0.06)", text: "#B91C1C", bar: "#DC2626" }
-      : { bg: "rgba(99,102,241,0.06)", text: "#4F46E5", bar: "#6366F1" }
+  const t = TONES[tone]
+  const p = totalMXN > 0 ? (amount / totalMXN) * 100 : 0
   return (
-    <div
-      className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.10em] text-gray-500">
-          Inversión {name}
-        </p>
-        <span
-          className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-          style={{ background: colors.bg, color: colors.text }}
-        >
-          {pct.toFixed(1)}% del pedido
-        </span>
+    <div>
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-[13px] font-semibold text-gray-900">{name}</p>
+        <div className="text-right">
+          <span className="text-[16px] font-bold tabular-nums text-gray-900">{mxn(amount)}</span>
+          <span className="ml-1.5 text-[11px] tabular-nums text-gray-400">{usd(usdValue)} USD</span>
+        </div>
       </div>
-      <p className="mt-2 text-[24px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900">
-        {mxn(amount)}
-      </p>
-      <p className="mt-1.5 inline-flex items-baseline gap-1 text-[11.5px] tabular-nums text-gray-500">
-        {usd(usdValue)}
-        <span
-          className="rounded-md px-1 py-0.5 text-[8.5px] font-bold tracking-[0.06em]"
-          style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
-        >
-          USD
+      <div className="mt-1.5 flex items-center gap-2">
+        <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.min(100, p)}%`, background: t.bar }}
+          />
+        </div>
+        <span className="text-[10.5px] font-semibold tabular-nums" style={{ color: t.text }}>
+          {p.toFixed(0)}%
         </span>
-        <span className="text-gray-400">@ TC {tc.toFixed(2)}</span>
-      </p>
-      <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-gray-100">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(100, pct)}%`, background: colors.bar }}
-        />
       </div>
     </div>
   )
