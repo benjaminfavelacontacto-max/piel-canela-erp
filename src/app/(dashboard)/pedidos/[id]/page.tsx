@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { ArrowLeft, Package, Pencil } from "lucide-react"
 import { buildProductoImageUrl } from "@/lib/storage-images"
 import { AgregarProductosPedido } from "./agregar-productos"
+import { Conversiones } from "./conversiones"
 
 const mxn = (v: number) =>
   v.toLocaleString("es-MX", {
@@ -136,6 +137,22 @@ export default async function PedidoDetailPage({
   const proveedorOptions = ((provData ?? []) as { id: string; nombre: string }[]).filter(
     (p) => p.nombre,
   )
+
+  // Conversiones MXN→USDT del pedido (tolerante si la tabla aún no existe)
+  const { data: conversionesData } = await supabase
+    .from("pedido_conversiones")
+    .select("id, fecha, mxn_gastado, usdt_recibido, tipo_cambio, comision_mxn, notas")
+    .eq("pedido_id", id)
+    .order("fecha", { ascending: true })
+  const conversiones = (conversionesData ?? []) as {
+    id: string
+    fecha: string
+    mxn_gastado: number
+    usdt_recibido: number
+    tipo_cambio: number
+    comision_mxn: number
+    notas: string | null
+  }[]
 
   const items = (pedido.pedido_compra_items ?? []).sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -281,6 +298,14 @@ export default async function PedidoDetailPage({
           totalMXN={pedido.total_mxn}
         />
       </section>
+
+      {/* Conversiones MXN → USDT (costo real con comisiones) */}
+      <Conversiones
+        pedidoId={pedido.id}
+        conversiones={conversiones}
+        pedidoTotalUsd={Number(pedido.total_usd)}
+        pedidoTotalMxn={Number(pedido.total_mxn)}
+      />
 
       {/* Items por categoría */}
       {items.length === 0 ? (

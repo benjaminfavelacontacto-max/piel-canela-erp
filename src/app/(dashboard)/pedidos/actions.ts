@@ -403,3 +403,59 @@ export async function editarPedido(
   revalidatePath("/inventario")
   return { ok: true }
 }
+
+export type ConversionInput = {
+  fecha: string
+  mxn_gastado: number
+  usdt_recibido: number
+  tipo_cambio: number
+  comision_mxn: number
+  notas?: string | null
+}
+
+/**
+ * Registra una conversión MXN→USDT que fondeó un pedido (los dólares enviados
+ * al proveedor) con su comisión. Alimenta el "costo total con comisiones".
+ */
+export async function agregarConversion(
+  pedidoId: string,
+  c: ConversionInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!pedidoId) return { ok: false, error: "Falta el pedido" }
+  const mxnGastado = Number(c.mxn_gastado) || 0
+  const usdtRecibido = Number(c.usdt_recibido) || 0
+  if (mxnGastado <= 0 || usdtRecibido <= 0)
+    return { ok: false, error: "Captura el monto en MXN y los USDT recibidos" }
+
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_conversiones").insert({
+    pedido_id: pedidoId,
+    fecha: c.fecha || new Date().toISOString(),
+    mxn_gastado: mxnGastado,
+    usdt_recibido: usdtRecibido,
+    // Si no se da TC, se infiere del propio monto/usdt
+    tipo_cambio: Number(c.tipo_cambio) || (usdtRecibido > 0 ? mxnGastado / usdtRecibido : 0),
+    comision_mxn: Number(c.comision_mxn) || 0,
+    notas: c.notas || null,
+  })
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarConversion(
+  pedidoId: string,
+  conversionId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!conversionId) return { ok: false, error: "Falta la conversión" }
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from("pedido_conversiones")
+    .delete()
+    .eq("id", conversionId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
