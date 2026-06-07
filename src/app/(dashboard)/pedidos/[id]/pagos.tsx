@@ -31,11 +31,12 @@ const EMPTY = { fecha: "", usdt_enviado: "", destinatario: "", mensaje: "" }
 export function Pagos({
   pedidoId,
   pagos,
-  pedidoTotalUsd,
+  productosUsd,
 }: {
   pedidoId: string
   pagos: Pago[]
-  pedidoTotalUsd: number
+  /** Costo de la MERCANCÍA (sin envío) — al proveedor solo se le paga esto. */
+  productosUsd: number
 }) {
   const router = useRouter()
   const [abierto, setAbierto] = useState(false)
@@ -44,9 +45,10 @@ export function Pagos({
   const [pending, startTransition] = useTransition()
 
   const totEnviado = pagos.reduce((s, p) => s + Number(p.usdt_enviado || 0), 0)
-  const cobertura = pedidoTotalUsd > 0 ? (totEnviado / pedidoTotalUsd) * 100 : 0
-  const faltante = Math.max(0, pedidoTotalUsd - totEnviado)
-  const completo = cobertura >= 99.5
+  // El proveedor cobra solo la mercancía; el envío se paga aparte a las paqueterías.
+  const cobertura = productosUsd > 0 ? (totEnviado / productosUsd) * 100 : 0
+  const faltante = Math.max(0, productosUsd - totEnviado)
+  const completo = totEnviado >= productosUsd - 0.5
 
   const setF = (k: keyof typeof EMPTY, v: string) =>
     setForm((p) => ({ ...p, [k]: v }))
@@ -253,22 +255,30 @@ export function Pagos({
             </p>
             <p className="mt-1 text-[12.5px] text-gray-600">
               <span className="font-bold tabular-nums text-gray-900">{num(totEnviado)}</span> enviado
-              <span className="mx-1 text-gray-300">·</span>
-              <span className="font-semibold tabular-nums">{num(pedidoTotalUsd)}</span> requerido
-              {!completo && (
+              {completo ? (
                 <>
+                  <span className="mx-1 text-gray-300">·</span>
+                  mercancía cubierta ✓
+                </>
+              ) : (
+                <>
+                  <span className="mx-1 text-gray-300">·</span>
+                  <span className="font-semibold tabular-nums">{num(productosUsd)}</span> en productos
                   <span className="mx-1 text-gray-300">·</span>
                   faltan{" "}
                   <span className="font-semibold tabular-nums text-amber-700">{num(faltante)}</span> USDT
                 </>
               )}
             </p>
+            <p className="mt-0.5 text-[10.5px] text-gray-400">
+              Solo mercancía — el envío se paga por separado (ver “Desglose del envío”).
+            </p>
           </div>
           <span
             className="text-[24px] font-bold leading-none tabular-nums"
             style={{ color: completo ? "#047857" : "#B45309" }}
           >
-            {cobertura.toFixed(0)}%
+            {Math.min(100, cobertura).toFixed(0)}%
           </span>
         </div>
         <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">

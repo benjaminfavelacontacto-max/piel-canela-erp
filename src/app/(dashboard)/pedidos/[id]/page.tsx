@@ -278,6 +278,10 @@ export default async function PedidoDetailPage({
   const envioMXN = Number(pedido.costo_envio_mxn)
   const totalMXN = Number(pedido.total_mxn)
   const totalUSD = Number(pedido.total_usd)
+  // Lo que se le paga al proveedor (Julio) es SOLO la mercancía; el envío se
+  // paga por separado a las paqueterías → la barra de pagos mide contra esto.
+  const envioUSD = Number(pedido.costo_envio_usd)
+  const productosUSD = Math.max(0, totalUSD - envioUSD)
   const envioPctPedido = totalMXN > 0 ? (envioMXN / totalMXN) * 100 : 0
   const envioPorSkuMXN = items.length > 0 ? envioMXN / items.length : 0
   // Rentabilidad (profit = precio_público − costo con envío)
@@ -429,7 +433,7 @@ export default async function PedidoDetailPage({
       <DesgloseEnvio pedidoId={pedido.id} tramos={tramosEnvio} />
 
       {/* ═══ Pagos al proveedor (USDT enviado) ═══ */}
-      <Pagos pedidoId={pedido.id} pagos={pagos} pedidoTotalUsd={totalUSD} />
+      <Pagos pedidoId={pedido.id} pagos={pagos} productosUsd={productosUSD} />
 
       {/* ═══ Conversiones MXN → USDT (comisiones → costo real) ═══ */}
       <Conversiones
