@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, X, Loader2, ArrowLeftRight } from "lucide-react"
-import { agregarConversion, eliminarConversion } from "../actions"
+import {
+  agregarConversion,
+  eliminarConversion,
+  subirComprobanteConversion,
+  eliminarComprobanteConversion,
+} from "../actions"
+import { DocChip } from "./doc-upload"
 
 type Conversion = {
   id: string
@@ -13,6 +19,7 @@ type Conversion = {
   tipo_cambio: number
   comision_mxn: number
   notas: string | null
+  comprobante_url: string | null
 }
 
 const mxn = (v: number | null | undefined) =>
@@ -208,6 +215,7 @@ export function Conversiones({
                 <th className="px-2 py-2 text-right">USDT</th>
                 <th className="px-2 py-2 text-right">TC</th>
                 <th className="px-2 py-2 text-right">Comisión</th>
+                <th className="px-2 py-2 text-center">Comprobante</th>
                 <th className="px-2 py-2" />
               </tr>
             </thead>
@@ -232,6 +240,18 @@ export function Conversiones({
                   </td>
                   <td className="px-2 py-2 text-right tabular-nums text-amber-700">
                     {mxn(c.comision_mxn)}
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <DocChip
+                      filename={c.comprobante_url}
+                      onUpload={(fd) =>
+                        subirComprobanteConversion(pedidoId, c.id, fd)
+                      }
+                      onDelete={() =>
+                        eliminarComprobanteConversion(pedidoId, c.id)
+                      }
+                      label="Subir"
+                    />
                   </td>
                   <td className="px-1 py-2 text-center">
                     <button
@@ -260,7 +280,7 @@ export function Conversiones({
                 <td className="px-2 py-2 text-right tabular-nums text-amber-700">
                   {mxn(totComision)}
                 </td>
-                <td />
+                <td colSpan={2} />
               </tr>
             </tfoot>
           </table>

@@ -22,6 +22,7 @@ import { AgregarProductosPedido } from "./agregar-productos"
 import { Conversiones } from "./conversiones"
 import { Pagos } from "./pagos"
 import { Documentos } from "./documentos"
+import { DesgloseEnvio } from "./envios"
 
 const mxn = (v: number) =>
   v.toLocaleString("es-MX", {
@@ -158,20 +159,36 @@ export default async function PedidoDetailPage({
   )
 
   // Conversiones MXN→USDT del pedido (tolerante si la tabla aún no existe)
-  const { data: conversionesData } = await supabase
+  const convRes = await supabase
     .from("pedido_conversiones")
-    .select("id, fecha, mxn_gastado, usdt_recibido, tipo_cambio, comision_mxn, notas")
+    .select(
+      "id, fecha, mxn_gastado, usdt_recibido, tipo_cambio, comision_mxn, notas, comprobante_url",
+    )
     .eq("pedido_id", id)
     .order("fecha", { ascending: true })
-  const conversiones = (conversionesData ?? []) as {
-    id: string
-    fecha: string
-    mxn_gastado: number
-    usdt_recibido: number
-    tipo_cambio: number
-    comision_mxn: number
-    notas: string | null
-  }[]
+  const conversionesData = convRes.error
+    ? (
+        await supabase
+          .from("pedido_conversiones")
+          .select(
+            "id, fecha, mxn_gastado, usdt_recibido, tipo_cambio, comision_mxn, notas",
+          )
+          .eq("pedido_id", id)
+          .order("fecha", { ascending: true })
+      ).data
+    : convRes.data
+  const conversiones = ((conversionesData ?? []) as Record<string, unknown>[]).map(
+    (c) => ({
+      id: c.id as string,
+      fecha: c.fecha as string,
+      mxn_gastado: c.mxn_gastado as number,
+      usdt_recibido: c.usdt_recibido as number,
+      tipo_cambio: c.tipo_cambio as number,
+      comision_mxn: c.comision_mxn as number,
+      notas: (c.notas as string | null) ?? null,
+      comprobante_url: (c.comprobante_url as string | null) ?? null,
+    }),
+  )
 
   // Pagos (transfers USDT) al proveedor. Intenta traer comprobante_url; si la
   // columna aún no existe (SQL no corrido), hace fallback sin romper los pagos.
@@ -211,6 +228,21 @@ export default async function PedidoDetailPage({
     filename: string
     notas: string | null
     created_at: string
+  }[]
+
+  // Tramos de envío (desglose informativo) — tolerante si la tabla aún no existe
+  const { data: enviosData } = await supabase
+    .from("pedido_envios")
+    .select("id, tramo, monto_usd, monto_mxn, filename, notas, sort_order")
+    .eq("pedido_id", id)
+    .order("sort_order", { ascending: true })
+  const tramosEnvio = (enviosData ?? []) as {
+    id: string
+    tramo: string
+    monto_usd: number
+    monto_mxn: number
+    filename: string | null
+    notas: string | null
   }[]
 
   const items = (pedido.pedido_compra_items ?? []).sort(
@@ -392,6 +424,9 @@ export default async function PedidoDetailPage({
           </div>
         </div>
       </section>
+
+      {/* ═══ Desglose del envío por tramos (informativo) ═══ */}
+      <DesgloseEnvio pedidoId={pedido.id} tramos={tramosEnvio} />
 
       {/* ═══ Pagos al proveedor (USDT enviado) ═══ */}
       <Pagos pedidoId={pedido.id} pagos={pagos} pedidoTotalUsd={totalUSD} />

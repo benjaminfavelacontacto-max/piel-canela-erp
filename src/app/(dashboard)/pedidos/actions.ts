@@ -610,3 +610,131 @@ export async function verDocumento(
   if (!url) return { ok: false, error: "No se pudo generar el enlace" }
   return { ok: true, url }
 }
+
+// ─── Desglose del envío por tramos (informativo) ─────────────────────
+
+export async function agregarEnvioTramo(
+  pedidoId: string,
+  input: {
+    tramo: string
+    monto_usd: number
+    monto_mxn: number
+    notas?: string | null
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!input.tramo?.trim()) return { ok: false, error: "Captura el tramo (origen → destino)" }
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_envios").insert({
+    pedido_id: pedidoId,
+    tramo: input.tramo.trim(),
+    monto_usd: Number(input.monto_usd) || 0,
+    monto_mxn: Number(input.monto_mxn) || 0,
+    notas: input.notas || null,
+  })
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarEnvioTramo(
+  pedidoId: string,
+  tramoId: string,
+  filename: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_envios").delete().eq("id", tramoId)
+  if (error) return { ok: false, error: error.message }
+  if (filename) await borrarDocumento(filename)
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function subirFacturaEnvio(
+  pedidoId: string,
+  tramoId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const file = formData.get("archivo") as File | null
+  const sub = await subirDocumento(file, `envio-${tramoId}`)
+  if (!sub.ok) return { ok: false, error: sub.error }
+  const admin = createAdminClient()
+  const { data: prev } = await admin
+    .from("pedido_envios")
+    .select("filename")
+    .eq("id", tramoId)
+    .maybeSingle()
+  if (prev?.filename) await borrarDocumento(prev.filename as string)
+  const { error } = await admin
+    .from("pedido_envios")
+    .update({ filename: sub.filename })
+    .eq("id", tramoId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarFacturaEnvio(
+  pedidoId: string,
+  tramoId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient()
+  const { data: prev } = await admin
+    .from("pedido_envios")
+    .select("filename")
+    .eq("id", tramoId)
+    .maybeSingle()
+  if (prev?.filename) await borrarDocumento(prev.filename as string)
+  const { error } = await admin
+    .from("pedido_envios")
+    .update({ filename: null })
+    .eq("id", tramoId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+// ─── Comprobante por conversión MXN→USDT ─────────────────────────────
+
+export async function subirComprobanteConversion(
+  pedidoId: string,
+  conversionId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const file = formData.get("archivo") as File | null
+  const sub = await subirDocumento(file, `conv-${conversionId}`)
+  if (!sub.ok) return { ok: false, error: sub.error }
+  const admin = createAdminClient()
+  const { data: prev } = await admin
+    .from("pedido_conversiones")
+    .select("comprobante_url")
+    .eq("id", conversionId)
+    .maybeSingle()
+  if (prev?.comprobante_url) await borrarDocumento(prev.comprobante_url as string)
+  const { error } = await admin
+    .from("pedido_conversiones")
+    .update({ comprobante_url: sub.filename })
+    .eq("id", conversionId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarComprobanteConversion(
+  pedidoId: string,
+  conversionId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient()
+  const { data: prev } = await admin
+    .from("pedido_conversiones")
+    .select("comprobante_url")
+    .eq("id", conversionId)
+    .maybeSingle()
+  if (prev?.comprobante_url) await borrarDocumento(prev.comprobante_url as string)
+  const { error } = await admin
+    .from("pedido_conversiones")
+    .update({ comprobante_url: null })
+    .eq("id", conversionId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
