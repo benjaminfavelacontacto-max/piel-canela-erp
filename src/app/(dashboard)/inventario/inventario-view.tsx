@@ -747,6 +747,7 @@ export function InventarioView({
                 <th
                   className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative sticky z-20 bg-[#F9FAFB]"
                   style={{ left: stickyLefts[0] }}
+                  title={HELP_BY_COL[0]}
                 >
                   Foto
                   <ResizeHandle colIndex={0} setColWidth={setColWidth} resetColWidth={resetColWidth} />
@@ -766,7 +767,10 @@ export function InventarioView({
                 <SortableTh align="right" k="profit_unitario" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={13} setColWidth={setColWidth} resetColWidth={resetColWidth}>Profit</SortableTh>
                 <SortableTh align="right" k="margen_pct" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={14} setColWidth={setColWidth} resetColWidth={resetColWidth}>Margen</SortableTh>
                 <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={15} setColWidth={setColWidth} resetColWidth={resetColWidth}>Vend.</SortableTh>
-                <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative">
+                <th
+                  className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative"
+                  title={HELP_BY_COL[16]}
+                >
                   Estatus
                   <ResizeHandle colIndex={16} setColWidth={setColWidth} resetColWidth={resetColWidth} />
                 </th>
@@ -837,6 +841,27 @@ export function InventarioView({
   )
 }
 
+// Explicación de cada columna — se muestra al pasar el mouse sobre el encabezado.
+const HELP_BY_COL: Record<number, string> = {
+  0: "Foto del producto. Arrastra un archivo sobre la celda para subirla o cambiarla.",
+  1: "Categoría a la que pertenece el producto (cintas, activadores, etc.).",
+  2: "Presentación o tamaño del producto (ml, g, piezas, mm).",
+  3: "Nombre del producto.",
+  4: "SKU: código único que identifica al producto.",
+  5: "Precio público: el precio de venta, lo que paga el cliente.",
+  6: "Precio del producto en dólares (sin envío).",
+  7: "Precio en pesos = precio USD × tipo de cambio.",
+  8: "Unidades disponibles ahora. 'mín' = nivel mínimo antes de reordenar.",
+  9: "Costo del producto en dólares (sin envío).",
+  10: "Costo del producto en pesos = costo USD × tipo de cambio.",
+  11: "Costo total en dólares, incluyendo el envío prorrateado por unidad.",
+  12: "Costo total en pesos (producto + envío).",
+  13: "Profit: ganancia en pesos por unidad = precio público − costo total.",
+  14: "Margen: ¿qué porcentaje del precio de venta es ganancia? (ganancia ÷ precio público).",
+  15: "Unidades de este producto vendidas históricamente.",
+  16: "Estado del inventario: Ok, Bajo (stock ≤ mínimo) o Agotado.",
+}
+
 function SortableTh({
   children,
   k,
@@ -873,6 +898,7 @@ function SortableTh({
   return (
     <th
       onClick={() => onSort(k)}
+      title={HELP_BY_COL[colIndex]}
       className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"} ${stickyLeft !== undefined ? "sticky z-20 bg-[#F9FAFB]" : ""}`}
       style={
         stickyLeft !== undefined
