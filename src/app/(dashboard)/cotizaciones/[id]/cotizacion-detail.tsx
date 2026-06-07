@@ -43,11 +43,13 @@ export function CotizacionDetail({
   cotizacionId,
   numero,
   estatus,
+  ventaAsociada,
   preview,
 }: {
   cotizacionId: string
   numero: string
   estatus: Estatus
+  ventaAsociada: { id: string; numero: string } | null
   preview: CotizacionData
 }) {
   const router = useRouter()
@@ -56,6 +58,9 @@ export function CotizacionDetail({
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
+  // "Vendida" = ya existe una venta generada desde esta cotización (señal fuerte),
+  // o el estatus es "aceptada". Evita que el botón verde invite a re-vender.
+  const yaVendida = ventaAsociada != null || currentEstatus === "aceptada"
 
   async function handleEliminar() {
     setDeleting(true)
@@ -127,37 +132,57 @@ export function CotizacionDetail({
               {numero}
             </h1>
             <div className="mt-1 flex items-center gap-2">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estatusBadge[currentEstatus]}`}
-              >
-                {estatusLabel[currentEstatus]}
-              </span>
+              {yaVendida ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  <CheckCircle2 className="size-3" />
+                  Vendida
+                </span>
+              ) : (
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estatusBadge[currentEstatus]}`}
+                >
+                  {estatusLabel[currentEstatus]}
+                </span>
+              )}
             </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {currentEstatus === "aceptada" && (
+          {ventaAsociada ? (
             <Link
-              href={`/ventas/nueva?cotizacion=${cotizacionId}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
+              href={`/ventas/${ventaAsociada.id}`}
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100"
+              title={`Esta cotización ya se vendió (${ventaAsociada.numero}). Ver la venta.`}
             >
-              <ShoppingBag className="size-4" />
-              Convertir a Venta
+              <CheckCircle2 className="size-4" />
+              Ver venta
             </Link>
+          ) : (
+            <>
+              {currentEstatus === "aceptada" && (
+                <Link
+                  href={`/ventas/nueva?cotizacion=${cotizacionId}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
+                >
+                  <ShoppingBag className="size-4" />
+                  Convertir a Venta
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={handleMarkSold}
+                disabled={pending || currentEstatus === "aceptada"}
+                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
+              >
+                <CheckCircle2 className="size-4" />
+                {currentEstatus === "aceptada"
+                  ? "Vendida"
+                  : pending
+                    ? "Procesando…"
+                    : "Marcar como Vendida"}
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            onClick={handleMarkSold}
-            disabled={pending || currentEstatus === "aceptada"}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
-          >
-            <CheckCircle2 className="size-4" />
-            {currentEstatus === "aceptada"
-              ? "Vendida"
-              : pending
-                ? "Procesando…"
-                : "Marcar como Vendida"}
-          </button>
           <Link
             href={`/cotizaciones/${cotizacionId}/editar`}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
@@ -182,7 +207,7 @@ export function CotizacionDetail({
             <FileDown className="size-4" />
             PDF
           </button>
-          {currentEstatus !== "aceptada" && (
+          {!yaVendida && (
             <button
               type="button"
               onClick={() => setConfirmarEliminar(true)}

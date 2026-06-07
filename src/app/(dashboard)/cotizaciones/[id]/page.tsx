@@ -82,6 +82,17 @@ export default async function CotizacionDetailPage({
     }
   })
 
+  // ¿Esta cotización ya generó una venta? Señal fuerte de "vendida" — más
+  // confiable que el estatus, que puede quedar en "borrador" aunque ya se vendió.
+  const { data: ventasAsoc } = await supabase
+    .from("ventas")
+    .select("id, numero")
+    .eq("cotizacion_id", id)
+    .order("fecha", { ascending: false })
+    .limit(1)
+  const ventaAsociada =
+    (ventasAsoc?.[0] as { id: string; numero: string } | undefined) ?? null
+
   const ivaActivo = Number(cot.iva ?? 0) > 0
 
   const cliente = (cot.clientes as unknown as Cliente | null) ?? null
@@ -105,6 +116,7 @@ export default async function CotizacionDetailPage({
       cotizacionId={cot.id as string}
       numero={cot.numero}
       estatus={cot.estatus as Estatus}
+      ventaAsociada={ventaAsociada}
       preview={preview}
     />
   )
