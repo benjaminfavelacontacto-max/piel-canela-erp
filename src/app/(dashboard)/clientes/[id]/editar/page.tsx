@@ -13,19 +13,32 @@ export default async function EditarClientePage({
   const supabase = await createClient()
   const admin = createAdminClient()
 
-  const [clienteRes, sociosRes] = await Promise.all([
-    supabase
-      .from("clientes")
-      .select(
-        `id, nombre, nombre_negocio, tipo, telefono, email,
+  const [clienteRes, sociosRes, ventasCountRes, cotsCountRes] =
+    await Promise.all([
+      supabase
+        .from("clientes")
+        .select(
+          `id, nombre, nombre_negocio, tipo, telefono, email,
          direccion, colonia, codigo_postal, ciudad, estado, pais, rfc, redes_sociales,
          vendedor_socio_id, metodo_pago_pref, notas, activo,
          created_at, updated_at`,
-      )
-      .eq("id", id)
-      .maybeSingle(),
-    admin.from("socios").select("id, nombre").eq("activo", true).order("nombre"),
-  ])
+        )
+        .eq("id", id)
+        .maybeSingle(),
+      admin
+        .from("socios")
+        .select("id, nombre")
+        .eq("activo", true)
+        .order("nombre"),
+      admin
+        .from("ventas")
+        .select("id", { count: "exact", head: true })
+        .eq("cliente_id", id),
+      admin
+        .from("cotizaciones")
+        .select("id", { count: "exact", head: true })
+        .eq("cliente_id", id),
+    ])
 
   if (clienteRes.error) {
     return (
@@ -41,5 +54,12 @@ export default async function EditarClientePage({
   const cliente = clienteRes.data as unknown as ClienteRow
   const socios = (sociosRes.data ?? []) as SocioBasic[]
 
-  return <ClienteForm initial={cliente} socios={socios} />
+  return (
+    <ClienteForm
+      initial={cliente}
+      socios={socios}
+      ventasCount={ventasCountRes.count ?? 0}
+      cotizacionesCount={cotsCountRes.count ?? 0}
+    />
+  )
 }

@@ -91,9 +91,39 @@ export async function updateCliente(id: string, input: ClienteInput) {
   return { ok: true as const, id }
 }
 
-export async function deleteCliente(id: string) {
+// Cliente interno Piel Canela — nunca se elimina (descuenta inventario propio).
+const INTERNAL_CLIENTE_ID = "08449791-0fab-4bfb-818f-b9dbf077c879"
+
+export type DeleteClienteResult =
+  | { ok: true }
+  | {
+      ok: false
+      error: string
+      blocked?: "ventas" | "internal"
+      needsConfirm?: boolean
+      ventas?: number
+      cotizaciones?: number
+    }
+
+/**
+ * Elimina un cliente.
+ * - Si tiene VENTAS → bloqueado (registros financieros: afectan ROI/KPIs). Sugiere desactivar.
+ * - Si tiene COTIZACIONES → requiere `force=true`; se borran en cascada (items → cotizaciones).
+ * - El cliente interno Piel Canela nunca se elimina.
+ */
+export async function deleteCliente(
+  id: string,
+  force = false,
+): Promise<DeleteClienteResult> {
+  if (id === INTERNAL_CLIENTE_ID) {
+    return {
+      ok: false,
+      blocked: "internal",
+      error:
+        "Piel Canela es el cliente interno del sistema; no se puede eliminar.",
+    }
+  }
   const supabase = createAdminClient()
-  // Verificar que no tenga ventas/cotizaciones asociadas
   const [ventasCount, cotsCount] = await Promise.all([
     supabase
       .from("ventas")
@@ -104,15 +134,72 @@ export async function deleteCliente(id: string) {
       .select("id", { count: "exact", head: true })
       .eq("cliente_id", id),
   ])
-  if ((ventasCount.count ?? 0) > 0 || (cotsCount.count ?? 0) > 0) {
+  const nVentas = ventasCount.count ?? 0
+  const nCots = cotsCount.count ?? 0
+
+  // Ventas = registros financieros. Nunca se borran en cascada.
+  if (nVentas > 0) {
     return {
-      ok: false as const,
-      error: `Cliente tiene ${ventasCount.count ?? 0} ventas y ${cotsCount.count ?? 0} cotizaciones. Fusiona primero o desactívalo.`,
+      ok: false,
+      blocked: "ventas",
+      ventas: nVentas,
+      cotizaciones: nCots,
+      error: `Tiene ${nVentas} ${nVentas === 1 ? "venta" : "ventas"} registradas (afectan reportes financieros). Desactívalo, o elimina/reasigna esas ventas primero.`,
     }
   }
+
+  // Cotizaciones: se borran en cascada pero requieren confirmación explícita.
+  if (nCots > 0 && !force) {
+    return {
+      ok: false,
+      needsConfirm: true,
+      ventas: 0,
+      cotizaciones: nCots,
+      error: `Tiene ${nCots} ${nCots === 1 ? "cotización" : "cotizaciones"}.`,
+    }
+  }
+
+  // Cascada: cotizacion_items → cotizaciones → cliente
+  if (nCots > 0) {
+    const { data: cots } = await supabase
+      .from("cotizaciones")
+      .select("id")
+      .eq("cliente_id", id)
+    const cotIds = (cots ?? []).map((c) => c.id as string)
+    if (cotIds.length) {
+      const delItems = await supabase
+        .from("cotizacion_items")
+        .delete()
+        .in("cotizacion_id", cotIds)
+      if (delItems.error) return { ok: false, error: delItems.error.message }
+    }
+    const delCots = await supabase
+      .from("cotizaciones")
+      .delete()
+      .eq("cliente_id", id)
+    if (delCots.error) return { ok: false, error: delCots.error.message }
+  }
+
   const { error } = await supabase.from("clientes").delete().eq("id", id)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath("/clientes")
+  revalidatePath("/cotizaciones")
+  return { ok: true }
+}
+
+/**
+ * Activa/desactiva un cliente (soft-delete). Alternativa a eliminar cuando
+ * tiene ventas que no se pueden borrar.
+ */
+export async function setClienteActivo(id: string, activo: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("clientes")
+    .update({ activo })
+    .eq("id", id)
   if (error) return { ok: false as const, error: error.message }
   revalidatePath("/clientes")
+  revalidatePath(`/clientes/${id}`)
   return { ok: true as const }
 }
 

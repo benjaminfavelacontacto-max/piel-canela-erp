@@ -37,13 +37,16 @@ import {
   Columns3,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   Search,
   Sparkles,
+  Trash2,
   UserPlus,
 } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { ClienteDrawer } from "./cliente-drawer"
+import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
 import { EstimadoIngresos } from "./estimado-ingresos"
 import { PrediccionCompras } from "./prediccion-compras"
@@ -111,6 +114,8 @@ export type SocioBasic = { id: string; nombre: string }
 
 export type EnrichedCliente = ClienteRow & {
   ventas_count: number
+  /** Ventas totales incluyendo canceladas (para decidir si se puede borrar). */
+  ventas_total_count: number
   cotizaciones_count: number
   ltv: number
   utilidad_total: number
@@ -303,9 +308,8 @@ export function ClientesDashboard({
     }
 
     return clientes.map((c) => {
-      const vs = (ventasByCliente.get(c.id) ?? []).filter(
-        (v) => v.estatus !== "cancelada",
-      )
+      const vsAll = ventasByCliente.get(c.id) ?? []
+      const vs = vsAll.filter((v) => v.estatus !== "cancelada")
       const cots = cotsByCliente.get(c.id) ?? []
       const ltv = vs.reduce((s, v) => s + Number(v.total ?? 0), 0)
       const utilidad = vs.reduce(
@@ -351,6 +355,7 @@ export function ClientesDashboard({
       return {
         ...c,
         ventas_count: vs.length,
+        ventas_total_count: vsAll.length,
         cotizaciones_count: cots.length,
         ltv,
         utilidad_total: utilidad,
@@ -448,6 +453,7 @@ export function ClientesDashboard({
   const [selectedCliente, setSelectedCliente] = useState<EnrichedCliente | null>(
     null,
   )
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null)
 
   // ─── Filtros ──────────────────────────────────────────────────────
   const [globalFilter, setGlobalFilter] = useState("")
@@ -830,6 +836,50 @@ export function ClientesDashboard({
         },
         size: 110,
       },
+      {
+        id: "acciones",
+        header: () => (
+          <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+            Acciones
+          </span>
+        ),
+        meta: { align: "right" },
+        enableSorting: false,
+        enableHiding: false,
+        size: 88,
+        cell: ({ row }) => {
+          const c = row.original
+          return (
+            <div
+              className="flex items-center justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link
+                href={`/clientes/${c.id}/editar`}
+                title="Editar cliente"
+                className="inline-flex size-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              >
+                <Pencil className="size-3.5" />
+              </Link>
+              <button
+                type="button"
+                title="Eliminar cliente"
+                onClick={() =>
+                  setDeleteTarget({
+                    id: c.id,
+                    nombre: c.nombre_negocio ?? c.nombre,
+                    ventas: c.ventas_total_count,
+                    cotizaciones: c.cotizaciones_count,
+                  })
+                }
+                className="inline-flex size-7 items-center justify-center rounded-md text-rose-400 transition hover:bg-rose-50 hover:text-rose-600"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          )
+        },
+      },
     ],
     [],
   )
@@ -1128,7 +1178,8 @@ export function ClientesDashboard({
                     </div>
                     <ul className="max-h-72 overflow-y-auto py-1">
                       {table.getAllLeafColumns().map((col) => {
-                        if (col.id === "expander") return null
+                        if (col.id === "expander" || col.id === "acciones")
+                          return null
                         return (
                           <li key={col.id}>
                             <label className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
@@ -1298,6 +1349,21 @@ export function ClientesDashboard({
         ventas={ventas}
         cotizaciones={cotizaciones}
         venta_items={venta_items}
+        onDelete={(c) => {
+          setSelectedCliente(null)
+          setDeleteTarget({
+            id: c.id,
+            nombre: c.nombre_negocio ?? c.nombre,
+            ventas: c.ventas_total_count,
+            cotizaciones: c.cotizaciones_count,
+          })
+        }}
+      />
+
+      {/* Diálogo de borrado con advertencia */}
+      <ClienteDeleteDialog
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
       />
     </div>
   )

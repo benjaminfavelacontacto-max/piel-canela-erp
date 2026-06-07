@@ -22,11 +22,11 @@ import {
 import {
   saveCliente,
   updateCliente,
-  deleteCliente,
   findSimilarClientes,
   type ClienteInput,
 } from "./actions"
 import type { ClienteRow, SocioBasic } from "./clientes-dashboard"
+import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { TIPOS_CLIENTE } from "./tipos-cliente"
 
 const METODOS_PAGO = [
@@ -39,13 +39,18 @@ const METODOS_PAGO = [
 export function ClienteForm({
   initial,
   socios,
+  ventasCount = 0,
+  cotizacionesCount = 0,
 }: {
   initial?: ClienteRow
   socios: SocioBasic[]
+  ventasCount?: number
+  cotizacionesCount?: number
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const isEdit = !!initial
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null)
 
   const [nombre, setNombre] = useState(initial?.nombre ?? "")
   const [nombreNegocio, setNombreNegocio] = useState(
@@ -129,26 +134,6 @@ export function ClienteForm({
     })
   }
 
-  function handleDelete() {
-    if (!initial) return
-    if (
-      !confirm(
-        `¿Eliminar ${initial.nombre_negocio ?? initial.nombre}? Esta acción no se puede deshacer.`,
-      )
-    )
-      return
-    startTransition(async () => {
-      const result = await deleteCliente(initial.id)
-      if (!result.ok) {
-        toast.error(result.error)
-        return
-      }
-      toast.success("Cliente eliminado")
-      router.push("/clientes")
-      router.refresh()
-    })
-  }
-
   function setRed(key: string, value: string) {
     setRedes((prev) => {
       const next = { ...prev }
@@ -183,7 +168,14 @@ export function ClienteForm({
           {isEdit && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() =>
+                setDeleteTarget({
+                  id: initial!.id,
+                  nombre: initial!.nombre_negocio ?? initial!.nombre,
+                  ventas: ventasCount,
+                  cotizaciones: cotizacionesCount,
+                })
+              }
               disabled={pending}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#FEE2E2] bg-white px-3 py-1.5 text-sm font-medium text-[#DC2626] transition hover:bg-[#FEE2E2] disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -476,6 +468,12 @@ export function ClienteForm({
           </Field>
         </Card>
       </div>
+
+      <ClienteDeleteDialog
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onDone={() => router.push("/clientes")}
+      />
     </div>
   )
 }

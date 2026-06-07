@@ -22,6 +22,7 @@ import {
   Sparkles,
   StickyNote,
   Target,
+  Trash2,
   TrendingUp,
   Users,
   Wallet,
@@ -109,6 +110,7 @@ export function ClienteDrawer({
   ventas,
   cotizaciones,
   venta_items,
+  onDelete,
 }: {
   cliente: EnrichedCliente | null
   open: boolean
@@ -116,6 +118,7 @@ export function ClienteDrawer({
   ventas: VentaSummaryRow[]
   cotizaciones: CotizacionSummaryRow[]
   venta_items: VentaItemSummary[]
+  onDelete?: (cliente: EnrichedCliente) => void
 }) {
   // Body scroll lock
   useEffect(() => {
@@ -321,6 +324,16 @@ export function ClienteDrawer({
                 <Mail className="size-3" />
                 Email
               </a>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(cliente)}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-600 shadow-sm transition hover:bg-rose-50"
+              >
+                <Trash2 className="size-3" />
+                Eliminar
+              </button>
             )}
           </div>
         </header>
