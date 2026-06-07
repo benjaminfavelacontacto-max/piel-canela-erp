@@ -21,6 +21,7 @@ import { buildProductoImageUrl } from "@/lib/storage-images"
 import { AgregarProductosPedido } from "./agregar-productos"
 import { Conversiones } from "./conversiones"
 import { Pagos } from "./pagos"
+import { Documentos } from "./documentos"
 
 const mxn = (v: number) =>
   v.toLocaleString("es-MX", {
@@ -172,18 +173,44 @@ export default async function PedidoDetailPage({
     notas: string | null
   }[]
 
-  // Pagos (transfers USDT) al proveedor (tolerante si la tabla aún no existe)
-  const { data: pagosData } = await supabase
+  // Pagos (transfers USDT) al proveedor. Intenta traer comprobante_url; si la
+  // columna aún no existe (SQL no corrido), hace fallback sin romper los pagos.
+  const pagosRes = await supabase
     .from("pedido_pagos")
-    .select("id, fecha, usdt_enviado, destinatario, mensaje")
+    .select("id, fecha, usdt_enviado, destinatario, mensaje, comprobante_url")
     .eq("pedido_id", id)
     .order("fecha", { ascending: true })
-  const pagos = (pagosData ?? []) as {
+  const pagosData = pagosRes.error
+    ? (
+        await supabase
+          .from("pedido_pagos")
+          .select("id, fecha, usdt_enviado, destinatario, mensaje")
+          .eq("pedido_id", id)
+          .order("fecha", { ascending: true })
+      ).data
+    : pagosRes.data
+  const pagos = ((pagosData ?? []) as Record<string, unknown>[]).map((p) => ({
+    id: p.id as string,
+    fecha: p.fecha as string,
+    usdt_enviado: p.usdt_enviado as number,
+    destinatario: (p.destinatario as string | null) ?? null,
+    mensaje: (p.mensaje as string | null) ?? null,
+    comprobante_url: (p.comprobante_url as string | null) ?? null,
+  }))
+
+  // Documentos del pedido (facturas, comprobantes) — tolerante si la tabla aún no existe
+  const { data: docsData } = await supabase
+    .from("pedido_documentos")
+    .select("id, nombre, tipo, filename, notas, created_at")
+    .eq("pedido_id", id)
+    .order("created_at", { ascending: false })
+  const documentos = (docsData ?? []) as {
     id: string
-    fecha: string
-    usdt_enviado: number
-    destinatario: string | null
-    mensaje: string | null
+    nombre: string
+    tipo: string
+    filename: string
+    notas: string | null
+    created_at: string
   }[]
 
   const items = (pedido.pedido_compra_items ?? []).sort(
@@ -375,6 +402,9 @@ export default async function PedidoDetailPage({
         conversiones={conversiones}
         pedidoTotalMxn={totalMXN}
       />
+
+      {/* ═══ Facturas y documentos (PDF/imagen) ═══ */}
+      <Documentos pedidoId={pedido.id} documentos={documentos} />
 
       {/* Items por categoría */}
       {items.length === 0 ? (

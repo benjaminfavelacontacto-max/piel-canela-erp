@@ -2,6 +2,11 @@
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
+import {
+  subirDocumento,
+  borrarDocumento,
+  getDocumentoSignedUrl,
+} from "@/lib/storage-docs"
 
 export type NuevoItemEntrada = {
   producto_id: string
@@ -505,4 +510,103 @@ export async function eliminarPago(
 
   revalidatePath(`/pedidos/${pedidoId}`)
   return { ok: true }
+}
+
+// ─── Documentos: comprobantes de pago + facturas del pedido ──────────
+
+export async function subirComprobantePago(
+  pedidoId: string,
+  pagoId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const file = formData.get("archivo") as File | null
+  const sub = await subirDocumento(file, `pago-${pagoId}`)
+  if (!sub.ok) return { ok: false, error: sub.error }
+  const admin = createAdminClient()
+  // Borrar el comprobante previo si lo había (no acumular huérfanos)
+  const { data: prev } = await admin
+    .from("pedido_pagos")
+    .select("comprobante_url")
+    .eq("id", pagoId)
+    .maybeSingle()
+  if (prev?.comprobante_url) await borrarDocumento(prev.comprobante_url as string)
+  const { error } = await admin
+    .from("pedido_pagos")
+    .update({ comprobante_url: sub.filename })
+    .eq("id", pagoId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarComprobantePago(
+  pedidoId: string,
+  pagoId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient()
+  const { data: prev } = await admin
+    .from("pedido_pagos")
+    .select("comprobante_url")
+    .eq("id", pagoId)
+    .maybeSingle()
+  if (prev?.comprobante_url) await borrarDocumento(prev.comprobante_url as string)
+  const { error } = await admin
+    .from("pedido_pagos")
+    .update({ comprobante_url: null })
+    .eq("id", pagoId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function subirDocumentoPedido(
+  pedidoId: string,
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const file = formData.get("archivo") as File | null
+  const nombre = String(formData.get("nombre") ?? "").trim()
+  const tipo = String(formData.get("tipo") ?? "otro")
+  const notas = String(formData.get("notas") ?? "").trim() || null
+  if (!nombre) return { ok: false, error: "Captura un nombre para el documento" }
+  const sub = await subirDocumento(file, `doc-${pedidoId}`)
+  if (!sub.ok) return { ok: false, error: sub.error }
+  const admin = createAdminClient()
+  const { error } = await admin.from("pedido_documentos").insert({
+    pedido_id: pedidoId,
+    nombre,
+    tipo,
+    filename: sub.filename,
+    notas,
+  })
+  if (error) {
+    await borrarDocumento(sub.filename) // rollback del archivo si falla la BD
+    return { ok: false, error: error.message }
+  }
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+export async function eliminarDocumentoPedido(
+  pedidoId: string,
+  docId: string,
+  filename: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from("pedido_documentos")
+    .delete()
+    .eq("id", docId)
+  if (error) return { ok: false, error: error.message }
+  if (filename) await borrarDocumento(filename)
+  revalidatePath(`/pedidos/${pedidoId}`)
+  return { ok: true }
+}
+
+/** Genera un enlace temporal (signed URL) para ver/descargar un documento. */
+export async function verDocumento(
+  filename: string,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const url = await getDocumentoSignedUrl(filename)
+  if (!url) return { ok: false, error: "No se pudo generar el enlace" }
+  return { ok: true, url }
 }

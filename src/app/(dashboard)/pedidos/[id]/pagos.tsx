@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, X, Loader2, Send, CheckCircle2 } from "lucide-react"
-import { agregarPago, eliminarPago } from "../actions"
+import {
+  agregarPago,
+  eliminarPago,
+  subirComprobantePago,
+  eliminarComprobantePago,
+} from "../actions"
+import { DocChip } from "./doc-upload"
 
 type Pago = {
   id: string
@@ -11,6 +17,7 @@ type Pago = {
   usdt_enviado: number
   destinatario: string | null
   mensaje: string | null
+  comprobante_url: string | null
 }
 
 const num = (v: number | null | undefined, d = 2) =>
@@ -167,6 +174,7 @@ export function Pagos({
                 <th className="px-2 py-2 text-left">Destinatario</th>
                 <th className="px-2 py-2 text-left">Mensaje</th>
                 <th className="px-2 py-2 text-right">USDT enviado</th>
+                <th className="px-2 py-2 text-center">Comprobante</th>
                 <th className="px-2 py-2" />
               </tr>
             </thead>
@@ -184,6 +192,14 @@ export function Pagos({
                   <td className="px-2 py-2 text-gray-500">{p.mensaje ?? "—"}</td>
                   <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700">
                     {num(p.usdt_enviado)}
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <DocChip
+                      filename={p.comprobante_url}
+                      onUpload={(fd) => subirComprobantePago(pedidoId, p.id, fd)}
+                      onDelete={() => eliminarComprobantePago(pedidoId, p.id)}
+                      label="Subir"
+                    />
                   </td>
                   <td className="px-1 py-2 text-center">
                     <button
@@ -207,7 +223,7 @@ export function Pagos({
                 <td className="px-2 py-2 text-right tabular-nums text-emerald-700">
                   {num(totEnviado)}
                 </td>
-                <td />
+                <td colSpan={2} />
               </tr>
             </tfoot>
           </table>
