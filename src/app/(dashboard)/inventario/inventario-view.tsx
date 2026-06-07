@@ -195,8 +195,8 @@ export function InventarioView({
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
   // ── Anchos manuales de columna (persistidos en localStorage) ──
-  const DEFAULT_COL_WIDTHS = [50, 100, 55, 160, 110, 100, 75, 90, 70, 85, 90, 80, 90, 90, 55, 96]
-  const COL_WIDTHS_KEY = "inventario-col-widths-v2"
+  const DEFAULT_COL_WIDTHS = [50, 100, 55, 160, 110, 100, 75, 90, 70, 85, 90, 80, 90, 90, 70, 55, 96]
+  const COL_WIDTHS_KEY = "inventario-col-widths-v3"
   const MIN_COL_WIDTH = 40
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS)
   useEffect(() => {
@@ -223,6 +223,14 @@ export function InventarioView({
     const next = [...colWidths]
     next[i] = DEFAULT_COL_WIDTHS[i]
     persistColWidths(next)
+  }
+  // Columnas fijas (sticky) al hacer scroll horizontal: Foto, Cat, Peso, Producto.
+  // `left` acumulado de los anchos (respeta el redimensionado de columnas).
+  const STICKY_COLS = 4
+  const stickyLefts: number[] = []
+  for (let i = 0, acc = 0; i < STICKY_COLS; i++) {
+    stickyLefts.push(acc)
+    acc += Number(colWidths[i] ?? 0)
   }
   const tableRef = useRef<HTMLElement>(null)
   const handleCategoriaClick = (cat: string, isActive: boolean) => {
@@ -736,13 +744,16 @@ export function InventarioView({
             </colgroup>
             <thead>
               <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
-                <th className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative">
+                <th
+                  className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative sticky z-20 bg-[#F9FAFB]"
+                  style={{ left: stickyLefts[0] }}
+                >
                   Foto
                   <ResizeHandle colIndex={0} setColWidth={setColWidth} resetColWidth={resetColWidth} />
                 </th>
-                <SortableTh align="left" k="categoria" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={1} setColWidth={setColWidth} resetColWidth={resetColWidth}>Cat.</SortableTh>
-                <SortableTh align="left" k="peso" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={2} setColWidth={setColWidth} resetColWidth={resetColWidth}>Peso</SortableTh>
-                <SortableTh align="left" k="nombre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={3} setColWidth={setColWidth} resetColWidth={resetColWidth}>Producto</SortableTh>
+                <SortableTh align="left" k="categoria" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={1} setColWidth={setColWidth} resetColWidth={resetColWidth} stickyLeft={stickyLefts[1]}>Cat.</SortableTh>
+                <SortableTh align="left" k="peso" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={2} setColWidth={setColWidth} resetColWidth={resetColWidth} stickyLeft={stickyLefts[2]}>Peso</SortableTh>
+                <SortableTh align="left" k="nombre" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={3} setColWidth={setColWidth} resetColWidth={resetColWidth} stickyLeft={stickyLefts[3]} lastSticky>Producto</SortableTh>
                 <SortableTh align="left" k="sku" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={4} setColWidth={setColWidth} resetColWidth={resetColWidth}>SKU</SortableTh>
                 <SortableTh align="right" k="precio_publico" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={5} setColWidth={setColWidth} resetColWidth={resetColWidth}>P. Público</SortableTh>
                 <SortableTh align="right" k="precio_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={6} setColWidth={setColWidth} resetColWidth={resetColWidth}>USD</SortableTh>
@@ -753,10 +764,11 @@ export function InventarioView({
                 <SortableTh align="right" k="costo_total_usd" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={11} setColWidth={setColWidth} resetColWidth={resetColWidth}>+Env USD</SortableTh>
                 <SortableTh align="right" k="costo_total_mxn" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={12} setColWidth={setColWidth} resetColWidth={resetColWidth}>+Env MXN</SortableTh>
                 <SortableTh align="right" k="profit_unitario" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={13} setColWidth={setColWidth} resetColWidth={resetColWidth}>Profit</SortableTh>
-                <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={14} setColWidth={setColWidth} resetColWidth={resetColWidth}>Vend.</SortableTh>
+                <SortableTh align="right" k="margen_pct" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={14} setColWidth={setColWidth} resetColWidth={resetColWidth}>Margen</SortableTh>
+                <SortableTh align="center" k="unidades_vendidas" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} colIndex={15} setColWidth={setColWidth} resetColWidth={resetColWidth}>Vend.</SortableTh>
                 <th className="py-3 px-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative">
                   Estatus
-                  <ResizeHandle colIndex={15} setColWidth={setColWidth} resetColWidth={resetColWidth} />
+                  <ResizeHandle colIndex={16} setColWidth={setColWidth} resetColWidth={resetColWidth} />
                 </th>
               </tr>
             </thead>
@@ -764,7 +776,7 @@ export function InventarioView({
               {sorted.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={16}
+                    colSpan={17}
                     className="px-5 py-12 text-center text-sm text-gray-500"
                   >
                     Sin resultados con esos filtros.
@@ -776,6 +788,7 @@ export function InventarioView({
                     key={p.sku}
                     p={p}
                     isTop={topSellersSet.has(p.sku)}
+                    stickyLefts={stickyLefts}
                     onClick={() => setSelectedSku(p.sku)}
                     onEdit={() => setEditSku(p.sku)}
                   />
@@ -809,6 +822,7 @@ export function InventarioView({
                   <td className="py-3 px-2 text-right text-xs font-bold text-emerald-600 tabular-nums whitespace-nowrap">
                     {mxn2.format(totals.profitTotal)}
                   </td>
+                  <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
                   <td className="py-3 px-2 text-center text-xs font-bold text-gray-900 tabular-nums">
                     {totals.ventas.toLocaleString("es-MX")}
                   </td>
@@ -833,6 +847,8 @@ function SortableTh({
   colIndex,
   setColWidth,
   resetColWidth,
+  stickyLeft,
+  lastSticky,
 }: {
   children: React.ReactNode
   k: SortKey
@@ -843,6 +859,8 @@ function SortableTh({
   colIndex: number
   setColWidth: (i: number, w: number) => void
   resetColWidth: (i: number) => void
+  stickyLeft?: number
+  lastSticky?: boolean
 }) {
   const active = sortKey === k
   const arrow = !active ? "" : sortDir === "asc" ? " ▲" : " ▼"
@@ -855,7 +873,15 @@ function SortableTh({
   return (
     <th
       onClick={() => onSort(k)}
-      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"}`}
+      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"} ${stickyLeft !== undefined ? "sticky z-20 bg-[#F9FAFB]" : ""}`}
+      style={
+        stickyLeft !== undefined
+          ? {
+              left: stickyLeft,
+              boxShadow: lastSticky ? "2px 0 5px -2px rgba(0,0,0,0.08)" : undefined,
+            }
+          : undefined
+      }
     >
       <span className={`inline-flex items-center gap-1 ${justify}`}>
         {children}
@@ -926,11 +952,13 @@ function ResizeHandle({
 function ProductRow({
   p,
   isTop: _isTop,
+  stickyLefts,
   onClick,
   onEdit,
 }: {
   p: ProductoEnriquecido
   isTop: boolean
+  stickyLefts: number[]
   onClick: () => void
   onEdit: () => void
 }) {
@@ -962,10 +990,14 @@ function ProductRow({
   return (
     <tr
       onClick={onClick}
-      className="border-b border-gray-50 cursor-pointer hover:bg-gray-50/50 transition-colors"
+      className="group border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors"
     >
-      {/* Foto — upload con drag & drop */}
-      <td className="py-2 px-2" onClick={(e) => e.stopPropagation()}>
+      {/* Foto — upload con drag & drop (columna fija) */}
+      <td
+        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        style={{ left: stickyLefts[0] }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <ImageUpload
           productoId={p.id}
           productoNombre={p.nombre_display ?? p.nombre}
@@ -974,8 +1006,11 @@ function ProductRow({
         />
       </td>
 
-      {/* Categoría */}
-      <td className="py-2 px-2">
+      {/* Categoría (columna fija) */}
+      <td
+        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        style={{ left: stickyLefts[1] }}
+      >
         <span
           className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap ${categoriaClass(p.categoria)}`}
           title={p.categoria}
@@ -984,13 +1019,23 @@ function ProductRow({
         </span>
       </td>
 
-      {/* Peso */}
-      <td className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap">
+      {/* Peso (columna fija) */}
+      <td
+        className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap sticky z-10 bg-white group-hover:bg-gray-50"
+        style={{ left: stickyLefts[2] }}
+      >
         {p.peso ?? "—"}
       </td>
 
-      {/* Producto */}
-      <td className="py-2 px-2" style={{ maxWidth: "160px" }}>
+      {/* Producto (columna fija — última, con sombra separadora) */}
+      <td
+        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        style={{
+          maxWidth: "160px",
+          left: stickyLefts[3],
+          boxShadow: "2px 0 5px -2px rgba(0,0,0,0.08)",
+        }}
+      >
         <p
           className="text-xs font-medium text-gray-900 truncate"
           title={p.nombre_display ?? p.nombre}
@@ -1062,6 +1107,26 @@ function ProductRow({
         {p.profit_unitario != null && p.profit_unitario !== 0
           ? mxn2.format(p.profit_unitario)
           : "—"}
+      </td>
+
+      {/* Margen % */}
+      <td className="py-2 px-2 text-right whitespace-nowrap">
+        {p.margen_pct != null ? (
+          <span
+            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+              p.margen_pct >= 60
+                ? "bg-emerald-50 text-emerald-700"
+                : p.margen_pct >= 35
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-rose-50 text-rose-700"
+            }`}
+            title="Margen sobre el costo total (landed)"
+          >
+            {p.margen_pct.toFixed(1)}%
+          </span>
+        ) : (
+          <span className="text-xs text-gray-300">—</span>
+        )}
       </td>
 
       {/* Unidades vendidas */}
