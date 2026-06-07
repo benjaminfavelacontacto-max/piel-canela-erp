@@ -445,3 +445,101 @@ export async function eliminarCotizacion(id: string) {
   revalidatePath("/cotizaciones")
   return { ok: true as const }
 }
+
+// ─── Revertir cotización vendida → borrador ────────────────────────
+// Deshace un "Marcar como Vendida" hecho por error:
+//  1. Restaura el inventario que se descontó (re-suma cantidades de venta_items;
+//     descontar_inventario_venta no tiene RPC inversa, se hace manual).
+//  2. Borra venta_socios, venta_items y la venta.
+//  3. Regresa la cotización a estatus 'borrador'.
+// Restaura ANTES de borrar para no perder las cantidades. Si no hay venta
+// asociada (solo estatus 'aceptada'), únicamente regresa el estatus.
+
+export async function revertirCotizacion(cotizacionId: string) {
+  const supabase = createAdminClient()
+
+  const { data: venta, error: ventaErr } = await supabase
+    .from("ventas")
+    .select("id, numero")
+    .eq("cotizacion_id", cotizacionId)
+    .order("fecha", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (ventaErr) {
+    return { ok: false as const, error: ventaErr.message }
+  }
+
+  if (venta) {
+    // 1) Restaurar inventario desde los items de la venta
+    const { data: items, error: itemsErr } = await supabase
+      .from("venta_items")
+      .select("producto_id, cantidad")
+      .eq("venta_id", venta.id)
+    if (itemsErr) {
+      return { ok: false as const, error: `Items: ${itemsErr.message}` }
+    }
+    const byProd = new Map<string, number>()
+    for (const it of items ?? []) {
+      const pid = it.producto_id as string | null
+      if (!pid) continue
+      byProd.set(pid, (byProd.get(pid) ?? 0) + Number(it.cantidad ?? 0))
+    }
+    for (const [productoId, cant] of byProd) {
+      if (cant <= 0) continue
+      const { data: inv } = await supabase
+        .from("inventario")
+        .select("id, stock_actual")
+        .eq("producto_id", productoId)
+        .maybeSingle()
+      if (inv?.id) {
+        const { error } = await supabase
+          .from("inventario")
+          .update({ stock_actual: Number(inv.stock_actual ?? 0) + cant })
+          .eq("id", inv.id)
+        if (error) {
+          return { ok: false as const, error: `Inventario: ${error.message}` }
+        }
+      } else {
+        const { error } = await supabase.from("inventario").insert({
+          producto_id: productoId,
+          stock_actual: cant,
+          stock_minimo: 0,
+          stock_inicial: cant,
+        })
+        if (error) {
+          return { ok: false as const, error: `Inventario: ${error.message}` }
+        }
+      }
+    }
+
+    // 2) Borrar reparto a socios, items y la venta (en ese orden por FKs)
+    await supabase.from("venta_socios").delete().eq("venta_id", venta.id)
+    await supabase.from("venta_items").delete().eq("venta_id", venta.id)
+    const { error: delErr } = await supabase
+      .from("ventas")
+      .delete()
+      .eq("id", venta.id)
+    if (delErr) {
+      return { ok: false as const, error: `Venta: ${delErr.message}` }
+    }
+  }
+
+  // 3) Regresar la cotización a borrador
+  const { error: updErr } = await supabase
+    .from("cotizaciones")
+    .update({ estatus: "borrador" })
+    .eq("id", cotizacionId)
+  if (updErr) {
+    return { ok: false as const, error: `Estatus: ${updErr.message}` }
+  }
+
+  revalidatePath(`/cotizaciones/${cotizacionId}`)
+  revalidatePath("/cotizaciones")
+  revalidatePath("/ventas")
+  revalidatePath("/inventario")
+  revalidatePath("/")
+  return {
+    ok: true as const,
+    ventaNumero: (venta?.numero as string | undefined) ?? null,
+  }
+}

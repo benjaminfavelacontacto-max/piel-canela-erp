@@ -10,6 +10,7 @@ import {
   Pencil,
   Copy,
   ShoppingBag,
+  RotateCcw,
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -21,6 +22,7 @@ import {
   marcarVendida,
   duplicarCotizacion,
   eliminarCotizacion,
+  revertirCotizacion,
 } from "../actions"
 
 const estatusBadge: Record<Estatus, string> = {
@@ -57,6 +59,8 @@ export function CotizacionDetail({
   const [currentEstatus, setCurrentEstatus] = useState<Estatus>(estatus)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmarRevertir, setConfirmarRevertir] = useState(false)
+  const [reverting, setReverting] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
   // "Vendida" = ya existe una venta generada desde esta cotización (señal fuerte),
   // o el estatus es "aceptada". Evita que el botón verde invite a re-vender.
@@ -73,6 +77,22 @@ export function CotizacionDetail({
     toast.success("Cotización eliminada")
     setConfirmarEliminar(false)
     router.push("/cotizaciones")
+  }
+
+  async function handleRevertir() {
+    setReverting(true)
+    const result = await revertirCotizacion(cotizacionId)
+    setReverting(false)
+    if (!result.ok) {
+      toast.error(result.error || "No se pudo revertir")
+      return
+    }
+    setConfirmarRevertir(false)
+    setCurrentEstatus("borrador")
+    toast.success("Revertida a cotización", {
+      description: "Venta eliminada e inventario restaurado.",
+    })
+    router.refresh()
   }
 
   function handleMarkSold() {
@@ -149,14 +169,25 @@ export function CotizacionDetail({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {ventaAsociada ? (
-            <Link
-              href={`/ventas/${ventaAsociada.id}`}
-              className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100"
-              title={`Esta cotización ya se vendió (${ventaAsociada.numero}). Ver la venta.`}
-            >
-              <CheckCircle2 className="size-4" />
-              Ver venta
-            </Link>
+            <>
+              <Link
+                href={`/ventas/${ventaAsociada.id}`}
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100"
+                title={`Esta cotización ya se vendió (${ventaAsociada.numero}). Ver la venta.`}
+              >
+                <CheckCircle2 className="size-4" />
+                Ver venta
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmarRevertir(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-100"
+                title="Deshacer la venta y regresar la cotización a borrador"
+              >
+                <RotateCcw className="size-4" />
+                Revertir a cotización
+              </button>
+            </>
           ) : (
             <>
               {currentEstatus === "aceptada" && (
@@ -227,6 +258,16 @@ export function CotizacionDetail({
           loading={deleting}
           onCancel={() => setConfirmarEliminar(false)}
           onConfirm={handleEliminar}
+        />
+      )}
+
+      {confirmarRevertir && (
+        <RevertCotModal
+          numero={numero}
+          ventaNumero={ventaAsociada?.numero ?? null}
+          loading={reverting}
+          onCancel={() => setConfirmarRevertir(false)}
+          onConfirm={handleRevertir}
         />
       )}
 
@@ -318,6 +359,84 @@ function DeleteCotModal({
               <>
                 <Trash2 className="size-3.5" />
                 Eliminar
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RevertCotModal({
+  numero,
+  ventaNumero,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  numero: string
+  ventaNumero: string | null
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      onClick={onCancel}
+    >
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-amber-50">
+          <RotateCcw className="size-6 text-amber-500" />
+        </div>
+        <h3 className="mb-1 text-center text-base font-bold text-gray-900">
+          ¿Revertir a cotización?
+        </h3>
+        <p className="mb-1 text-center font-mono text-sm font-semibold text-gray-700">
+          {numero}
+        </p>
+        <p className="mb-5 text-center text-xs text-gray-500">
+          {ventaNumero ? (
+            <>
+              Se eliminará la venta <strong>{ventaNumero}</strong>, se
+              devolverá el stock al inventario
+            </>
+          ) : (
+            <>Se devolverá el stock al inventario</>
+          )}{" "}
+          y la cotización volverá a <strong>borrador</strong>. Esta acción no se
+          puede deshacer.
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? (
+              <>
+                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Revirtiendo…
+              </>
+            ) : (
+              <>
+                <RotateCcw className="size-3.5" />
+                Revertir
               </>
             )}
           </button>
