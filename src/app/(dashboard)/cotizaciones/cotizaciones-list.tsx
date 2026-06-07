@@ -380,25 +380,6 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
     router.refresh()
   }
 
-  // Si ya tiene venta — indicador sutil siempre visible, sin acciones
-  if (cot.esConvertida) {
-    return (
-      <div className="flex items-center justify-end">
-        <span
-          className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium tabular-nums"
-          style={{
-            backgroundColor: "rgba(15,118,110,0.06)",
-            color: "#0F766E",
-          }}
-          title="Cotización con venta vinculada"
-        >
-          <CheckCircle2 className="size-3" strokeWidth={2.25} />
-          Vendida
-        </span>
-      </div>
-    )
-  }
-
   const canSend = cot.estatus === "borrador"
   const canSell = cot.estatus === "borrador" || cot.estatus === "enviada"
 
@@ -1059,10 +1040,20 @@ export function CotizacionesList({
         id: "estadoComercial",
         accessorFn: (c) => c.estadoComercial,
         header: (ctx) => <HeaderCell label="Estado" ctx={ctx} />,
-        cell: ({ row }) => (
-          <EstadoComercialPill estado={row.original.estadoComercial} />
-        ),
-        size: 110,
+        // Vendida (con venta vinculada) → badge fijo. Resto → dropdown editable.
+        cell: ({ row }) =>
+          row.original.esConvertida ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200/60"
+              title="Cotización vendida (tiene venta vinculada). Para revertirla, abre el detalle."
+            >
+              <CheckCircle2 className="size-3" strokeWidth={2.25} />
+              Vendida
+            </span>
+          ) : (
+            <StatusCell cotId={row.original.id} estatus={row.original.estatus} />
+          ),
+        size: 150,
       },
       {
         id: "probabilidad",
@@ -1734,63 +1725,6 @@ function Kpi({
       </div>
       {sub && <div className="mt-1 text-[11px] text-gray-500">{sub}</div>}
     </article>
-  )
-}
-
-const ESTADO_COMERCIAL_CONF: Record<
-  ReturnType<typeof classifyEstadoComercial>,
-  { label: string; bg: string; text: string; ring: string; dot: string }
-> = {
-  convertida: {
-    label: "Convertida",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200/60",
-    dot: "bg-emerald-500",
-  },
-  activa: {
-    label: "Activa",
-    bg: "bg-teal-50",
-    text: "text-teal-700",
-    ring: "ring-teal-200/60",
-    dot: "bg-teal-500",
-  },
-  seguimiento: {
-    label: "Seguimiento",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    ring: "ring-amber-200/60",
-    dot: "bg-amber-500",
-  },
-  vencida: {
-    label: "Vencida",
-    bg: "bg-orange-50",
-    text: "text-orange-700",
-    ring: "ring-orange-200/60",
-    dot: "bg-orange-500",
-  },
-  perdida: {
-    label: "Perdida",
-    bg: "bg-rose-50",
-    text: "text-[#DC2626]",
-    ring: "ring-rose-200/60",
-    dot: "bg-rose-500",
-  },
-}
-
-function EstadoComercialPill({
-  estado,
-}: {
-  estado: ReturnType<typeof classifyEstadoComercial>
-}) {
-  const c = ESTADO_COMERCIAL_CONF[estado]
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full ${c.bg} ${c.text} px-2 py-0.5 text-xs font-medium ring-1 ${c.ring}`}
-    >
-      <span className={`size-1.5 rounded-full ${c.dot}`} />
-      {c.label}
-    </span>
   )
 }
 
