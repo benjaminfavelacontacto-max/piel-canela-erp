@@ -749,7 +749,7 @@ export function VentasTablePremium({
     ganancia_bruta: false,
     utilidad_neta: false,
     subtotal: false,
-    iva: false,
+    // iva visible por defecto: muestra "+ $monto" si pagó con IVA, o "Sin IVA"
   })
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
   const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -797,9 +797,18 @@ export function VentasTablePremium({
         header: (ctx) => <HeaderCell label="Número" ctx={ctx} />,
         cell: ({ getValue, row }) => (
           <Link
-            href={`/ventas/${row.original.id}`}
+            href={
+              row.original.cotizacion_id
+                ? `/cotizaciones/${row.original.cotizacion_id}`
+                : `/ventas/${row.original.id}`
+            }
             className="font-mono text-xs text-[#0F766E] transition hover:underline"
             onClick={(e) => e.stopPropagation()}
+            title={
+              row.original.cotizacion_id
+                ? "Ver la cotización de esta venta"
+                : "Ver detalle (esta venta no tiene cotización)"
+            }
           >
             {getValue() as string}
           </Link>
