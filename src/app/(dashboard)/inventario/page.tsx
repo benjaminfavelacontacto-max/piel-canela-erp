@@ -200,11 +200,18 @@ export default async function InventarioPage({
       const precio = p ? idToPriceMap.get(p.id) ?? null : null
       const stock = Number(v.stock_actual ?? 0)
       const minimo = Number(v.stock_minimo ?? 0)
+      // Costo unitario REAL = costo landed de la vista (precio_usd + envío × TC).
+      // Si el producto no tiene costeo cargado, caemos al promedio de costos de
+      // ventas pasadas. Así capital/margen YA NO dependen de haber vendido antes
+      // (antes: capital = stock × costoProm → 0 en los 78 productos sin ventas).
+      const costoLanded =
+        v.costo_total_mxn != null ? Number(v.costo_total_mxn) : 0
+      const costoUnit = costoLanded > 0 ? costoLanded : costoProm
       const valor = precio != null ? stock * precio : null
-      const capital = stock * costoProm
+      const capital = costoUnit > 0 ? stock * costoUnit : null
       const margen =
-        precio != null && precio > 0 && costoProm > 0
-          ? ((precio - costoProm) / precio) * 100
+        precio != null && precio > 0 && costoUnit > 0
+          ? ((precio - costoUnit) / precio) * 100
           : null
       return {
         id: p?.id ?? v.sku,
@@ -216,7 +223,7 @@ export default async function InventarioPage({
         categoria: v.categoria ?? p?.categorias?.nombre ?? "Sin categoría",
         proveedor: p?.proveedores?.nombre ?? null,
         precio_publico: precio,
-        costo_unitario_prom: costoProm > 0 ? costoProm : null,
+        costo_unitario_prom: costoUnit > 0 ? costoUnit : null,
         stock_actual: stock,
         stock_minimo: minimo,
         estatus: (v.estatus as "ok" | "bajo" | "agotado") ?? "ok",
@@ -225,7 +232,7 @@ export default async function InventarioPage({
             ? Number(v.unidades_vendidas)
             : agg.unidades,
         valor_inventario: valor,
-        capital_invertido: capital > 0 ? capital : null,
+        capital_invertido: capital,
         margen_pct: margen,
         // Campos USD/MXN desde la vista
         precio_usd: v.precio_usd != null ? Number(v.precio_usd) : null,
