@@ -3,6 +3,11 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import {
+  construirNumeroOrden,
+  nombreCorto,
+  cambiarTipoNumero,
+} from "@/lib/numero-orden"
 
 export type SaveItem = {
   producto_id: string
@@ -28,14 +33,76 @@ export type SaveCotizacionInput = {
   items: SaveItem[]
 }
 
+// ─── Auto-generación del número de orden (consecutivo por cliente) ──────
+
+async function numeroOrdenExiste(
+  supabase: ReturnType<typeof createAdminClient>,
+  numeroC: string,
+): Promise<boolean> {
+  const numeroV = cambiarTipoNumero(numeroC, "V")
+  const [c1, c2, v1, v2] = await Promise.all([
+    supabase.from("cotizaciones").select("id").eq("numero", numeroC).maybeSingle(),
+    supabase.from("cotizaciones").select("id").eq("numero", numeroV).maybeSingle(),
+    supabase.from("ventas").select("id").eq("numero", numeroC).maybeSingle(),
+    supabase.from("ventas").select("id").eq("numero", numeroV).maybeSingle(),
+  ])
+  return !!(c1.data || c2.data || v1.data || v2.data)
+}
+
+async function generarNumeroCotizacion(
+  supabase: ReturnType<typeof createAdminClient>,
+  clienteId: string,
+  fecha: string,
+): Promise<string> {
+  // Consecutivo = # de cotizaciones del cliente + 1
+  const { count } = await supabase
+    .from("cotizaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("cliente_id", clienteId)
+  const { data: cli } = await supabase
+    .from("clientes")
+    .select("nombre, nombre_negocio")
+    .eq("id", clienteId)
+    .maybeSingle()
+  const corto = nombreCorto(cli ?? null)
+  let consecutivo = (count ?? 0) + 1
+  // Garantizar unicidad: si el número ya existe, sube el consecutivo.
+  for (let i = 0; i < 50; i++) {
+    const numero = construirNumeroOrden({ fecha, consecutivo, tipo: "C", nombreCorto: corto })
+    if (!(await numeroOrdenExiste(supabase, numero))) return numero
+    consecutivo++
+  }
+  return construirNumeroOrden({ fecha, consecutivo, tipo: "C", nombreCorto: corto })
+}
+
+/** Server action: número sugerido para el formulario (preview, editable). */
+export async function siguienteNumeroCotizacion(
+  clienteId: string,
+  fecha?: string,
+): Promise<string | null> {
+  if (!clienteId) return null
+  const supabase = createAdminClient()
+  return generarNumeroCotizacion(
+    supabase,
+    clienteId,
+    fecha || new Date().toISOString().slice(0, 10),
+  )
+}
+
 export async function saveCotizacion(input: SaveCotizacionInput) {
   const supabase = createAdminClient()
+
+  // Número: usar el provisto, o auto-generar (consecutivo por cliente) si viene vacío.
+  let numero = (input.numero ?? "").trim()
+  if (!numero && input.cliente_id) {
+    numero = await generarNumeroCotizacion(supabase, input.cliente_id, input.fecha)
+  }
 
   // total y utilidad_neta son GENERATED — no se insertan. Postgres las calcula.
   const { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .insert({
-      numero: input.numero,
+      numero,
       cliente_id: input.cliente_id,
       fecha: input.fecha,
       valida_hasta: input.valida_hasta,
@@ -128,11 +195,14 @@ export async function marcarVendida(cotizacionId: string) {
     return { ok: false as const, error: itemsErr.message }
   }
 
+  // Al vender, el número cambia su sufijo de -C- (cotizado) a -V- (vendido).
+  const numeroVenta = cambiarTipoNumero(cot.numero, "V")
+
   // total / ganancia / saldo_pendiente / utilidad_neta son GENERATED — Postgres los calcula.
   const { data: venta, error: ventaErr } = await supabase
     .from("ventas")
     .insert({
-      numero: cot.numero,
+      numero: numeroVenta,
       cliente_id: cot.cliente_id,
       fecha: new Date().toISOString().slice(0, 10),
       moneda: cot.moneda,
@@ -187,7 +257,7 @@ export async function marcarVendida(cotizacionId: string) {
 
   const { error: updErr } = await supabase
     .from("cotizaciones")
-    .update({ estatus: "aceptada" })
+    .update({ estatus: "aceptada", numero: numeroVenta })
     .eq("id", cotizacionId)
 
   if (updErr) {
@@ -524,10 +594,12 @@ export async function revertirCotizacion(cotizacionId: string) {
     }
   }
 
-  // 3) Regresar la cotización a borrador
+  // 3) Regresar la cotización a borrador (y su número de -V- de vuelta a -C-)
+  const updatesCot: { estatus: string; numero?: string } = { estatus: "borrador" }
+  if (venta?.numero) updatesCot.numero = cambiarTipoNumero(venta.numero, "C")
   const { error: updErr } = await supabase
     .from("cotizaciones")
-    .update({ estatus: "borrador" })
+    .update(updatesCot)
     .eq("id", cotizacionId)
   if (updErr) {
     return { ok: false as const, error: `Estatus: ${updErr.message}` }

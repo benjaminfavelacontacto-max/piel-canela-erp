@@ -11,7 +11,11 @@ import type {
   Producto,
 } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
-import { saveCotizacion, updateCotizacion } from "../actions"
+import {
+  saveCotizacion,
+  updateCotizacion,
+  siguienteNumeroCotizacion,
+} from "../actions"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 
 const mxn = new Intl.NumberFormat("es-MX", {
@@ -85,6 +89,17 @@ export function CotizacionForm({
     () => clientes.find((c) => c.id === clienteId) ?? null,
     [clienteId, clientes],
   )
+
+  // Al elegir cliente, auto-generar el número (PC-DDMMYY-NNN-C-NombreCorto).
+  // Solo en creación; el campo queda editable por si se quiere ajustar.
+  function handleSelectCliente(id: string) {
+    setClienteId(id)
+    if (isEdit || !id) return
+    void (async () => {
+      const n = await siguienteNumeroCotizacion(id, fecha)
+      if (n) setNumero(n)
+    })()
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -294,7 +309,7 @@ export function CotizacionForm({
           <ClientePicker
             clientes={clientes}
             selectedId={clienteId}
-            onSelect={setClienteId}
+            onSelect={handleSelectCliente}
           />
           {cliente && (
             <div className="mt-3 space-y-1.5 rounded-lg bg-gradient-to-br from-pink-50/60 to-white p-3 text-xs">
@@ -340,7 +355,10 @@ export function CotizacionForm({
               )}
               <button
                 type="button"
-                onClick={() => setClienteId("")}
+                onClick={() => {
+                  setClienteId("")
+                  if (!isEdit) setNumero("")
+                }}
                 className="mt-2 text-[10.5px] text-[#0F766E] hover:text-[#115E59] hover:underline"
               >
                 Cambiar cliente
@@ -482,12 +500,17 @@ export function CotizacionForm({
           <h2 className="text-sm font-semibold text-gray-900">Detalles</h2>
 
           <label className="block text-xs">
-            <span className="text-gray-600">Número de orden</span>
+            <span className="text-gray-600">
+              Número de orden{" "}
+              <span className="text-gray-400">
+                · se genera solo al elegir cliente
+              </span>
+            </span>
             <input
               type="text"
               value={numero}
               onChange={(e) => setNumero(e.target.value)}
-              placeholder="PC-210526001-V-NombreCliente"
+              placeholder="PC-020626001-C-Cliente (automático)"
               className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
           </label>
