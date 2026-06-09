@@ -49,7 +49,11 @@ import { ClienteDrawer } from "./cliente-drawer"
 import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
 import { EstimadoIngresos } from "./estimado-ingresos"
-import { PrediccionCompras } from "./prediccion-compras"
+import {
+  predecirCompra,
+  calcularGlobalFrecuencia,
+  type PrediccionResult,
+} from "./lib-prediccion"
 import { TIPOS_CLIENTE, getTipoConf } from "./tipos-cliente"
 import { actualizarTipoCliente } from "./actions"
 
@@ -233,6 +237,35 @@ function Avatar({ nombre }: { nombre: string }) {
   )
 }
 
+// ─── Filtros inteligentes (basados en la predicción de compra) ───────
+type PredFilterKey = "todos" | "semana" | "alta_prob" | "riesgo"
+
+const PRED_FILTERS: { key: PredFilterKey; label: string }[] = [
+  { key: "todos", label: "Todos" },
+  { key: "semana", label: "Compra esta semana" },
+  { key: "alta_prob", label: "Alta probabilidad" },
+  { key: "riesgo", label: "En riesgo" },
+]
+
+function matchesPredFilter(
+  pred: PrediccionResult | undefined,
+  f: PredFilterKey,
+): boolean {
+  if (f === "todos") return true
+  if (!pred || pred.metodo === "insufficient") return false
+  const dias = pred.diasParaProxima
+  switch (f) {
+    case "semana":
+      return dias !== null && dias >= -3 && dias <= 7
+    case "alta_prob":
+      return pred.probabilidadProx60 >= 0.6
+    case "riesgo":
+      return pred.riesgoAbandono >= 0.6
+    default:
+      return true
+  }
+}
+
 function HeaderCell({
   label,
   ctx,
@@ -373,6 +406,46 @@ export function ClientesDashboard({
     })
   }, [clientes, ventas, cotizaciones, today, sociosMap])
 
+  // ─── Predicción de compra por cliente (CDF empírica + bell + global) ──
+  //     Reusa lib-prediccion. Alimenta columnas, filtros y KPI proyectado.
+  const predByCliente = useMemo(() => {
+    const globalFreq = calcularGlobalFrecuencia(enriched)
+    const m = new Map<string, PrediccionResult>()
+    for (const c of enriched) {
+      m.set(c.id, predecirCompra(c, ventas, today, globalFreq))
+    }
+    return m
+  }, [enriched, ventas, today])
+
+  const predCounts = useMemo(() => {
+    const count = (f: PredFilterKey) =>
+      enriched.filter((c) => matchesPredFilter(predByCliente.get(c.id), f)).length
+    return {
+      todos: enriched.length,
+      semana: count("semana"),
+      alta_prob: count("alta_prob"),
+      riesgo: count("riesgo"),
+    } as Record<PredFilterKey, number>
+  }, [enriched, predByCliente])
+
+  // Revenue proyectado a 7 días (próxima compra inminente × probabilidad)
+  const revenue7d = useMemo(() => {
+    let s = 0
+    for (const c of enriched) {
+      const p = predByCliente.get(c.id)
+      if (
+        p &&
+        p.diasParaProxima !== null &&
+        p.diasParaProxima >= 0 &&
+        p.diasParaProxima <= 7 &&
+        p.probabilidadProx60 >= 0.5
+      ) {
+        s += p.ingresoEstimadoProx
+      }
+    }
+    return s
+  }, [enriched, predByCliente])
+
   // ─── KPIs básicos (F3 los amplía) ─────────────────────────────────
   const kpis = useMemo(() => {
     const total = enriched.length
@@ -461,6 +534,7 @@ export function ClientesDashboard({
     "todos",
   )
   const [tipoFilter, setTipoFilter] = useState<string>("todos")
+  const [predFilter, setPredFilter] = useState<PredFilterKey>("todos")
 
   const filtered = useMemo(() => {
     let list = enriched
@@ -470,8 +544,13 @@ export function ClientesDashboard({
     if (tipoFilter !== "todos") {
       list = list.filter((c) => c.tipo === tipoFilter)
     }
+    if (predFilter !== "todos") {
+      list = list.filter((c) =>
+        matchesPredFilter(predByCliente.get(c.id), predFilter),
+      )
+    }
     return list
-  }, [enriched, statusFilter, tipoFilter])
+  }, [enriched, statusFilter, tipoFilter, predFilter, predByCliente])
 
   // ─── TanStack Table ────────────────────────────────────────────────
   const [sorting, setSorting] = useState<SortingState>([
@@ -837,6 +916,109 @@ export function ClientesDashboard({
         size: 110,
       },
       {
+        id: "prox_compra",
+        accessorFn: (c) => predByCliente.get(c.id)?.diasParaProxima ?? 99999,
+        header: (ctx) => (
+          <HeaderCell label="Próxima compra" ctx={ctx} align="center" />
+        ),
+        meta: { align: "center" },
+        size: 150,
+        cell: ({ row }) => {
+          const p = predByCliente.get(row.original.id)
+          if (!p || p.metodo === "insufficient" || !p.fechaProxima) {
+            return <span className="text-[11px] text-gray-300">—</span>
+          }
+          const dias = p.diasParaProxima ?? 0
+          const rel =
+            dias === 0 ? "hoy" : dias < 0 ? `hace ${-dias}d` : `en ${dias}d`
+          const color =
+            dias < -7
+              ? "#B91C1C"
+              : dias < 0
+                ? "#B45309"
+                : dias <= 14
+                  ? "#047857"
+                  : "#475569"
+          const accion =
+            p.riesgoAbandono >= 0.6
+              ? "Contactar"
+              : dias >= -3 && dias <= 14
+                ? "Preparar"
+                : null
+          return (
+            <div className="text-center leading-tight">
+              <div
+                className="text-[12px] font-semibold tabular-nums"
+                style={{ color }}
+              >
+                {fechaFmt.format(p.fechaProxima)}
+              </div>
+              <div className="text-[10px] text-gray-400">
+                {rel}
+                {accion ? (
+                  <span className="font-semibold" style={{ color }}>
+                    {" · "}
+                    {accion}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        id: "probabilidad",
+        accessorFn: (c) => predByCliente.get(c.id)?.probabilidadProx60 ?? -1,
+        header: (ctx) => <HeaderCell label="Prob. 60d" ctx={ctx} align="center" />,
+        meta: { align: "center" },
+        size: 120,
+        cell: ({ row }) => {
+          const p = predByCliente.get(row.original.id)
+          if (!p || p.metodo === "insufficient") {
+            return <span className="text-[11px] text-gray-300">—</span>
+          }
+          const pct = Math.round(p.probabilidadProx60 * 100)
+          const color =
+            pct >= 60 ? "#047857" : pct >= 30 ? "#B45309" : "#94A3B8"
+          return (
+            <div className="mx-auto flex w-20 flex-col items-center gap-1">
+              <span
+                className="text-[12px] font-bold tabular-nums"
+                style={{ color }}
+              >
+                {pct}%
+              </span>
+              <div className="h-1 w-full overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${pct}%`, background: color }}
+                />
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        id: "revenue_esp",
+        accessorFn: (c) => predByCliente.get(c.id)?.ingresoEstimadoProx ?? 0,
+        header: (ctx) => (
+          <HeaderCell label="Revenue esp." ctx={ctx} align="right" />
+        ),
+        meta: { align: "right" },
+        size: 120,
+        cell: ({ row }) => {
+          const p = predByCliente.get(row.original.id)
+          if (!p || p.metodo === "insufficient" || p.ingresoEstimadoProx <= 0) {
+            return <span className="text-[11px] text-gray-300">—</span>
+          }
+          return (
+            <span className="text-[12.5px] font-semibold tabular-nums text-gray-800">
+              {mxn.format(p.ingresoEstimadoProx)}
+            </span>
+          )
+        },
+      },
+      {
         id: "acciones",
         header: () => (
           <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
@@ -881,7 +1063,7 @@ export function ClientesDashboard({
         },
       },
     ],
-    [],
+    [predByCliente],
   )
 
   const table = useReactTable({
@@ -1051,6 +1233,12 @@ export function ClientesDashboard({
                 borderRadius: "12px",
               }}
             >
+              {revenue7d > 0 && (
+                <InsightPill tone="violet">
+                  Revenue proyectado 7d:{" "}
+                  <span className="font-semibold">{mxn.format(revenue7d)}</span>
+                </InsightPill>
+              )}
               {kpis.mejor && concentrado > 30 && (
                 <InsightPill tone="amber">
                   <span className="font-semibold">{kpis.mejor.nombre_negocio ?? kpis.mejor.nombre}</span>{" "}
@@ -1091,12 +1279,8 @@ export function ClientesDashboard({
         {/* Estimado de ingresos predictivo */}
         <EstimadoIngresos clientes={enriched} ventas={ventas} />
 
-        {/* Predicción de compras por cliente (CDF empírica + bell + seasonality) */}
-        <PrediccionCompras
-          clientes={enriched}
-          ventas={ventas}
-          onClienteClick={setSelectedCliente}
-        />
+        {/* Predicción de compras: fusionada en la tabla unificada de abajo
+            (columnas Próxima compra · Prob. 60d · Revenue esp. + filtros). */}
 
         {/* Recurrencia analytics con heatmap interactivo */}
         <RecurrenciaAnalytics
@@ -1203,6 +1387,43 @@ export function ClientesDashboard({
             </div>
           </div>
         </header>
+
+        {/* Filtros inteligentes de predicción */}
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-[rgba(15,23,42,0.04)] bg-[#FBFCFD] px-5 py-2">
+          <span className="mr-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            <Sparkles className="size-3 text-[#4F46E5]" />
+            Predicción
+          </span>
+          {PRED_FILTERS.map((f) => {
+            const active = predFilter === f.key
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setPredFilter(f.key)}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all"
+                style={{
+                  background: active ? "rgba(99,102,241,0.10)" : "white",
+                  color: active ? "#4F46E5" : "#64748B",
+                  border: `1px solid ${active ? "rgba(99,102,241,0.30)" : "rgba(15,23,42,0.08)"}`,
+                }}
+              >
+                {f.label}
+                <span
+                  className="rounded-full px-1.5 py-px text-[9px] font-bold tabular-nums"
+                  style={{
+                    background: active
+                      ? "rgba(99,102,241,0.20)"
+                      : "rgba(15,23,42,0.06)",
+                    color: active ? "#4F46E5" : "#94A3B8",
+                  }}
+                >
+                  {predCounts[f.key]}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
         {/* Body */}
         <div className="relative max-w-full overflow-auto">
