@@ -31,6 +31,48 @@ function formatMXN(v: number): string {
   })
 }
 
+// ─── Agrupación de cintas por tipo (1 tarjeta → varias medidas) ──────
+// En la categoría CINTAS cada "tipo" (p.ej. "Amarilla clara") tiene varias
+// medidas (cortada 6/9/12mm, entera). Las unimos en una sola tarjeta y al
+// hacer clic el cliente elige la medida. Se agrupa por el nombre base (lo que
+// va antes del paréntesis); la medida es el contenido del paréntesis.
+const CINTA_CAT = "CINTAS"
+
+function parseCintaNombre(nombre: string): {
+  base: string
+  medidaRaw: string | null
+} {
+  const m = nombre.match(/^(.*?)\s*\(([^)]+)\)\s*$/)
+  if (m) return { base: m[1].trim(), medidaRaw: m[2].trim() }
+  return { base: nombre.trim(), medidaRaw: null }
+}
+
+function medidaCorta(medidaRaw: string | null, peso: string | null): string {
+  if (medidaRaw) {
+    const mm = medidaRaw.match(/(\d+)\s*mm/i)
+    if (mm) return `${mm[1]}mm`
+    if (/enter/i.test(medidaRaw)) return "Entera"
+    return medidaRaw.charAt(0).toUpperCase() + medidaRaw.slice(1)
+  }
+  if ((peso ?? "").toUpperCase() === "1PZA") return "Entera"
+  return peso || "Pieza"
+}
+
+function medidaRank(medida: string): number {
+  const mm = medida.match(/(\d+)mm/i)
+  if (mm) return Number(mm[1]) // 6, 9, 12 → orden natural
+  if (/enter/i.test(medida)) return 100 // entera al final
+  return 50
+}
+
+export type VarianteCinta = { producto: Producto; medida: string; rank: number }
+export type GrupoCinta = {
+  key: string
+  base: string
+  imagen_url: string | null
+  variantes: VarianteCinta[]
+}
+
 export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState("TODOS")
   const [busqueda, setBusqueda] = useState("")
@@ -38,6 +80,8 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const [step, setStep] = useState<"catalog" | "checkout">("catalog")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Grupo de cinta abierto en el selector de medida (null = cerrado)
+  const [medidaGrupo, setMedidaGrupo] = useState<GrupoCinta | null>(null)
 
   const [clienteData, setClienteData] = useState({
     nombre: "",
@@ -57,15 +101,82 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
     [productos],
   )
 
-  const productosFiltrados = productos.filter((p) => {
-    const matchCat = categoriaActiva === "TODOS" || p.categoria === categoriaActiva
+  // Grupos de cinta por tipo (se arman una vez sobre TODO el catálogo).
+  const cintaGroups = useMemo<GrupoCinta[]>(() => {
+    const map = new Map<string, GrupoCinta>()
+    for (const p of productos) {
+      if (p.categoria !== CINTA_CAT) continue
+      const { base, medidaRaw } = parseCintaNombre(p.nombre)
+      const key = base.toLowerCase()
+      const medida = medidaCorta(medidaRaw, p.peso)
+      const g =
+        map.get(key) ??
+        ({ key, base, imagen_url: null, variantes: [] } as GrupoCinta)
+      g.variantes.push({ producto: p, medida, rank: medidaRank(medida) })
+      if (!g.imagen_url && p.imagen_url) g.imagen_url = p.imagen_url
+      map.set(key, g)
+    }
+    const arr = [...map.values()]
+    for (const g of arr) g.variantes.sort((a, b) => a.rank - b.rank)
+    return arr
+  }, [productos])
+
+  // Lista a renderizar: productos sueltos (no-cinta) + grupos de cinta.
+  // Las cintas de una sola medida se muestran como tarjeta normal.
+  type DisplayItem =
+    | { kind: "single"; sortName: string; producto: Producto }
+    | { kind: "group"; sortName: string; grupo: GrupoCinta }
+
+  const displayList = useMemo<DisplayItem[]>(() => {
     const q = busqueda.trim().toLowerCase()
-    const matchBusq =
-      !q ||
-      p.nombre.toLowerCase().includes(q) ||
-      p.sku.toLowerCase().includes(q)
-    return matchCat && matchBusq
-  })
+    const inCat = (cat: string) =>
+      categoriaActiva === "TODOS" || cat === categoriaActiva
+    const out: DisplayItem[] = []
+
+    for (const p of productos) {
+      if (p.categoria === CINTA_CAT) continue
+      if (!inCat(p.categoria)) continue
+      if (
+        q &&
+        !(
+          p.nombre.toLowerCase().includes(q) ||
+          p.sku.toLowerCase().includes(q)
+        )
+      )
+        continue
+      out.push({ kind: "single", sortName: p.nombre.toLowerCase(), producto: p })
+    }
+
+    if (inCat(CINTA_CAT)) {
+      for (const g of cintaGroups) {
+        if (
+          q &&
+          !(
+            g.base.toLowerCase().includes(q) ||
+            g.variantes.some(
+              (v) =>
+                v.producto.nombre.toLowerCase().includes(q) ||
+                v.producto.sku.toLowerCase().includes(q) ||
+                v.medida.toLowerCase().includes(q),
+            )
+          )
+        )
+          continue
+        if (g.variantes.length === 1) {
+          out.push({
+            kind: "single",
+            sortName: g.base.toLowerCase(),
+            producto: g.variantes[0].producto,
+          })
+        } else {
+          out.push({ kind: "group", sortName: g.base.toLowerCase(), grupo: g })
+        }
+      }
+    }
+
+    out.sort((a, b) => a.sortName.localeCompare(b.sortName, "es"))
+    return out
+  }, [productos, cintaGroups, categoriaActiva, busqueda])
 
   const addToCart = (producto: Producto) => {
     if (producto.stock <= 0) return // agotado: no se puede cotizar
@@ -192,7 +303,25 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
 
           {/* Grid de productos */}
           <div className="mb-24 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {productosFiltrados.map((producto) => {
+            {displayList.map((item) => {
+              if (item.kind === "group") {
+                const unidades = item.grupo.variantes.reduce(
+                  (s, v) =>
+                    s +
+                    (cart.find((i) => i.producto.id === v.producto.id)
+                      ?.cantidad ?? 0),
+                  0,
+                )
+                return (
+                  <CintaGroupCard
+                    key={item.grupo.key}
+                    grupo={item.grupo}
+                    unidadesEnCarrito={unidades}
+                    onElegir={() => setMedidaGrupo(item.grupo)}
+                  />
+                )
+              }
+              const producto = item.producto
               const enCarrito = cart.find((i) => i.producto.id === producto.id)
               const agotado = producto.stock <= 0
               return (
@@ -284,7 +413,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                 </div>
               )
             })}
-            {productosFiltrados.length === 0 && (
+            {displayList.length === 0 && (
               <div className="col-span-full py-16 text-center text-sm text-gray-500">
                 Sin productos con esos filtros.
               </div>
@@ -308,6 +437,17 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                 </span>
               </button>
             </div>
+          )}
+
+          {/* Selector de medida para un tipo de cinta */}
+          {medidaGrupo && (
+            <MedidaPicker
+              grupo={medidaGrupo}
+              cart={cart}
+              addToCart={addToCart}
+              updateCantidad={updateCantidad}
+              onClose={() => setMedidaGrupo(null)}
+            />
           )}
         </>
       ) : (
@@ -547,6 +687,212 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
           </p>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Tarjeta de un TIPO de cinta (varias medidas) ───────────────────
+function CintaGroupCard({
+  grupo,
+  unidadesEnCarrito,
+  onElegir,
+}: {
+  grupo: GrupoCinta
+  unidadesEnCarrito: number
+  onElegir: () => void
+}) {
+  const agotado = grupo.variantes.every((v) => v.producto.stock <= 0)
+  const precios = grupo.variantes.map((v) => v.producto.precio)
+  const precioMin = Math.min(...precios)
+  const variosPrecios = new Set(precios).size > 1
+  return (
+    <button
+      type="button"
+      onClick={agotado ? undefined : onElegir}
+      disabled={agotado}
+      className={`relative block overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
+        agotado
+          ? "cursor-not-allowed opacity-75"
+          : "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+      }`}
+    >
+      <div className="relative flex h-36 items-center justify-center bg-[#F9FAFB]">
+        {agotado && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-gray-900/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            Agotado
+          </span>
+        )}
+        {unidadesEnCarrito > 0 && (
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0F766E] px-2 py-0.5 text-[10px] font-bold text-white">
+            {unidadesEnCarrito} en pedido
+          </span>
+        )}
+        {grupo.imagen_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={grupo.imagen_url}
+            alt={grupo.base}
+            className={`h-full w-full object-contain p-2 ${agotado ? "grayscale" : ""}`}
+          />
+        ) : (
+          <div className="text-3xl font-bold text-gray-200">CN</div>
+        )}
+      </div>
+      <div className="p-3">
+        <p className="text-[10px] uppercase tracking-wide text-gray-400">
+          Cinta · {grupo.variantes.length} medidas
+        </p>
+        <p className="mt-0.5 text-sm font-semibold leading-tight text-gray-900">
+          {grupo.base}
+        </p>
+        <p className="mt-1 text-base font-bold text-[#0F766E]">
+          {variosPrecios ? "desde " : ""}
+          {formatMXN(precioMin)}
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {grupo.variantes.map((v) => (
+            <span
+              key={v.producto.id}
+              className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                v.producto.stock > 0
+                  ? "bg-[#EAF6F4] text-[#0F766E]"
+                  : "bg-gray-100 text-gray-300 line-through"
+              }`}
+            >
+              {v.medida}
+            </span>
+          ))}
+        </div>
+        <span
+          className={`mt-2 block w-full rounded-lg py-1.5 text-center text-xs font-medium ${
+            agotado ? "bg-[#F3F5F7] text-gray-400" : "bg-[#0F766E] text-white"
+          }`}
+        >
+          {agotado ? "Agotado" : "Elegir medida"}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// ─── Modal selector de medida ───────────────────────────────────────
+function MedidaPicker({
+  grupo,
+  cart,
+  addToCart,
+  updateCantidad,
+  onClose,
+}: {
+  grupo: GrupoCinta
+  cart: CartItem[]
+  addToCart: (p: Producto) => void
+  updateCantidad: (id: string, cantidad: number) => void
+  onClose: () => void
+}) {
+  const totalGrupo = grupo.variantes.reduce(
+    (s, v) =>
+      s + (cart.find((i) => i.producto.id === v.producto.id)?.cantidad ?? 0),
+    0,
+  )
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-md sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-gray-400">
+              Elige la medida
+            </p>
+            <h3 className="truncate text-base font-semibold text-gray-900">
+              {grupo.base}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </header>
+
+        <ul className="max-h-[55vh] divide-y divide-[rgba(15,23,42,0.04)] overflow-y-auto">
+          {grupo.variantes.map((v) => {
+            const p = v.producto
+            const enCarrito = cart.find((i) => i.producto.id === p.id)
+            const agotado = p.stock <= 0
+            return (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 px-5 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {v.medida}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {formatMXN(p.precio)}
+                    {agotado ? " · Agotado" : ""}
+                  </p>
+                </div>
+                {agotado ? (
+                  <span className="rounded-lg bg-[#F3F5F7] px-3 py-1.5 text-xs font-medium text-gray-400">
+                    Agotado
+                  </span>
+                ) : enCarrito ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateCantidad(p.id, enCarrito.cantidad - 1)}
+                      className="flex size-7 items-center justify-center rounded-lg bg-[#F3F5F7] font-bold text-gray-700 transition-colors hover:bg-[#EEF1F4]"
+                      aria-label="Quitar uno"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center text-sm font-bold tabular-nums">
+                      {enCarrito.cantidad}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateCantidad(p.id, enCarrito.cantidad + 1)}
+                      className="flex size-7 items-center justify-center rounded-lg bg-[#0F766E] font-bold text-white transition-colors hover:bg-[#115E59]"
+                      aria-label="Agregar uno"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => addToCart(p)}
+                    className="rounded-lg bg-[#0F766E] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#115E59]"
+                  >
+                    + Agregar
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+
+        <footer className="border-t border-[rgba(15,23,42,0.06)] p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl bg-[#0F766E] py-3 text-sm font-bold text-white transition-colors hover:bg-[#115E59]"
+          >
+            {totalGrupo > 0
+              ? `Listo · ${totalGrupo} agregada${totalGrupo === 1 ? "" : "s"}`
+              : "Cerrar"}
+          </button>
+        </footer>
+      </div>
     </div>
   )
 }
