@@ -28,6 +28,45 @@ type OrderResult =
   | { success: true; numero: string; cotizacionId: string }
   | { success: false; error: string }
 
+export type ClienteMatch = {
+  id: string
+  nombre: string
+  nombre_negocio: string | null
+  email: string | null
+  ciudad: string | null
+  telefono: string | null
+}
+
+/**
+ * Busca un cliente por teléfono para el portal público (feature
+ * "¡Te reconocemos!" + anti-duplicados). Corre server-side con service role
+ * porque, con RLS activado, el anon key ya no puede leer `clientes`.
+ *
+ * Devuelve SOLO el match exacto por teléfono completo (no permite listar
+ * clientes). Rate-limit para evitar enumeración de números/PII.
+ */
+export async function buscarClientePorTelefono(
+  tel: string,
+): Promise<ClienteMatch | null> {
+  const digits = tel.replace(/\D/g, "")
+  if (digits.length < 10) return null
+
+  // Anti-enumeración: 20 búsquedas por IP cada minuto.
+  const ip = clientIp(await headers())
+  const rl = checkRateLimit(`cliente-lookup:${ip}`, 20, 60 * 1000)
+  if (!rl.allowed) return null
+
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("clientes")
+    .select("id, nombre, nombre_negocio, email, ciudad, telefono")
+    .ilike("telefono", `%${digits}%`)
+    .limit(1)
+    .maybeSingle()
+
+  return (data as ClienteMatch | null) ?? null
+}
+
 /**
  * Crea una cotización en estatus "borrador" desde el portal público.
  * - Reusa cliente existente si telefono coincide (match exacto)

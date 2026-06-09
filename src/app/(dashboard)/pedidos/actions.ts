@@ -107,6 +107,172 @@ export async function sumarStockEntrada(
 }
 
 /**
+ * Datos para el formulario de "Nuevo Pedido" (productos + proveedores +
+ * categorías). Server-side con service role: el form ya no usa el anon key.
+ */
+export async function getNuevoPedidoData(): Promise<{
+  productos: unknown[]
+  proveedores: { id: string; nombre: string }[]
+  categorias: { id: string; nombre: string }[]
+}> {
+  const admin = createAdminClient()
+  const [{ data: prods }, { data: provs }, { data: cats }] = await Promise.all([
+    admin
+      .from("productos")
+      .select(
+        `id, sku, nombre, precio_usd, costo_envio_usd, proveedor_id,
+         precios_producto(precio, listas_precios(nombre))`,
+      )
+      .eq("activo", true)
+      .order("nombre"),
+    admin.from("proveedores").select("id, nombre"),
+    admin.from("categorias").select("id, nombre").order("nombre"),
+  ])
+  return {
+    productos: (prods ?? []) as unknown[],
+    proveedores: (provs ?? []) as { id: string; nombre: string }[],
+    categorias: (cats ?? []) as { id: string; nombre: string }[],
+  }
+}
+
+export type CrearPedidoPayload = {
+  nombre: string
+  fecha: string
+  proveedor_id: string | null
+  tipo: string
+  tipo_cambio: number
+  envio_total_usd: number
+  notas: string | null
+  sandra_usd: number
+  benjamin_usd: number
+  items: {
+    producto_id: string
+    cantidad: number
+    precio_usd: number
+    proveedor_id: string | null
+  }[]
+}
+
+/**
+ * Crea un pedido de compra NUEVO (entrada de inventario). Mueve al servidor
+ * toda la lógica que antes hacía el browser con el anon key:
+ *  - número correlativo + insert del header
+ *  - re-prorrateo del envío por unidad + insert de ítems (vía itemFields)
+ *  - snapshot de costos a productos (alimenta vista_inventario)
+ *  - suma del stock al inventario
+ * El precio público se lee server-side (no se confía en el cliente).
+ */
+export async function crearPedido(
+  payload: CrearPedidoPayload,
+): Promise<{ ok: true; pedidoId: string } | { ok: false; error: string }> {
+  if (!payload.nombre?.trim())
+    return { ok: false, error: "Falta el nombre del pedido" }
+  const items = (payload.items ?? []).filter(
+    (i) => i.producto_id && i.cantidad > 0,
+  )
+  if (items.length === 0)
+    return { ok: false, error: "Agrega al menos un producto" }
+
+  const admin = createAdminClient()
+  const tc = Number(payload.tipo_cambio) || 0
+  const envioTotal = Number(payload.envio_total_usd) || 0
+
+  // Número correlativo
+  const { count } = await admin
+    .from("pedidos_compra")
+    .select("*", { count: "exact", head: true })
+  const numero = (count ?? 0) + 1
+
+  // Cantidades / precio / proveedor por producto (suma duplicados por si acaso)
+  const cantByProd = new Map<string, number>()
+  const precioByProd = new Map<string, number>()
+  const provByProd = new Map<string, string | null>()
+  for (const it of items) {
+    const c = Math.round(it.cantidad)
+    cantByProd.set(it.producto_id, (cantByProd.get(it.producto_id) ?? 0) + c)
+    if (!precioByProd.has(it.producto_id))
+      precioByProd.set(it.producto_id, Number(it.precio_usd) || 0)
+    if (!provByProd.has(it.producto_id))
+      provByProd.set(it.producto_id, it.proveedor_id ?? null)
+  }
+
+  // Precio público (Pública MXN) para el profit
+  const pubByProd = new Map<string, number>()
+  const { data: lista } = await admin
+    .from("listas_precios")
+    .select("id")
+    .eq("nombre", "Pública MXN")
+    .maybeSingle()
+  if (lista?.id) {
+    const { data: precios } = await admin
+      .from("precios_producto")
+      .select("producto_id, precio")
+      .eq("lista_id", lista.id)
+      .in("producto_id", [...cantByProd.keys()])
+    for (const p of precios ?? [])
+      pubByProd.set(p.producto_id as string, Number(p.precio))
+  }
+
+  const totalUnidades = [...cantByProd.values()].reduce((s, c) => s + c, 0)
+  const envioUnit = totalUnidades > 0 ? envioTotal / totalUnidades : 0
+  const subtotalUsd = [...cantByProd.entries()].reduce(
+    (s, [pid, c]) => s + (precioByProd.get(pid) ?? 0) * c,
+    0,
+  )
+  const grandTotalUsd = subtotalUsd + envioTotal
+  const sandraUsd = Number(payload.sandra_usd) || 0
+  const benjaminUsd = Number(payload.benjamin_usd) || 0
+
+  const { data: pedido, error } = await admin
+    .from("pedidos_compra")
+    .insert({
+      numero,
+      nombre: payload.nombre.trim(),
+      fecha: payload.fecha,
+      proveedor_id: payload.proveedor_id || null,
+      tipo: payload.tipo,
+      tipo_cambio: tc,
+      subtotal_usd: subtotalUsd,
+      costo_envio_usd: envioTotal,
+      costo_envio_mxn: envioTotal * tc,
+      total_usd: grandTotalUsd,
+      total_mxn: grandTotalUsd * tc,
+      inversion_sandra_usd: sandraUsd,
+      inversion_benjamin_usd: benjaminUsd,
+      inversion_sandra_mxn: sandraUsd * tc,
+      inversion_benjamin_mxn: benjaminUsd * tc,
+      notas: payload.notas || null,
+    })
+    .select("id")
+    .single()
+  if (error || !pedido)
+    return { ok: false, error: error?.message ?? "Error al guardar el pedido" }
+
+  let sort = 0
+  for (const [pid, cant] of cantByProd) {
+    const precio = precioByProd.get(pid) ?? 0
+    const pub = pubByProd.get(pid) ?? null
+    const fields = itemFields(precio, cant, envioUnit, tc, pub)
+    const { error: itErr } = await admin.from("pedido_compra_items").insert({
+      pedido_id: pedido.id,
+      producto_id: pid,
+      cantidad: cant,
+      precio_publico_mxn: pub,
+      proveedor_id: provByProd.get(pid) ?? null,
+      sort_order: sort++,
+      ...fields,
+    })
+    if (itErr) return { ok: false, error: `item: ${itErr.message}` }
+    await snapshotProducto(admin, pid, precio, envioUnit, tc)
+    await sumarStock(admin, pid, cant)
+  }
+
+  revalidatePath("/pedidos")
+  revalidatePath("/inventario")
+  return { ok: true, pedidoId: pedido.id as string }
+}
+
+/**
  * Agrega productos a un pedido EXISTENTE (entrada de inventario):
  * - Re-prorratea el envío total del pedido sobre el nuevo total de unidades
  * - Recalcula y reescribe todos los ítems + snapshot de costos a productos

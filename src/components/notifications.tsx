@@ -5,40 +5,18 @@ import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Bell, X, ShoppingCart } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import {
+  getNotificacionesNoLeidas,
+  marcarNotificacionLeida,
+  marcarTodasLeidas as marcarTodasLeidasAction,
+  type Notificacion,
+} from "./notifications-actions"
 
 const mxn0 = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",
   maximumFractionDigits: 0,
 })
-
-type NotifTipo = "pedido_portal" | "stock_bajo" | "pago_pendiente" | string
-
-interface NotifDatos {
-  cotizacion_numero?: string
-  cotizacion_id?: string
-  cliente_nombre?: string
-  cliente_negocio?: string
-  cliente_telefono?: string
-  cliente_email?: string
-  cliente_ciudad?: string
-  items_count?: number
-  subtotal?: number
-  notas?: string
-  url?: string
-  [key: string]: unknown
-}
-
-interface Notificacion {
-  id: string
-  tipo: NotifTipo
-  titulo: string
-  mensaje: string
-  datos: NotifDatos
-  leida: boolean
-  created_at: string
-}
 
 function formatPhoneIntl(tel: string | undefined): string {
   if (!tel) return ""
@@ -134,7 +112,7 @@ export function NotificationBell() {
   }, [open])
 
   useEffect(() => {
-    const supabase = createClient()
+    let cancelled = false
 
     function showToastForNew(nueva: Notificacion) {
       setToast(nueva)
@@ -143,115 +121,26 @@ export function NotificationBell() {
       playBeep()
     }
 
-    /** True si el error es por schema cache desactualizado de PostgREST. */
-    function isSchemaCacheError(msg: string | undefined): boolean {
-      if (!msg) return false
-      const m = msg.toLowerCase()
-      return (
-        m.includes("schema cache") ||
-        m.includes("not find the table") ||
-        m.includes("pgrst205")
-      )
+    // Carga inicial de no-leídas (server action con service role).
+    async function cargarInicial() {
+      const arr = await getNotificacionesNoLeidas()
+      if (!cancelled) setNotifs(arr)
     }
+    void cargarInicial()
 
-    // Carga inicial de no-leídas — reintenta si la tabla no está en cache
-    let retryTimer: ReturnType<typeof setTimeout> | null = null
-    async function cargarNotificaciones() {
-      try {
-        const { data, error } = await supabase
-          .from("notificaciones")
-          .select("*")
-          .eq("leida", false)
-          .order("created_at", { ascending: false })
-          .limit(20)
-
-        if (error) {
-          if (isSchemaCacheError(error.message)) {
-            console.warn(
-              "[NotificationBell] tabla aún no en cache PostgREST, reintentando en 5s…",
-            )
-            retryTimer = setTimeout(() => void cargarNotificaciones(), 5000)
-            return
-          }
-          console.error("[NotificationBell] error cargando:", error.message)
-          return
-        }
-        const arr = (data ?? []) as Notificacion[]
-        console.log(
-          `[NotificationBell] 🔔 carga inicial: ${arr.length} no leída(s)`,
-          arr.map((n) => ({ id: n.id, tipo: n.tipo, created: n.created_at })),
-        )
-        setNotifs(arr)
-      } catch (e) {
-        console.error("[NotificationBell] excepción cargando:", e)
-      }
-    }
-    void cargarNotificaciones()
-
-    // Suscripción Realtime — channel name único por tab para evitar
-    // colisiones cuando hay múltiples pestañas abiertas
-    const channel = supabase
-      .channel(`notificaciones-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notificaciones" },
-        (payload) => {
-          const nueva = payload.new as Notificacion
-          console.log("[NotificationBell] 🔔 INSERT recibido:", nueva.id)
-          setNotifs((prev) =>
-            prev.some((n) => n.id === nueva.id) ? prev : [nueva, ...prev],
-          )
-          showToastForNew(nueva)
-        },
-      )
-      .subscribe((status, err) => {
-        if (status === "SUBSCRIBED") {
-          console.log("[NotificationBell] ✅ Realtime conectado")
-        } else if (status === "CHANNEL_ERROR") {
-          console.error("[NotificationBell] ❌ Channel error:", err)
-        } else if (status === "TIMED_OUT") {
-          console.warn("[NotificationBell] ⏱ Realtime timeout")
-        } else if (status === "CLOSED") {
-          console.warn("[NotificationBell] 🔌 Realtime closed")
-        }
-      })
-
-    // Función reusable para fetch+merge: usada por polling Y por
-    // visibilitychange para responder rápido cuando vuelven a la pestaña
+    // Polling cada 8s — detecta nuevas y dispara toast/beep. Reemplaza al
+    // Realtime: con RLS activado, las notificaciones (que llevan PII) se
+    // leen server-side, no por websocket con el anon key.
     async function refetchNuevas() {
-      try {
-        const { data, error } = await supabase
-          .from("notificaciones")
-          .select("*")
-          .eq("leida", false)
-          .order("created_at", { ascending: false })
-          .limit(20)
-        if (error) {
-          if (!isSchemaCacheError(error.message)) {
-            console.error("[NotificationBell] refetch error:", error.message)
-          }
-          return
-        }
-        if (!data) return
-        setNotifs((prev) => {
-          const idsActuales = new Set(prev.map((n) => n.id))
-          const nuevasNotifs = (data as Notificacion[]).filter(
-            (n) => !idsActuales.has(n.id),
-          )
-          if (nuevasNotifs.length === 0) return prev
-          console.log(
-            `[NotificationBell] 📊 refetch detectó ${nuevasNotifs.length} nuevas`,
-          )
-          if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
-          return data as Notificacion[]
-        })
-      } catch (e) {
-        console.error("[NotificationBell] excepción refetch:", e)
-      }
+      const data = await getNotificacionesNoLeidas()
+      if (cancelled) return
+      setNotifs((prev) => {
+        const idsActuales = new Set(prev.map((n) => n.id))
+        const nuevasNotifs = data.filter((n) => !idsActuales.has(n.id))
+        if (nuevasNotifs[0]) showToastForNew(nuevasNotifs[0])
+        return data
+      })
     }
-
-    // FALLBACK: polling cada 8s — cubre si Realtime se cae o si la
-    // tabla no está en la publication supabase_realtime
     const polling = setInterval(refetchNuevas, 8000)
 
     // Refetch inmediato al volver a la pestaña (browsers pausan setInterval
@@ -273,10 +162,8 @@ export function NotificationBell() {
     document.addEventListener("mousedown", handleClick)
 
     return () => {
-      console.log("[NotificationBell] desconectando")
-      supabase.removeChannel(channel)
+      cancelled = true
       clearInterval(polling)
-      if (retryTimer) clearTimeout(retryTimer)
       document.removeEventListener("mousedown", handleClick)
       document.removeEventListener("visibilitychange", onVisibility)
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -284,15 +171,13 @@ export function NotificationBell() {
   }, [])
 
   async function marcarLeida(id: string) {
-    const supabase = createClient()
-    await supabase.from("notificaciones").update({ leida: true }).eq("id", id)
     setNotifs((prev) => prev.filter((n) => n.id !== id))
+    await marcarNotificacionLeida(id)
   }
 
   async function marcarTodasLeidas() {
-    const supabase = createClient()
-    await supabase.from("notificaciones").update({ leida: true }).eq("leida", false)
     setNotifs([])
+    await marcarTodasLeidasAction()
   }
 
   function irACotizacion(notif: Notificacion) {

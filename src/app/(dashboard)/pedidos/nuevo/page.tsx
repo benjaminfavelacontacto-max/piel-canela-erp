@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { sumarStockEntrada } from "../actions"
+import { crearPedido, getNuevoPedidoData } from "../actions"
 import {
   ProductCreateModal,
   type ProductoCreado,
@@ -64,7 +63,6 @@ const usd = (v: number) => `$${v.toFixed(2)}`
 
 export default function NuevoPedidoPage() {
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
 
   const [productos, setProductos] = useState<ProductoBase[]>([])
   const [proveedores, setProveedores] = useState<ProveedorBase[]>([])
@@ -87,26 +85,13 @@ export default function NuevoPedidoPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: prods }, { data: provs }, { data: cats }] = await Promise.all([
-        supabase
-          .from("productos")
-          .select(
-            `
-              id, sku, nombre, precio_usd, costo_envio_usd, proveedor_id,
-              precios_producto(precio, listas_precios(nombre))
-            `,
-          )
-          .eq("activo", true)
-          .order("nombre"),
-        supabase.from("proveedores").select("id, nombre"),
-        supabase.from("categorias").select("id, nombre").order("nombre"),
-      ])
-      setProductos((prods ?? []) as unknown as ProductoBase[])
-      setProveedores((provs ?? []) as ProveedorBase[])
-      setCategorias((cats ?? []) as { id: string; nombre: string }[])
+      const data = await getNuevoPedidoData()
+      setProductos(data.productos as unknown as ProductoBase[])
+      setProveedores(data.proveedores as ProveedorBase[])
+      setCategorias(data.categorias)
     }
-    load()
-  }, [supabase])
+    void load()
+  }, [])
 
   // Reprorrateo de envío cuando cambian envío total, TC o cantidades
   useEffect(() => {
@@ -251,94 +236,31 @@ export default function NuevoPedidoPage() {
     if (!nombre || items.length === 0) return
     setSaving(true)
 
-    const { count } = await supabase
-      .from("pedidos_compra")
-      .select("*", { count: "exact", head: true })
-    const numero = (count ?? 0) + 1
+    // Todo el guardado (header + ítems + snapshot de costos + stock) corre
+    // server-side con service role. El cliente solo manda los inputs.
+    const res = await crearPedido({
+      nombre,
+      fecha,
+      proveedor_id: proveedorId || null,
+      tipo,
+      tipo_cambio: tc,
+      envio_total_usd: envioTotalUSD,
+      notas: notas || null,
+      sandra_usd: sandraUSD,
+      benjamin_usd: benjaminUSD,
+      items: items.map((i) => ({
+        producto_id: i.producto_id,
+        cantidad: i.cantidad,
+        precio_usd: i.precio_usd,
+        proveedor_id: i.proveedor_id,
+      })),
+    })
 
-    const { data: pedido, error } = await supabase
-      .from("pedidos_compra")
-      .insert({
-        numero,
-        nombre,
-        fecha,
-        proveedor_id: proveedorId || null,
-        tipo,
-        tipo_cambio: tc,
-        subtotal_usd: totalUSD,
-        costo_envio_usd: envioTotalUSD,
-        costo_envio_mxn: envioTotalUSD * tc,
-        total_usd: grandTotalUSD,
-        total_mxn: grandTotalMXN,
-        inversion_sandra_usd: sandraUSD,
-        inversion_benjamin_usd: benjaminUSD,
-        inversion_sandra_mxn: sandraUSD * tc,
-        inversion_benjamin_mxn: benjaminUSD * tc,
-        notas: notas || null,
-      })
-      .select("id")
-      .single()
-
-    if (error || !pedido) {
-      toast.error(error?.message ?? "Error al guardar el pedido")
+    if (!res.ok) {
+      toast.error(res.error)
       setSaving(false)
       return
     }
-
-    const { error: itemsErr } = await supabase
-      .from("pedido_compra_items")
-      .insert(
-        items.map((item, idx) => ({
-          pedido_id: pedido.id,
-          producto_id: item.producto_id,
-          cantidad: item.cantidad,
-          precio_unitario_usd: item.precio_usd,
-          precio_unitario_mxn: item.precio_mxn,
-          envio_unitario_usd: item.envio_unit_usd,
-          envio_unitario_mxn: item.envio_unit_mxn,
-          costo_total_unitario_usd: item.costo_total_usd,
-          costo_total_unitario_mxn: item.costo_total_mxn,
-          subtotal_usd: item.subtotal_usd,
-          subtotal_mxn: item.subtotal_mxn,
-          total_con_envio_usd:
-            (item.precio_usd + item.envio_unit_usd) * item.cantidad,
-          total_con_envio_mxn: item.costo_total_mxn * item.cantidad,
-          precio_publico_mxn: item.precio_publico,
-          profit_unitario: item.profit_unit,
-          profit_total: item.profit_total,
-          proveedor_id: item.proveedor_id,
-          sort_order: idx,
-        })),
-      )
-
-    if (itemsErr) {
-      toast.error(itemsErr.message)
-      setSaving(false)
-      return
-    }
-
-    // Snapshot de costos en productos → alimenta el inventario (vista_inventario).
-    // costo_envio_usd = envío prorrateado por unidad. La vista DERIVA el resto:
-    // costo_envio_mxn = costo_envio_usd × TC, costo_total = precio + costo_envio,
-    // profit = precio_publico − costo_total_mxn. Solo hace falta costo_envio_usd + TC.
-    await Promise.all(
-      items.map((item) =>
-        supabase
-          .from("productos")
-          .update({
-            precio_usd: item.precio_usd,
-            costo_envio_usd: item.envio_unit_usd,
-            tipo_cambio: tc,
-            costo: item.costo_total_mxn,
-          })
-          .eq("id", item.producto_id),
-      ),
-    )
-
-    // El pedido es una entrada real → suma el stock al inventario
-    await sumarStockEntrada(
-      items.map((i) => ({ producto_id: i.producto_id, cantidad: i.cantidad })),
-    )
 
     toast.success(`Pedido "${nombre}" guardado`)
     router.push("/pedidos")

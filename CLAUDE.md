@@ -20,10 +20,13 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - inventario.estatus es GENERATED (se calcula del stock: ok/bajo/agotado) — NUNCA insertarla/actualizarla
 - inventario.stock_inicial es NOT NULL sin default — al crear fila nueva, igualarlo a stock_actual
 - No todos los productos tienen fila en `inventario`; `vista_inventario` sintetiza stock 0 vía LEFT JOIN. Al editar stock: UPDATE si existe, INSERT si no
-- RLS está DESACTIVADO en todas las tablas (sistema interno)
+- RLS está ACTIVADO en las 25 tablas (bloqueo total al rol `anon`) — ver `scripts/enable-rls.sql`. Motivo: el portal público /order expone el anon key; sin RLS cualquiera leía/escribía todo. NO hay políticas para `anon`: toda la app accede vía `service_role` (que bypassa RLS)
+- `server.ts` (createClient server) usa el **service role** (no anon) → bypassa RLS. Es server-only y solo se usa detrás del candado JWT. NUNCA usar el browser client (`@/lib/supabase/client`) para leer datos: el anon ya no tiene acceso. Mover lecturas/escrituras a server components o server actions
+- El portal público /order NO usa anon: catálogo/stock vía server component (admin), búsqueda por teléfono + submitOrder vía server actions (admin)
 - RLS en `storage.objects` SÍ está activo → usar `createAdminClient()` (service_role_key) para uploads
-- Usar createClient() de @/lib/supabase/server en server components/actions
-- Usar createAdminClient() de @/lib/supabase/admin para queries que tocan RLS o storage
+- Usar createClient() de @/lib/supabase/server en server components/actions (ya es service role)
+- Usar createAdminClient() de @/lib/supabase/admin para queries en server actions / rutas públicas
+- Las VISTAS (vista_inventario, vista_productos_top, vista_ventas_cliente) tienen `security_invoker=on` + REVOKE a anon
 - Lista de precios se llama exactamente 'Pública MXN'
 - Enum `estatus_venta`: `pendiente | pagada_parcial | pagada_total | cancelada` (NO existe 'completada')
 
