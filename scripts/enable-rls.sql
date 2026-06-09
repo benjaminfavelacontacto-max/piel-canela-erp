@@ -23,6 +23,28 @@
 --  Es idempotente: se puede correr varias veces sin error.
 -- ============================================================================
 
+-- ── 0. Dropear TODAS las políticas preexistentes del schema public.
+--      Algunas tablas (productos, categorias, ventas, clientes, cotizaciones,
+--      precios_producto, inventario, etc.) tenían políticas permisivas que
+--      dejaban LEER al rol anon — creadas cuando el portal leía con anon antes
+--      del candado JWT. En el modelo de "bloqueo total" NO debe existir ninguna
+--      política para anon: todo accede vía service_role (que bypassa RLS).
+--      Solo toca el schema `public` (NO storage.objects — sus policies se quedan).
+do $$
+declare r record;
+begin
+  for r in
+    select schemaname, tablename, policyname
+    from pg_policies
+    where schemaname = 'public'
+  loop
+    execute format(
+      'drop policy if exists %I on %I.%I',
+      r.policyname, r.schemaname, r.tablename
+    );
+  end loop;
+end $$;
+
 -- ── 1. Tablas base: activar RLS (sin políticas = anon/authenticated bloqueados)
 --      service_role bypassa RLS, así que la app no se ve afectada.
 alter table public.categorias              enable row level security;
