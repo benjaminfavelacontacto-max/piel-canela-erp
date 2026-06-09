@@ -49,6 +49,7 @@ import { ClienteDrawer } from "./cliente-drawer"
 import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
 import { EstimadoIngresos } from "./estimado-ingresos"
+import { PrediccionInsights } from "./prediccion-insights"
 import {
   predecirCompra,
   calcularGlobalFrecuencia,
@@ -1279,8 +1280,14 @@ export function ClientesDashboard({
         {/* Estimado de ingresos predictivo */}
         <EstimadoIngresos clientes={enriched} ventas={ventas} />
 
-        {/* Predicción de compras: fusionada en la tabla unificada de abajo
+        {/* Predicción de compras — panel compacto de insights.
+            La lista por cliente vive en la tabla unificada de abajo
             (columnas Próxima compra · Prob. 60d · Revenue esp. + filtros). */}
+        <PrediccionInsights
+          clientes={enriched}
+          predByCliente={predByCliente}
+          onClienteClick={setSelectedCliente}
+        />
 
         {/* Recurrencia analytics con heatmap interactivo */}
         <RecurrenciaAnalytics
