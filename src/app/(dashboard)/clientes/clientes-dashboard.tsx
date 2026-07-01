@@ -45,6 +45,7 @@ import {
   UserPlus,
 } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { ExportClientesButton } from "./export-clientes-button"
 import { ClienteDrawer } from "./cliente-drawer"
 import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { RecurrenciaAnalytics } from "./recurrencia-analytics"
@@ -57,6 +58,7 @@ import {
 } from "./lib-prediccion"
 import { TIPOS_CLIENTE, getTipoConf } from "./tipos-cliente"
 import { actualizarTipoCliente } from "./actions"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
 // ─── Types compartidos ──────────────────────────────────────────────
 
@@ -142,17 +144,6 @@ type ClienteStatus =
   | "inactivo"
   | "sin_actividad"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -763,7 +754,7 @@ export function ClientesDashboard({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="text-sm font-bold tabular-nums text-gray-900">
-              {mxn.format(v)}
+              {formatMXN(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -781,7 +772,7 @@ export function ClientesDashboard({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="text-xs tabular-nums text-gray-600">
-              {mxn.format(v)}
+              {formatMXN(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -799,7 +790,7 @@ export function ClientesDashboard({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="text-xs font-semibold tabular-nums text-emerald-700">
-              {mxn.format(v)}
+              {formatMXN(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -815,7 +806,7 @@ export function ClientesDashboard({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="inline-flex items-center rounded-md bg-rose-50 px-1.5 py-0.5 text-xs font-semibold text-rose-700 tabular-nums">
-              {mxn.format(v)}
+              {formatMXN(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -1014,7 +1005,7 @@ export function ClientesDashboard({
           }
           return (
             <span className="text-[12.5px] font-semibold tabular-nums text-gray-800">
-              {mxn.format(p.ingresoEstimadoProx)}
+              {formatMXN(p.ingresoEstimadoProx)}
             </span>
           )
         },
@@ -1164,8 +1155,8 @@ export function ClientesDashboard({
                 },
                 {
                   label: "LTV total",
-                  value: mxn.format(kpis.ltvTotal),
-                  sub: `${mxn.format(cur?.ltvGanado ?? 0)} este mes`,
+                  value: formatMXN(kpis.ltvTotal),
+                  sub: `${formatMXN(cur?.ltvGanado ?? 0)} este mes`,
                   trend: {
                     value: `${dLtv >= 0 ? "+" : ""}${dLtv.toFixed(1)}%`,
                     positive: dLtv >= 0,
@@ -1176,15 +1167,18 @@ export function ClientesDashboard({
                   label: "Mejor cliente",
                   value: mejorDisplay,
                   sub: kpis.mejor
-                    ? `${mxn.format(kpis.mejor.ltv)} · ${concentrado.toFixed(0)}% revenue`
+                    ? `${formatMXN(kpis.mejor.ltv)} · ${concentrado.toFixed(0)}% revenue`
                     : "Sin ventas",
                 },
               ]}
               actions={
-                <Link href="/clientes/nuevo" className="pc-btn-primary">
-                  <UserPlus className="size-4" strokeWidth={1.75} />
-                  Nuevo cliente
-                </Link>
+                <>
+                  <ExportClientesButton clientes={enriched} />
+                  <Link href="/clientes/nuevo" className="pc-btn-primary">
+                    <UserPlus className="size-4" strokeWidth={1.75} />
+                    Nuevo cliente
+                  </Link>
+                </>
               }
             />
 
@@ -1214,7 +1208,7 @@ export function ClientesDashboard({
               />
               <SplitMetric
                 label="Saldo pendiente"
-                value={mxn.format(kpis.saldoTotal)}
+                value={formatMXN(kpis.saldoTotal)}
                 sub={`${kpis.inactivos} inactivos`}
                 accent={kpis.saldoTotal > 0 ? "rose" : "neutral"}
                 progress={
@@ -1237,7 +1231,7 @@ export function ClientesDashboard({
               {revenue7d > 0 && (
                 <InsightPill tone="violet">
                   Revenue proyectado 7d:{" "}
-                  <span className="font-semibold">{mxn.format(revenue7d)}</span>
+                  <span className="font-semibold">{formatMXN(revenue7d)}</span>
                 </InsightPill>
               )}
               {kpis.mejor && concentrado > 30 && (
@@ -1257,7 +1251,7 @@ export function ClientesDashboard({
               {mejorMes && mejorMes.ltvGanado > 0 && (
                 <InsightPill tone="violet">
                   Mejor mes histórico: <span className="font-semibold">{mejorMesLabel}</span>{" "}
-                  · {mxn.format(mejorMes.ltvGanado)}
+                  · {formatMXN(mejorMes.ltvGanado)}
                 </InsightPill>
               )}
               {dLtv >= 8 && (
@@ -1856,7 +1850,7 @@ function BestClienteMetric({
               fontFeatureSettings: '"tnum" 1',
             }}
           >
-            {mxn.format(cliente.ltv)}
+            {formatMXN(cliente.ltv)}
             {pctRevenue > 0 && (
               <>
                 <span
@@ -2046,21 +2040,21 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
         <div className="grid grid-cols-2 gap-2 text-xs">
           <Mini
             label="Total compras"
-            value={mxn2.format(cliente.ltv)}
+            value={formatMXN2(cliente.ltv)}
             tone="text-[#0F766E]"
           />
           <Mini
             label="Utilidad"
-            value={mxn2.format(cliente.utilidad_total)}
+            value={formatMXN2(cliente.utilidad_total)}
             tone="text-emerald-700"
           />
           <Mini
             label="Ticket prom."
-            value={mxn2.format(cliente.ticket_promedio)}
+            value={formatMXN2(cliente.ticket_promedio)}
           />
           <Mini
             label="Saldo"
-            value={mxn2.format(cliente.saldo_total)}
+            value={formatMXN2(cliente.saldo_total)}
             tone={cliente.saldo_total > 0 ? "text-rose-700" : "text-gray-700"}
           />
           <Mini

@@ -4,12 +4,7 @@ import { useMemo } from "react"
 import { Brain, CalendarClock, TrendingUp, AlertTriangle } from "lucide-react"
 import type { EnrichedCliente } from "./clientes-dashboard"
 import type { PrediccionResult } from "./lib-prediccion"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
+import { formatMXN } from "@/lib/utils"
 
 // Avatar gradient estable por nombre (mismo criterio que el resto del módulo).
 const AVATAR_GRADIENTS = [
@@ -112,7 +107,7 @@ export function PrediccionInsights({
   const KPIS = [
     {
       label: "Revenue proyectado (60d)",
-      value: mxn.format(kpis.revenue60),
+      value: formatMXN(kpis.revenue60),
       sub: "ticket × probabilidad",
       color: "#047857",
       tint: "rgba(5,150,105,0.07)",

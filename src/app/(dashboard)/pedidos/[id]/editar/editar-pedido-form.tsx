@@ -10,6 +10,7 @@ import {
   type ProductoCreado,
 } from "../../../inventario/product-create-modal"
 import { editarPedido } from "../../actions"
+import { formatMXN } from "@/lib/utils"
 
 type ProductoBase = {
   id: string
@@ -42,8 +43,6 @@ export type PedidoInicial = {
 }
 
 const usd = (v: number) => `$${v.toFixed(2)}`
-const mxn = (v: number) =>
-  v.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 })
 
 export function EditarPedidoForm({
   pedidoId,
@@ -382,7 +381,7 @@ export function EditarPedidoForm({
                   className="pc-input"
                   style={{ color: s.color, opacity: divisionIgual ? 0.55 : 1 }}
                 />
-                <p className="mt-1 text-[10px] text-gray-400 tabular-nums">= {mxn(s.value * tc)} MXN</p>
+                <p className="mt-1 text-[10px] text-gray-400 tabular-nums">= {formatMXN(s.value * tc)} MXN</p>
               </Field>
             ))}
           </section>
@@ -394,7 +393,7 @@ export function EditarPedidoForm({
             <Row label="Envío USD" value={usd(envioTotal)} />
             <Row label="Envío / unidad" value={`${usd(envioUnit)} · ${totalUnidades} u`} />
             <Row label="Total USD" value={usd(totalUsd)} strong />
-            <Row label="Total MXN" value={mxn(totalUsd * tc)} strong />
+            <Row label="Total MXN" value={formatMXN(totalUsd * tc)} strong />
 
             {error && (
               <div className="my-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">

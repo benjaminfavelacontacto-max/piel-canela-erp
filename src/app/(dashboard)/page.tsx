@@ -15,7 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
-import { formatMXNshort } from "@/lib/utils"
+import { formatMXN, formatMXNshort } from "@/lib/utils"
 import { PageHeader } from "@/components/page-header"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 import { PortalBadge, type PortalCotizacion } from "./portal-badge"
@@ -23,18 +23,6 @@ import { PortalBadge, type PortalCotizacion } from "./portal-badge"
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaLarga = new Intl.DateTimeFormat("es-MX", {
   weekday: "long",
   day: "numeric",
@@ -141,16 +129,16 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from("ventas")
-      .select("id, total, ganancia, cliente_id, clientes(nombre, nombre_negocio)")
+      .select("id, total, utilidad_neta, estatus, cliente_id, clientes(nombre, nombre_negocio)")
       .gte("fecha", monthStart),
     supabase
       .from("ventas")
-      .select("total, ganancia, cliente_id")
+      .select("total, utilidad_neta, estatus, cliente_id")
       .gte("fecha", lastMonthStart)
       .lte("fecha", lastMonthEnd),
     supabase
       .from("ventas")
-      .select("id, fecha, total, ganancia, estatus, cliente_id")
+      .select("id, fecha, total, utilidad_neta, estatus, cliente_id")
       .order("fecha", { ascending: true }),
     supabase.from("clientes").select("*", { count: "exact", head: true }),
     supabase
@@ -227,7 +215,7 @@ export default async function DashboardPage() {
   type VentaRow = {
     id: string
     total: number | null
-    ganancia: number | null
+    utilidad_neta: number | null
     cliente_id: string | null
     clientes: { nombre: string; nombre_negocio: string | null } | null
     fecha?: string
@@ -236,28 +224,32 @@ export default async function DashboardPage() {
     created_at?: string
     valida_hasta?: string | null
   }
+  // KPIs del mes: excluir internas (Piel Canela) Y canceladas.
   const ventasMes = (
     (ventasMesRes.data ?? []) as unknown as VentaRow[]
-  ).filter((v) => !isInternalCli(v.cliente_id))
+  ).filter((v) => !isInternalCli(v.cliente_id) && v.estatus !== "cancelada")
   const ventasMesAnt = (
     (ventasMesAntRes.data ?? []) as {
       total: number | null
-      ganancia: number | null
+      utilidad_neta: number | null
+      estatus: Estatus
       cliente_id: string | null
     }[]
-  ).filter((v) => !isInternalCli(v.cliente_id))
+  ).filter((v) => !isInternalCli(v.cliente_id) && v.estatus !== "cancelada")
   const ventasAllRaw = (ventasAllRes.data ?? []) as {
     id: string
     fecha: string
     total: number | null
-    ganancia: number | null
+    utilidad_neta: number | null
     estatus: Estatus
     cliente_id: string | null
   }[]
   const ventasAll = ventasAllRaw.filter((v) => !isInternalCli(v.cliente_id))
-  // Set de venta_ids internos para filtrar venta_socios y venta_items
-  const internalVentaIds = new Set(
-    ventasAllRaw.filter((v) => isInternalCli(v.cliente_id)).map((v) => v.id),
+  // Excluidas del capital recuperado / reparto / top productos: internas + canceladas.
+  const excludedVentaIds = new Set(
+    ventasAllRaw
+      .filter((v) => isInternalCli(v.cliente_id) || v.estatus === "cancelada")
+      .map((v) => v.id),
   )
   const inversiones = (inversionesRes.data ?? []) as {
     socio_id: string
@@ -269,7 +261,7 @@ export default async function DashboardPage() {
       socio_id: string
       monto: number
     }[]
-  ).filter((vs) => !internalVentaIds.has(vs.venta_id))
+  ).filter((vs) => !excludedVentaIds.has(vs.venta_id))
   const recentVentas = (
     (recentVentasRes.data ?? []) as unknown as VentaRow[]
   ).filter((v) => !isInternalCli(v.cliente_id))
@@ -281,7 +273,7 @@ export default async function DashboardPage() {
       precio_unitario: number
       productos: { nombre: string; sku: string | null } | null
     }[]
-  ).filter((it) => !internalVentaIds.has(it.venta_id))
+  ).filter((it) => !excludedVentaIds.has(it.venta_id))
   const inventarioBajo = (inventarioBajoRes.data ?? []) as {
     sku: string | null
     nombre: string
@@ -303,14 +295,14 @@ export default async function DashboardPage() {
 
   // ─── KPI calcs ────────────────────────────────────────────────────
   const totalVentasMes = ventasMes.reduce((s, v) => s + Number(v.total ?? 0), 0)
-  const gananciaMes = ventasMes.reduce((s, v) => s + Number(v.ganancia ?? 0), 0)
+  const gananciaMes = ventasMes.reduce((s, v) => s + Number(v.utilidad_neta ?? 0), 0)
   const totalVentasMesAnt = ventasMesAnt.reduce(
     (s, v) => s + Number(v.total ?? 0),
     0,
   )
   const cambioVentas = pctChange(totalVentasMes, totalVentasMesAnt)
   const gananciaMesAnt = ventasMesAnt.reduce(
-    (s, v) => s + Number(v.ganancia ?? 0),
+    (s, v) => s + Number(v.utilidad_neta ?? 0),
     0,
   )
   const cambioGanancia = pctChange(gananciaMes, gananciaMesAnt)
@@ -363,7 +355,7 @@ export default async function DashboardPage() {
     const b = monthly.get(k)
     if (!b) continue
     b.total += Number(v.total ?? 0)
-    b.ganancia += Number(v.ganancia ?? 0)
+    b.ganancia += Number(v.utilidad_neta ?? 0)
     b.count += 1
   }
   const chartData = Array.from(monthly.values())
@@ -405,7 +397,7 @@ export default async function DashboardPage() {
   if (topCliente) {
     insights.push({
       emoji: "🏆",
-      texto: `Mejor cliente del mes: ${topCliente[0]} con ${mxn.format(topCliente[1])}`,
+      texto: `Mejor cliente del mes: ${topCliente[0]} con ${formatMXN(topCliente[1])}`,
     })
   }
 
@@ -486,7 +478,7 @@ export default async function DashboardPage() {
         kpis={[
           {
             label: "Ventas del mes",
-            value: mxn.format(totalVentasMes),
+            value: formatMXN(totalVentasMes),
             sub: `${ventasMes.length} órdenes · vs mes anterior`,
             trend: {
               value: `${cambioVentas >= 0 ? "+" : ""}${cambioVentas.toFixed(1)}%`,
@@ -496,7 +488,7 @@ export default async function DashboardPage() {
           },
           {
             label: "Ganancia neta",
-            value: mxn.format(gananciaMes),
+            value: formatMXN(gananciaMes),
             sub:
               totalVentasMes > 0
                 ? `${((gananciaMes / totalVentasMes) * 100).toFixed(1)}% margen`
@@ -514,7 +506,7 @@ export default async function DashboardPage() {
           },
           {
             label: "Ticket promedio",
-            value: mxn.format(ticketMes),
+            value: formatMXN(ticketMes),
             sub: `${ventasMes.length} órdenes · vs mes anterior`,
             trend: {
               value: `${cambioTicket >= 0 ? "+" : ""}${cambioTicket.toFixed(1)}%`,
@@ -583,12 +575,12 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-5">
             <ChartSummary
               label="Este mes"
-              value={mxn.format(totalVentasMes)}
+              value={formatMXN(totalVentasMes)}
               tone="text-[#0F172A]"
             />
             <ChartSummary
               label="Mes anterior"
-              value={mxn.format(totalVentasMesAnt)}
+              value={formatMXN(totalVentasMesAnt)}
               tone="text-[#64748B]"
             />
             <ChartSummary
@@ -636,7 +628,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-semibold tabular-nums text-gray-900">
-                          {mxn.format(Number(v.total ?? 0))}
+                          {formatMXN(Number(v.total ?? 0))}
                         </div>
                         <div className="text-[10px] text-gray-400">
                           {v.fecha ? tiempoRelativo(v.fecha) : ""}
@@ -726,7 +718,7 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-sm font-semibold tabular-nums text-gray-900">
-                      {mxn.format(Number(c.total ?? 0))}
+                      {formatMXN(Number(c.total ?? 0))}
                     </div>
                   </Link>
                 </li>
@@ -821,7 +813,7 @@ export default async function DashboardPage() {
                       <span className="text-gray-700">{a.cliente}</span>
                       <span className="text-gray-400"> · </span>
                       <span className="font-semibold tabular-nums text-gray-900">
-                        {mxn.format(a.total)}
+                        {formatMXN(a.total)}
                       </span>
                     </div>
                   </div>
@@ -996,7 +988,7 @@ function SocioCard({
             Invertido
           </p>
           <p className="mt-1 font-bold tabular-nums text-gray-900">
-            {mxn.format(stats.totalInvertido)}
+            {formatMXN(stats.totalInvertido)}
           </p>
         </div>
         <div>
@@ -1004,7 +996,7 @@ function SocioCard({
             Recuperado
           </p>
           <p className="mt-1 font-bold tabular-nums text-emerald-600">
-            {mxn.format(stats.recuperado)}
+            {formatMXN(stats.recuperado)}
           </p>
         </div>
         <div>

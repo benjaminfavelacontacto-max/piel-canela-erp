@@ -2,13 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { Plus, Package } from "lucide-react"
-
-const mxn = (v: number) =>
-  v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
+import { formatMXN } from "@/lib/utils"
 
 const usd = (v: number) =>
   `$${Number(v).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
@@ -202,7 +196,7 @@ export default async function PedidosPage() {
           },
           {
             label: "Invertido",
-            value: mxn(totalInvMXN),
+            value: formatMXN(totalInvMXN),
             currency: "MXN",
             sub: "snapshot al TC del pedido",
             color: "text-[#C5A47E]",
@@ -215,7 +209,7 @@ export default async function PedidosPage() {
           },
           {
             label: "Profit potencial",
-            value: mxn(totalProfit),
+            value: formatMXN(totalProfit),
             currency: "MXN",
             sub: "si se vende todo el stock",
             color: "text-emerald-700",
@@ -346,7 +340,7 @@ export default async function PedidosPage() {
                   />
                   <Chip
                     label="invertido"
-                    value={mxn(invTotal)}
+                    value={formatMXN(invTotal)}
                     color="#A8895F"
                   />
 
@@ -356,7 +350,7 @@ export default async function PedidosPage() {
                       <SectionLabel tone="emerald">Resultado</SectionLabel>
                       <Chip
                         label="profit"
-                        value={`↑ ${mxn(profitPed)}`}
+                        value={`↑ ${formatMXN(profitPed)}`}
                         color="#047857"
                         bg="rgba(5,150,105,0.08)"
                         border="rgba(5,150,105,0.20)"

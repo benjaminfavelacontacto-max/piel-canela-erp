@@ -11,13 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+import { formatMXN2 } from "@/lib/utils"
 
 type TooltipPayloadItem = {
   name?: string | number
@@ -52,7 +46,7 @@ function CustomTooltip({
             {NAMES[String(p.dataKey ?? "")] ?? p.name ?? "—"}
           </span>
           <span className="font-bold tabular-nums text-gray-900">
-            {typeof p.value === "number" ? mxn.format(p.value) : "—"}
+            {typeof p.value === "number" ? formatMXN2(p.value) : "—"}
           </span>
         </div>
       ))}

@@ -25,16 +25,10 @@ import type {
   VistaStockRow,
 } from "./ventas-dashboard"
 import type { EnrichedVenta } from "./ventas-table-premium"
+import { formatMXN2 } from "@/lib/utils"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "numeric",
   month: "long",
@@ -226,16 +220,16 @@ export function VentaDrawer({
               </p>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-3">
-              <Stat label="Total" value={mxn.format(total)} accent="text-gray-900" />
+              <Stat label="Total" value={formatMXN2(total)} accent="text-gray-900" />
               <Stat
                 label="Utilidad"
-                value={mxn.format(ganancia)}
+                value={formatMXN2(ganancia)}
                 accent="text-emerald-700"
                 sub={`${margen.toFixed(1)}% margen`}
               />
               <Stat
                 label="Cobrado"
-                value={mxn.format(cantPagada)}
+                value={formatMXN2(cantPagada)}
                 accent="text-[#0F766E]"
                 sub={`${progresoPago.toFixed(0)}%`}
               />
@@ -308,9 +302,9 @@ export function VentaDrawer({
             <div className="rounded-xl bg-gray-50/80 p-3">
               <div className="mb-2 flex items-center justify-between text-xs">
                 <span className="text-gray-600">
-                  {mxn.format(cantPagada)}{" "}
+                  {formatMXN2(cantPagada)}{" "}
                   <span className="text-gray-400">
-                    de {mxn.format(total)}
+                    de {formatMXN2(total)}
                   </span>
                 </span>
                 <span className="font-semibold tabular-nums text-gray-700">
@@ -325,7 +319,7 @@ export function VentaDrawer({
               </div>
               {saldo > 0 && (
                 <div className="mt-2 text-[11px] text-rose-600">
-                  Saldo pendiente: {mxn.format(saldo)}
+                  Saldo pendiente: {formatMXN2(saldo)}
                 </div>
               )}
               {venta.metodo && (
@@ -342,7 +336,7 @@ export function VentaDrawer({
             title={`Productos (${items.length})`}
             right={
               <span className="text-[11px] tabular-nums text-gray-500">
-                {mxn.format(subtotal)}
+                {formatMXN2(subtotal)}
               </span>
             }
           >
@@ -393,10 +387,10 @@ export function VentaDrawer({
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-semibold tabular-nums text-gray-900">
-                          {mxn.format(Number(it.subtotal ?? 0))}
+                          {formatMXN2(Number(it.subtotal ?? 0))}
                         </div>
                         <div className="text-[10px] text-gray-500 tabular-nums">
-                          {Number(it.cantidad ?? 0)} × {mxn.format(Number(it.precio_unitario ?? 0))}
+                          {Number(it.cantidad ?? 0)} × {formatMXN2(Number(it.precio_unitario ?? 0))}
                         </div>
                       </div>
                     </li>
@@ -414,18 +408,18 @@ export function VentaDrawer({
                 Cobro
               </div>
               <dl className="grid grid-cols-2 gap-1.5 text-xs">
-                <DetailLine label="Subtotal" value={mxn.format(subtotal)} />
+                <DetailLine label="Subtotal" value={formatMXN2(subtotal)} />
                 <DetailLine
                   label="Descuento"
-                  value={descuento > 0 ? `− ${mxn.format(descuento)}` : "$0.00"}
+                  value={descuento > 0 ? `− ${formatMXN2(descuento)}` : "$0.00"}
                   accent={descuento > 0 ? "text-rose-600" : ""}
                 />
                 <DetailLine
                   label="IVA"
-                  value={iva > 0 ? mxn.format(iva) : "Sin IVA"}
+                  value={iva > 0 ? formatMXN2(iva) : "Sin IVA"}
                   accent={iva > 0 ? "text-teal-700" : "text-blue-600"}
                 />
-                <DetailLine label="Total" value={mxn.format(total)} bold />
+                <DetailLine label="Total" value={formatMXN2(total)} bold />
               </dl>
             </div>
 
@@ -437,16 +431,16 @@ export function VentaDrawer({
               <dl className="grid grid-cols-2 gap-1.5 text-xs">
                 <DetailLine
                   label="Productos"
-                  value={mxn.format(costoProductos)}
+                  value={formatMXN2(costoProductos)}
                 />
                 <DetailLine
                   label="Envío"
-                  value={costoEnvio > 0 ? mxn.format(costoEnvio) : "—"}
+                  value={costoEnvio > 0 ? formatMXN2(costoEnvio) : "—"}
                   accent={costoEnvio > 0 ? "text-amber-700" : ""}
                 />
                 <DetailLine
                   label="Total costos"
-                  value={mxn.format(costoProductos + costoEnvio)}
+                  value={formatMXN2(costoProductos + costoEnvio)}
                   bold
                 />
               </dl>
@@ -460,7 +454,7 @@ export function VentaDrawer({
               <dl className="grid grid-cols-2 gap-1.5 text-xs">
                 <DetailLine
                   label="Bruta (Sheet)"
-                  value={mxn.format(ganancia)}
+                  value={formatMXN2(ganancia)}
                   accent="text-emerald-600"
                 />
                 <DetailLine
@@ -476,7 +470,7 @@ export function VentaDrawer({
                 />
                 <DetailLine
                   label="NETA real"
-                  value={mxn.format(utilidadNeta)}
+                  value={formatMXN2(utilidadNeta)}
                   accent={
                     utilidadNeta >= 0 ? "text-emerald-700" : "text-rose-700"
                   }
@@ -554,14 +548,14 @@ export function VentaDrawer({
               {cantPagada > 0 && (
                 <TimelineItem
                   date={venta.fecha}
-                  label={`Pago recibido: ${mxn.format(cantPagada)}`}
+                  label={`Pago recibido: ${formatMXN2(cantPagada)}`}
                   tone="teal"
                 />
               )}
               {saldo > 0 && (
                 <TimelineItem
                   date={null}
-                  label={`Saldo pendiente: ${mxn.format(saldo)}`}
+                  label={`Saldo pendiente: ${formatMXN2(saldo)}`}
                   tone="amber"
                 />
               )}
@@ -573,7 +567,7 @@ export function VentaDrawer({
             <div className="grid grid-cols-2 gap-2">
               <InsightCard
                 label="Ticket"
-                value={mxn.format(total)}
+                value={formatMXN2(total)}
                 hint="Valor de la orden"
               />
               <InsightCard
@@ -583,13 +577,13 @@ export function VentaDrawer({
               />
               <InsightCard
                 label="Utilidad"
-                value={mxn.format(ganancia)}
+                value={formatMXN2(ganancia)}
                 hint={`${margen.toFixed(1)}% sobre total`}
                 tone="emerald"
               />
               <InsightCard
                 label="Por cobrar"
-                value={mxn.format(saldo)}
+                value={formatMXN2(saldo)}
                 hint={
                   saldo > 0
                     ? `${(100 - progresoPago).toFixed(0)}% pendiente`
@@ -663,7 +657,7 @@ function SocioBar({
           )}
         </div>
         <span className={`text-sm font-bold tabular-nums ${text}`}>
-          {mxn.format(monto)}
+          {formatMXN2(monto)}
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-white">

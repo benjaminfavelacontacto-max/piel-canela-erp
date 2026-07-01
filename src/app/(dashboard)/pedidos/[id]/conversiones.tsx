@@ -10,6 +10,7 @@ import {
   eliminarComprobanteConversion,
 } from "../actions"
 import { DocChip } from "./doc-upload"
+import { formatMXN2 } from "@/lib/utils"
 
 type Conversion = {
   id: string
@@ -22,13 +23,6 @@ type Conversion = {
   comprobante_url: string | null
 }
 
-const mxn = (v: number | null | undefined) =>
-  (Number(v) || 0).toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
 const num = (v: number | null | undefined, d = 2) =>
   (Number(v) || 0).toLocaleString("en-US", {
     minimumFractionDigits: d,
@@ -230,7 +224,7 @@ export function Conversiones({
                     })}
                   </td>
                   <td className="px-2 py-2 text-right tabular-nums text-gray-900">
-                    {mxn(c.mxn_gastado)}
+                    {formatMXN2(c.mxn_gastado)}
                   </td>
                   <td className="px-2 py-2 text-right tabular-nums font-semibold text-indigo-700">
                     {num(c.usdt_recibido)}
@@ -239,7 +233,7 @@ export function Conversiones({
                     {num(c.tipo_cambio, 2)}
                   </td>
                   <td className="px-2 py-2 text-right tabular-nums text-amber-700">
-                    {mxn(c.comision_mxn)}
+                    {formatMXN2(c.comision_mxn)}
                   </td>
                   <td className="px-2 py-2 text-center">
                     <DocChip
@@ -270,7 +264,7 @@ export function Conversiones({
             <tfoot>
               <tr className="border-t border-gray-200 text-[12px] font-semibold text-gray-900">
                 <td className="px-2 py-2">Totales</td>
-                <td className="px-2 py-2 text-right tabular-nums">{mxn(totMxn)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatMXN2(totMxn)}</td>
                 <td className="px-2 py-2 text-right tabular-nums text-indigo-700">
                   {num(totUsdt)}
                 </td>
@@ -278,7 +272,7 @@ export function Conversiones({
                   {num(tcEfectivo, 2)}
                 </td>
                 <td className="px-2 py-2 text-right tabular-nums text-amber-700">
-                  {mxn(totComision)}
+                  {formatMXN2(totComision)}
                 </td>
                 <td colSpan={2} />
               </tr>
@@ -294,11 +288,11 @@ export function Conversiones({
 
       {/* Resumen de costo real */}
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Summary label="Comisiones totales" value={mxn(totComision)} tone="amber" />
+        <Summary label="Comisiones totales" value={formatMXN2(totComision)} tone="amber" />
         <Summary
           label="Costo total con comisiones"
-          value={mxn(costoConComision)}
-          sub={`pedido ${mxn(pedidoTotalMxn)} + comisiones`}
+          value={formatMXN2(costoConComision)}
+          sub={`pedido ${formatMXN2(pedidoTotalMxn)} + comisiones`}
           tone="indigo"
           strong
         />

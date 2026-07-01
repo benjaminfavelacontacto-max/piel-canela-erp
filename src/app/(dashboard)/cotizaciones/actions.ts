@@ -173,106 +173,27 @@ export async function saveCotizacionAndRedirect(input: SaveCotizacionInput) {
 export async function marcarVendida(cotizacionId: string) {
   const supabase = createAdminClient()
 
-  const { data: cot, error: cotErr } = await supabase
-    .from("cotizaciones")
-    .select(
-      "numero, cliente_id, fecha, moneda, subtotal, iva, descuento, total, costo_productos, costo_envio, notas",
-    )
-    .eq("id", cotizacionId)
-    .single()
+  // Flujo cotización→venta ATÓMICO: una sola RPC plpgsql crea la venta espejo
+  // (número -C-→-V-), copia los items, inserta el reparto 50/50, descuenta
+  // inventario y marca la cotización 'aceptada' — TODO en una transacción
+  // (o todo, o nada). Reemplaza el orquestado JS que podía dejar ventas a
+  // medias ante un fallo. Ver scripts/atomic-venta-rpc.sql.
+  const { data: ventaId, error } = await supabase.rpc(
+    "crear_venta_desde_cotizacion",
+    { p_cotizacion_id: cotizacionId },
+  )
 
-  if (cotErr || !cot) {
-    return { ok: false as const, error: cotErr?.message ?? "Cotización no encontrada" }
-  }
-
-  const { data: items, error: itemsErr } = await supabase
-    .from("cotizacion_items")
-    .select("producto_id, cantidad, precio_unitario, costo_unitario, subtotal, sort_order")
-    .eq("cotizacion_id", cotizacionId)
-    .order("sort_order", { ascending: true })
-
-  if (itemsErr) {
-    return { ok: false as const, error: itemsErr.message }
-  }
-
-  // Al vender, el número cambia su sufijo de -C- (cotizado) a -V- (vendido).
-  const numeroVenta = cambiarTipoNumero(cot.numero, "V")
-
-  // total / ganancia / saldo_pendiente / utilidad_neta son GENERATED — Postgres los calcula.
-  const { data: venta, error: ventaErr } = await supabase
-    .from("ventas")
-    .insert({
-      numero: numeroVenta,
-      cliente_id: cot.cliente_id,
-      fecha: new Date().toISOString().slice(0, 10),
-      moneda: cot.moneda,
-      subtotal: cot.subtotal,
-      iva: cot.iva,
-      descuento: cot.descuento,
-      costo_productos: cot.costo_productos,
-      costo_envio: cot.costo_envio ?? 0,
-      notas: cot.notas,
-      cotizacion_id: cotizacionId,
-    })
-    .select("id")
-    .single()
-
-  if (ventaErr || !venta) {
-    return {
-      ok: false as const,
-      error: `No se pudo crear la venta: ${ventaErr?.message ?? "desconocido"}`,
-    }
-  }
-
-  if (items && items.length > 0) {
-    const ventaItems = items.map((it) => ({
-      venta_id: venta.id,
-      producto_id: it.producto_id,
-      cantidad: it.cantidad,
-      precio_unitario: it.precio_unitario,
-      costo_unitario: it.costo_unitario,
-      subtotal: it.subtotal,
-      sort_order: it.sort_order,
-    }))
-    const { error: ventaItemsErr } = await supabase
-      .from("venta_items")
-      .insert(ventaItems)
-    if (ventaItemsErr) {
-      return {
-        ok: false as const,
-        error: `Venta creada pero items fallaron: ${ventaItemsErr.message}`,
-      }
-    }
-  }
-
-  const { error: rpcErr } = await supabase.rpc("descontar_inventario_venta", {
-    venta_id: venta.id,
-  })
-  if (rpcErr) {
-    return {
-      ok: false as const,
-      error: `Venta creada pero descuento de inventario falló: ${rpcErr.message}`,
-    }
-  }
-
-  const { error: updErr } = await supabase
-    .from("cotizaciones")
-    .update({ estatus: "aceptada", numero: numeroVenta })
-    .eq("id", cotizacionId)
-
-  if (updErr) {
-    return {
-      ok: false as const,
-      error: `Inventario descontado pero estatus no se actualizó: ${updErr.message}`,
-    }
+  if (error) {
+    return { ok: false as const, error: error.message }
   }
 
   revalidatePath(`/cotizaciones/${cotizacionId}`)
   revalidatePath("/cotizaciones")
   revalidatePath("/")
   revalidatePath("/inventario")
+  revalidatePath("/ventas")
 
-  return { ok: true as const, ventaId: venta.id as string }
+  return { ok: true as const, ventaId: ventaId as string }
 }
 
 // ───────────────────────────────────────────────────────────────────

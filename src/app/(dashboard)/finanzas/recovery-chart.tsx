@@ -11,12 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
+import { formatMXN } from "@/lib/utils"
 
 type Point = {
   mes: string
@@ -68,7 +63,7 @@ export function RecoveryChart({
             fontSize: 12,
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
           }}
-          formatter={(v) => mxn.format(Number(v ?? 0))}
+          formatter={(v) => formatMXN(Number(v ?? 0))}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         <ReferenceLine
@@ -77,7 +72,7 @@ export function RecoveryChart({
           strokeDasharray="4 4"
           strokeOpacity={0.4}
           label={{
-            value: `Inv. Sandra ${mxn.format(invSandra)}`,
+            value: `Inv. Sandra ${formatMXN(invSandra)}`,
             position: "insideTopRight",
             fill: "#94A3B8",
             fontSize: 10,
@@ -89,7 +84,7 @@ export function RecoveryChart({
           strokeDasharray="4 4"
           strokeOpacity={0.4}
           label={{
-            value: `Inv. Benjamin ${mxn.format(invBenjamin)}`,
+            value: `Inv. Benjamin ${formatMXN(invBenjamin)}`,
             position: "insideBottomRight",
             fill: "#0F766E",
             fontSize: 10,

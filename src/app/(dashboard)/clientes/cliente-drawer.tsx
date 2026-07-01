@@ -35,13 +35,8 @@ import type {
   VentaSummaryRow,
 } from "./clientes-dashboard"
 import { EmpiricalCDFModel, MES_ABBR } from "./lib-prediccion"
+import { formatMXN2 } from "@/lib/utils"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "numeric",
   month: "long",
@@ -277,22 +272,29 @@ export function ClienteDrawer({
           <div className="mt-3 grid grid-cols-3 gap-2">
             <Stat
               label="LTV"
-              value={mxn.format(cliente.ltv)}
+              value={formatMXN2(cliente.ltv)}
               accent="text-[#0F766E]"
             />
             <Stat
               label="Utilidad"
-              value={mxn.format(cliente.utilidad_total)}
+              value={formatMXN2(cliente.utilidad_total)}
               accent="text-emerald-700"
             />
             <Stat
               label="Ticket prom."
-              value={mxn.format(cliente.ticket_promedio)}
+              value={formatMXN2(cliente.ticket_promedio)}
               accent="text-violet-700"
             />
           </div>
           {/* Quick actions */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Link
+              href={`/clientes/${cliente.id}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+            >
+              <ExternalLink className="size-3" />
+              Ver ficha
+            </Link>
             <Link
               href={`/clientes/${cliente.id}/editar`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
@@ -419,7 +421,7 @@ export function ClienteDrawer({
               />
               <RecurMini
                 label="Saldo"
-                value={mxn.format(cliente.saldo_total)}
+                value={formatMXN2(cliente.saldo_total)}
                 accent={
                   cliente.saldo_total > 0 ? "text-rose-700" : "text-gray-700"
                 }
@@ -444,7 +446,7 @@ export function ClienteDrawer({
                       <div
                         key={m.key}
                         className="flex flex-1 flex-col items-center gap-1"
-                        title={`${m.label}: ${mxn.format(m.total)} (${m.count})`}
+                        title={`${m.label}: ${formatMXN2(m.total)} (${m.count})`}
                       >
                         <div
                           className={`w-full rounded-t ${m.total > 0 ? "bg-gradient-to-t from-pink-400 to-pink-600" : "bg-gray-100"}`}
@@ -488,7 +490,7 @@ export function ClienteDrawer({
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
-                        {mxn.format(p.revenue)}
+                        {formatMXN2(p.revenue)}
                       </div>
                     </div>
                   </li>
@@ -533,7 +535,7 @@ export function ClienteDrawer({
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-bold tabular-nums text-gray-900">
-                          {mxn.format(Number(v.total ?? 0))}
+                          {formatMXN2(Number(v.total ?? 0))}
                         </div>
                         <span
                           className={`mt-0.5 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9.5px] font-medium ring-1 ${status}`}
@@ -582,7 +584,7 @@ export function ClienteDrawer({
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-bold tabular-nums text-gray-900">
-                          {mxn.format(Number(c.total ?? 0))}
+                          {formatMXN2(Number(c.total ?? 0))}
                         </div>
                         <span
                           className={`mt-0.5 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9.5px] font-medium ring-1 ${status}`}
@@ -609,7 +611,7 @@ export function ClienteDrawer({
                 <TimelineItem
                   key={v.id}
                   date={v.fecha}
-                  label={`Venta ${v.numero} · ${mxn.format(Number(v.total ?? 0))}`}
+                  label={`Venta ${v.numero} · ${formatMXN2(Number(v.total ?? 0))}`}
                   tone="emerald"
                   href={`/ventas/${v.id}`}
                 />
@@ -700,7 +702,7 @@ export function ClienteDrawer({
                   <PredCard
                     icon={<TrendingUp className="size-3.5" />}
                     label="Ticket esperado"
-                    value={mxn.format(prediccion.ingresoEstimadoProx)}
+                    value={formatMXN2(prediccion.ingresoEstimadoProx)}
                     accent="text-emerald-700"
                   />
                   <PredCard
@@ -730,7 +732,7 @@ export function ClienteDrawer({
                       Valor futuro estimado · 12 meses
                     </span>
                     <span className="text-base font-bold tabular-nums text-emerald-700">
-                      {mxn.format(prediccion.valorFuturo12m)}
+                      {formatMXN2(prediccion.valorFuturo12m)}
                     </span>
                   </div>
                 </div>

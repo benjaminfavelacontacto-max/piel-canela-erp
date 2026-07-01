@@ -4,9 +4,27 @@ import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Save, ArrowLeft, FileText } from "lucide-react"
+import { Save, ArrowLeft, FileText, X } from "lucide-react"
 import { saveVenta } from "./actions"
 import type { CotizacionLoaded } from "./nueva/page"
+import { formatMXN2 } from "@/lib/utils"
+
+export type ProductoOpcion = {
+  id: string
+  sku: string | null
+  nombre: string
+  precio: number
+  costo: number
+}
+
+type Linea = {
+  producto_id: string
+  nombre: string
+  sku: string | null
+  cantidad: number
+  precio: number
+  costo: number
+}
 
 type Cliente = {
   id: string
@@ -26,11 +44,6 @@ type Socio = {
 }
 
 type MetodoPago = "transferencia" | "efectivo" | "tarjeta"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-})
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -59,11 +72,13 @@ const estatusLabel: Record<Estatus, string> = {
 export function VentaForm({
   clientes,
   socios,
+  productos = [],
   cotizacion,
   cotizacionError,
 }: {
   clientes: Cliente[]
   socios: Socio[]
+  productos?: ProductoOpcion[]
   cotizacion: CotizacionLoaded | null
   cotizacionError: string | null
 }) {
@@ -90,12 +105,44 @@ export function VentaForm({
   const [manualCostoProductos, setManualCostoProductos] = useState<number>(0)
   const [manualCostoEnvio, setManualCostoEnvio] = useState<number>(0)
 
+  // Partidas opcionales de venta manual. Si hay líneas, subtotal y costo se
+  // derivan de ellas (y al guardar se descuenta inventario). Si no, se usan los
+  // totales manuales de abajo (comportamiento previo).
+  const [lineas, setLineas] = useState<Linea[]>([])
+  const usaLineas = !cotizacion && lineas.length > 0
+
+  function addLinea(prodId: string) {
+    const p = productos.find((x) => x.id === prodId)
+    if (!p) return
+    setLineas((prev) => {
+      const existing = prev.find((l) => l.producto_id === prodId)
+      if (existing) {
+        return prev.map((l) =>
+          l.producto_id === prodId ? { ...l, cantidad: l.cantidad + 1 } : l,
+        )
+      }
+      return [
+        ...prev,
+        { producto_id: p.id, nombre: p.nombre, sku: p.sku, cantidad: 1, precio: p.precio, costo: p.costo },
+      ]
+    })
+  }
+  function updateLinea(prodId: string, patch: Partial<Linea>) {
+    setLineas((prev) =>
+      prev.map((l) => (l.producto_id === prodId ? { ...l, ...patch } : l)),
+    )
+  }
+  function removeLinea(prodId: string) {
+    setLineas((prev) => prev.filter((l) => l.producto_id !== prodId))
+  }
+
   const totals = useMemo(() => {
     if (cotizacion) {
       const subtotal = Number(cotizacion.subtotal ?? 0)
       const descuento = Number(cotizacion.descuento ?? 0)
-      // IVA real = subtotal × 16% si user activa toggle, NO el de la cotización
-      const iva = ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
+      // IVA real = (subtotal − descuento) × 16% si user activa toggle. El descuento
+      // reduce la base gravable antes del IVA (estándar fiscal MX).
+      const iva = ivaActivo ? Number(((subtotal - descuento) * 0.16).toFixed(2)) : 0
       return {
         subtotal,
         iva,
@@ -105,19 +152,28 @@ export function VentaForm({
         costo_envio: 0,
       }
     }
+    // Manual: si hay líneas, subtotal/costo salen de ellas; si no, de los inputs.
+    const conLineas = lineas.length > 0
+    const subtotal = conLineas
+      ? lineas.reduce((s, l) => s + l.precio * l.cantidad, 0)
+      : manualSubtotal
+    const costo_productos = conLineas
+      ? lineas.reduce((s, l) => s + l.costo * l.cantidad, 0)
+      : manualCostoProductos
     const iva = ivaActivo
-      ? Number((manualSubtotal * 0.16).toFixed(2))
+      ? Number(((subtotal - manualDescuento) * 0.16).toFixed(2))
       : 0
     return {
-      subtotal: manualSubtotal,
+      subtotal,
       iva,
       descuento: manualDescuento,
-      total: Math.max(0, manualSubtotal + iva - manualDescuento),
-      costo_productos: manualCostoProductos,
+      total: Math.max(0, subtotal + iva - manualDescuento),
+      costo_productos,
       costo_envio: manualCostoEnvio,
     }
   }, [
     cotizacion,
+    lineas,
     manualSubtotal,
     ivaActivo,
     manualDescuento,
@@ -160,6 +216,15 @@ export function VentaForm({
         cantidad_pagada: cantidadPagada,
         metodo_pago: metodoPago,
         notas,
+        items:
+          usaLineas
+            ? lineas.map((l) => ({
+                producto_id: l.producto_id,
+                cantidad: l.cantidad,
+                precio_unitario: l.precio,
+                costo_unitario: l.costo,
+              }))
+            : undefined,
       })
       if (!result.ok) {
         toast.error(result.error)
@@ -269,6 +334,121 @@ export function VentaForm({
             </div>
           </div>
 
+          {!lockedFromCotizacion && (
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Productos <span className="text-gray-400">(opcional)</span>
+                </h2>
+                {lineas.length > 0 && (
+                  <span className="text-xs text-gray-400">
+                    {lineas.length} partida{lineas.length === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
+              <p className="mb-3 text-xs text-gray-500">
+                Agrega productos para descontar inventario automáticamente y
+                calcular subtotal/costo. Si lo dejas vacío, captura los totales a
+                mano abajo.
+              </p>
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) addLinea(e.target.value)
+                }}
+                disabled={productos.length === 0}
+                className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] disabled:opacity-50"
+              >
+                <option value="">
+                  {productos.length === 0
+                    ? "No hay productos con precio"
+                    : "+ Agregar producto…"}
+                </option>
+                {productos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.sku ? `${p.sku} — ` : ""}
+                    {p.nombre} · {formatMXN2(p.precio)}
+                  </option>
+                ))}
+              </select>
+
+              {lineas.length > 0 && (
+                <div className="space-y-2">
+                  {lineas.map((l) => (
+                    <div
+                      key={l.producto_id}
+                      className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium text-gray-900">
+                          {l.nombre}
+                        </div>
+                        {l.sku && (
+                          <div className="text-xs text-gray-400">{l.sku}</div>
+                        )}
+                      </div>
+                      <label className="flex items-center gap-1 text-xs text-gray-500">
+                        <span className="hidden sm:inline">Cant.</span>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={l.cantidad}
+                          onChange={(e) =>
+                            updateLinea(l.producto_id, {
+                              cantidad: Math.max(1, Math.floor(Number(e.target.value)) || 1),
+                            })
+                          }
+                          className="w-16 rounded-md border border-gray-200 px-2 py-1 text-right tabular-nums"
+                          aria-label={`Cantidad de ${l.nombre}`}
+                        />
+                      </label>
+                      <label className="flex items-center gap-1 text-xs text-gray-500">
+                        <span className="hidden sm:inline">P.U.</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={l.precio}
+                          onChange={(e) =>
+                            updateLinea(l.producto_id, {
+                              precio: Math.max(0, Number(e.target.value) || 0),
+                            })
+                          }
+                          className="w-24 rounded-md border border-gray-200 px-2 py-1 text-right tabular-nums"
+                          aria-label={`Precio unitario de ${l.nombre}`}
+                        />
+                      </label>
+                      <div className="w-24 text-right font-medium tabular-nums text-gray-900">
+                        {formatMXN2(l.precio * l.cantidad)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeLinea(l.producto_id)}
+                        className="text-gray-400 transition-colors hover:text-red-600"
+                        aria-label={`Quitar ${l.nombre}`}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t border-gray-100 pt-2 text-sm">
+                    <span className="text-gray-600">Subtotal productos</span>
+                    <span className="font-semibold tabular-nums text-gray-900">
+                      {formatMXN2(totals.subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Costo de productos (auto)</span>
+                    <span className="tabular-nums">
+                      {formatMXN2(totals.costo_productos)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Totales
@@ -276,26 +456,26 @@ export function VentaForm({
             {lockedFromCotizacion ? (
               <div className="space-y-3 text-sm">
                 <div className="space-y-1">
-                  <Row label="Subtotal" value={mxn.format(totals.subtotal)} />
+                  <Row label="Subtotal" value={formatMXN2(totals.subtotal)} />
                   {totals.descuento > 0 && (
                     <Row
                       label="Descuento"
-                      value={`-${mxn.format(totals.descuento)}`}
+                      value={`-${formatMXN2(totals.descuento)}`}
                       valueClass="text-emerald-700"
                     />
                   )}
                   {totals.iva > 0 && (
-                    <Row label="IVA real cobrado" value={mxn.format(totals.iva)} />
+                    <Row label="IVA real cobrado" value={formatMXN2(totals.iva)} />
                   )}
                   <Row
                     label="Costo de productos"
-                    value={mxn.format(totals.costo_productos)}
+                    value={formatMXN2(totals.costo_productos)}
                     valueClass="text-gray-500"
                   />
                   <div className="my-2 border-t border-gray-100" />
                   <Row
                     label="Total"
-                    value={mxn.format(totals.total)}
+                    value={formatMXN2(totals.total)}
                     valueClass="font-bold text-base"
                   />
                 </div>
@@ -344,8 +524,8 @@ export function VentaForm({
                   </div>
                   {ivaActivo && (
                     <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-[11px] tabular-nums text-amber-900">
-                      IVA 16%: <strong>{mxn.format(totals.iva)}</strong> · Total:{" "}
-                      <strong>{mxn.format(totals.total)}</strong>
+                      IVA 16%: <strong>{formatMXN2(totals.iva)}</strong> · Total:{" "}
+                      <strong>{formatMXN2(totals.total)}</strong>
                     </p>
                   )}
                 </div>
@@ -353,14 +533,26 @@ export function VentaForm({
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <Field label="Subtotal">
-                    <NumberInput value={manualSubtotal} onChange={setManualSubtotal} />
+                  <Field label={usaLineas ? "Subtotal (de productos)" : "Subtotal"}>
+                    {usaLineas ? (
+                      <div className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm tabular-nums text-gray-700">
+                        {formatMXN2(totals.subtotal)}
+                      </div>
+                    ) : (
+                      <NumberInput value={manualSubtotal} onChange={setManualSubtotal} />
+                    )}
                   </Field>
                   <Field label="Descuento">
                     <NumberInput value={manualDescuento} onChange={setManualDescuento} />
                   </Field>
-                  <Field label="Costo productos">
-                    <NumberInput value={manualCostoProductos} onChange={setManualCostoProductos} />
+                  <Field label={usaLineas ? "Costo productos (auto)" : "Costo productos"}>
+                    {usaLineas ? (
+                      <div className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm tabular-nums text-gray-700">
+                        {formatMXN2(totals.costo_productos)}
+                      </div>
+                    ) : (
+                      <NumberInput value={manualCostoProductos} onChange={setManualCostoProductos} />
+                    )}
                   </Field>
                   <Field label="Costo envío">
                     <NumberInput value={manualCostoEnvio} onChange={setManualCostoEnvio} />
@@ -373,7 +565,7 @@ export function VentaForm({
                     <p className="text-xs text-gray-500">
                       Aplica impuesto al subtotal
                       {ivaActivo
-                        ? ` (${mxn.format(totals.iva)})`
+                        ? ` (${formatMXN2(totals.iva)})`
                         : ""}
                     </p>
                   </div>
@@ -397,7 +589,7 @@ export function VentaForm({
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total calculado</span>
                     <span className="font-semibold tabular-nums text-gray-900">
-                      {mxn.format(totals.total)}
+                      {formatMXN2(totals.total)}
                     </span>
                   </div>
                 </div>
@@ -432,7 +624,7 @@ export function VentaForm({
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                   <div className="text-xs uppercase tracking-wide text-gray-500">Saldo pendiente</div>
                   <div className="mt-1 text-lg font-semibold tabular-nums text-gray-900">
-                    {mxn.format(saldoPendiente)}
+                    {formatMXN2(saldoPendiente)}
                   </div>
                 </div>
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
@@ -479,12 +671,12 @@ export function VentaForm({
               Resumen
             </h2>
             <div className="mt-2 space-y-1 text-sm">
-              <Row label="Total" value={mxn.format(totals.total)} valueClass="font-bold" />
-              <Row label="Ganancia" value={mxn.format(ganancia)} valueClass="text-emerald-700" />
-              <Row label="Pagado" value={mxn.format(cantidadPagada)} valueClass="text-blue-700" />
+              <Row label="Total" value={formatMXN2(totals.total)} valueClass="font-bold" />
+              <Row label="Ganancia" value={formatMXN2(ganancia)} valueClass="text-emerald-700" />
+              <Row label="Pagado" value={formatMXN2(cantidadPagada)} valueClass="text-blue-700" />
               <Row
                 label="Saldo"
-                value={mxn.format(saldoPendiente)}
+                value={formatMXN2(saldoPendiente)}
                 valueClass={saldoPendiente > 0 ? "text-amber-700" : ""}
               />
             </div>
@@ -506,7 +698,7 @@ export function VentaForm({
                         <div className="font-medium text-gray-900">{s.nombre}</div>
                         <div className="text-xs text-gray-500">{s.porcentaje}%</div>
                       </div>
-                      <span className="tabular-nums font-semibold">{mxn.format(monto)}</span>
+                      <span className="tabular-nums font-semibold">{formatMXN2(monto)}</span>
                     </li>
                   )
                 })}

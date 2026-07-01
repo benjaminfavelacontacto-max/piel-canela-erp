@@ -6,7 +6,9 @@ import { BarChart3, Sparkles } from "lucide-react"
 import { VentasTablePremium, type EnrichedVenta } from "./ventas-table-premium"
 import { VentasPorTipo, type TipoData } from "./ventas-por-tipo"
 import { VentaDrawer } from "./venta-drawer"
+import { ExportVentasButton } from "./export-ventas-button"
 import { PageHeader } from "@/components/page-header"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 import {
   Bar,
   CartesianGrid,
@@ -95,17 +97,6 @@ const SOCIO_COLORS: Record<string, string> = {
 }
 const FALLBACK_COLORS = ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280"]
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const monthShort = new Intl.DateTimeFormat("es-MX", { month: "short" })
 const monthLong = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" })
 
@@ -438,7 +429,7 @@ export function VentasDashboard({
           return [
             {
               label: "Total vendido",
-              value: mxn.format(kpis.totalVentas),
+              value: formatMXN(kpis.totalVentas),
               sub: `${kpis.activosCount} órdenes · vs mes anterior`,
               trend: {
                 value: `${dTotal >= 0 ? "+" : ""}${dTotal.toFixed(1)}%`,
@@ -449,7 +440,7 @@ export function VentasDashboard({
             },
             {
               label: "Utilidad neta",
-              value: mxn.format(kpis.utilidadNeta),
+              value: formatMXN(kpis.utilidadNeta),
               sub: `${kpis.margenNeto.toFixed(1)}% margen`,
               trend: {
                 value: `${dGanancia >= 0 ? "+" : ""}${dGanancia.toFixed(1)}%`,
@@ -459,21 +450,22 @@ export function VentasDashboard({
             },
             {
               label: "Cobrado",
-              value: mxn.format(kpis.cobrado),
+              value: formatMXN(kpis.cobrado),
               sub: `${kpis.pctCobrado.toFixed(0)}% del total · ${kpis.pendientes} pend.`,
             },
             {
               label: "Ticket promedio",
-              value: mxn.format(kpis.ticket),
+              value: formatMXN(kpis.ticket),
               sub:
                 kpis.saldo > 0
-                  ? `Saldo ${mxn.format(kpis.saldo)}`
+                  ? `Saldo ${formatMXN(kpis.saldo)}`
                   : "Todo cobrado",
             },
           ]
         })()}
         actions={
           <>
+            <ExportVentasButton ventas={ventas} />
             <Link
               href="/ventas/estadisticas"
               className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-[#F9FAFB]"
@@ -588,7 +580,7 @@ export function VentasDashboard({
                   fontSize: 12,
                   boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
                 }}
-                formatter={(v) => mxn2.format(Number(v ?? 0))}
+                formatter={(v) => formatMXN2(Number(v ?? 0))}
                 labelFormatter={(l, p) => {
                   const item = p?.[0]?.payload
                   return item?.date ? monthLong.format(item.date) : l
@@ -658,7 +650,7 @@ export function VentasDashboard({
                         className="ml-1 font-semibold text-[#0F172A] tabular-nums"
                         style={{ letterSpacing: "-0.02em" }}
                       >
-                        {mxn.format(vendido)}
+                        {formatMXN(vendido)}
                       </span>
                     </span>
                     <span>
@@ -667,7 +659,7 @@ export function VentasDashboard({
                         className="ml-1 font-semibold text-emerald-700 tabular-nums"
                         style={{ letterSpacing: "-0.02em" }}
                       >
-                        {mxn.format(ganancia)}
+                        {formatMXN(ganancia)}
                       </span>
                     </span>
                   </div>
@@ -678,7 +670,7 @@ export function VentasDashboard({
                     />
                   </div>
                   <p className="text-[10.5px] text-[#94A3B8]">
-                    Cobrado {mxn.format(cobrado)}
+                    Cobrado {formatMXN(cobrado)}
                     {vendido > 0
                       ? ` · ${((cobrado / vendido) * 100).toFixed(0)}%`
                       : ""}
@@ -717,7 +709,7 @@ export function VentasDashboard({
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v) => mxn2.format(Number(v ?? 0))}
+                      formatter={(v) => formatMXN2(Number(v ?? 0))}
                       cursor={{ fill: "rgba(15,118,110,0.04)" }}
                       contentStyle={{
                         border: "1px solid rgba(15,23,42,0.06)",
@@ -757,37 +749,37 @@ export function VentasDashboard({
         <InsightCard
           label="ROI Sandra"
           big={`${kpis.sandraROI.toFixed(0)}%`}
-          line1={`${mxn.format(kpis.sandra)} de ${mxn.format(kpis.sandraInvertido)}`}
+          line1={`${formatMXN(kpis.sandra)} de ${formatMXN(kpis.sandraInvertido)}`}
         />
         <InsightCard
           label="ROI Benjamin"
           big={`${kpis.benjaminROI.toFixed(0)}%`}
-          line1={`${mxn.format(kpis.benjamin)} de ${mxn.format(kpis.benjaminInvertido)}`}
+          line1={`${formatMXN(kpis.benjamin)} de ${formatMXN(kpis.benjaminInvertido)}`}
         />
         <InsightCard
           label="Mejor cliente"
           big={kpis.mejorCliente?.nombre ?? "—"}
           line1={
             kpis.mejorCliente
-              ? `${mxn.format(kpis.mejorCliente.monto)} · ${kpis.mejorCliente.n} ${kpis.mejorCliente.n === 1 ? "venta" : "ventas"}`
+              ? `${formatMXN(kpis.mejorCliente.monto)} · ${kpis.mejorCliente.n} ${kpis.mejorCliente.n === 1 ? "venta" : "ventas"}`
               : "Sin ventas"
           }
           truncateBig
         />
         <InsightCard
           label="Ganancia bruta"
-          big={mxn.format(kpis.ganancia)}
+          big={formatMXN(kpis.ganancia)}
           line1={`${kpis.margen.toFixed(1)}% margen bruto`}
         />
         <InsightCard
           label="Costo envío"
-          big={mxn.format(kpis.totalCostoEnvio)}
+          big={formatMXN(kpis.totalCostoEnvio)}
           line1="Restado de utilidad neta"
         />
         <InsightCard
           label="Sin IVA"
           big={`${kpis.sinIVA}`}
-          line1={`${mxn.format(kpis.sinIVAMonto)} sin IVA`}
+          line1={`${formatMXN(kpis.sinIVAMonto)} sin IVA`}
         />
       </section>
 

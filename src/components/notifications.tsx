@@ -11,12 +11,7 @@ import {
   marcarTodasLeidas as marcarTodasLeidasAction,
   type Notificacion,
 } from "./notifications-actions"
-
-const mxn0 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
+import { formatMXN } from "@/lib/utils"
 
 function formatPhoneIntl(tel: string | undefined): string {
   if (!tel) return ""
@@ -453,7 +448,7 @@ export function NotificationBell() {
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {mxn0.format(n.datos.subtotal)}
+                        {formatMXN(n.datos.subtotal)}
                       </p>
                     )}
 

@@ -4,11 +4,7 @@ import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil } 
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-})
+import { formatMXN2 } from "@/lib/utils"
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -214,25 +210,25 @@ export default async function VentaDetailPage({
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Total"
-          value={mxn.format(Number(venta.total ?? 0))}
+          value={formatMXN2(Number(venta.total ?? 0))}
           icon={ShoppingBag}
           tone="text-gray-900"
         />
         <StatCard
           label="Ganancia"
-          value={mxn.format(Number(venta.ganancia ?? 0))}
+          value={formatMXN2(Number(venta.ganancia ?? 0))}
           icon={TrendingUp}
           tone="text-emerald-700"
         />
         <StatCard
           label="Pagado"
-          value={mxn.format(Number(venta.cantidad_pagada ?? 0))}
+          value={formatMXN2(Number(venta.cantidad_pagada ?? 0))}
           icon={CircleDollarSign}
           tone="text-blue-700"
         />
         <StatCard
           label="Saldo"
-          value={mxn.format(Number(venta.saldo_pendiente ?? 0))}
+          value={formatMXN2(Number(venta.saldo_pendiente ?? 0))}
           icon={Wallet}
           tone={Number(venta.saldo_pendiente ?? 0) > 0 ? "text-amber-700" : "text-gray-900"}
         />
@@ -299,13 +295,13 @@ export default async function VentaDetailPage({
                       </td>
                       <td className="px-3 py-2 text-center tabular-nums">{it.cantidad}</td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {mxn.format(Number(it.precio_unitario))}
+                        {formatMXN2(Number(it.precio_unitario))}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-500">
-                        {mxn.format(Number(it.costo_unitario))}
+                        {formatMXN2(Number(it.costo_unitario))}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                        {mxn.format(Number(it.subtotal))}
+                        {formatMXN2(Number(it.subtotal))}
                       </td>
                     </tr>
                   )
@@ -317,7 +313,7 @@ export default async function VentaDetailPage({
                     Subtotal
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {mxn.format(Number(venta.subtotal ?? 0))}
+                    {formatMXN2(Number(venta.subtotal ?? 0))}
                   </td>
                 </tr>
                 {Number(venta.descuento ?? 0) > 0 && (
@@ -326,7 +322,7 @@ export default async function VentaDetailPage({
                       Descuento
                     </td>
                     <td className="px-3 py-1 text-right tabular-nums text-emerald-700">
-                      -{mxn.format(Number(venta.descuento))}
+                      -{formatMXN2(Number(venta.descuento))}
                     </td>
                   </tr>
                 )}
@@ -340,7 +336,7 @@ export default async function VentaDetailPage({
                   <td className="px-3 py-1 text-right tabular-nums">
                     {Number(venta.iva ?? 0) > 0 ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-teal-200/60">
-                        ✓ Con IVA · {mxn.format(Number(venta.iva))}
+                        ✓ Con IVA · {formatMXN2(Number(venta.iva))}
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
@@ -354,7 +350,7 @@ export default async function VentaDetailPage({
                     Total
                   </td>
                   <td className="px-3 py-2 text-right text-base font-bold tabular-nums">
-                    {mxn.format(Number(venta.total ?? 0))}
+                    {formatMXN2(Number(venta.total ?? 0))}
                   </td>
                 </tr>
               </tfoot>
@@ -391,10 +387,10 @@ export default async function VentaDetailPage({
             </h2>
             <div className="mt-2 space-y-1 text-sm">
               <Row label="Método" value={metodo ?? "—"} />
-              <Row label="Pagado" value={mxn.format(Number(venta.cantidad_pagada ?? 0))} />
+              <Row label="Pagado" value={formatMXN2(Number(venta.cantidad_pagada ?? 0))} />
               <Row
                 label="Saldo"
-                value={mxn.format(Number(venta.saldo_pendiente ?? 0))}
+                value={formatMXN2(Number(venta.saldo_pendiente ?? 0))}
                 valueClass={
                   Number(venta.saldo_pendiente ?? 0) > 0 ? "text-amber-700" : ""
                 }
@@ -470,7 +466,7 @@ export default async function VentaDetailPage({
                           />
                         </div>
                         <p className="mt-1 text-[10px] tabular-nums text-gray-400">
-                          {mxn.format(item.subtotal)}
+                          {formatMXN2(item.subtotal)}
                         </p>
                       </div>
                     </div>
@@ -512,7 +508,7 @@ export default async function VentaDetailPage({
                       </div>
                     </div>
                     <span className="tabular-nums font-semibold">
-                      {mxn.format(Number(s.monto))}
+                      {formatMXN2(Number(s.monto))}
                     </span>
                   </li>
                 ))}

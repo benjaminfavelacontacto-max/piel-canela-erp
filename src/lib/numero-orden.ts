@@ -8,7 +8,7 @@
  * - DDMMYY: fecha de la orden (día, mes, año corto).
  * - NNN: consecutivo de 3 dígitos POR CLIENTE.
  * - TIPO: "C" = cotizado · "V" = vendido.
- * - NombreCorto: primera palabra del nombre del negocio del cliente.
+ * - NombreCorto: nombre completo del negocio del cliente (sin espacios ni acentos).
  */
 
 export type TipoOrden = "C" | "V"
@@ -24,18 +24,18 @@ export function fechaDDMMYY(fecha: Date | string = new Date()): string {
 }
 
 /**
- * Nombre corto del cliente para el sufijo: primera palabra de nombre_negocio
- * (o nombre), sin acentos ni caracteres especiales.
- * "Mithra Sun & Spa" → "Mithra" · "Ana Lucia" → "Ana".
+ * Nombre del cliente para el sufijo: nombre_negocio COMPLETO (o nombre), sin
+ * acentos ni caracteres especiales. Los espacios se concatenan para mantener el
+ * número como un identificador limpio (sin guiones que choquen con el -C-/-V-).
+ * "Mithra Sun & Spa" → "MithraSunSpa" · "Ana Lucia" → "AnaLucia".
  */
 export function nombreCorto(
   cliente: { nombre_negocio?: string | null; nombre?: string | null } | null,
 ): string {
   const base = (cliente?.nombre_negocio ?? cliente?.nombre ?? "Cliente").trim()
-  const primera = base.split(/\s+/)[0] ?? base
   // NFD separa los acentos en marcas combinantes; el filtro alfanumérico las
-  // elimina junto con cualquier símbolo. "Café" → "Cafe", "Mithra" → "Mithra".
-  const limpio = primera.normalize("NFD").replace(/[^A-Za-z0-9]/g, "")
+  // elimina junto con espacios y símbolos. "Café Sol" → "CafeSol".
+  const limpio = base.normalize("NFD").replace(/[^A-Za-z0-9]/g, "")
   return limpio || "Cliente"
 }
 

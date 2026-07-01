@@ -59,16 +59,11 @@ import {
   updateVentaSocio,
 } from "./actions"
 import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
+import { formatMXN2 } from "@/lib/utils"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -350,7 +345,7 @@ function EditableMonto({
         <Loader2 className="size-3 animate-spin" />
       ) : monto > 0 ? (
         <>
-          <span>{mxn.format(monto)}</span>
+          <span>{formatMXN2(monto)}</span>
           <Pencil className="size-2.5 opacity-0 transition group-hover:opacity-60" />
         </>
       ) : (
@@ -839,7 +834,7 @@ export function VentasTablePremium({
         header: (ctx) => <HeaderCell label="Subtotal" ctx={ctx} align="right" />,
         cell: ({ getValue }) => (
           <span className="text-xs tabular-nums text-gray-500">
-            {mxn.format(Number(getValue() ?? 0))}
+            {formatMXN2(Number(getValue() ?? 0))}
           </span>
         ),
         size: 120,
@@ -854,9 +849,9 @@ export function VentasTablePremium({
             return (
               <span
                 className="inline-flex items-center rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-teal-200/60 tabular-nums"
-                title={`IVA 16% sobre subtotal ${mxn.format(Number(row.original.subtotal ?? 0))}`}
+                title={`IVA 16% sobre subtotal ${formatMXN2(Number(row.original.subtotal ?? 0))}`}
               >
-                + {mxn.format(v)}
+                + {formatMXN2(v)}
               </span>
             )
           }
@@ -881,7 +876,7 @@ export function VentasTablePremium({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 tabular-nums">
-              − {mxn.format(v)}
+              − {formatMXN2(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -902,8 +897,8 @@ export function VentasTablePremium({
           const inconsistent = drift > 0.05
           const sinIva = iva === 0 && total > 0
           const tooltip = inconsistent
-            ? `⚠ Inconsistencia: total=${mxn.format(total)} pero subtotal+iva−desc=${mxn.format(expected)} (Δ ${mxn.format(drift)})`
-            : `Total final = Subtotal ${mxn.format(sub)}${iva > 0 ? ` + IVA ${mxn.format(iva)}` : sinIva ? " (sin IVA)" : ""}${desc > 0 ? ` − Desc ${mxn.format(desc)}` : ""}`
+            ? `⚠ Inconsistencia: total=${formatMXN2(total)} pero subtotal+iva−desc=${formatMXN2(expected)} (Δ ${formatMXN2(drift)})`
+            : `Total final = Subtotal ${formatMXN2(sub)}${iva > 0 ? ` + IVA ${formatMXN2(iva)}` : sinIva ? " (sin IVA)" : ""}${desc > 0 ? ` − Desc ${formatMXN2(desc)}` : ""}`
           return (
             <span
               className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm font-bold tabular-nums ${
@@ -913,7 +908,7 @@ export function VentasTablePremium({
               }`}
               title={tooltip}
             >
-              {mxn.format(total)}
+              {formatMXN2(total)}
               {inconsistent && (
                 <AlertTriangle className="size-3 text-rose-600" />
               )}
@@ -928,7 +923,7 @@ export function VentasTablePremium({
         header: (ctx) => <HeaderCell label="Costo prods." ctx={ctx} align="right" />,
         cell: ({ getValue }) => (
           <span className="text-xs tabular-nums text-gray-600">
-            {mxn.format(Number(getValue() ?? 0))}
+            {formatMXN2(Number(getValue() ?? 0))}
           </span>
         ),
         size: 120,
@@ -940,7 +935,7 @@ export function VentasTablePremium({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="text-xs tabular-nums text-amber-700">
-              {mxn.format(v)}
+              {formatMXN2(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -954,7 +949,7 @@ export function VentasTablePremium({
         header: (ctx) => <HeaderCell label="Utilidad bruta" ctx={ctx} align="right" />,
         cell: ({ getValue }) => (
           <span className="text-xs font-semibold text-emerald-600 tabular-nums">
-            {mxn.format(Number(getValue() ?? 0))}
+            {formatMXN2(Number(getValue() ?? 0))}
           </span>
         ),
         size: 130,
@@ -967,7 +962,7 @@ export function VentasTablePremium({
           const tone = v >= 0 ? "text-emerald-700" : "text-rose-700"
           return (
             <span className={`text-sm font-bold tabular-nums ${tone}`}>
-              {mxn.format(v)}
+              {formatMXN2(v)}
             </span>
           )
         },
@@ -1061,7 +1056,7 @@ export function VentasTablePremium({
           return (
             <div className="text-right">
               <div className="text-xs font-semibold text-gray-900 tabular-nums">
-                {mxn.format(v)}
+                {formatMXN2(v)}
               </div>
               <div className="text-[10px] text-gray-500 tabular-nums">{pct.toFixed(0)}%</div>
             </div>
@@ -1443,7 +1438,7 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
               }`}
             >
               <AlertTriangle className="size-2.5" />
-              Restante {mxn.format(restante)}
+              Restante {formatMXN2(restante)}
             </span>
           )}
         </header>
@@ -1477,7 +1472,7 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
               Total venta
             </div>
             <div className="mt-0.5 font-bold text-gray-900 tabular-nums">
-              {mxn.format(total)}
+              {formatMXN2(total)}
             </div>
           </div>
           <div>
@@ -1487,7 +1482,7 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
             <div
               className={`mt-0.5 font-bold tabular-nums ${cuadra ? "text-emerald-700" : "text-amber-700"}`}
             >
-              {mxn.format(sumSocios)}
+              {formatMXN2(sumSocios)}
             </div>
           </div>
           <div>
@@ -1495,7 +1490,7 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
               Utilidad neta
             </div>
             <div className="mt-0.5 font-bold tabular-nums text-emerald-700">
-              {mxn.format(utilNeta)}
+              {formatMXN2(utilNeta)}
             </div>
           </div>
         </div>
@@ -1562,8 +1557,8 @@ function SocioCard({
       </div>
       <div className="mt-1.5 grid grid-cols-3 gap-1 text-[10px]">
         <Mini label="Particip." value={`${pct.toFixed(1)}%`} />
-        <Mini label="Cobrado" value={mxn.format(cobrado)} />
-        <Mini label="Utilidad" value={mxn.format(utilidad)} accent={cfg.text} />
+        <Mini label="Cobrado" value={formatMXN2(cobrado)} />
+        <Mini label="Utilidad" value={formatMXN2(utilidad)} accent={cfg.text} />
       </div>
     </div>
   )

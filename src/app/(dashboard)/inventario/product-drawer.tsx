@@ -27,19 +27,8 @@ import {
   YAxis,
 } from "recharts"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -266,7 +255,7 @@ export function ProductDrawer({
               label="Precio público"
               value={
                 producto.precio_publico != null
-                  ? mxn2.format(producto.precio_publico)
+                  ? formatMXN2(producto.precio_publico)
                   : "—"
               }
               sub={
@@ -280,12 +269,12 @@ export function ProductDrawer({
               label="Capital invertido"
               value={
                 producto.capital_invertido != null
-                  ? mxn.format(producto.capital_invertido)
+                  ? formatMXN(producto.capital_invertido)
                   : "—"
               }
               sub={
                 tieneCosto
-                  ? `${mxn2.format(costoUnit!)} costo/u`
+                  ? `${formatMXN2(costoUnit!)} costo/u`
                   : "Sin costo cargado"
               }
             />
@@ -294,7 +283,7 @@ export function ProductDrawer({
               label="Valor inventario"
               value={
                 producto.valor_inventario != null
-                  ? mxn.format(producto.valor_inventario)
+                  ? formatMXN(producto.valor_inventario)
                   : "—"
               }
               sub="A precio público"
@@ -309,10 +298,10 @@ export function ProductDrawer({
             </h3>
             {tieneCosto ? (
               <div className="grid grid-cols-3 gap-3">
-                <MiniStat label="Costo real" value={mxn2.format(costoUnit!)} />
+                <MiniStat label="Costo real" value={formatMXN2(costoUnit!)} />
                 <MiniStat
                   label="Ganancia"
-                  value={gananciaUnit != null ? mxn2.format(gananciaUnit) : "—"}
+                  value={gananciaUnit != null ? formatMXN2(gananciaUnit) : "—"}
                   tone="emerald"
                 />
                 <MiniStat
@@ -345,7 +334,7 @@ export function ProductDrawer({
                 </span>
                 <span className="shrink-0 text-lg font-bold tabular-nums text-emerald-700">
                   {potencialGanancia != null
-                    ? mxn.format(potencialGanancia)
+                    ? formatMXN(potencialGanancia)
                     : "—"}
                 </span>
               </div>
@@ -355,7 +344,7 @@ export function ProductDrawer({
                     Valor a costo
                   </p>
                   <p className="text-sm font-semibold tabular-nums text-gray-900">
-                    {valorCosto != null ? mxn.format(valorCosto) : "—"}
+                    {valorCosto != null ? formatMXN(valorCosto) : "—"}
                   </p>
                 </div>
                 <div>
@@ -364,7 +353,7 @@ export function ProductDrawer({
                   </p>
                   <p className="text-sm font-semibold tabular-nums text-gray-900">
                     {producto.valor_inventario != null
-                      ? mxn.format(producto.valor_inventario)
+                      ? formatMXN(producto.valor_inventario)
                       : "—"}
                   </p>
                 </div>
@@ -456,7 +445,7 @@ export function ProductDrawer({
                       formatter={(v, key) =>
                         key === "cantidad"
                           ? `${Number(v ?? 0)} u`
-                          : mxn2.format(Number(v ?? 0))
+                          : formatMXN2(Number(v ?? 0))
                       }
                     />
                     <Bar
@@ -480,7 +469,7 @@ export function ProductDrawer({
                 <p className="text-[10px] text-gray-400">
                   {ventasList.length} línea{ventasList.length === 1 ? "" : "s"}
                   {ventasList.length > 0
-                    ? ` · ticket prom. ${mxn2.format(ticketProm)}`
+                    ? ` · ticket prom. ${formatMXN2(ticketProm)}`
                     : ""}
                 </p>
               </div>
@@ -533,7 +522,7 @@ export function ProductDrawer({
                           {v.cantidad}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums font-semibold text-gray-900">
-                          {mxn2.format(v.subtotal)}
+                          {formatMXN2(v.subtotal)}
                         </td>
                       </tr>
                     ))}
@@ -589,7 +578,7 @@ export function ProductDrawer({
                   <span>Costo total MXN</span>
                   <span className="tabular-nums">
                     {producto.costo_total_mxn != null
-                      ? mxn2.format(producto.costo_total_mxn)
+                      ? formatMXN2(producto.costo_total_mxn)
                       : "—"}
                   </span>
                 </div>

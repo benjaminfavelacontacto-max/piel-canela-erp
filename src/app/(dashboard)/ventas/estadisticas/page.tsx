@@ -16,13 +16,8 @@ import { MonthlyChart } from "./monthly-chart"
 import { PeriodoTabs } from "./periodo-tabs"
 import { ClientesTable } from "./clientes-table"
 import { AnimatedNumber } from "./animated-number"
+import { formatMXN } from "@/lib/utils"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
 const monthLong = new Intl.DateTimeFormat("es-MX", {
   month: "long",
   year: "numeric",
@@ -147,7 +142,7 @@ export default async function EstadisticasPage({
     if (topCli) {
       insights.push({
         emoji: "🏆",
-        texto: `Mejor cliente: ${topCli.nombre} con ${mxn.format(topCli.totalCompras)}`,
+        texto: `Mejor cliente: ${topCli.nombre} con ${formatMXN(topCli.totalCompras)}`,
       })
     }
     const topProd = stats.topProductos[0]
@@ -201,14 +196,9 @@ export default async function EstadisticasPage({
 
   // Insight de IVA real recaudado
   if (ventasConIva + ventasSinIva > 0) {
-    const mxn0 = new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 0,
-    })
     insights.push({
       emoji: "🧾",
-      texto: `${ventasConIva} ventas con IVA · ${ventasSinIva} sin IVA · IVA recaudado real: ${mxn0.format(ivaRecaudado)}`,
+      texto: `${ventasConIva} ventas con IVA · ${ventasSinIva} sin IVA · IVA recaudado real: ${formatMXN(ivaRecaudado)}`,
     })
   }
 
@@ -275,7 +265,7 @@ export default async function EstadisticasPage({
               }
               sub={
                 ant
-                  ? `vs ${mxn.format(prevTotal)} periodo anterior`
+                  ? `vs ${formatMXN(prevTotal)} periodo anterior`
                   : "Todo el histórico"
               }
               change={cambioVentas}
@@ -317,7 +307,7 @@ export default async function EstadisticasPage({
               }
               sub={
                 ant
-                  ? `vs ${mxn.format(ticketPrev)} anterior`
+                  ? `vs ${formatMXN(ticketPrev)} anterior`
                   : "Promedio histórico"
               }
               change={cambioTicket}
@@ -430,7 +420,7 @@ export default async function EstadisticasPage({
                       <div className="rounded-lg bg-teal-50 p-2.5">
                         <p className="text-xs text-teal-600">Generado</p>
                         <p className="font-bold text-teal-700">
-                          {mxn.format(p.totalGenerado)}
+                          {formatMXN(p.totalGenerado)}
                         </p>
                       </div>
                     </div>
