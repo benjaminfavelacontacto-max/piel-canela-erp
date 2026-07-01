@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { actualizarProducto } from "./actions"
 import type { ProductoEnriquecido } from "./inventario-view"
+import { formatMXN2 } from "@/lib/utils"
 
 type FormState = {
   nombre_display: string
@@ -249,10 +250,7 @@ export function ProductEditModal({
                   const u = parseNum(form.costo_envio_usd)
                   const tc = parseNum(form.tipo_cambio)
                   return u != null && tc != null
-                    ? (u * tc).toLocaleString("es-MX", {
-                        style: "currency",
-                        currency: "MXN",
-                      })
+                    ? formatMXN2(u * tc)
                     : "—"
                 })()}{" "}
                 · lo calcula el inventario automáticamente

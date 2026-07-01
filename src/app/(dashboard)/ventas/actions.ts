@@ -9,6 +9,28 @@ import { parseNotas } from "./notas-util"
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
+/**
+ * Compensación (rollback manual) si una venta queda a medio crear. Supabase-js
+ * no abre transacciones multi-statement, así que ante un fallo posterior al
+ * INSERT de `ventas` borramos venta + hijos para no dejar datos huérfanos.
+ * La versión atómica real vive en scripts/atomic-venta-rpc.sql.
+ */
+async function rollbackVenta(
+  supabase: ReturnType<typeof createAdminClient>,
+  ventaId: string,
+) {
+  await supabase.from("venta_items").delete().eq("venta_id", ventaId)
+  await supabase.from("venta_socios").delete().eq("venta_id", ventaId)
+  await supabase.from("ventas").delete().eq("id", ventaId)
+}
+
+export type SaveVentaItem = {
+  producto_id: string
+  cantidad: number
+  precio_unitario: number
+  costo_unitario: number
+}
+
 export type SaveVentaInput = {
   numero: string
   cotizacion_id: string | null
@@ -23,6 +45,12 @@ export type SaveVentaInput = {
   cantidad_pagada: number
   metodo_pago: "transferencia" | "efectivo" | "tarjeta"
   notas: string
+  /**
+   * Partidas opcionales de una venta MANUAL (sin cotización). Si vienen, se
+   * crean `venta_items` y se descuenta inventario (mismo RPC que la conversión).
+   * Se ignoran cuando hay `cotizacion_id` (los items se copian de la cotización).
+   */
+  items?: SaveVentaItem[]
 }
 
 function buildNotas(metodo: string, notas: string): string {
@@ -72,6 +100,9 @@ export async function saveVenta(input: SaveVentaInput) {
     return { ok: false as const, error: ventaErr?.message ?? "Error al crear venta" }
   }
 
+  // ¿La venta lleva partidas? (para decidir si se descuenta inventario)
+  let hasItems = false
+
   if (input.cotizacion_id) {
     const { data: cotItems, error: cotErr } = await supabase
       .from("cotizacion_items")
@@ -80,7 +111,8 @@ export async function saveVenta(input: SaveVentaInput) {
       .order("sort_order", { ascending: true })
 
     if (cotErr) {
-      return { ok: false as const, error: `Venta creada pero items fallaron: ${cotErr.message}` }
+      await rollbackVenta(supabase, venta.id)
+      return { ok: false as const, error: `No se pudo crear la venta (items): ${cotErr.message}` }
     }
 
     if (cotItems && cotItems.length > 0) {
@@ -97,15 +129,38 @@ export async function saveVenta(input: SaveVentaInput) {
 
       const { error: itemsErr } = await supabase.from("venta_items").insert(ventaItems)
       if (itemsErr) {
+        await rollbackVenta(supabase, venta.id)
         return {
           ok: false as const,
-          error: `Venta creada pero items fallaron: ${itemsErr.message}`,
+          error: `No se pudo crear la venta (items): ${itemsErr.message}`,
         }
       }
+      hasItems = true
     }
+  } else if (input.items && input.items.length > 0) {
+    // Venta MANUAL con partidas: crear venta_items desde el editor del formulario.
+    const ventaItems = input.items.map((it, i) => ({
+      venta_id: venta.id,
+      producto_id: it.producto_id,
+      cantidad: it.cantidad,
+      precio_unitario: it.precio_unitario,
+      costo_unitario: it.costo_unitario,
+      subtotal: Number(it.precio_unitario) * Number(it.cantidad),
+      costo_total: Number(it.costo_unitario) * Number(it.cantidad),
+      sort_order: i,
+    }))
+    const { error: itemsErr } = await supabase.from("venta_items").insert(ventaItems)
+    if (itemsErr) {
+      await rollbackVenta(supabase, venta.id)
+      return {
+        ok: false as const,
+        error: `No se pudo crear la venta (items): ${itemsErr.message}`,
+      }
+    }
+    hasItems = true
   }
 
-  // División hardcodeada Sandra/Benjamin al 50% (no depende de RLS sobre `socios`).
+  // División hardcodeada Sandra/Benjamin al 50% (placeholder, se ajusta a mano).
   const half = Number((input.total / 2).toFixed(2))
   const ventaSocios = [
     {
@@ -127,9 +182,25 @@ export async function saveVenta(input: SaveVentaInput) {
   ]
   const { error: vsErr } = await supabase.from("venta_socios").insert(ventaSocios)
   if (vsErr) {
+    await rollbackVenta(supabase, venta.id)
     return {
       ok: false as const,
-      error: `Venta creada pero distribución de socios falló: ${vsErr.message}`,
+      error: `No se pudo crear la venta (reparto socios): ${vsErr.message}`,
+    }
+  }
+
+  // Descontar inventario si la venta tiene partidas — venga de una cotización o
+  // sea manual con productos. Mismo RPC (opera sobre venta_items).
+  if (hasItems) {
+    const { error: rpcErr } = await supabase.rpc("descontar_inventario_venta", {
+      venta_id: venta.id,
+    })
+    if (rpcErr) {
+      await rollbackVenta(supabase, venta.id)
+      return {
+        ok: false as const,
+        error: `No se pudo crear la venta (inventario): ${rpcErr.message}`,
+      }
     }
   }
 
@@ -185,7 +256,8 @@ export type VentasStats = {
 type VentaForStats = {
   id: string
   total: number | null
-  ganancia: number | null
+  utilidad_neta: number | null
+  estatus: string | null
   fecha: string
   cliente_id: string | null
   cotizacion_id: string | null
@@ -213,7 +285,7 @@ export async function getVentasStats(filtros?: {
   const admin = createAdminClient()
 
   let query = supabase.from("ventas").select(
-    `id, total, ganancia, fecha, cliente_id, cotizacion_id,
+    `id, total, utilidad_neta, estatus, fecha, cliente_id, cotizacion_id,
      clientes(nombre, nombre_negocio)`,
   )
   if (filtros?.desde) query = query.gte("fecha", filtros.desde)
@@ -228,7 +300,9 @@ export async function getVentasStats(filtros?: {
   // Excluir ventas internas (Piel Canela) — movimientos de inventario
   const internalIds = await getInternalClienteIds()
   const ventas = ((data ?? []) as unknown as VentaForStats[]).filter(
-    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+    (v) =>
+      (!v.cliente_id || !internalIds.has(v.cliente_id)) &&
+      v.estatus !== "cancelada",
   )
   const ventaIds = ventas.map((v) => v.id)
   const cotIds = ventas
@@ -270,7 +344,7 @@ export async function getVentasStats(filtros?: {
     const mes = v.fecha.slice(0, 7)
     const cur = acc[mes] ?? { mes, total: 0, ganancia: 0, count: 0 }
     cur.total += Number(v.total ?? 0)
-    cur.ganancia += Number(v.ganancia ?? 0)
+    cur.ganancia += Number(v.utilidad_neta ?? 0)
     cur.count += 1
     acc[mes] = cur
     return acc
@@ -378,7 +452,7 @@ export async function updateVenta(input: UpdateVentaInput) {
 
   const { data: current, error: fetchErr } = await supabase
     .from("ventas")
-    .select("subtotal, descuento, costo_envio, costo_productos, notas")
+    .select("subtotal, descuento, costo_envio, costo_productos, notas, estatus")
     .eq("id", input.id)
     .single()
   if (fetchErr || !current) {
@@ -392,12 +466,18 @@ export async function updateVenta(input: UpdateVentaInput) {
   const subtotal = Number(current.subtotal ?? 0)
   const descuento =
     input.descuento != null ? Number(input.descuento) : Number(current.descuento ?? 0)
-  const iva = input.ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
+  // IVA sobre la base gravable (subtotal − descuento), estándar fiscal MX.
+  const iva = input.ivaActivo ? Number(((subtotal - descuento) * 0.16).toFixed(2)) : 0
   // total y saldo_pendiente son GENERATED — Postgres los calcula desde
   // subtotal/iva/descuento/cantidad_pagada. Solo usamos el cálculo aquí
   // para decidir el estatus correcto.
   const calcTotal = subtotal + iva - descuento
-  const estatus = ventaEstatus(calcTotal, input.cantidad_pagada)
+  // Una venta cancelada NO revive al editarla: se preserva el estatus. Recalcular
+  // solo tiene sentido para ventas activas (pendiente/parcial/pagada).
+  const estatus =
+    current.estatus === "cancelada"
+      ? "cancelada"
+      : ventaEstatus(calcTotal, input.cantidad_pagada)
 
   // Preserva el tag "Método: X." si existe en las notas previas
   const { metodo } = parseNotas(current.notas)

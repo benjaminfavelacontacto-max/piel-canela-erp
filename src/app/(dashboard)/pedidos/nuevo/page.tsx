@@ -10,6 +10,7 @@ import {
   ProductCreateModal,
   type ProductoCreado,
 } from "../../inventario/product-create-modal"
+import { formatMXN } from "@/lib/utils"
 
 interface ItemPedido {
   producto_id: string
@@ -53,12 +54,6 @@ interface ProveedorBase {
   nombre: string
 }
 
-const mxn = (v: number) =>
-  v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
 const usd = (v: number) => `$${v.toFixed(2)}`
 
 export default function NuevoPedidoPage() {
@@ -527,10 +522,10 @@ export default function NuevoPedidoPage() {
                           {usd(item.envio_unit_usd)}
                         </td>
                         <td className="whitespace-nowrap px-2 py-2.5 text-right text-gray-700 tabular-nums">
-                          {mxn(item.costo_total_mxn)}
+                          {formatMXN(item.costo_total_mxn)}
                         </td>
                         <td className="whitespace-nowrap px-2 py-2.5 text-right text-gray-500 tabular-nums">
-                          {mxn(item.precio_publico)}
+                          {formatMXN(item.precio_publico)}
                         </td>
                         <td
                           className="whitespace-nowrap px-2 py-2.5 text-right font-semibold tabular-nums"
@@ -538,7 +533,7 @@ export default function NuevoPedidoPage() {
                             color: item.profit_unit >= 0 ? "#047857" : "#B91C1C",
                           }}
                         >
-                          {mxn(item.profit_total)}
+                          {formatMXN(item.profit_total)}
                         </td>
                         <td className="px-1 py-2.5 text-center">
                           <button
@@ -614,7 +609,7 @@ export default function NuevoPedidoPage() {
                   }}
                 />
                 <p className="mt-1 text-[10px] text-gray-400 tabular-nums">
-                  = {mxn(s.value * tc)} MXN
+                  = {formatMXN(s.value * tc)} MXN
                 </p>
               </Field>
             ))}
@@ -641,12 +636,12 @@ export default function NuevoPedidoPage() {
               },
               {
                 label: "Grand Total MXN",
-                value: mxn(grandTotalMXN),
+                value: formatMXN(grandTotalMXN),
                 tone: "champagne" as const,
               },
               {
                 label: "Profit Potencial",
-                value: mxn(profitTotal),
+                value: formatMXN(profitTotal),
                 tone: "emerald" as const,
               },
             ].map((row, i) => (

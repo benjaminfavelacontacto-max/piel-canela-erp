@@ -1,14 +1,10 @@
 import type { CotizacionData, CotizacionItem } from "@/lib/cotizacion-types"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
 const TEAL = "#1a8f72"
 const TEAL_BG = "#f8fdfb"
 const TEAL_LINE = "#d0ece4"
 const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-})
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -388,7 +384,7 @@ export function CotizacionPreview({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {mxn.format(it.precio_unitario)}
+                    {formatMXN2(it.precio_unitario)}
                   </span>
                   <span
                     style={{
@@ -399,7 +395,7 @@ export function CotizacionPreview({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {mxn.format(it.subtotal)}
+                    {formatMXN2(it.subtotal)}
                   </span>
                 </div>
               )
@@ -506,11 +502,7 @@ export function CotizacionPreview({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {r.subtotal.toLocaleString("es-MX", {
-                      style: "currency",
-                      currency: "MXN",
-                      maximumFractionDigits: 0,
-                    })}
+                    {formatMXN(r.subtotal)}
                   </span>
                 </div>
               ))}
@@ -548,7 +540,7 @@ export function CotizacionPreview({
                     lineHeight: 1.3,
                   }}
                 >
-                  {mxn.format(data.subtotal)}
+                  {formatMXN2(data.subtotal)}
                 </p>
                 {data.descuento > 0 && (
                   <>
@@ -573,7 +565,7 @@ export function CotizacionPreview({
                         lineHeight: 1.3,
                       }}
                     >
-                      − {mxn.format(data.descuento)}
+                      − {formatMXN2(data.descuento)}
                     </p>
                   </>
                 )}
@@ -600,7 +592,7 @@ export function CotizacionPreview({
                         lineHeight: 1.3,
                       }}
                     >
-                      {mxn.format(data.iva)}
+                      {formatMXN2(data.iva)}
                     </p>
                   </>
                 )}

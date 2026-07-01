@@ -2,13 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { CotizacionItem } from "@/lib/cotizacion-types"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+import { formatMXN2 } from "@/lib/utils"
 
 type ColKey =
   | "#"
@@ -65,7 +59,7 @@ function cellValue(it: CotizacionItem, key: ColKey): number | null {
 
 function fmt(v: number | null, format?: "currency" | "number"): string {
   if (v == null || Number.isNaN(v)) return "—"
-  if (format === "currency") return mxn.format(v)
+  if (format === "currency") return formatMXN2(v)
   if (format === "number") return v.toLocaleString("es-MX")
   return String(v)
 }
@@ -366,18 +360,18 @@ function SelectionBar({
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-3 duration-200">
       <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-2xl backdrop-blur-md">
-        <Stat label="Suma" value={mxn.format(stats.sum)} highlight />
+        <Stat label="Suma" value={formatMXN2(stats.sum)} highlight />
         <Sep />
-        <Stat label="Promedio" value={mxn.format(stats.avg)} />
+        <Stat label="Promedio" value={formatMXN2(stats.avg)} />
         <Sep />
         <Stat
           label="Cantidad"
           value={stats.count.toLocaleString("es-MX")}
         />
         <Sep />
-        <Stat label="Mín" value={mxn.format(stats.min)} subtle />
+        <Stat label="Mín" value={formatMXN2(stats.min)} subtle />
         <Sep />
-        <Stat label="Máx" value={mxn.format(stats.max)} subtle />
+        <Stat label="Máx" value={formatMXN2(stats.max)} subtle />
         <button
           type="button"
           onClick={onClear}

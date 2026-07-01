@@ -14,6 +14,7 @@ import {
   PieChart,
   Pie,
 } from "recharts"
+import { formatMXN as fmtMXN } from "@/lib/utils"
 
 interface Orden {
   id: string
@@ -123,13 +124,6 @@ const ESTATUS_CONFIG: Record<
     border: "rgba(100,116,139,0.20)",
   },
 }
-
-const fmtMXN = (v: number | undefined | null) =>
-  (Number(v) || 0).toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
 
 interface TooltipPayload {
   payload: TipoData

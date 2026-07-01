@@ -10,12 +10,7 @@ import {
   ArrowRight,
   MessageSquare,
 } from "lucide-react"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
+import { formatMXN } from "@/lib/utils"
 
 function formatPhoneIntl(tel: string | null | undefined): string {
   if (!tel) return ""
@@ -209,12 +204,12 @@ export default async function ConfirmarPedidoPage({
                     ×{item.cantidad}
                   </p>
                   <p className="text-xs tabular-nums text-gray-500">
-                    {mxn.format(Number(item.precio_unitario))} c/u
+                    {formatMXN(Number(item.precio_unitario))} c/u
                   </p>
                 </div>
                 <div className="w-24 text-right">
                   <p className="text-sm font-bold tabular-nums text-[#0F766E]">
-                    {mxn.format(linea)}
+                    {formatMXN(linea)}
                   </p>
                 </div>
               </div>
@@ -225,7 +220,7 @@ export default async function ConfirmarPedidoPage({
         <div className="mt-4 flex items-center justify-between border-t border-[rgba(15,23,42,0.06)] pt-3">
           <p className="font-semibold text-gray-900">Total solicitado</p>
           <p className="text-xl font-bold tabular-nums text-[#0F766E]">
-            {mxn.format(Number(cot.subtotal ?? 0))}
+            {formatMXN(Number(cot.subtotal ?? 0))}
           </p>
         </div>
         <p className="mt-1 text-[11px] text-gray-400">

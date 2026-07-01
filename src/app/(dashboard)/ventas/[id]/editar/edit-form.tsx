@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Save } from "lucide-react"
 import { updateVenta } from "../../actions"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+import { formatMXN2 } from "@/lib/utils"
 
 type Estatus = "pendiente" | "pagada_parcial" | "pagada_total"
 
@@ -57,7 +51,8 @@ export function EditVentaForm({
   const [notas, setNotas] = useState<string>(notasIniciales)
 
   const computed = useMemo(() => {
-    const iva = ivaActivo ? Number((subtotal * 0.16).toFixed(2)) : 0
+    // IVA sobre la base gravable (subtotal − descuento), estándar fiscal MX.
+    const iva = ivaActivo ? Number(((subtotal - descuento) * 0.16).toFixed(2)) : 0
     const total = subtotal + iva - descuento
     const saldo = Math.max(0, total - cantidadPagada)
     const estatus = estatusFor(total, cantidadPagada)
@@ -147,8 +142,8 @@ export function EditVentaForm({
             </div>
             {ivaActivo && (
               <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-xs tabular-nums text-amber-900">
-                IVA 16%: <strong>{mxn.format(computed.iva)}</strong> · Total:{" "}
-                <strong>{mxn.format(subtotal + computed.iva - descuento)}</strong>
+                IVA 16%: <strong>{formatMXN2(computed.iva)}</strong> · Total:{" "}
+                <strong>{formatMXN2(subtotal + computed.iva - descuento)}</strong>
               </p>
             )}
           </div>
@@ -184,11 +179,11 @@ export function EditVentaForm({
             Resumen
           </h2>
           <dl className="mt-3 space-y-2 text-sm">
-            <Row label="Subtotal" value={mxn.format(subtotal)} />
+            <Row label="Subtotal" value={formatMXN2(subtotal)} />
             {descuento > 0 && (
               <Row
                 label="Descuento"
-                value={`-${mxn.format(descuento)}`}
+                value={`-${formatMXN2(descuento)}`}
                 className="text-emerald-700"
               />
             )}
@@ -196,21 +191,21 @@ export function EditVentaForm({
               label={ivaActivo ? "IVA 16%" : "IVA"}
               value={
                 ivaActivo
-                  ? mxn.format(computed.iva)
+                  ? formatMXN2(computed.iva)
                   : "—"
               }
               className={ivaActivo ? "text-teal-700" : "text-gray-400"}
             />
             <div className="my-2 border-t border-gray-100" />
-            <Row label="Total" value={mxn.format(computed.total)} bold />
+            <Row label="Total" value={formatMXN2(computed.total)} bold />
             <Row
               label="Pagado"
-              value={mxn.format(cantidadPagada)}
+              value={formatMXN2(cantidadPagada)}
               className="text-blue-700"
             />
             <Row
               label="Saldo"
-              value={mxn.format(computed.saldo)}
+              value={formatMXN2(computed.saldo)}
               className={
                 computed.saldo > 0 ? "text-amber-700 font-medium" : ""
               }

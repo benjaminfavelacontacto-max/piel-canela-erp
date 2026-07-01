@@ -6,6 +6,7 @@ import {
   buscarClientePorTelefono,
   type ClienteMatch,
 } from "./actions"
+import { formatMXN } from "@/lib/utils"
 
 export interface Producto {
   id: string
@@ -21,14 +22,6 @@ export interface Producto {
 interface CartItem {
   producto: Producto
   cantidad: number
-}
-
-function formatMXN(v: number): string {
-  return v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
 }
 
 // ─── Agrupación de cintas por tipo (1 tarjeta → varias medidas) ──────

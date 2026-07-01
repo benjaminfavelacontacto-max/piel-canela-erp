@@ -1,15 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
-const mxn0 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
+import { formatMXN } from "@/lib/utils"
 
 function formatValue(n: number, style: "integer" | "currency"): string {
-  if (style === "currency") return mxn0.format(n)
+  if (style === "currency") return formatMXN(n)
   return Math.floor(n).toLocaleString("es-MX")
 }
 

@@ -32,18 +32,8 @@ import type {
   VentaSummaryRow,
 } from "./clientes-dashboard"
 import { EmpiricalCDFModel, MES_ABBR } from "./lib-prediccion"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const monthShort = new Intl.DateTimeFormat("es-MX", {
   month: "short",
   year: "2-digit",
@@ -411,7 +401,7 @@ export function RecurrenciaAnalytics({
           value={
             kpis.masGrande?.nombre_negocio ?? kpis.masGrande?.nombre ?? "—"
           }
-          sub={kpis.masGrande ? mxn.format(kpis.masGrande.ltv) : ""}
+          sub={kpis.masGrande ? formatMXN(kpis.masGrande.ltv) : ""}
           accent="text-amber-700"
           gradient="from-amber-50 via-white to-orange-50/50"
           ring="ring-amber-100"
@@ -439,7 +429,7 @@ export function RecurrenciaAnalytics({
           icon={<Activity className="size-4" />}
           label="Inactivos (90+ días)"
           value={kpis.inactivosCount.toString()}
-          sub={`${mxn.format(kpis.inactivosLTV)} en LTV "perdido"`}
+          sub={`${formatMXN(kpis.inactivosLTV)} en LTV "perdido"`}
           accent="text-rose-700"
           gradient="from-white via-white to-white/50"
           ring="ring-rose-100"
@@ -595,7 +585,7 @@ export function RecurrenciaAnalytics({
                               }}
                               disabled={!isClickable}
                               className={`flex h-7 w-12 items-center justify-center rounded text-[9.5px] font-semibold tabular-nums transition ${isClickable ? "cursor-pointer hover:scale-110 hover:shadow" : "cursor-default"} ${tone}`}
-                              title={`${row.cliente} · ${buckets[idx].label}: ${mxn.format(c.total)} ${tooltipDetail}`}
+                              title={`${row.cliente} · ${buckets[idx].label}: ${formatMXN(c.total)} ${tooltipDetail}`}
                             >
                               {c.total > 0
                                 ? c.total >= 1000
@@ -657,7 +647,7 @@ export function RecurrenciaAnalytics({
                         {c.frecuencia_dias
                           ? `cada ${Math.round(c.frecuencia_dias)}d`
                           : "—"}{" "}
-                        · {mxn.format(c.ltv)}
+                        · {formatMXN(c.ltv)}
                       </div>
                     </div>
                   </div>
@@ -909,7 +899,7 @@ function DrilldownModal({
           <p className="text-xs text-gray-500">{periodLabel}</p>
           {/* Stats */}
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <Stat label="Total" value={mxn2.format(total)} accent="text-[#0F766E]" />
+            <Stat label="Total" value={formatMXN2(total)} accent="text-[#0F766E]" />
             <Stat
               label="Órdenes"
               value={`${ventasInBucket.length} venta${ventasInBucket.length === 1 ? "" : "s"}`}
@@ -951,7 +941,7 @@ function DrilldownModal({
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-bold tabular-nums text-gray-900">
-                        {mxn2.format(Number(v.total ?? 0))}
+                        {formatMXN2(Number(v.total ?? 0))}
                       </div>
                       <span className="text-[9.5px] text-gray-500">
                         {v.estatus}
@@ -988,7 +978,7 @@ function DrilldownModal({
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-bold tabular-nums text-gray-900">
-                        {mxn2.format(Number(c.total ?? 0))}
+                        {formatMXN2(Number(c.total ?? 0))}
                       </div>
                       <span className="text-[9.5px] text-gray-500">
                         {c.estatus}
@@ -1027,7 +1017,7 @@ function DrilldownModal({
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
-                        {mxn2.format(p.revenue)}
+                        {formatMXN2(p.revenue)}
                       </div>
                     </div>
                   </li>
@@ -1165,11 +1155,7 @@ function ActivosPorMesTooltip({
         const valNum = typeof p.value === "number" ? p.value : Number(p.value)
         const formatted = isClientes
           ? String(valNum)
-          : valNum.toLocaleString("es-MX", {
-              style: "currency",
-              currency: "MXN",
-              maximumFractionDigits: 0,
-            })
+          : formatMXN(valNum)
         return (
           <div
             key={`${p.dataKey ?? i}`}

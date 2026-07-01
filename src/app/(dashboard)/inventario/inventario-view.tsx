@@ -14,9 +14,11 @@ import { ProductDrawer } from "./product-drawer"
 import { ProductEditModal } from "./product-edit-modal"
 import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
+import { ExportInventarioButton } from "./export-inventario-button"
 import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
 import { ImageUpload } from "./image-upload"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -62,18 +64,6 @@ export type ProductoEnriquecido = {
   activo: boolean
 }
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const categoriaBadgeColor: Record<string, string> = {
   ACTIVADORES: "bg-teal-100 text-teal-700",
   POTENCIADORES: "bg-emerald-100 text-emerald-700",
@@ -456,14 +446,17 @@ export function InventarioView({
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
         icon={<Package className="size-5" />}
         actions={
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c]"
-          >
-            <Plus className="size-4" />
-            Nuevo producto
-          </button>
+          <>
+            <ExportInventarioButton productos={productos} />
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c]"
+            >
+              <Plus className="size-4" />
+              Nuevo producto
+            </button>
+          </>
         }
       />
 
@@ -574,14 +567,14 @@ export function InventarioView({
                 <div className="mt-2 flex items-baseline justify-between gap-2">
                   <span className="text-[10px] text-gray-400">invertido</span>
                   <span className="text-[11px] font-semibold tabular-nums text-gray-700">
-                    {mxn.format(c.costoMXN)}
+                    {formatMXN(c.costoMXN)}
                   </span>
                 </div>
                 {c.profitTotal > 0 && (
                   <div className="mt-1 flex items-baseline justify-between gap-2">
                     <span className="text-[10px] text-gray-400">profit pot.</span>
                     <span className="text-[11px] font-semibold tabular-nums text-emerald-700">
-                      {mxn.format(c.profitTotal)}
+                      {formatMXN(c.profitTotal)}
                     </span>
                   </div>
                 )}
@@ -815,16 +808,16 @@ export function InventarioView({
                     ${totals.costoUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                   </td>
                   <td className="py-3 px-2 text-right text-xs font-semibold text-gray-700 tabular-nums whitespace-nowrap">
-                    {mxn2.format(totals.costoMXN)}
+                    {formatMXN2(totals.costoMXN)}
                   </td>
                   <td className="py-3 px-2 text-right text-xs font-semibold text-orange-600 tabular-nums whitespace-nowrap">
                     ${totals.costoEnvUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                   </td>
                   <td className="py-3 px-2 text-right text-xs font-semibold text-orange-700 tabular-nums whitespace-nowrap">
-                    {mxn2.format(totals.costoEnvMXN)}
+                    {formatMXN2(totals.costoEnvMXN)}
                   </td>
                   <td className="py-3 px-2 text-right text-xs font-bold text-emerald-600 tabular-nums whitespace-nowrap">
-                    {mxn2.format(totals.profitTotal)}
+                    {formatMXN2(totals.profitTotal)}
                   </td>
                   <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
                   <td className="py-3 px-2 text-center text-xs font-bold text-gray-900 tabular-nums">
@@ -1079,7 +1072,7 @@ function ProductRow({
 
       {/* Precio Público */}
       <td className="py-2 px-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">
-        {p.precio_publico != null ? mxn2.format(p.precio_publico) : "—"}
+        {p.precio_publico != null ? formatMXN2(p.precio_publico) : "—"}
       </td>
 
       {/* Precio USD */}
@@ -1090,7 +1083,7 @@ function ProductRow({
       {/* Precio MXN calculado */}
       <td className="py-2 px-2 text-right text-xs text-gray-500 whitespace-nowrap">
         {p.precio_mxn_calculado != null && p.precio_mxn_calculado > 0
-          ? mxn2.format(p.precio_mxn_calculado)
+          ? formatMXN2(p.precio_mxn_calculado)
           : "—"}
       </td>
 
@@ -1111,7 +1104,7 @@ function ProductRow({
 
       {/* Costo MXN */}
       <td className="py-2 px-2 text-right text-xs text-gray-600 whitespace-nowrap">
-        {precioUsd > 0 ? mxn2.format(costoMxnCalc) : "—"}
+        {precioUsd > 0 ? formatMXN2(costoMxnCalc) : "—"}
       </td>
 
       {/* P.Unit + Envío USD */}
@@ -1124,14 +1117,14 @@ function ProductRow({
       {/* P.Unit + Envío MXN */}
       <td className="py-2 px-2 text-right text-xs text-orange-700 whitespace-nowrap">
         {p.costo_total_mxn != null && p.costo_total_mxn > 0
-          ? mxn2.format(p.costo_total_mxn)
+          ? formatMXN2(p.costo_total_mxn)
           : "—"}
       </td>
 
       {/* Profit */}
       <td className="py-2 px-2 text-right text-xs font-bold text-emerald-600 whitespace-nowrap">
         {p.profit_unitario != null && p.profit_unitario !== 0
-          ? mxn2.format(p.profit_unitario)
+          ? formatMXN2(p.profit_unitario)
           : "—"}
       </td>
 

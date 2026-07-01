@@ -23,21 +23,7 @@ import { Conversiones } from "./conversiones"
 import { Pagos } from "./pagos"
 import { Documentos } from "./documentos"
 import { DesgloseEnvio } from "./envios"
-
-const mxn = (v: number) =>
-  v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
-
-const mxn2 = (v: number) =>
-  v.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
 const usd = (v: number, decimals = 0) =>
   `$${Number(v).toLocaleString("en-US", {
@@ -366,12 +352,12 @@ export default async function PedidoDetailPage({
               Costo real del pedido
             </p>
             <p className="mt-2 text-[42px] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
-              {mxn(costoRealMXN)}
+              {formatMXN(costoRealMXN)}
             </p>
             <p className="mt-2.5 text-[12px] text-white/55">
-              Productos {mxn(valorProductosMXN)}
-              <span className="mx-1.5 text-white/25">+</span>Envío {mxn(envioMXN)}
-              <span className="mx-1.5 text-white/25">+</span>Comisiones {mxn(totComisionMXN)}
+              Productos {formatMXN(valorProductosMXN)}
+              <span className="mx-1.5 text-white/25">+</span>Envío {formatMXN(envioMXN)}
+              <span className="mx-1.5 text-white/25">+</span>Comisiones {formatMXN(totComisionMXN)}
             </p>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right backdrop-blur">
@@ -389,16 +375,16 @@ export default async function PedidoDetailPage({
         <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
           <ResumenMetric icon={Boxes} tone="slate" value={totalUnidades.toLocaleString("es-MX")} label="Unidades pedidas" />
           <ResumenMetric icon={Tag} tone="slate" value={String(items.length)} label="SKUs distintos" />
-          <ResumenMetric icon={Coins} tone="indigo" value={mxn(valorProductosMXN)} label="Valor productos" />
-          <ResumenMetric icon={Truck} tone="amber" value={mxn(envioMXN)} label="Costo envío" />
-          <ResumenMetric icon={Wallet} tone="emerald" value={mxn(totalMXN)} label="Inversión total" />
+          <ResumenMetric icon={Coins} tone="indigo" value={formatMXN(valorProductosMXN)} label="Valor productos" />
+          <ResumenMetric icon={Truck} tone="amber" value={formatMXN(envioMXN)} label="Costo envío" />
+          <ResumenMetric icon={Wallet} tone="emerald" value={formatMXN(totalMXN)} label="Inversión total" />
         </div>
       </section>
 
       {/* ═══ Bloque 5 — Rentabilidad (KPIs destacadas) ═══ */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard icon={Wallet} tone="slate" label="Inversión total" value={mxn(totalMXN)} sub={`${usd(totalUSD, 2)} USD`} />
-        <KpiCard icon={TrendingUp} tone="emerald" label="Profit potencial" value={mxn(totalProfit)} sub="si se vende todo" big />
+        <KpiCard icon={Wallet} tone="slate" label="Inversión total" value={formatMXN(totalMXN)} sub={`${usd(totalUSD, 2)} USD`} />
+        <KpiCard icon={TrendingUp} tone="emerald" label="Profit potencial" value={formatMXN(totalProfit)} sub="si se vende todo" big />
         <KpiCard icon={Percent} tone="emerald" label="Margen esperado" value={pct(margenPct)} sub="sobre la venta" />
         <KpiCard icon={Target} tone="indigo" label="ROI esperado" value={pct(roiPct)} sub="sobre la inversión" big />
       </section>
@@ -411,9 +397,9 @@ export default async function PedidoDetailPage({
             Logística del envío
           </h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-            <StatBlock tone="amber" label="Costo total" value={mxn(envioMXN)} />
-            <StatBlock tone="slate" label="Por unidad" value={mxn2(envioUnitMXN)} />
-            <StatBlock tone="slate" label="Por SKU" value={mxn(envioPorSkuMXN)} />
+            <StatBlock tone="amber" label="Costo total" value={formatMXN(envioMXN)} />
+            <StatBlock tone="slate" label="Por unidad" value={formatMXN2(envioUnitMXN)} />
+            <StatBlock tone="slate" label="Por SKU" value={formatMXN(envioPorSkuMXN)} />
             <StatBlock tone="amber" label="Representa del pedido" value={pct(envioPctPedido)} />
           </div>
         </div>
@@ -485,7 +471,7 @@ export default async function PedidoDetailPage({
                     {usd(catCostUSD)}
                     <span className="mx-1.5 text-gray-300">·</span>
                     <span className="font-semibold text-gray-700">
-                      {mxn(catCostMXN)}
+                      {formatMXN(catCostMXN)}
                     </span>{" "}
                     con envío
                   </p>
@@ -577,7 +563,7 @@ export default async function PedidoDetailPage({
                               {usd(item.precio_unitario_usd, 2)}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-gray-600">
-                              {mxn2(item.precio_unitario_mxn)}
+                              {formatMXN2(item.precio_unitario_mxn)}
                             </td>
                             <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-indigo-700">
                               {usd(item.subtotal_usd, 2)}
@@ -586,14 +572,14 @@ export default async function PedidoDetailPage({
                               {usd(item.envio_unitario_usd, 4)}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-gray-700">
-                              {mxn2(item.costo_total_unitario_mxn)}
+                              {formatMXN2(item.costo_total_unitario_mxn)}
                             </td>
                             <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-gray-900">
-                              {mxn(item.total_con_envio_mxn)}
+                              {formatMXN(item.total_con_envio_mxn)}
                             </td>
                             <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">
                               {item.precio_publico_mxn > 0
-                                ? mxn(item.precio_publico_mxn)
+                                ? formatMXN(item.precio_publico_mxn)
                                 : "—"}
                             </td>
                             <td
@@ -603,7 +589,7 @@ export default async function PedidoDetailPage({
                               }}
                             >
                               {item.precio_publico_mxn > 0
-                                ? mxn(item.profit_total)
+                                ? formatMXN(item.profit_total)
                                 : "—"}
                             </td>
                             <td
@@ -764,7 +750,7 @@ function PartnerRow({
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-[13px] font-semibold text-gray-900">{name}</p>
         <div className="text-right">
-          <span className="text-[16px] font-bold tabular-nums text-gray-900">{mxn(amount)}</span>
+          <span className="text-[16px] font-bold tabular-nums text-gray-900">{formatMXN(amount)}</span>
           <span className="ml-1.5 text-[11px] tabular-nums text-gray-400">{usd(usdValue)} USD</span>
         </div>
       </div>

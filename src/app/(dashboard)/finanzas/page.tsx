@@ -2,6 +2,7 @@ import { TrendingUp, Wallet, ChartLine, ScrollText } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { PageHeader } from "@/components/page-header"
+import { formatMXN2 } from "@/lib/utils"
 import { RecoveryChart } from "./recovery-chart"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -13,17 +14,6 @@ const SOCIO_COLOR: Record<string, string> = {
   Benjamin: "#0F766E",
 }
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-const mxn0 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -85,7 +75,7 @@ export default async function FinanzasPage() {
       .in("id", [SANDRA_ID, BENJAMIN_ID]),
     supabase
       .from("ventas")
-      .select("id, numero, fecha, total, notas, cliente_id")
+      .select("id, numero, fecha, total, notas, cliente_id, estatus")
       .order("fecha", { ascending: true }),
   ])
 
@@ -97,17 +87,25 @@ export default async function FinanzasPage() {
   const sociosDb = (sociosRes.data ?? []) as Socio[]
   const ventasRaw = (ventasRes.data ?? []) as (Venta & {
     cliente_id?: string | null
+    estatus?: string | null
   })[]
+  // ROI / capital recuperado: excluir internas (Piel Canela) Y canceladas.
   const ventas = ventasRaw.filter(
-    (v) => !v.cliente_id || !internalIds.has(v.cliente_id),
+    (v) =>
+      (!v.cliente_id || !internalIds.has(v.cliente_id)) &&
+      v.estatus !== "cancelada",
   )
-  const internalVentaIds = new Set(
+  const excludedVentaIds = new Set(
     ventasRaw
-      .filter((v) => v.cliente_id && internalIds.has(v.cliente_id))
+      .filter(
+        (v) =>
+          (v.cliente_id && internalIds.has(v.cliente_id)) ||
+          v.estatus === "cancelada",
+      )
       .map((v) => v.id),
   )
   const ventaSocios = ((vsRes.data ?? []) as VentaSocio[]).filter(
-    (vs) => !internalVentaIds.has(vs.venta_id),
+    (vs) => !excludedVentaIds.has(vs.venta_id),
   )
 
   const inversionesError = invRes.error?.message ?? null
@@ -283,13 +281,13 @@ export default async function FinanzasPage() {
           return [
             {
               label: "Total invertido",
-              value: mxn.format(totalInvertido),
+              value: formatMXN2(totalInvertido),
               sub: "ambos socios",
             },
             {
               label: "Capital recuperado",
-              value: mxn.format(totalRecuperado),
-              sub: `${mxn.format(cur?.recuperadoMes ?? 0)} este mes`,
+              value: formatMXN2(totalRecuperado),
+              sub: `${formatMXN2(cur?.recuperadoMes ?? 0)} este mes`,
               trend: {
                 value: `${dRecMes >= 0 ? "+" : ""}${dRecMes.toFixed(1)}%`,
                 positive: dRecMes >= 0,
@@ -298,7 +296,7 @@ export default async function FinanzasPage() {
             },
             {
               label: "Ganancia neta",
-              value: mxn.format(gananciaNeta),
+              value: formatMXN2(gananciaNeta),
               sub: gananciaNeta >= 0 ? "en positivo" : "aún en rojo",
               color:
                 gananciaNeta >= 0 ? "text-emerald-700" : "text-rose-600",
@@ -360,21 +358,21 @@ export default async function FinanzasPage() {
               </header>
 
               <dl className="mt-4 space-y-2 text-sm">
-                <Row label="Total invertido" value={mxn.format(k.totalInvertido)} bold />
+                <Row label="Total invertido" value={formatMXN2(k.totalInvertido)} bold />
                 <Row
                   label="Capital recuperado"
-                  value={mxn.format(k.capitalRecuperado)}
+                  value={formatMXN2(k.capitalRecuperado)}
                   className="text-emerald-700"
                 />
                 <Row
                   label="Ganancia neta"
-                  value={`${k.resultadoNeto >= 0 ? "+" : ""}${mxn.format(k.resultadoNeto)}`}
+                  value={`${k.resultadoNeto >= 0 ? "+" : ""}${formatMXN2(k.resultadoNeto)}`}
                   className={k.resultadoNeto >= 0 ? "text-emerald-700" : "text-red-700"}
                   bold
                 />
                 <Row
                   label="Capital en riesgo"
-                  value={mxn.format(k.capitalEnRiesgo)}
+                  value={formatMXN2(k.capitalEnRiesgo)}
                   className={k.capitalEnRiesgo > 0 ? "text-amber-700" : "text-gray-500"}
                 />
                 <div className="my-2 border-t border-gray-100" />
@@ -435,7 +433,7 @@ export default async function FinanzasPage() {
                 <span className="text-xs text-gray-500">
                   Subtotal{" "}
                   <strong className="font-semibold tabular-nums text-gray-900">
-                    {mxn.format(subtotal)}
+                    {formatMXN2(subtotal)}
                   </strong>
                 </span>
               </div>
@@ -463,7 +461,7 @@ export default async function FinanzasPage() {
                           {it.concepto ?? "—"}
                         </td>
                         <td className="px-5 py-2 text-right tabular-nums font-semibold">
-                          {mxn.format(Number(it.monto_mxn ?? 0))}
+                          {formatMXN2(Number(it.monto_mxn ?? 0))}
                         </td>
                         <td className="px-5 py-2 text-right text-gray-500 text-xs">
                           {fechaFmt.format(new Date(it.fecha))}
@@ -536,13 +534,13 @@ export default async function FinanzasPage() {
                       {fechaFmt.format(new Date(venta.fecha))}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums font-semibold">
-                      {mxn.format(Number(venta.total ?? 0))}
+                      {formatMXN2(Number(venta.total ?? 0))}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
-                      {sandra > 0 ? mxn.format(sandra) : "—"}
+                      {sandra > 0 ? formatMXN2(sandra) : "—"}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums text-teal-700">
-                      {benjamin > 0 ? mxn.format(benjamin) : "—"}
+                      {benjamin > 0 ? formatMXN2(benjamin) : "—"}
                     </td>
                     <td className="px-5 py-2 text-xs text-gray-500 max-w-xs truncate">
                       {venta.notas ?? "—"}
@@ -561,13 +559,13 @@ export default async function FinanzasPage() {
                     Totales
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums">
-                    {mxn.format(totalAsignado)}
+                    {formatMXN2(totalAsignado)}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
-                    {mxn.format(totalSandra)}
+                    {formatMXN2(totalSandra)}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums text-teal-700">
-                    {mxn.format(totalBenjamin)}
+                    {formatMXN2(totalBenjamin)}
                   </td>
                   <td />
                 </tr>

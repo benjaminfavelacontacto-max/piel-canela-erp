@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { crearProducto } from "./actions"
+import { formatMXN2 } from "@/lib/utils"
 
 export type Opcion = { id: string; nombre: string }
 
@@ -133,7 +134,7 @@ export function ProductCreateModal({
     const u = parseNum(form.costo_envio_usd)
     const tc = parseNum(form.tipo_cambio)
     return u != null && tc != null
-      ? (u * tc).toLocaleString("es-MX", { style: "currency", currency: "MXN" })
+      ? formatMXN2(u * tc)
       : "—"
   })()
 

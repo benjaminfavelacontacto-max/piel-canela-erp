@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Plus, Trash2, Save, FileDown, Search, FileText } from "lucide-react"
@@ -17,11 +17,7 @@ import {
   siguienteNumeroCotizacion,
 } from "../actions"
 import { downloadCotizacionPdf } from "@/lib/pdf"
-
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-})
+import { formatMXN2 } from "@/lib/utils"
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -83,7 +79,20 @@ export function CotizacionForm({
 
   const [search, setSearch] = useState<string>("")
   const [selectedProductId, setSelectedProductId] = useState<string>("")
-  const [cantidad, setCantidad] = useState<number>(1)
+  // `cantidad` admite "" como estado intermedio para poder borrar el campo sin
+  // que rebote a 1 (se normaliza a ≥1 en blur / al agregar).
+  const [cantidad, setCantidad] = useState<number | "">(1)
+  // Borradores de texto por ítem para que el input de cantidad se pueda vaciar
+  // mientras se edita (la cantidad real solo se confirma con un número ≥1).
+  const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
+
+  // Escalado responsivo del preview: el documento es de ancho fijo (816px) por
+  // fidelidad con el PDF; en móvil se desbordaría, así que lo escalamos para que
+  // quepa en el ancho disponible. El transform va en un wrapper, NO en
+  // `previewRef`, para no afectar la captura de html2pdf (que fuerza 816px).
+  const previewBoxRef = useRef<HTMLDivElement>(null)
+  const [previewScale, setPreviewScale] = useState(1)
+  const [previewH, setPreviewH] = useState(1056)
 
   const cliente = useMemo(
     () => clientes.find((c) => c.id === clienteId) ?? null,
@@ -119,13 +128,15 @@ export function CotizacionForm({
   )
 
   const subtotal = items.reduce((s, it) => s + it.subtotal, 0)
-  // Descuento global (% o monto fijo). Se aplica DESPUÉS del IVA — coincide con la lógica del Sheet.
+  // Descuento global (% o monto fijo). Reduce la BASE GRAVABLE antes del IVA
+  // (estándar fiscal MX: el descuento comercial baja la base sobre la que se calcula el 16%).
   const descuento =
     descuentoTipo === "pct"
       ? Math.max(0, Math.min(subtotal, subtotal * (descuentoValor / 100)))
       : Math.max(0, Math.min(subtotal, descuentoValor))
-  const iva = ivaActivo ? subtotal * 0.16 : 0
-  const total = subtotal + iva - descuento
+  const baseGravable = subtotal - descuento
+  const iva = ivaActivo ? baseGravable * 0.16 : 0
+  const total = baseGravable + iva
   const costoProductos = items.reduce(
     (s, it) => s + it.costo_unitario * it.cantidad,
     0,
@@ -191,18 +202,37 @@ export function CotizacionForm({
     notas: notas || null,
   }
 
+  // Recalcula la escala del preview cuando cambia el ancho disponible (resize /
+  // rotación del móvil) o la altura del documento (al agregar productos).
+  useEffect(() => {
+    const box = previewBoxRef.current
+    const doc = previewRef.current
+    if (!box || !doc) return
+    const PREVIEW_W = 816
+    const update = () => {
+      setPreviewScale(Math.min(1, box.clientWidth / PREVIEW_W))
+      setPreviewH(doc.offsetHeight || 1056)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(box)
+    ro.observe(doc)
+    return () => ro.disconnect()
+  }, [])
+
   function addItem() {
-    if (!selectedProduct || cantidad < 1) return
+    const qty = typeof cantidad === "number" && cantidad >= 1 ? cantidad : 1
+    if (!selectedProduct) return
     const newItem: CotizacionItem = {
       producto_id: selectedProduct.id,
       sku: selectedProduct.sku,
       nombre: selectedProduct.nombre,
       imagen_url: selectedProduct.imagen_url,
       peso: selectedProduct.peso,
-      cantidad,
+      cantidad: qty,
       precio_unitario: selectedProduct.precio,
       costo_unitario: Number(selectedProduct.costo ?? 0),
-      subtotal: selectedProduct.precio * cantidad,
+      subtotal: selectedProduct.precio * qty,
     }
     setItems((prev) => {
       const i = prev.findIndex((x) => x.producto_id === newItem.producto_id)
@@ -210,8 +240,8 @@ export function CotizacionForm({
       const copy = [...prev]
       const merged: CotizacionItem = {
         ...copy[i],
-        cantidad: copy[i].cantidad + cantidad,
-        subtotal: (copy[i].cantidad + cantidad) * copy[i].precio_unitario,
+        cantidad: copy[i].cantidad + qty,
+        subtotal: (copy[i].cantidad + qty) * copy[i].precio_unitario,
       }
       copy[i] = merged
       return copy
@@ -302,8 +332,8 @@ export function CotizacionForm({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 p-6">
-      <aside className="lg:sticky lg:top-6 self-start space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4 p-4 sm:gap-6 sm:p-6">
+      <aside className="min-w-0 lg:sticky lg:top-6 self-start space-y-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">Cliente</h2>
           <ClientePicker
@@ -425,7 +455,7 @@ export function CotizacionForm({
                           </span>
                         )}
                         <span className="font-semibold text-[#0F766E]">
-                          {mxn.format(p.precio)}
+                          {formatMXN2(p.precio)}
                         </span>
                       </div>
                     </div>
@@ -441,9 +471,11 @@ export function CotizacionForm({
               min={1}
               step={1}
               value={cantidad}
-              onChange={(e) =>
-                setCantidad(Math.max(1, parseInt(e.target.value) || 1))
-              }
+              onChange={(e) => {
+                const v = e.target.value
+                setCantidad(v === "" ? "" : Math.max(1, parseInt(v, 10) || 1))
+              }}
+              onBlur={() => setCantidad((c) => (c === "" || c < 1 ? 1 : c))}
               className="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
             />
             <button
@@ -470,17 +502,25 @@ export function CotizacionForm({
                   <input
                     type="number"
                     min={1}
-                    value={it.cantidad}
-                    onChange={(e) =>
-                      updateItemCantidad(
-                        it.producto_id,
-                        Math.max(1, parseInt(e.target.value) || 1),
-                      )
+                    value={qtyDrafts[it.producto_id] ?? String(it.cantidad)}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setQtyDrafts((d) => ({ ...d, [it.producto_id]: v }))
+                      const n = parseInt(v, 10)
+                      if (!Number.isNaN(n) && n >= 1)
+                        updateItemCantidad(it.producto_id, n)
+                    }}
+                    onBlur={() =>
+                      setQtyDrafts((d) => {
+                        const next = { ...d }
+                        delete next[it.producto_id]
+                        return next
+                      })
                     }
                     className="w-14 rounded border border-gray-200 px-2 py-0.5 text-xs"
                   />
                   <span className="w-16 text-right tabular-nums font-medium">
-                    {mxn.format(it.subtotal)}
+                    {formatMXN2(it.subtotal)}
                   </span>
                   <button
                     type="button"
@@ -595,7 +635,7 @@ export function CotizacionForm({
                       <span className="text-gray-500">{c.cantidad} ítems</span>
                       <span className="font-semibold">{c.piezas} pzs</span>
                       <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-900 ring-1 ring-gray-200/60">
-                        {mxn.format(c.monto)}
+                        {formatMXN2(c.monto)}
                       </span>
                     </span>
                   </li>
@@ -651,7 +691,7 @@ export function CotizacionForm({
             </div>
             {descuento > 0 && (
               <p className="text-xs text-rose-600 tabular-nums">
-                − {mxn.format(descuento)}
+                − {formatMXN2(descuento)}
                 {descuentoTipo === "pct" && (
                   <span className="text-gray-500">
                     {" "}({descuentoValor.toFixed(1)}% de subtotal)
@@ -687,22 +727,22 @@ export function CotizacionForm({
 
           {/* Resumen financiero (lectura) */}
           <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-3 space-y-1.5 text-xs">
-            <Row label="Subtotal" value={mxn.format(subtotal)} />
+            <Row label="Subtotal" value={formatMXN2(subtotal)} />
             {descuento > 0 && (
-              <Row label="Descuento" value={`− ${mxn.format(descuento)}`} accent="text-rose-600" />
+              <Row label="Descuento" value={`− ${formatMXN2(descuento)}`} accent="text-rose-600" />
             )}
             {iva > 0 && (
-              <Row label="IVA 16%" value={mxn.format(iva)} accent="text-teal-700" />
+              <Row label="IVA 16%" value={formatMXN2(iva)} accent="text-teal-700" />
             )}
-            <Row label="Total" value={mxn.format(total)} bold />
+            <Row label="Total" value={formatMXN2(total)} bold />
             <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
-              <Row label="Costo productos" value={mxn.format(costoProductos)} muted />
+              <Row label="Costo productos" value={formatMXN2(costoProductos)} muted />
               {costoEnvio > 0 && (
-                <Row label="Costo envío" value={mxn.format(costoEnvio)} muted />
+                <Row label="Costo envío" value={formatMXN2(costoEnvio)} muted />
               )}
               <Row
                 label="Utilidad neta"
-                value={mxn.format(utilidadNeta)}
+                value={formatMXN2(utilidadNeta)}
                 accent={utilidadNeta >= 0 ? "text-emerald-700" : "text-rose-700"}
                 bold
               />
@@ -746,9 +786,21 @@ export function CotizacionForm({
         </div>
       </aside>
 
-      <section>
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
-          <CotizacionPreview data={previewData} innerRef={previewRef} />
+      <section className="min-w-0">
+        <div
+          ref={previewBoxRef}
+          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          style={{ height: previewH * previewScale }}
+        >
+          <div
+            style={{
+              width: 816,
+              transform: `scale(${previewScale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <CotizacionPreview data={previewData} innerRef={previewRef} />
+          </div>
         </div>
       </section>
     </div>

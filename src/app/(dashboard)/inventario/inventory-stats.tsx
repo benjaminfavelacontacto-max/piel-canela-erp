@@ -1,6 +1,7 @@
 "use client"
 
 import { Package, TrendingUp, AlertTriangle, DollarSign } from "lucide-react"
+import { formatMXN } from "@/lib/utils"
 
 interface CategoryPill {
   label: string
@@ -43,13 +44,6 @@ export function InventoryStats({
   stockBajo,
   categorias,
 }: InventoryStatsProps) {
-  const fmt = (v: number) =>
-    v.toLocaleString("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 0,
-    })
-
   const topCats = categorias.slice(0, 3)
 
   // Pills tonales sobre fondo claro — tonos saturados con bg suave
@@ -64,7 +58,7 @@ export function InventoryStats({
   const cards: StatCard[] = [
     {
       label: "VALOR INVENTARIO",
-      value: fmt(valorInventario),
+      value: formatMXN(valorInventario),
       valueColor: "#0F172A",
       sub: `${totalSkus} SKUs activos`,
       icon: <Package style={{ width: 16, height: 16 }} />,
@@ -77,7 +71,7 @@ export function InventoryStats({
     },
     {
       label: "CAPITAL INVERTIDO",
-      value: fmt(capitalInvertido),
+      value: formatMXN(capitalInvertido),
       valueColor: "#0F172A",
       sub: "costo total de compra de stock disponible",
       icon: <DollarSign style={{ width: 16, height: 16 }} />,
@@ -89,7 +83,7 @@ export function InventoryStats({
     },
     {
       label: "UTILIDAD POTENCIAL",
-      value: fmt(utilidadPotencial),
+      value: formatMXN(utilidadPotencial),
       valueColor: "#047857",
       sub: "si se vende todo el stock",
       icon: <TrendingUp style={{ width: 16, height: 16 }} />,

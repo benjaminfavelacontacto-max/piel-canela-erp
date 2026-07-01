@@ -2,13 +2,8 @@
 
 import { useState } from "react"
 import type { ClienteStats } from "../actions"
+import { formatMXN } from "@/lib/utils"
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
 const fechaCorta = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -68,7 +63,7 @@ export function ClientesTable({ data }: { data: ClienteStats[] }) {
                     {c.nombre}
                   </p>
                   <p className="ml-2 shrink-0 text-sm font-bold text-gray-900">
-                    {mxn.format(c.totalCompras)}
+                    {formatMXN(c.totalCompras)}
                   </p>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
@@ -94,7 +89,7 @@ export function ClientesTable({ data }: { data: ClienteStats[] }) {
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-gray-400">Ticket prom.</p>
-                  <p className="font-bold text-gray-900">{mxn.format(ticket)}</p>
+                  <p className="font-bold text-gray-900">{formatMXN(ticket)}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-gray-400">Última compra</p>

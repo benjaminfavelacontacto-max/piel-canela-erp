@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { formatMXN } from "@/lib/utils"
 
 export interface DataPoint {
   mes: string
@@ -25,13 +26,6 @@ export interface DataPoint {
 }
 
 type Vista = "ambas" | "ventas" | "ganancia"
-
-const fmt = (v: number | null | undefined) =>
-  (v ?? 0).toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 0,
-  })
 
 function fmtShort(v: number) {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -89,7 +83,7 @@ function CustomTooltip({
               <span className="text-xs text-gray-500">Ventas</span>
             </div>
             <span className="text-sm font-bold tabular-nums text-gray-900">
-              {fmt(data.ventas ?? data.proyeccion)}
+              {formatMXN(data.ventas ?? data.proyeccion)}
             </span>
           </div>
         )}
@@ -101,7 +95,7 @@ function CustomTooltip({
               <span className="text-xs text-gray-500">Ganancia</span>
             </div>
             <span className="text-sm font-bold tabular-nums text-emerald-600">
-              {fmt(data.ganancia ?? data.proyeccionGanancia)}
+              {formatMXN(data.ganancia ?? data.proyeccionGanancia)}
             </span>
           </div>
         )}

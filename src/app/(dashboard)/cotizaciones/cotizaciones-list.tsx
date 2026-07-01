@@ -55,6 +55,7 @@ import {
 } from "recharts"
 import { cambiarEstatusCotizacion, eliminarCotizacion } from "./actions"
 import { PageHeader } from "@/components/page-header"
+import { formatMXN } from "@/lib/utils"
 import {
   calcularProbabilidad,
   classifyEstadoComercial,
@@ -194,11 +195,6 @@ const ESTATUS_CONF: Record<
   },
 }
 
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -961,7 +957,7 @@ export function CotizacionesList({
         ),
         cell: ({ getValue }) => (
           <span className="text-xs tabular-nums text-gray-500">
-            {mxn.format(Number(getValue() ?? 0))}
+            {formatMXN(Number(getValue() ?? 0))}
           </span>
         ),
         size: 110,
@@ -973,7 +969,7 @@ export function CotizacionesList({
           const v = Number(getValue() ?? 0)
           return v > 0 ? (
             <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-[#DC2626] tabular-nums">
-              − {mxn.format(v)}
+              − {formatMXN(v)}
             </span>
           ) : (
             <span className="text-xs text-gray-300">—</span>
@@ -990,7 +986,7 @@ export function CotizacionesList({
           if (v > 0)
             return (
               <span className="inline-flex items-center rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-teal-200/60 tabular-nums">
-                + {mxn.format(v)}
+                + {formatMXN(v)}
               </span>
             )
           if (total > 0)
@@ -1008,7 +1004,7 @@ export function CotizacionesList({
         header: (ctx) => <HeaderCell label="Total" ctx={ctx} align="right" />,
         cell: ({ getValue }) => (
           <span className="text-sm font-bold text-teal-800 tabular-nums">
-            {mxn.format(Number(getValue() ?? 0))}
+            {formatMXN(Number(getValue() ?? 0))}
           </span>
         ),
         size: 130,
@@ -1180,7 +1176,7 @@ export function CotizacionesList({
         kpis={[
           {
             label: "Valor convertido",
-            value: mxn.format(kpis.valorConvertido),
+            value: formatMXN(kpis.valorConvertido),
             sub: `Cobrado en ${kpis.convertidas} ventas`,
             trend: {
               value: `${dValor >= 0 ? "+" : ""}${dValor.toFixed(1)}%`,
@@ -1205,7 +1201,7 @@ export function CotizacionesList({
           },
           {
             label: "Ticket promedio",
-            value: mxn.format(kpis.ticketProm),
+            value: formatMXN(kpis.ticketProm),
             sub: "por cotización convertida",
             trend: {
               value: `${dTicket >= 0 ? "+" : ""}${dTicket.toFixed(1)}%`,
@@ -1237,13 +1233,13 @@ export function CotizacionesList({
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi
           label="Pipeline potencial"
-          value={mxn.format(kpis.pipelinePotencial)}
+          value={formatMXN(kpis.pipelinePotencial)}
           sub={`${kpis.activas} cotizaciones activas`}
           icon={<Target className="size-4" />}
         />
         <Kpi
           label="Pendiente de convertir"
-          value={mxn.format(kpis.pendienteConvertir)}
+          value={formatMXN(kpis.pendienteConvertir)}
           sub="Enviadas vigentes en seguimiento"
           icon={<Wallet className="size-4" />}
         />
@@ -1343,7 +1339,7 @@ export function CotizacionesList({
                   boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
                 }}
                 formatter={(v) =>
-                  typeof v === "number" ? mxn.format(v) : String(v)
+                  typeof v === "number" ? formatMXN(v) : String(v)
                 }
               />
               <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />

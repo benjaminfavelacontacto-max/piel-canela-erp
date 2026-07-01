@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { VentaForm } from "../venta-form"
+import { VentaForm, type ProductoOpcion } from "../venta-form"
 
 type Cliente = {
   id: string
@@ -39,7 +39,7 @@ export default async function NuevaVentaPage({
   const { cotizacion: cotizacionId } = await searchParams
   const supabase = await createClient()
 
-  const [clientesRes, sociosRes] = await Promise.all([
+  const [clientesRes, sociosRes, productosRes] = await Promise.all([
     supabase
       .from("clientes")
       .select("id, nombre, nombre_negocio, telefono, email, direccion, ciudad")
@@ -49,10 +49,46 @@ export default async function NuevaVentaPage({
       .select("id, nombre, email, porcentaje")
       .eq("activo", true)
       .order("nombre", { ascending: true }),
+    supabase
+      .from("productos")
+      .select(
+        "id, sku, nombre, nombre_display, costo, precios_producto(precio, listas_precios(nombre))",
+      )
+      .eq("activo", true)
+      .order("nombre", { ascending: true }),
   ])
 
   const clientes = (clientesRes.data ?? []) as Cliente[]
   const socios = (sociosRes.data ?? []) as Socio[]
+
+  // Productos con precio público (MXN) y costo, para el editor de partidas
+  // opcional de la venta manual. Se descarta lo que no tenga precio.
+  type ProdRow = {
+    id: string
+    sku: string | null
+    nombre: string
+    nombre_display: string | null
+    costo: number | null
+    precios_producto: {
+      precio: number | null
+      listas_precios: { nombre: string } | null
+    }[]
+  }
+  const productos: ProductoOpcion[] = ((productosRes.data ?? []) as unknown as ProdRow[])
+    .map((p) => {
+      const precio =
+        p.precios_producto?.find(
+          (pp) => pp.listas_precios?.nombre === "Pública MXN",
+        )?.precio ?? 0
+      return {
+        id: p.id,
+        sku: p.sku,
+        nombre: p.nombre_display ?? p.nombre,
+        precio: Number(precio),
+        costo: Number(p.costo ?? 0),
+      }
+    })
+    .filter((p) => p.precio > 0)
 
   let cotizacion: CotizacionLoaded | null = null
   let cotizacionError: string | null = null
@@ -95,6 +131,7 @@ export default async function NuevaVentaPage({
     <VentaForm
       clientes={clientes}
       socios={socios}
+      productos={productos}
       cotizacion={cotizacion}
       cotizacionError={cotizacionError}
     />

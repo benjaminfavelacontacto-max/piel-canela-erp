@@ -15,23 +15,13 @@ import {
   GraficaHistoricoProyeccion,
   type DataPoint,
 } from "./chart-historico-proyeccion"
+import { formatMXN, formatMXN2 } from "@/lib/utils"
 
 const MESES_ABBR = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
 function formatMesLabel(mesStr: string) {
   const [year, month] = mesStr.split("-")
   return `${MESES_ABBR[parseInt(month, 10) - 1]} ${year.slice(2)}`
 }
-const mxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
-const mxn2 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 export function EstimadoIngresos({
   clientes,
   ventas,
@@ -468,7 +458,7 @@ export function EstimadoIngresos({
                     fontFeatureSettings: '"tnum" 1',
                   }}
                 >
-                  {mxn.format(seasonalInsights.junioPromedio)}
+                  {formatMXN(seasonalInsights.junioPromedio)}
                 </p>
               </div>
             )}
@@ -482,7 +472,7 @@ export function EstimadoIngresos({
           <AiTile
             icon={<Target className="size-3.5" strokeWidth={1.75} />}
             label={`Estimado ${seasonalInsights.proxNombre}`}
-            value={mxn.format(
+            value={formatMXN(
               proyecciones[0]?.estimado ?? insights.estimadoMesProx,
             )}
             sub={
@@ -496,21 +486,21 @@ export function EstimadoIngresos({
           <AiTile
             icon={<Calendar className="size-3.5" strokeWidth={1.75} />}
             label="Proyección Q3"
-            value={mxn.format(insights.estimadoTrim)}
+            value={formatMXN(insights.estimadoTrim)}
             sub="Próximos 3 meses"
             tone="violet"
           />
           <AiTile
             icon={<TrendingUp className="size-3.5" strokeWidth={1.75} />}
             label="Promedio 3m"
-            value={mxn.format(insights.promMes3)}
-            sub={`vs ${mxn.format(insights.promMes6)} (6m)`}
+            value={formatMXN(insights.promMes3)}
+            sub={`vs ${formatMXN(insights.promMes6)} (6m)`}
             tone="emerald"
           />
           <AiTile
             icon={<Zap className="size-3.5" strokeWidth={1.75} />}
             label="Recompra probable"
-            value={mxn.format(probabilidadTotal)}
+            value={formatMXN(probabilidadTotal)}
             sub={`${probableRecompra.length} clientes en cycle`}
             tone="amber"
           />
@@ -571,7 +561,7 @@ export function EstimadoIngresos({
                           {c.score.toFixed(0)}%
                         </span>
                         <div className="mt-0.5 text-[10px] tabular-nums text-[#0F766E]">
-                          {mxn2.format(c.estimado)}
+                          {formatMXN2(c.estimado)}
                         </div>
                       </div>
                     </div>

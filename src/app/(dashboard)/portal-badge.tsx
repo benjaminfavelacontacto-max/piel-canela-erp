@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { formatMXN } from "@/lib/utils"
 
 export type PortalCotizacion = {
   id: string
@@ -11,12 +12,6 @@ export type PortalCotizacion = {
   cliente_nombre: string | null
   cliente_telefono: string | null
 }
-
-const mxn0 = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-})
 
 function formatPhoneIntl(tel: string | null | undefined): string {
   if (!tel) return ""
@@ -230,7 +225,7 @@ export function PortalBadge({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {mxn0.format(Number(cot.total) || 0)}
+                    {formatMXN(Number(cot.total) || 0)}
                   </p>
                   <div style={{ display: "flex", gap: 6 }}>
                     <Link
