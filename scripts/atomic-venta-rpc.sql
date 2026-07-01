@@ -19,10 +19,10 @@
 -- (Mantén los revalidatePath en el server action.)
 --
 -- ⚠️ REVISA los nombres/columnas contra tu esquema real ANTES de correr.
---    Se modeló según el código actual:
---      - venta_items.subtotal y .costo_total SÍ se insertan (como en el JS actual)
+--    Verificado contra el esquema real (2026-06-29):
+--      - venta_items.subtotal y .costo_total son GENERATED → NO se insertan (error 428C9)
 --      - ventas.total / ganancia / saldo_pendiente / utilidad_neta son GENERATED → NO se insertan
---      - reusa la RPC existente descontar_inventario_venta(venta_id)
+--      - reusa la RPC existente descontar_inventario_venta(p_venta_id)
 -- ════════════════════════════════════════════════════════════════════
 
 create or replace function crear_venta_desde_cotizacion(p_cotizacion_id uuid)
@@ -59,14 +59,15 @@ begin
   )
   returning id into v_venta_id;
 
-  -- 2) Copiar items
+  -- 2) Copiar items. OJO: venta_items.subtotal y .costo_total son GENERATED
+  --    (Postgres los calcula). Insertarlos da error 428C9 → NO incluirlos.
   insert into venta_items (
     venta_id, producto_id, cantidad, precio_unitario,
-    costo_unitario, subtotal, costo_total, sort_order
+    costo_unitario, sort_order
   )
   select
     v_venta_id, producto_id, cantidad, precio_unitario,
-    costo_unitario, subtotal, coalesce(costo_unitario, 0) * cantidad, sort_order
+    costo_unitario, sort_order
   from cotizacion_items
   where cotizacion_id = p_cotizacion_id
   order by sort_order;

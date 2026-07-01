@@ -116,14 +116,13 @@ export async function saveVenta(input: SaveVentaInput) {
     }
 
     if (cotItems && cotItems.length > 0) {
+      // venta_items.subtotal y .costo_total son GENERATED — NO se insertan.
       const ventaItems = cotItems.map((it) => ({
         venta_id: venta.id,
         producto_id: it.producto_id,
         cantidad: it.cantidad,
         precio_unitario: it.precio_unitario,
         costo_unitario: it.costo_unitario,
-        subtotal: it.subtotal,
-        costo_total: Number(it.costo_unitario) * Number(it.cantidad),
         sort_order: it.sort_order,
       }))
 
@@ -139,14 +138,13 @@ export async function saveVenta(input: SaveVentaInput) {
     }
   } else if (input.items && input.items.length > 0) {
     // Venta MANUAL con partidas: crear venta_items desde el editor del formulario.
+    // venta_items.subtotal y .costo_total son GENERATED — NO se insertan.
     const ventaItems = input.items.map((it, i) => ({
       venta_id: venta.id,
       producto_id: it.producto_id,
       cantidad: it.cantidad,
       precio_unitario: it.precio_unitario,
       costo_unitario: it.costo_unitario,
-      subtotal: Number(it.precio_unitario) * Number(it.cantidad),
-      costo_total: Number(it.costo_unitario) * Number(it.cantidad),
       sort_order: i,
     }))
     const { error: itemsErr } = await supabase.from("venta_items").insert(ventaItems)
@@ -193,7 +191,7 @@ export async function saveVenta(input: SaveVentaInput) {
   // sea manual con productos. Mismo RPC (opera sobre venta_items).
   if (hasItems) {
     const { error: rpcErr } = await supabase.rpc("descontar_inventario_venta", {
-      venta_id: venta.id,
+      p_venta_id: venta.id,
     })
     if (rpcErr) {
       await rollbackVenta(supabase, venta.id)
