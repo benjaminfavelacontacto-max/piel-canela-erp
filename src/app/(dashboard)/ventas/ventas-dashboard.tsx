@@ -491,7 +491,7 @@ export function VentasDashboard({
 
       {/* ─── Chart principal + Socios panel (dominante) ─── */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] lg:col-span-2">
+        <div className="pc-card lg:col-span-2">
           <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -607,7 +607,7 @@ export function VentasDashboard({
           </ResponsiveContainer>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <div className="space-y-4 pc-card">
           <header className="flex items-center justify-between">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
               Socios
@@ -784,7 +784,7 @@ export function VentasDashboard({
       </section>
 
       {/* ─── Filtros globales ─── */}
-      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <section className="pc-card-flush">
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex size-6 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">

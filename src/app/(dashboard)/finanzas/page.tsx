@@ -336,7 +336,7 @@ export default async function FinanzasPage() {
           return (
             <div
               key={k.socio.id}
-              className="rounded-xl border border-gray-200 bg-white p-5"
+              className="pc-card"
             >
               <header className="flex items-center gap-3 pb-4 border-b border-gray-100">
                 <span
@@ -409,7 +409,7 @@ export default async function FinanzasPage() {
       </section>
 
       {/* ─── B. Inversiones agrupadas ─── */}
-      <section className="rounded-xl border border-gray-200 bg-white">
+      <section className="pc-card-flush">
         <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
           <Wallet className="size-4 text-gray-500" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -477,7 +477,7 @@ export default async function FinanzasPage() {
       </section>
 
       {/* ─── D. Gráfica acumulada ─── */}
-      <section className="rounded-xl border border-gray-200 bg-white p-5">
+      <section className="pc-card">
         <header className="mb-3 flex items-center gap-2">
           <ChartLine className="size-4 text-gray-500" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -492,7 +492,7 @@ export default async function FinanzasPage() {
       </section>
 
       {/* ─── C. Tabla recuperación por venta ─── */}
-      <section className="rounded-xl border border-gray-200 bg-white">
+      <section className="pc-card-flush">
         <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
           <ScrollText className="size-4 text-gray-500" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
