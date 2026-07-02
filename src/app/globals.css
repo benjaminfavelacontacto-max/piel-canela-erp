@@ -243,6 +243,15 @@
     box-shadow: var(--pc-shadow-elevated);
   }
 
+  /* ─── Card sin padding (contenedores de tabla/lista edge-to-edge) ─── */
+  .pc-card-flush {
+    background-color: var(--pc-bg-card);
+    border: 1px solid var(--pc-border);
+    border-radius: 20px;
+    box-shadow: var(--pc-shadow-card);
+    overflow: hidden;
+  }
+
   /* ─── Botón primario ─── */
   .pc-btn-primary {
     background-color: var(--pc-accent);
