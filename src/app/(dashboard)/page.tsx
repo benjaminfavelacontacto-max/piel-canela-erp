@@ -448,6 +448,7 @@ export default async function DashboardPage() {
     cliente: string
     total: number
     created_at: string
+    href: string
   }
   const actVentas: ActivityItem[] = allVentasRecientes.map((v) => ({
     tipo: "venta" as const,
@@ -456,6 +457,7 @@ export default async function DashboardPage() {
       v.clientes?.nombre_negocio ?? v.clientes?.nombre ?? "Sin cliente",
     total: Number(v.total ?? 0),
     created_at: v.created_at ?? v.fecha ?? "",
+    href: v.id ? `/ventas/${v.id}` : "/ventas",
   }))
   const actCots: ActivityItem[] = allCotsRecientes.map((c) => ({
     tipo: "cotizacion" as const,
@@ -464,6 +466,7 @@ export default async function DashboardPage() {
       c.clientes?.nombre_negocio ?? c.clientes?.nombre ?? "Sin cliente",
     total: Number(c.total ?? 0),
     created_at: c.created_at ?? c.fecha ?? "",
+    href: c.id ? `/cotizaciones/${c.id}` : "/cotizaciones",
   }))
   const activity = [...actVentas, ...actCots]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -560,9 +563,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* ─── Chart full-width con summary inline (compacto) ─── */}
-      <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 transition-shadow hover:shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
-        style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
-      >
+      <section className="pc-card">
         <header className="mb-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold text-[#0F172A]">
@@ -616,7 +617,7 @@ export default async function DashboardPage() {
                   <li key={v.id}>
                     <Link
                       href={`/ventas/${v.id}`}
-                      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
+                      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/25"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-mono text-xs text-[#0F766E]">
@@ -705,7 +706,7 @@ export default async function DashboardPage() {
                 <li key={c.id}>
                   <Link
                     href={`/cotizaciones/${c.id}`}
-                    className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50"
+                    className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/25"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-mono text-xs text-[#0F766E]">
@@ -746,7 +747,7 @@ export default async function DashboardPage() {
 
       {/* ─── Insights ─── */}
       {insights.length > 0 && (
-        <section className="rounded-2xl border border-[#E7EAF0] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+        <section className="pc-card">
           <header className="mb-4 flex items-center gap-2">
             <Sparkles className="size-4 text-[#0F766E]" />
             <h3 className="text-sm font-semibold text-gray-900">Insights</h3>
@@ -768,7 +769,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ─── Activity feed ─── */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <section className="pc-card">
         <header className="mb-4 flex items-center gap-2">
           <Calendar className="size-4 text-gray-500" />
           <h2 className="text-sm font-semibold text-gray-900">
@@ -786,10 +787,7 @@ export default async function DashboardPage() {
                   ? "bg-teal-50 text-teal-600"
                   : "bg-[#F9FAFB] text-[#0F766E]"
               const tipoLabel = a.tipo === "venta" ? "Venta" : "Cotización"
-              const href =
-                a.tipo === "venta"
-                  ? `/ventas` // no tenemos ID directo aquí pero es OK
-                  : `/cotizaciones`
+              const href = a.href
               return (
                 <li
                   key={`${a.tipo}-${a.numero}-${i}`}
@@ -931,7 +929,7 @@ function PanelCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+    <div className="pc-card">
       <header className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
@@ -972,7 +970,7 @@ function SocioCard({
   }
 }) {
   return (
-    <div className="rounded-2xl border border-[#E7EAF0] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+    <div className="pc-card">
       <div className="mb-5 flex items-center gap-3">
         <div className="flex size-10 items-center justify-center rounded-full bg-[#F3F5F7] text-sm font-semibold text-gray-700">
           {inicial}
