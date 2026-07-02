@@ -323,9 +323,7 @@ export function CotizacionForm({
   async function handlePdf() {
     if (!previewRef.current) return
     try {
-      const nombreCliente =
-        cliente?.nombre_negocio ?? cliente?.nombre ?? "SinCliente"
-      await downloadCotizacionPdf(previewRef.current, numero, nombreCliente)
+      await downloadCotizacionPdf(previewRef.current, numero)
     } catch (e) {
       toast.error(`Error al generar PDF: ${(e as Error).message}`)
     }
