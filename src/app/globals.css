@@ -284,6 +284,13 @@
     transform: translateY(-1px);
   }
 
+  /* Foco visible por teclado (no aparece con mouse) — accesibilidad */
+  .pc-btn-primary:focus-visible,
+  .pc-btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--pc-accent-glow);
+  }
+
   /* ─── Input premium (sólido) ─── */
   .pc-input {
     background-color: white;
