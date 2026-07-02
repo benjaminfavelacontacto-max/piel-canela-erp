@@ -37,12 +37,14 @@ html, body { background: #ffffff !important; color: #111827 !important; }
 export async function downloadCotizacionPdf(
   element: HTMLElement,
   numeroOrden: string,
-  nombreCliente: string,
 ) {
   const mod = await import("html2pdf.js")
   const html2pdf = mod.default ?? mod
 
-  const filename = `PC_${safeFilenamePart(numeroOrden)}_${safeFilenamePart(nombreCliente)}.pdf`
+  // El archivo se llama EXACTAMENTE como la cotización (su número), para no
+  // tener que renombrarlo. El número ya es filename-safe (PC-DDMMYY-NNN-TIPO-
+  // NombreCorto); safeFilenamePart solo actúa como red de seguridad.
+  const filename = `${safeFilenamePart(numeroOrden)}.pdf`
 
   // `pagebreak` no está en los tipos de html2pdf.js pero sí existe en runtime
   // y respeta `page-break-inside: avoid` para evitar cortes entre páginas.
