@@ -127,3 +127,69 @@ export async function crearSalidaInterna(
   revalidatePath("/cotizaciones")
   return { ok: true, ventaId: venta.ventaId, numero: v?.numero ?? "", fecha: today }
 }
+
+/**
+ * Edita las cantidades de una salida ya registrada y re-sincroniza inventario
+ * por delta (subió cantidad → descuenta más; bajó → devuelve; 0 → quita el ítem).
+ * Recalcula el encabezado (subtotal / costo_productos) desde los ítems restantes.
+ */
+export async function editarSalidaCantidades(
+  ventaId: string,
+  cambios: { producto_id: string; cantidad: number }[],
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!ventaId) return { ok: false, error: "Falta la salida" }
+  const admin = createAdminClient()
+
+  const { data: viejos } = await admin
+    .from("venta_items")
+    .select("id, producto_id, cantidad")
+    .eq("venta_id", ventaId)
+  const oldBy = new Map((viejos ?? []).map((v) => [v.producto_id as string, v]))
+
+  for (const c of cambios) {
+    const old = oldBy.get(c.producto_id)
+    if (!old) continue
+    const nueva = Math.max(0, Math.round(Number(c.cantidad) || 0))
+    const delta = nueva - Number(old.cantidad)
+    if (delta !== 0) {
+      const { data: inv } = await admin
+        .from("inventario")
+        .select("id, stock_actual")
+        .eq("producto_id", c.producto_id)
+        .maybeSingle()
+      if (inv?.id)
+        await admin
+          .from("inventario")
+          .update({ stock_actual: Math.max(0, Number(inv.stock_actual) - delta) })
+          .eq("id", inv.id)
+    }
+    if (nueva === 0) {
+      await admin.from("venta_items").delete().eq("id", old.id as string)
+    } else if (delta !== 0) {
+      await admin.from("venta_items").update({ cantidad: nueva }).eq("id", old.id as string)
+    }
+  }
+
+  // Recalcular encabezado desde los ítems restantes
+  const { data: rest } = await admin
+    .from("venta_items")
+    .select("cantidad, precio_unitario, costo_unitario")
+    .eq("venta_id", ventaId)
+  const subtotal = (rest ?? []).reduce(
+    (s, i) => s + Number(i.precio_unitario) * Number(i.cantidad),
+    0,
+  )
+  const costoProd = (rest ?? []).reduce(
+    (s, i) => s + Number(i.costo_unitario) * Number(i.cantidad),
+    0,
+  )
+  await admin
+    .from("ventas")
+    .update({ subtotal, costo_productos: costoProd })
+    .eq("id", ventaId)
+
+  revalidatePath("/piel-canela")
+  revalidatePath("/inventario")
+  revalidatePath(`/ventas/${ventaId}`)
+  return { ok: true }
+}

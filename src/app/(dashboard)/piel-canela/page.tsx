@@ -3,14 +3,13 @@ import { createClient } from "@/lib/supabase/server"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { buildProductoImageUrl } from "@/lib/storage-images"
 import { NuevaSalida } from "./nueva-salida"
+import { SalidasList } from "./salidas-list"
 import {
   Home,
   Coins,
   Tag,
   TrendingDown,
   Package,
-  Boxes,
-  ArrowRight,
   type LucideIcon,
 } from "lucide-react"
 
@@ -23,6 +22,7 @@ const mxn = (v: number) =>
 
 type ItemRow = {
   venta_id: string
+  producto_id: string
   cantidad: number
   costo_unitario: number
   precio_unitario: number
@@ -53,7 +53,7 @@ export default async function PielCanelaPage() {
     ? await supabase
         .from("venta_items")
         .select(
-          "venta_id, cantidad, costo_unitario, precio_unitario, productos(sku, nombre, nombre_display, imagen_url, categorias(nombre))",
+          "venta_id, producto_id, cantidad, costo_unitario, precio_unitario, productos(sku, nombre, nombre_display, imagen_url, categorias(nombre))",
         )
         .in("venta_id", ventaIds)
     : { data: [] }
@@ -150,21 +150,46 @@ export default async function PielCanelaPage() {
     }))
     .sort((a, b) => b.publico - a.publico)
 
-  // Agregado por salida (venta interna) — para clic al detalle
+  // Agregado por salida (venta interna) — con sus ítems para desplegar y editar
+  type SItem = {
+    producto_id: string
+    sku: string
+    nombre: string
+    cantidad: number
+    precio: number
+    costo: number
+  }
   const byTake = new Map<
     string,
-    { id: string; numero: string; fecha: string; unidades: number; costo: number; publico: number }
+    {
+      id: string
+      numero: string
+      fecha: string
+      unidades: number
+      costo: number
+      publico: number
+      items: SItem[]
+    }
   >()
   for (const it of items) {
     const v = ventaById.get(it.venta_id)
     if (!v) continue
+    const p = it.productos
     const cant = Number(it.cantidad) || 0
     const cur =
       byTake.get(it.venta_id) ??
-      { id: v.id, numero: v.numero, fecha: v.fecha, unidades: 0, costo: 0, publico: 0 }
+      { id: v.id, numero: v.numero, fecha: v.fecha, unidades: 0, costo: 0, publico: 0, items: [] as SItem[] }
     cur.unidades += cant
     cur.costo += Number(it.costo_unitario) * cant
     cur.publico += Number(it.precio_unitario) * cant
+    cur.items.push({
+      producto_id: it.producto_id,
+      sku: p?.sku ?? "?",
+      nombre: p?.nombre_display ?? p?.nombre ?? p?.sku ?? "?",
+      cantidad: cant,
+      precio: Number(it.precio_unitario) || 0,
+      costo: Number(it.costo_unitario) || 0,
+    })
     byTake.set(it.venta_id, cur)
   }
   const takes = [...byTake.values()].sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
@@ -299,54 +324,8 @@ export default async function PielCanelaPage() {
         </div>
       )}
 
-      {/* Salidas — clic para ver el detalle de cada orden */}
-      {takes.length > 0 && (
-        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-            <Boxes className="size-4 text-gray-400" strokeWidth={1.75} />
-            <h2 className="text-[13px] font-semibold text-gray-900">Salidas</h2>
-            <span className="text-[11px] text-gray-400">{takes.length} veces · clic para ver el detalle</span>
-          </header>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead>
-                <tr className="border-b border-gray-50 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">
-                  <th className="px-3 py-2.5 text-left">Fecha</th>
-                  <th className="px-3 py-2.5 text-left">Folio</th>
-                  <th className="px-3 py-2.5 text-right">Unidades</th>
-                  <th className="px-3 py-2.5 text-right">Costo real</th>
-                  <th className="px-3 py-2.5 text-right">Valor público</th>
-                  <th className="px-3 py-2.5" />
-                </tr>
-              </thead>
-              <tbody>
-                {takes.map((t) => (
-                  <tr key={t.id} className="group border-b border-gray-50 transition-colors hover:bg-purple-50/40">
-                    <td className="px-3 py-2.5">
-                      <Link href={`/ventas/${t.id}`} className="block text-gray-700">
-                        {new Date(t.fecha).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <Link href={`/ventas/${t.id}`} className="font-mono text-[11px] text-[#7C3AED] group-hover:underline">
-                        {t.numero}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-gray-900">{t.unidades}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-amber-700">{mxn(t.costo)}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-indigo-700">{mxn(t.publico)}</td>
-                    <td className="px-2 py-2.5 text-right">
-                      <Link href={`/ventas/${t.id}`} className="inline-flex text-gray-300 transition-colors group-hover:text-[#7C3AED]" aria-label="Ver salida">
-                        <ArrowRight className="size-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {/* Salidas — desplegables: ver productos + fecha y editar cantidades */}
+      {takes.length > 0 && <SalidasList salidas={takes} />}
     </div>
   )
 }
