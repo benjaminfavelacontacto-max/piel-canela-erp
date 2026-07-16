@@ -10,6 +10,7 @@ import {
   Users,
   TrendingUp,
   ShoppingCart,
+  Home,
 } from "lucide-react"
 
 const items = [
@@ -20,6 +21,7 @@ const items = [
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/pedidos", label: "Pedidos", icon: ShoppingCart },
   { href: "/finanzas", label: "Finanzas", icon: TrendingUp },
+  { href: "/piel-canela", label: "Piel Canela", icon: Home },
 ]
 
 export function SidebarNav() {
