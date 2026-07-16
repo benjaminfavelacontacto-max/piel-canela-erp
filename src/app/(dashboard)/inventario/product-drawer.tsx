@@ -516,6 +516,14 @@ export function ProductDrawer({
                           </div>
                         </td>
                         <td className="px-3 py-2 text-gray-700 truncate max-w-[140px]">
+                          {v.interno && (
+                            <span
+                              className="mr-1 inline-flex items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[9px] font-semibold text-purple-700 align-middle"
+                              title="Consumo interno Piel Canela (no cuenta como venta)"
+                            >
+                              🏠 Interno
+                            </span>
+                          )}
                           {v.cliente ?? "—"}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-gray-700">

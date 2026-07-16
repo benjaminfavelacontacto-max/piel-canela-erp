@@ -29,6 +29,7 @@ export type ProductoSales = {
     cantidad: number
     precio_unitario: number
     subtotal: number
+    interno: boolean
   }>
   monthly: Array<{ mes: string; cantidad: number; revenue: number }>
 }

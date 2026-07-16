@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { buildProductoImageUrl } from "@/lib/storage-images"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { InventarioView } from "./inventario-view"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 
@@ -40,9 +41,10 @@ export default async function InventarioPage({
       admin
         .from("venta_items")
         .select(
-          "producto_id, cantidad, costo_unitario, precio_unitario, ventas(id, numero, fecha, clientes(nombre, nombre_negocio))",
+          "producto_id, cantidad, costo_unitario, precio_unitario, ventas(id, numero, fecha, cliente_id, clientes(nombre, nombre_negocio))",
         ),
     ])
+  const internalIds = await getInternalClienteIds()
 
   type ProdRow = {
     id: string
@@ -61,7 +63,7 @@ export default async function InventarioPage({
   const listaId = listaRes.data?.id as string | undefined
 
   // Precios públicos — query separada
-  let preciosBySku = new Map<string, number>()
+  const preciosBySku = new Map<string, number>()
   if (listaId) {
     const { data: prc } = await supabase
       .from("precios_producto")
@@ -101,6 +103,7 @@ export default async function InventarioPage({
       id: string
       numero: string
       fecha: string
+      cliente_id: string | null
       clientes: { nombre: string; nombre_negocio: string | null } | null
     } | null
   }
@@ -139,6 +142,8 @@ export default async function InventarioPage({
         precio_unitario: Number(it.precio_unitario ?? 0),
         subtotal:
           Number(it.cantidad ?? 0) * Number(it.precio_unitario ?? 0),
+        interno:
+          !!it.ventas.cliente_id && internalIds.has(it.ventas.cliente_id),
       })
       salesBySku.set(sku, sales)
     }
