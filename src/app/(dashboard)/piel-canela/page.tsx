@@ -251,7 +251,10 @@ export default async function PielCanelaPage() {
         <Kpi icon={TrendingDown} tone="rose" label="Ganancia no realizada" value={mxn(gananciaNoRealizada)} sub="dinero que se deja de ganar por no venderlo" strong />
       </section>
 
-      {/* Productos llevados — agrupados por tipo */}
+      {/* Salidas — cada folio: clic para ver sus productos y editar cantidades */}
+      {takes.length > 0 && <SalidasList salidas={takes} />}
+
+      {/* Productos llevados por tipo (resumen general) */}
       {categorias.length === 0 ? (
         <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-400 shadow-sm">
           Piel Canela no ha registrado consumo interno todavía. Usa <b>Nueva salida</b> para empezar.
@@ -324,8 +327,6 @@ export default async function PielCanelaPage() {
         </div>
       )}
 
-      {/* Salidas — desplegables: ver productos + fecha y editar cantidades */}
-      {takes.length > 0 && <SalidasList salidas={takes} />}
     </div>
   )
 }
