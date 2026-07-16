@@ -59,12 +59,25 @@ export default async function PielCanelaPage() {
     : { data: [] }
   const items = (itemsData ?? []) as unknown as ItemRow[]
 
-  // Productos para el buscador de "Nueva salida"
+  // Productos + precio público para el buscador de "Nueva salida"
   const { data: prodList } = await supabase
     .from("productos")
     .select("id, sku, nombre, nombre_display")
     .eq("activo", true)
     .order("nombre")
+  const { data: listaPub } = await supabase
+    .from("listas_precios")
+    .select("id")
+    .eq("nombre", "Pública MXN")
+    .maybeSingle()
+  const precioBy = new Map<string, number>()
+  if (listaPub?.id) {
+    const { data: prc } = await supabase
+      .from("precios_producto")
+      .select("producto_id, precio")
+      .eq("lista_id", listaPub.id)
+    for (const p of prc ?? []) precioBy.set(p.producto_id as string, Number(p.precio))
+  }
   const productosPicker = ((prodList ?? []) as {
     id: string
     sku: string | null
@@ -72,7 +85,12 @@ export default async function PielCanelaPage() {
     nombre_display: string | null
   }[])
     .filter((p) => p.sku)
-    .map((p) => ({ id: p.id, sku: p.sku as string, nombre: p.nombre_display ?? p.nombre }))
+    .map((p) => ({
+      id: p.id,
+      sku: p.sku as string,
+      nombre: p.nombre_display ?? p.nombre,
+      precio: precioBy.get(p.id) ?? 0,
+    }))
 
   // Agregado por producto (con categoría)
   type Agg = {

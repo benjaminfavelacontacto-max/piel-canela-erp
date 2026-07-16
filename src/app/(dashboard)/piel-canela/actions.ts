@@ -14,7 +14,10 @@ import { revalidatePath } from "next/cache"
  */
 export async function crearSalidaInterna(
   entrada: { producto_id: string; cantidad: number }[],
-): Promise<{ ok: true; ventaId: string } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; ventaId: string; numero: string; fecha: string }
+  | { ok: false; error: string }
+> {
   const limpios = (entrada ?? []).filter((i) => i.producto_id && i.cantidad > 0)
   if (limpios.length === 0) return { ok: false, error: "Agrega al menos un producto" }
 
@@ -113,7 +116,14 @@ export async function crearSalidaInterna(
       await admin.from("inventario").update({ stock_actual: 0 }).eq("id", inv.id)
   }
 
+  const { data: v } = await admin
+    .from("ventas")
+    .select("numero")
+    .eq("id", venta.ventaId)
+    .maybeSingle()
+
   revalidatePath("/piel-canela")
   revalidatePath("/inventario")
-  return { ok: true, ventaId: venta.ventaId }
+  revalidatePath("/cotizaciones")
+  return { ok: true, ventaId: venta.ventaId, numero: v?.numero ?? "", fecha: today }
 }
