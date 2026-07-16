@@ -102,6 +102,9 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                   <p className="font-mono text-[10.5px] text-gray-400">{s.numero}</p>
                 </div>
                 <div className="ml-auto flex items-center gap-4 text-[12px] tabular-nums">
+                  <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-[#7C3AED]">
+                    {s.items.length} {s.items.length === 1 ? "ítem" : "ítems"}
+                  </span>
                   <span className="text-gray-500">{s.unidades} u</span>
                   <span className="hidden text-amber-700 sm:inline">{mxn(s.costo)}</span>
                   <span className="font-semibold text-indigo-700">{mxn(s.publico)}</span>
