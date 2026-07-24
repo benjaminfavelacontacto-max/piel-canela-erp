@@ -7,7 +7,7 @@ import type {
   CotizacionData,
   Estatus,
 } from "@/lib/cotizacion-types"
-import { CotizacionDetail } from "./cotizacion-detail"
+import { CotizacionDetail, type Faltante } from "./cotizacion-detail"
 
 export default async function CotizacionDetailPage({
   params,
@@ -82,6 +82,34 @@ export default async function CotizacionDetailPage({
     }
   })
 
+  // Faltantes de stock. `crear_venta_desde_cotizacion` descuenta inventario y
+  // aborta la transacción entera si alguna partida no alcanza, así que se
+  // comprueba ANTES: si no, el usuario descubre el problema hasta que falla la
+  // venta, sin saber qué producto lo causó.
+  const productoIds = [...new Set(items.map((i) => i.producto_id).filter(Boolean))]
+  const stockPorProducto = new Map<string, number>()
+  if (productoIds.length > 0) {
+    const { data: invRows } = await supabase
+      .from("inventario")
+      .select("producto_id, stock_actual")
+      .in("producto_id", productoIds)
+    for (const row of invRows ?? []) {
+      stockPorProducto.set(
+        row.producto_id as string,
+        Number(row.stock_actual ?? 0),
+      )
+    }
+  }
+  // Sin fila de inventario = sin existencias registradas → cuenta como 0.
+  const faltantes: Faltante[] = items
+    .map((i) => ({
+      nombre: i.nombre,
+      sku: i.sku,
+      cantidad: i.cantidad,
+      stock: stockPorProducto.get(i.producto_id) ?? 0,
+    }))
+    .filter((f) => f.stock < f.cantidad)
+
   // ¿Esta cotización ya generó una venta? Señal fuerte de "vendida" — más
   // confiable que el estatus, que puede quedar en "borrador" aunque ya se vendió.
   const { data: ventasAsoc } = await supabase
@@ -117,6 +145,7 @@ export default async function CotizacionDetailPage({
       numero={cot.numero}
       estatus={cot.estatus as Estatus}
       ventaAsociada={ventaAsociada}
+      faltantes={faltantes}
       preview={preview}
     />
   )
