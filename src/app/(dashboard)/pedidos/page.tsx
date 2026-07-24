@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/page-header"
 import { Plus, Package } from "lucide-react"
 import { formatMXN } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const usd = (v: number) =>
   `$${Number(v).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
 
@@ -295,7 +297,7 @@ export default async function PedidosPage() {
                       </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-[#64748B]">
                         <span>
-                          {new Date(pedido.fecha).toLocaleDateString("es-MX", {
+                          {parseFecha(pedido.fecha).toLocaleDateString("es-MX", {
                             day: "numeric",
                             month: "long",
                             year: "numeric",

@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { CotizacionesList } from "./cotizaciones-list"
+import { parseFecha } from "@/lib/fecha"
+
 import type {
   ClienteOption,
   CotItemRow,
@@ -123,7 +125,7 @@ export default async function CotizacionesPage() {
     const cot = cotById.get(v.cotizacion_id)
     if (!cot) continue
     const diff =
-      (new Date(v.fecha).getTime() - new Date(cot.fecha).getTime()) /
+      (parseFecha(v.fecha).getTime() - parseFecha(cot.fecha).getTime()) /
       (1000 * 60 * 60 * 24)
     if (diff >= 0 && diff < 365) tiemposCierre.push(diff)
   }

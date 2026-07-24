@@ -29,6 +29,8 @@ import type { ClienteRow, SocioBasic } from "./clientes-dashboard"
 import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
 import { TIPOS_CLIENTE } from "./tipos-cliente"
 
+import { parseFecha } from "@/lib/fecha"
+
 const METODOS_PAGO = [
   "Transferencia",
   "Efectivo",
@@ -159,7 +161,7 @@ export function ClienteForm({
             </h1>
             <p className="mt-0.5 text-sm text-gray-500">
               {isEdit
-                ? `Última actualización: ${new Date(initial!.updated_at).toLocaleDateString("es-MX")}`
+                ? `Última actualización: ${parseFecha(initial!.updated_at).toLocaleDateString("es-MX")}`
                 : "Crea un nuevo cliente para usarlo en cotizaciones y ventas"}
             </p>
           </div>

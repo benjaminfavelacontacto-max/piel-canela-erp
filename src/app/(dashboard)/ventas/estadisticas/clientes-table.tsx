@@ -4,6 +4,8 @@ import { useState } from "react"
 import type { ClienteStats } from "../actions"
 import { formatMXN } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const fechaCorta = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -94,7 +96,7 @@ export function ClientesTable({ data }: { data: ClienteStats[] }) {
                 <div className="text-center">
                   <p className="text-xs text-gray-400">Última compra</p>
                   <p className="font-bold text-gray-900 text-xs">
-                    {fechaCorta.format(new Date(c.ultimaCompra))}
+                    {fechaCorta.format(parseFecha(c.ultimaCompra))}
                   </p>
                   <p className="text-[10px] text-gray-400">
                     hace {diasDesde(c.ultimaCompra)} días

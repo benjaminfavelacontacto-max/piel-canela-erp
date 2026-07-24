@@ -62,9 +62,15 @@ export function CotizacionDetail({
   const [confirmarRevertir, setConfirmarRevertir] = useState(false)
   const [reverting, setReverting] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
-  // "Vendida" = ya existe una venta generada desde esta cotización (señal fuerte),
-  // o el estatus es "aceptada". Evita que el botón verde invite a re-vender.
-  const yaVendida = ventaAsociada != null || currentEstatus === "aceptada"
+  // "Vendida" = existe una venta generada desde esta cotización. El estatus
+  // "aceptada" NO basta: se puede poner a mano desde el desplegable de la lista
+  // (`cambiarEstatusCotizacion`), que sólo escribe el estatus y no crea venta.
+  // Tomarlo como "vendida" dejaba la cotización en un callejón sin salida — el
+  // único botón que genera la venta quedaba deshabilitado para siempre.
+  // Venta recién creada en esta sesión (antes de que el refresh traiga
+  // `ventaAsociada` del servidor).
+  const [ventaCreada, setVentaCreada] = useState<string | null>(null)
+  const yaVendida = ventaAsociada != null || ventaCreada != null
 
   async function handleEliminar() {
     setDeleting(true)
@@ -96,8 +102,10 @@ export function CotizacionDetail({
   }
 
   function handleMarkSold() {
-    if (currentEstatus === "aceptada") {
-      toast.info("Esta cotización ya está marcada como vendida.")
+    if (ventaAsociada || ventaCreada) {
+      toast.info(
+        `Esta cotización ya generó la venta ${ventaAsociada?.numero ?? ""}`.trim(),
+      )
       return
     }
     const itemSummary = preview.items
@@ -117,9 +125,14 @@ export function CotizacionDetail({
         return
       }
       setCurrentEstatus("aceptada")
+      // Cierra el botón de inmediato: `ventaAsociada` llega del servidor y no
+      // se actualiza hasta el refresh, así que sin esto un segundo clic crearía
+      // una venta duplicada.
+      setVentaCreada(result.ventaId ?? "creada")
       toast.success("Vendida. Inventario descontado.", {
         description: itemSummary,
       })
+      router.refresh()
     })
   }
 
@@ -198,15 +211,11 @@ export function CotizacionDetail({
               <button
                 type="button"
                 onClick={handleMarkSold}
-                disabled={pending || currentEstatus === "aceptada"}
+                disabled={pending || ventaCreada != null}
                 className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
               >
                 <CheckCircle2 className="size-4" />
-                {currentEstatus === "aceptada"
-                  ? "Vendida"
-                  : pending
-                    ? "Procesando…"
-                    : "Marcar como Vendida"}
+                {pending ? "Procesando…" : "Marcar como Vendida"}
               </button>
             </>
           )}

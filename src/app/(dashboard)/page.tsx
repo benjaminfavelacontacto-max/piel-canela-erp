@@ -20,6 +20,8 @@ import { PageHeader } from "@/components/page-header"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 import { PortalBadge, type PortalCotizacion } from "./portal-badge"
 
+import { parseFecha } from "@/lib/fecha"
+
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
@@ -349,7 +351,7 @@ export default async function DashboardPage() {
   }
   for (const v of ventasAll) {
     if (v.estatus === "cancelada") continue
-    const d = new Date(v.fecha)
+    const d = parseFecha(v.fecha)
     if (Number.isNaN(d.getTime())) continue
     const k = ymKey(d)
     const b = monthly.get(k)

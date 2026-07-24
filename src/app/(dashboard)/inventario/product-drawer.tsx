@@ -29,6 +29,8 @@ import {
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "short",
@@ -124,7 +126,7 @@ export function ProductDrawer({
   const monthlyData =
     sales?.monthly.map((m) => ({
       ...m,
-      label: monthShort.format(new Date(m.mes + "-01")),
+      label: monthShort.format(parseFecha(m.mes)),
     })) ?? []
   const ventasList = sales?.ventas ?? []
   const totalUnidades = ventasList.reduce((s, v) => s + v.cantidad, 0)
@@ -385,7 +387,7 @@ export function ProductDrawer({
                   label="Última venta"
                   value={
                     ultimaVenta
-                      ? fechaFmt.format(new Date(ultimaVenta))
+                      ? fechaFmt.format(parseFecha(ultimaVenta))
                       : "—"
                   }
                 />
@@ -512,7 +514,7 @@ export function ProductDrawer({
                             {v.venta_numero}
                           </Link>
                           <div className="text-[10px] text-gray-400">
-                            {fechaFmt.format(new Date(v.fecha))}
+                            {fechaFmt.format(parseFecha(v.fecha))}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-gray-700 truncate max-w-[140px]">

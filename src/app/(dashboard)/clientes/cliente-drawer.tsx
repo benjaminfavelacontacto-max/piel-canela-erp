@@ -37,6 +37,8 @@ import type {
 import { EmpiricalCDFModel, MES_ABBR } from "./lib-prediccion"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "numeric",
   month: "long",
@@ -525,7 +527,7 @@ export function ClienteDrawer({
                           {v.numero}
                         </Link>
                         <div className="text-[10px] text-gray-500">
-                          {fechaShort.format(new Date(v.fecha))}
+                          {fechaShort.format(parseFecha(v.fecha))}
                           {v.iva && Number(v.iva) === 0 && (
                             <span className="ml-1.5 inline-flex rounded-sm bg-blue-50 px-1 text-[9px] text-blue-700">
                               sin IVA
@@ -579,7 +581,7 @@ export function ClienteDrawer({
                           {c.numero}
                         </Link>
                         <div className="text-[10px] text-gray-500">
-                          {fechaShort.format(new Date(c.fecha))}
+                          {fechaShort.format(parseFecha(c.fecha))}
                         </div>
                       </div>
                       <div className="text-right">

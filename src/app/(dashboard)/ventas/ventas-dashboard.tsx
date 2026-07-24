@@ -9,6 +9,8 @@ import { VentaDrawer } from "./venta-drawer"
 import { ExportVentasButton } from "./export-ventas-button"
 import { PageHeader } from "@/components/page-header"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
+import { parseFecha } from "@/lib/fecha"
+
 import {
   Bar,
   CartesianGrid,
@@ -260,7 +262,7 @@ export function VentasDashboard({
     const map = new Map(buckets.map((b) => [b.key, { ...b, total: 0, ganancia: 0, count: 0 }]))
     for (const v of ventas) {
       if (v.estatus === "cancelada") continue
-      const d = new Date(v.fecha)
+      const d = parseFecha(v.fecha)
       if (Number.isNaN(d.getTime())) continue
       const key = ymKey(d)
       const b = map.get(key)
@@ -275,12 +277,12 @@ export function VentasDashboard({
   // ─── Series mensual completa (todos los meses desde la primera venta) ──
   const monthlyAll = useMemo(() => {
     const valid = ventas.filter(
-      (v) => v.estatus !== "cancelada" && !Number.isNaN(new Date(v.fecha).getTime()),
+      (v) => v.estatus !== "cancelada" && !Number.isNaN(parseFecha(v.fecha).getTime()),
     )
     if (valid.length === 0) return monthly
     const earliest = valid.reduce(
-      (min, v) => (new Date(v.fecha) < min ? new Date(v.fecha) : min),
-      new Date(valid[0].fecha),
+      (min, v) => (parseFecha(v.fecha) < min ? parseFecha(v.fecha) : min),
+      parseFecha(valid[0].fecha),
     )
     const today = new Date()
     const buckets: { key: string; date: Date; label: string }[] = []
@@ -299,7 +301,7 @@ export function VentasDashboard({
       buckets.map((b) => [b.key, { ...b, total: 0, ganancia: 0, count: 0 }]),
     )
     for (const v of valid) {
-      const key = ymKey(new Date(v.fecha))
+      const key = ymKey(parseFecha(v.fecha))
       const b = map.get(key)
       if (!b) continue
       b.total += Number(v.total ?? 0)

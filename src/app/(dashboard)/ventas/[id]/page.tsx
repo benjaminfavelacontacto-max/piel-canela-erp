@@ -6,6 +6,8 @@ import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "long",
@@ -176,7 +178,7 @@ export default async function VentaDetailPage({
               {venta.numero}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              {fechaFmt.format(new Date(venta.fecha))}
+              {fechaFmt.format(parseFecha(venta.fecha))}
               {venta.cotizacion_id && (
                 <>
                   {" · "}

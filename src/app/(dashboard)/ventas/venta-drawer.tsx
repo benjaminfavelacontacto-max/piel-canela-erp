@@ -27,6 +27,8 @@ import type {
 import type { EnrichedVenta } from "./ventas-table-premium"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
@@ -216,7 +218,7 @@ export function VentaDrawer({
               <h2 className="text-xl font-bold text-gray-900">{cliente}</h2>
               <p className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
                 <Calendar className="size-3" />
-                {fechaFmt.format(new Date(venta.fecha))}
+                {fechaFmt.format(parseFecha(venta.fecha))}
               </p>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-3">

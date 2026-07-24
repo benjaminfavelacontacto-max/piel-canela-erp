@@ -25,6 +25,8 @@ import { Documentos } from "./documentos"
 import { DesgloseEnvio } from "./envios"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const usd = (v: number, decimals = 0) =>
   `$${Number(v).toLocaleString("en-US", {
     minimumFractionDigits: decimals,
@@ -295,7 +297,7 @@ export default async function PedidoDetailPage({
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-gray-500">
             <span>
-              {new Date(pedido.fecha).toLocaleDateString("es-MX", {
+              {parseFecha(pedido.fecha).toLocaleDateString("es-MX", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",

@@ -13,6 +13,8 @@ import {
 } from "recharts"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 type TooltipPayloadItem = {
   name?: string | number
   value?: number
@@ -63,7 +65,7 @@ export function MonthlyChart({
 }) {
   const formatted = data.map((d) => ({
     ...d,
-    label: new Date(d.mes + "-01").toLocaleDateString("es-MX", {
+    label: parseFecha(d.mes).toLocaleDateString("es-MX", {
       month: "short",
       year: "2-digit",
     }),

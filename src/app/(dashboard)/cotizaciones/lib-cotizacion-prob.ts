@@ -1,3 +1,5 @@
+import { parseFecha } from "@/lib/fecha"
+
 /**
  * Probabilidad de cierre de cotización.
  * Función pura, basada en heurísticas: estatus, recurrencia cliente,
@@ -32,7 +34,7 @@ export function calcularProbabilidad(
   cliente: ClienteHist | null,
   esConvertida: boolean,
 ): ProbResult {
-  const fechaCot = new Date(cot.fecha)
+  const fechaCot = parseFecha(cot.fecha)
   const diasAbierta = Math.max(
     0,
     Math.round((hoy.getTime() - fechaCot.getTime()) / DAY_MS),
