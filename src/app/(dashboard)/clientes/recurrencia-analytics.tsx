@@ -34,6 +34,8 @@ import type {
 import { EmpiricalCDFModel, MES_ABBR } from "./lib-prediccion"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const monthShort = new Intl.DateTimeFormat("es-MX", {
   month: "short",
   year: "2-digit",
@@ -197,7 +199,7 @@ export function RecurrenciaAnalytics({
     const set = new Set<number>()
     for (const v of ventas) {
       if (v.estatus === "cancelada") continue
-      set.add(new Date(v.fecha).getFullYear())
+      set.add(parseFecha(v.fecha).getFullYear())
     }
     set.add(today.getFullYear())
     return Array.from(set).sort((a, b) => b - a)
@@ -208,7 +210,7 @@ export function RecurrenciaAnalytics({
     let earliest: Date | null = null
     for (const v of ventas) {
       if (v.estatus === "cancelada") continue
-      const d = new Date(v.fecha)
+      const d = parseFecha(v.fecha)
       if (!earliest || d < earliest) earliest = d
     }
     return earliest
@@ -817,8 +819,8 @@ function DrilldownModal({
         (v) =>
           v.cliente_id === clienteId &&
           v.estatus !== "cancelada" &&
-          new Date(v.fecha) >= bucket.start &&
-          new Date(v.fecha) <= bucket.end,
+          parseFecha(v.fecha) >= bucket.start &&
+          parseFecha(v.fecha) <= bucket.end,
       )
       .sort((a, b) => (a.fecha < b.fecha ? -1 : 1))
   }, [ventas, clienteId, bucket])
@@ -827,8 +829,8 @@ function DrilldownModal({
     return cotizaciones.filter(
       (c) =>
         c.cliente_id === clienteId &&
-        new Date(c.fecha) >= bucket.start &&
-        new Date(c.fecha) <= bucket.end,
+        parseFecha(c.fecha) >= bucket.start &&
+        parseFecha(c.fecha) <= bucket.end,
     )
   }, [cotizaciones, clienteId, bucket])
 
@@ -936,7 +938,7 @@ function DrilldownModal({
                         {v.numero}
                       </Link>
                       <div className="text-[10px] text-gray-500">
-                        {fechaFmt.format(new Date(v.fecha))}
+                        {fechaFmt.format(parseFecha(v.fecha))}
                       </div>
                     </div>
                     <div className="text-right">
@@ -973,7 +975,7 @@ function DrilldownModal({
                         {c.numero}
                       </Link>
                       <div className="text-[10px] text-gray-500">
-                        {fechaFmt.format(new Date(c.fecha))}
+                        {fechaFmt.format(parseFecha(c.fecha))}
                       </div>
                     </div>
                     <div className="text-right">

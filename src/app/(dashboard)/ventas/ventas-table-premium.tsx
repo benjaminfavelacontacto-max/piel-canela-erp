@@ -61,6 +61,8 @@ import {
 import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
@@ -781,7 +783,7 @@ export function VentasTablePremium({
         header: (ctx) => <HeaderCell label="Fecha" ctx={ctx} />,
         cell: ({ getValue }) => (
           <span className="text-xs font-medium text-gray-700 tabular-nums">
-            {fechaFmt.format(new Date(getValue() as string))}
+            {fechaFmt.format(parseFecha(getValue() as string))}
           </span>
         ),
         size: 120,

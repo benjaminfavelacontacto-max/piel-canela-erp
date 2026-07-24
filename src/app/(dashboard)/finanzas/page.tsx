@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/page-header"
 import { formatMXN2 } from "@/lib/utils"
 import { RecoveryChart } from "./recovery-chart"
 
+import { parseFecha } from "@/lib/fecha"
+
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
@@ -197,7 +199,7 @@ export default async function FinanzasPage() {
   const chartData = orderedBuckets.map((b) => {
     acumS += b.sandra
     acumB += b.benjamin
-    const d = new Date(b.mes + "-01")
+    const d = parseFecha(b.mes)
     return {
       mes: b.mes,
       label: monthShort.format(d),
@@ -464,7 +466,7 @@ export default async function FinanzasPage() {
                           {formatMXN2(Number(it.monto_mxn ?? 0))}
                         </td>
                         <td className="px-5 py-2 text-right text-gray-500 text-xs">
-                          {fechaFmt.format(new Date(it.fecha))}
+                          {fechaFmt.format(parseFecha(it.fecha))}
                         </td>
                       </tr>
                     ))}
@@ -531,7 +533,7 @@ export default async function FinanzasPage() {
                       {venta.numero}
                     </td>
                     <td className="px-5 py-2 text-gray-600 text-xs">
-                      {fechaFmt.format(new Date(venta.fecha))}
+                      {fechaFmt.format(parseFecha(venta.fecha))}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums font-semibold">
                       {formatMXN2(Number(venta.total ?? 0))}

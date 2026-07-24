@@ -15,6 +15,8 @@ import {
 } from "lucide-react"
 import { crearSalidaInterna } from "./actions"
 
+import { parseFecha } from "@/lib/fecha"
+
 type ProductoBase = { id: string; sku: string; nombre: string; precio: number }
 type Fila = { producto_id: string; sku: string; nombre: string; cantidad: number; precio: number }
 
@@ -85,7 +87,7 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
         Salida registrada —{" "}
         <span className="font-mono font-semibold">{exito.numero || "cotización interna"}</span>
         <span className="text-emerald-600">
-          · {new Date(exito.fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+          · {parseFecha(exito.fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
         </span>
       </p>
       <div className="flex items-center gap-3">

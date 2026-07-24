@@ -12,6 +12,8 @@ import {
 import { DocChip } from "./doc-upload"
 import { formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 type Conversion = {
   id: string
   fecha: string
@@ -217,7 +219,7 @@ export function Conversiones({
               {conversiones.map((c) => (
                 <tr key={c.id} className="border-b border-gray-50">
                   <td className="px-2 py-2 text-gray-700">
-                    {new Date(c.fecha).toLocaleDateString("es-MX", {
+                    {parseFecha(c.fecha).toLocaleDateString("es-MX", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",

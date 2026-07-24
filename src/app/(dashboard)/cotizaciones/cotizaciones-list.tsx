@@ -56,6 +56,8 @@ import {
 import { cambiarEstatusCotizacion, eliminarCotizacion } from "./actions"
 import { PageHeader } from "@/components/page-header"
 import { formatMXN } from "@/lib/utils"
+import { parseFecha } from "@/lib/fecha"
+
 import {
   calcularProbabilidad,
   classifyEstadoComercial,
@@ -805,7 +807,7 @@ export function CotizacionesList({
         header: (ctx) => <HeaderCell label="Fecha" ctx={ctx} />,
         cell: ({ getValue }) => (
           <span className="text-xs font-medium text-gray-700 tabular-nums">
-            {fechaFmt.format(new Date(getValue() as string))}
+            {fechaFmt.format(parseFecha(getValue() as string))}
           </span>
         ),
         size: 120,
@@ -1086,7 +1088,7 @@ export function CotizacionesList({
         ),
         cell: ({ row }) => (
           <span className="text-[10.5px] text-gray-500 tabular-nums">
-            {fechaFmt.format(new Date(row.original.ultimaActividadISO))}
+            {fechaFmt.format(parseFecha(row.original.ultimaActividadISO))}
           </span>
         ),
         size: 130,

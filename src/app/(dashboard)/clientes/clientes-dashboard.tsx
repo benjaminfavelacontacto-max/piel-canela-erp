@@ -60,6 +60,8 @@ import { TIPOS_CLIENTE, getTipoConf } from "./tipos-cliente"
 import { actualizarTipoCliente } from "./actions"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 // ─── Types compartidos ──────────────────────────────────────────────
 
 export type ClienteRow = {
@@ -835,7 +837,7 @@ export function ClientesDashboard({
           return (
             <div className="text-right">
               <div className="text-xs tabular-nums text-gray-700">
-                {fechaFmt.format(new Date(c.ultimo_pedido))}
+                {fechaFmt.format(parseFecha(c.ultimo_pedido))}
               </div>
               <div className={`text-[10px] ${tone}`}>
                 hace {dias}d
@@ -1117,7 +1119,7 @@ export function ClientesDashboard({
           monthlyKpi[0],
         )
         const mejorMesLabel = mejorMes
-          ? new Date(mejorMes.key + "-01").toLocaleDateString("es-MX", {
+          ? parseFecha(mejorMes.key).toLocaleDateString("es-MX", {
               month: "short",
               year: "2-digit",
             })
@@ -2078,7 +2080,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
               label="Primera"
               value={
                 cliente.primer_pedido
-                  ? fechaFmt.format(new Date(cliente.primer_pedido))
+                  ? fechaFmt.format(parseFecha(cliente.primer_pedido))
                   : "—"
               }
             />
@@ -2086,7 +2088,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
               label="Última"
               value={
                 cliente.ultimo_pedido
-                  ? fechaFmt.format(new Date(cliente.ultimo_pedido))
+                  ? fechaFmt.format(parseFecha(cliente.ultimo_pedido))
                   : "—"
               }
               accent={

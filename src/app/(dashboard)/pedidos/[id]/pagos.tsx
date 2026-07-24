@@ -11,6 +11,8 @@ import {
 } from "../actions"
 import { DocChip } from "./doc-upload"
 
+import { parseFecha } from "@/lib/fecha"
+
 type Pago = {
   id: string
   fecha: string
@@ -184,7 +186,7 @@ export function Pagos({
               {pagos.map((p) => (
                 <tr key={p.id} className="border-b border-gray-50">
                   <td className="px-2 py-2 text-gray-700">
-                    {new Date(p.fecha).toLocaleDateString("es-MX", {
+                    {parseFecha(p.fecha).toLocaleDateString("es-MX", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
