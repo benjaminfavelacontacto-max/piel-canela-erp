@@ -193,6 +193,26 @@ export async function actualizarProducto(
         })
       if (error) return { ok: false, error: `inventario: ${error.message}` }
     }
+
+    // Bitácora del ajuste manual (tabla de scripts/ajustes-inventario.sql).
+    // La auditoría 2026-07-25 no pudo distinguir ajustes legítimos de errores
+    // porque las ediciones de stock no dejaban rastro. No-fatal a propósito:
+    // si la tabla aún no existe, la edición no debe romperse — sólo se avisa
+    // en el log del servidor.
+    const stockAnterior = Number(invRow?.stock_actual ?? 0)
+    if ("stock_actual" in data && stockAnterior !== stockActual) {
+      const { error: logErr } = await admin.from("ajustes_inventario").insert({
+        producto_id: productoId,
+        stock_antes: stockAnterior,
+        stock_despues: stockActual,
+        origen: "edicion_manual",
+      })
+      if (logErr)
+        console.error(
+          "[actualizarProducto] bitácora ajustes_inventario (¿falta aplicar scripts/ajustes-inventario.sql?):",
+          logErr.message,
+        )
+    }
   }
 
   // 3) precios_producto (precio público — lista 'Pública MXN')

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
+import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
 
@@ -71,6 +72,28 @@ function estatusFor(
 export async function saveVenta(input: SaveVentaInput) {
   // Admin client: bypassa RLS para que los INSERTs no bloqueen.
   const supabase = createAdminClient()
+
+  // Validar existencias ANTES de escribir nada. La RPC de descuento no valida
+  // (deja stock negativo) y corre al FINAL del flujo: si fallara ahí, el
+  // rollback manual es el que ya nos dejó ventas a medias. Validar aquí evita
+  // crear la venta siquiera. Ver auditoría de inventario 2026-07-25.
+  let itemsParaStock: { producto_id: string | null; cantidad: number }[] = []
+  if (input.cotizacion_id) {
+    const { data: cotItems } = await supabase
+      .from("cotizacion_items")
+      .select("producto_id, cantidad")
+      .eq("cotizacion_id", input.cotizacion_id)
+    itemsParaStock = (cotItems ?? []) as { producto_id: string | null; cantidad: number }[]
+  } else if (input.items && input.items.length > 0) {
+    itemsParaStock = input.items
+  }
+  const faltantesVenta = await faltantesDeStock(supabase, itemsParaStock)
+  if (faltantesVenta.length > 0) {
+    return {
+      ok: false as const,
+      error: `Sin existencias suficientes — ${describirFaltantes(faltantesVenta)}`,
+    }
+  }
 
   // total, ganancia y saldo_pendiente son columnas GENERATED — Postgres las calcula.
   const estatus = estatusFor(input.total, input.cantidad_pagada)

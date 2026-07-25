@@ -1,6 +1,7 @@
 "use server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import {
@@ -170,8 +171,40 @@ export async function saveCotizacionAndRedirect(input: SaveCotizacionInput) {
  * NOTA: Asume que `ventas` y `venta_items` reflejan el shape de cotizaciones/cotizacion_items.
  * Si tu schema difiere, este insert va a fallar y debes ajustar los campos.
  */
-export async function marcarVendida(cotizacionId: string) {
+export async function marcarVendida(
+  cotizacionId: string,
+  opts?: {
+    /**
+     * Sólo para salidas internas (Piel Canela): la socia ya se llevó el
+     * producto físicamente, así que se registra aunque el sistema no tenga
+     * stock — el negativo resultante es la señal para reconciliar.
+     * Las ventas a clientes NUNCA deben pasar esto.
+     */
+    permitirSinStock?: boolean
+  },
+) {
   const supabase = createAdminClient()
+
+  // Validación de existencias EN EL SERVIDOR. La RPC de descuento no valida
+  // (deja el stock en negativo), y el aviso del detalle de cotización es sólo
+  // visual — sin esto, cualquier otro camino (o una pestaña vieja) puede
+  // vender sin stock. Ver auditoría de inventario 2026-07-25.
+  if (!opts?.permitirSinStock) {
+    const { data: itemsCot } = await supabase
+      .from("cotizacion_items")
+      .select("producto_id, cantidad")
+      .eq("cotizacion_id", cotizacionId)
+    const faltantes = await faltantesDeStock(
+      supabase,
+      (itemsCot ?? []) as { producto_id: string | null; cantidad: number }[],
+    )
+    if (faltantes.length > 0) {
+      return {
+        ok: false as const,
+        error: `Sin existencias suficientes — ${describirFaltantes(faltantes)}`,
+      }
+    }
+  }
 
   // Flujo cotización→venta ATÓMICO: una sola RPC plpgsql crea la venta espejo
   // (número -C-→-V-), copia los items, inserta el reparto 50/50, descuenta

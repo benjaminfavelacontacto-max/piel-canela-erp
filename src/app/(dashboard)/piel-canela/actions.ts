@@ -15,7 +15,15 @@ import { revalidatePath } from "next/cache"
 export async function crearSalidaInterna(
   entrada: { producto_id: string; cantidad: number }[],
 ): Promise<
-  | { ok: true; ventaId: string; numero: string; fecha: string }
+  | {
+      ok: true
+      ventaId: string
+      numero: string
+      fecha: string
+      /** Productos cuyo stock quedó negativo: se llevó más de lo que el
+       *  sistema tenía. Señal de reconciliación, NO se oculta. */
+      negativos: { nombre: string; stock: number }[]
+    }
   | { ok: false; error: string }
 > {
   const limpios = (entrada ?? []).filter((i) => i.producto_id && i.cantidad > 0)
@@ -49,8 +57,15 @@ export async function crearSalidaInterna(
     for (const p of prc ?? []) pubBy.set(p.producto_id as string, Number(p.precio))
   }
   const costBy = new Map<string, number>()
-  const { data: prods } = await admin.from("productos").select("id, costo").in("id", ids)
-  for (const p of prods ?? []) costBy.set(p.id as string, Number(p.costo ?? 0))
+  const nombreBy = new Map<string, string>()
+  const { data: prods } = await admin
+    .from("productos")
+    .select("id, costo, nombre, nombre_display")
+    .in("id", ids)
+  for (const p of prods ?? []) {
+    costBy.set(p.id as string, Number(p.costo ?? 0))
+    nombreBy.set(p.id as string, (p.nombre_display ?? p.nombre ?? "Producto") as string)
+  }
 
   const items = [...qtyBy.entries()].map(([producto_id, cantidad]) => {
     const precio = pubBy.get(producto_id) ?? 0
@@ -85,7 +100,10 @@ export async function crearSalidaInterna(
   })
   if (!cot.ok) return { ok: false, error: cot.error }
 
-  // 2) Pre-crear filas de inventario faltantes (la RPC de descuento las requiere)
+  // 2) Pre-crear filas de inventario faltantes (la RPC de descuento las
+  // requiere). En CERO — no con la cantidad de la salida: crearlas con
+  // stock=cantidad "inventaba" existencias justo antes de descontarlas, y el
+  // producto parecía haber tenido siempre 0 (auditoría 2026-07-25).
   for (const i of items) {
     const { data: inv } = await admin
       .from("inventario")
@@ -95,25 +113,32 @@ export async function crearSalidaInterna(
     if (!inv)
       await admin.from("inventario").insert({
         producto_id: i.producto_id,
-        stock_actual: i.cantidad,
+        stock_actual: 0,
         stock_minimo: 0,
-        stock_inicial: i.cantidad,
+        stock_inicial: 0,
       })
   }
 
-  // 3) Convertir a venta interna → descuenta inventario (RPC atómica)
-  const venta = await marcarVendida(cot.id)
+  // 3) Convertir a venta interna → descuenta inventario (RPC atómica).
+  // permitirSinStock: la socia YA se llevó el producto físicamente; registrar
+  // la realidad va primero, y el negativo resultante queda como señal.
+  const venta = await marcarVendida(cot.id, { permitirSinStock: true })
   if (!venta.ok) return { ok: false, error: venta.error }
 
-  // 4) Clamp de negativos (si se llevó más de lo que había en stock)
+  // 4) Detectar sobregiros — SIN recortarlos. El recorte a 0 que vivía aquí
+  // borró durante meses la evidencia de que el conteo estaba mal; un stock
+  // negativo es información (hay que reconciliar con conteo físico), no un
+  // defecto cosmético.
+  const negativos: { nombre: string; stock: number }[] = []
   for (const i of items) {
     const { data: inv } = await admin
       .from("inventario")
-      .select("id, stock_actual")
+      .select("stock_actual")
       .eq("producto_id", i.producto_id)
       .maybeSingle()
-    if (inv && Number(inv.stock_actual) < 0)
-      await admin.from("inventario").update({ stock_actual: 0 }).eq("id", inv.id)
+    const st = Number(inv?.stock_actual ?? 0)
+    if (st < 0)
+      negativos.push({ nombre: nombreBy.get(i.producto_id) ?? "Producto", stock: st })
   }
 
   const { data: v } = await admin
@@ -125,7 +150,7 @@ export async function crearSalidaInterna(
   revalidatePath("/piel-canela")
   revalidatePath("/inventario")
   revalidatePath("/cotizaciones")
-  return { ok: true, ventaId: venta.ventaId, numero: v?.numero ?? "", fecha: today }
+  return { ok: true, ventaId: venta.ventaId, numero: v?.numero ?? "", fecha: today, negativos }
 }
 
 /**
@@ -157,10 +182,12 @@ export async function editarSalidaCantidades(
         .select("id, stock_actual")
         .eq("producto_id", c.producto_id)
         .maybeSingle()
+      // Sin Math.max(0,…): recortar el negativo aquí tenía el mismo efecto
+      // corruptor que el clamp de crearSalidaInterna — ocultaba sobregiros.
       if (inv?.id)
         await admin
           .from("inventario")
-          .update({ stock_actual: Math.max(0, Number(inv.stock_actual) - delta) })
+          .update({ stock_actual: Number(inv.stock_actual) - delta })
           .eq("id", inv.id)
     }
     if (nueva === 0) {
