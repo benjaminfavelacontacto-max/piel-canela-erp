@@ -27,6 +27,8 @@ export type SaveCotizacionInput = {
   subtotal: number
   iva: number
   descuento: number
+  descuento_tipo: "monto" | "pct"
+  descuento_valor: number
   total: number
   costo_productos: number
   costo_envio: number
@@ -90,6 +92,26 @@ export async function siguienteNumeroCotizacion(
   )
 }
 
+// Compatibilidad: si la migración add-descuento-tipo-cotizaciones.sql aún no
+// se corre, la BD no tiene descuento_tipo/descuento_valor. Detectamos ese
+// error y reintentamos sin esos campos (comportamiento anterior) en lugar de
+// romper el guardado.
+function esColumnaDescuentoFaltante(
+  err: { code?: string; message?: string } | null,
+): boolean {
+  if (!err) return false
+  return (
+    err.code === "PGRST204" ||
+    err.code === "42703" ||
+    /descuento_(tipo|valor)/.test(err.message ?? "")
+  )
+}
+
+function sinCamposDescuento<T extends Record<string, unknown>>(row: T) {
+  const { descuento_tipo: _t, descuento_valor: _v, ...resto } = row
+  return resto
+}
+
 export async function saveCotizacion(input: SaveCotizacionInput) {
   const supabase = createAdminClient()
 
@@ -100,24 +122,35 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
   }
 
   // total y utilidad_neta son GENERATED — no se insertan. Postgres las calcula.
-  const { data: cot, error: cotErr } = await supabase
+  const row = {
+    numero,
+    cliente_id: input.cliente_id,
+    fecha: input.fecha,
+    valida_hasta: input.valida_hasta,
+    moneda: input.moneda,
+    subtotal: input.subtotal,
+    iva: input.iva,
+    descuento: input.descuento,
+    descuento_tipo: input.descuento_tipo,
+    descuento_valor: input.descuento_valor,
+    costo_productos: input.costo_productos,
+    costo_envio: input.costo_envio ?? 0,
+    estatus: "borrador",
+    notas: input.notas,
+  }
+  let { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
-    .insert({
-      numero,
-      cliente_id: input.cliente_id,
-      fecha: input.fecha,
-      valida_hasta: input.valida_hasta,
-      moneda: input.moneda,
-      subtotal: input.subtotal,
-      iva: input.iva,
-      descuento: input.descuento,
-      costo_productos: input.costo_productos,
-      costo_envio: input.costo_envio ?? 0,
-      estatus: "borrador",
-      notas: input.notas,
-    })
+    .insert(row)
     .select("id")
     .single()
+  if (esColumnaDescuentoFaltante(cotErr)) {
+    console.warn("[saveCotizacion] BD sin migración de descuento_tipo; guardando sin tipo/valor")
+    ;({ data: cot, error: cotErr } = await supabase
+      .from("cotizaciones")
+      .insert(sinCamposDescuento(row))
+      .select("id")
+      .single())
+  }
 
   if (cotErr || !cot) {
     console.error("[saveCotizacion] insert cotización falló:", JSON.stringify(cotErr, null, 2))
@@ -272,13 +305,22 @@ export async function cambiarEstatusCotizacion(
 
 export async function duplicarCotizacion(id: string) {
   const supabase = createAdminClient()
-  const { data: orig, error: fetchErr } = await supabase
+  let { data: orig, error: fetchErr } = await supabase
     .from("cotizaciones")
     .select(
-      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, costo_envio, notas",
+      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, descuento_tipo, descuento_valor, costo_productos, costo_envio, notas",
     )
     .eq("id", id)
     .single()
+  if (esColumnaDescuentoFaltante(fetchErr)) {
+    ;({ data: orig, error: fetchErr } = await supabase
+      .from("cotizaciones")
+      .select(
+        "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, costo_envio, notas",
+      )
+      .eq("id", id)
+      .single())
+  }
   if (fetchErr || !orig) {
     console.error(
       "[duplicarCotizacion] fetch error:",
@@ -295,24 +337,38 @@ export async function duplicarCotizacion(id: string) {
     return d.toISOString().slice(0, 10)
   })()
 
-  const { data: cot, error: insErr } = await supabase
+  const origRow = orig as typeof orig & {
+    descuento_tipo?: string
+    descuento_valor?: number
+  }
+  const nuevaRow = {
+    numero: newNumero,
+    cliente_id: orig.cliente_id,
+    fecha: today,
+    valida_hasta: validaHasta,
+    moneda: orig.moneda,
+    subtotal: orig.subtotal,
+    iva: orig.iva,
+    descuento: orig.descuento,
+    descuento_tipo: origRow.descuento_tipo ?? "monto",
+    descuento_valor: origRow.descuento_valor ?? orig.descuento,
+    costo_productos: orig.costo_productos,
+    costo_envio: orig.costo_envio ?? 0,
+    estatus: "borrador",
+    notas: orig.notas,
+  }
+  let { data: cot, error: insErr } = await supabase
     .from("cotizaciones")
-    .insert({
-      numero: newNumero,
-      cliente_id: orig.cliente_id,
-      fecha: today,
-      valida_hasta: validaHasta,
-      moneda: orig.moneda,
-      subtotal: orig.subtotal,
-      iva: orig.iva,
-      descuento: orig.descuento,
-      costo_productos: orig.costo_productos,
-      costo_envio: orig.costo_envio ?? 0,
-      estatus: "borrador",
-      notas: orig.notas,
-    })
+    .insert(nuevaRow)
     .select("id")
     .single()
+  if (esColumnaDescuentoFaltante(insErr)) {
+    ;({ data: cot, error: insErr } = await supabase
+      .from("cotizaciones")
+      .insert(sinCamposDescuento(nuevaRow))
+      .select("id")
+      .single())
+  }
   if (insErr || !cot) {
     console.error(
       "[duplicarCotizacion] insert error:",
@@ -366,22 +422,32 @@ export async function updateCotizacion(
   const supabase = createAdminClient()
 
   // total y utilidad_neta son GENERATED — Postgres los recalcula
-  const { error: updErr } = await supabase
+  const row = {
+    numero: input.numero,
+    cliente_id: input.cliente_id,
+    fecha: input.fecha,
+    valida_hasta: input.valida_hasta,
+    moneda: input.moneda,
+    subtotal: input.subtotal,
+    iva: input.iva,
+    descuento: input.descuento,
+    descuento_tipo: input.descuento_tipo,
+    descuento_valor: input.descuento_valor,
+    costo_productos: input.costo_productos,
+    costo_envio: input.costo_envio ?? 0,
+    notas: input.notas,
+  }
+  let { error: updErr } = await supabase
     .from("cotizaciones")
-    .update({
-      numero: input.numero,
-      cliente_id: input.cliente_id,
-      fecha: input.fecha,
-      valida_hasta: input.valida_hasta,
-      moneda: input.moneda,
-      subtotal: input.subtotal,
-      iva: input.iva,
-      descuento: input.descuento,
-      costo_productos: input.costo_productos,
-      costo_envio: input.costo_envio ?? 0,
-      notas: input.notas,
-    })
+    .update(row)
     .eq("id", id)
+  if (esColumnaDescuentoFaltante(updErr)) {
+    console.warn("[updateCotizacion] BD sin migración de descuento_tipo; guardando sin tipo/valor")
+    ;({ error: updErr } = await supabase
+      .from("cotizaciones")
+      .update(sinCamposDescuento(row))
+      .eq("id", id))
+  }
   if (updErr) {
     console.error(
       "[updateCotizacion] update error:",

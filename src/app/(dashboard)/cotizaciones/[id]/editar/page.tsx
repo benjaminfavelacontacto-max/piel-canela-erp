@@ -13,13 +13,23 @@ export default async function EditarCotizacionPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: cot, error: cotErr } = await supabase
+  let { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .select(
-      "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, costo_envio, notas",
+      "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, descuento_tipo, descuento_valor, costo_envio, notas",
     )
     .eq("id", id)
     .maybeSingle()
+  // BD sin la migración de descuento_tipo: reintenta sin esas columnas.
+  if (cotErr && /descuento_(tipo|valor)/.test(cotErr.message ?? "")) {
+    ;({ data: cot, error: cotErr } = await supabase
+      .from("cotizaciones")
+      .select(
+        "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, costo_envio, notas",
+      )
+      .eq("id", id)
+      .maybeSingle())
+  }
 
   if (cotErr) {
     return (
@@ -150,8 +160,17 @@ export default async function EditarCotizacionPage({
     fecha: cot.fecha,
     valida_hasta: cot.valida_hasta,
     ivaActivo: Number(cot.iva ?? 0) > 0,
-    descuentoTipo: "monto",
-    descuentoValor: Number(cot.descuento ?? 0),
+    // Cotizaciones previas a la migración no traen tipo/valor: se tratan
+    // como monto fijo igual al descuento guardado (comportamiento anterior).
+    descuentoTipo:
+      ((cot as { descuento_tipo?: string }).descuento_tipo as
+        | "monto"
+        | "pct") ?? "monto",
+    descuentoValor: Number(
+      (cot as { descuento_valor?: number }).descuento_valor ??
+        cot.descuento ??
+        0,
+    ),
     costoEnvio: Number(cot.costo_envio ?? 0),
     notas: cot.notas,
     items,

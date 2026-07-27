@@ -127,16 +127,20 @@ export function CotizacionForm({
     [selectedProductId, productos],
   )
 
-  const subtotal = items.reduce((s, it) => s + it.subtotal, 0)
+  // Todo importe se redondea a centavos al calcularse, para que subtotal,
+  // descuento, IVA y total cuadren exactos entre pantalla, PDF y BD.
+  const round2 = (n: number) => Math.round(n * 100) / 100
+  const subtotal = round2(items.reduce((s, it) => s + it.subtotal, 0))
   // Descuento global (% o monto fijo). Reduce la BASE GRAVABLE antes del IVA
   // (estándar fiscal MX: el descuento comercial baja la base sobre la que se calcula el 16%).
-  const descuento =
+  const descuento = round2(
     descuentoTipo === "pct"
       ? Math.max(0, Math.min(subtotal, subtotal * (descuentoValor / 100)))
-      : Math.max(0, Math.min(subtotal, descuentoValor))
-  const baseGravable = subtotal - descuento
-  const iva = ivaActivo ? baseGravable * 0.16 : 0
-  const total = baseGravable + iva
+      : Math.max(0, Math.min(subtotal, descuentoValor)),
+  )
+  const baseGravable = round2(subtotal - descuento)
+  const iva = ivaActivo ? round2(baseGravable * 0.16) : 0
+  const total = round2(baseGravable + iva)
   const costoProductos = items.reduce(
     (s, it) => s + it.costo_unitario * it.cantidad,
     0,
@@ -289,6 +293,8 @@ export function CotizacionForm({
           subtotal,
           iva,
           descuento,
+          descuento_tipo: descuentoTipo,
+          descuento_valor: descuentoValor,
           total,
           costo_productos: costoProductos,
           costo_envio: costoEnvio,
