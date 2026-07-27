@@ -289,6 +289,8 @@ export function CotizacionForm({
           subtotal,
           iva,
           descuento,
+          descuento_tipo: descuentoTipo,
+          descuento_valor: descuentoValor,
           total,
           costo_productos: costoProductos,
           costo_envio: costoEnvio,

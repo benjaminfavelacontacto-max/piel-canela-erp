@@ -27,6 +27,8 @@ export type SaveCotizacionInput = {
   subtotal: number
   iva: number
   descuento: number
+  descuento_tipo: "monto" | "pct"
+  descuento_valor: number
   total: number
   costo_productos: number
   costo_envio: number
@@ -111,6 +113,8 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
       subtotal: input.subtotal,
       iva: input.iva,
       descuento: input.descuento,
+      descuento_tipo: input.descuento_tipo,
+      descuento_valor: input.descuento_valor,
       costo_productos: input.costo_productos,
       costo_envio: input.costo_envio ?? 0,
       estatus: "borrador",
@@ -275,7 +279,7 @@ export async function duplicarCotizacion(id: string) {
   const { data: orig, error: fetchErr } = await supabase
     .from("cotizaciones")
     .select(
-      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, costo_productos, costo_envio, notas",
+      "numero, cliente_id, fecha, valida_hasta, moneda, subtotal, iva, descuento, descuento_tipo, descuento_valor, costo_productos, costo_envio, notas",
     )
     .eq("id", id)
     .single()
@@ -306,6 +310,8 @@ export async function duplicarCotizacion(id: string) {
       subtotal: orig.subtotal,
       iva: orig.iva,
       descuento: orig.descuento,
+      descuento_tipo: orig.descuento_tipo ?? "monto",
+      descuento_valor: orig.descuento_valor ?? orig.descuento,
       costo_productos: orig.costo_productos,
       costo_envio: orig.costo_envio ?? 0,
       estatus: "borrador",
@@ -377,6 +383,8 @@ export async function updateCotizacion(
       subtotal: input.subtotal,
       iva: input.iva,
       descuento: input.descuento,
+      descuento_tipo: input.descuento_tipo,
+      descuento_valor: input.descuento_valor,
       costo_productos: input.costo_productos,
       costo_envio: input.costo_envio ?? 0,
       notas: input.notas,

@@ -92,6 +92,8 @@ export async function crearSalidaInterna(
     subtotal,
     iva: 0,
     descuento: 0,
+    descuento_tipo: "monto",
+    descuento_valor: 0,
     total: subtotal,
     costo_productos: costoProd,
     costo_envio: 0,
