@@ -1,8 +1,8 @@
 -- Persiste CÓMO se capturó el descuento de una cotización (% o monto fijo).
 -- Sin esto, un descuento capturado como porcentaje se congela como monto al
 -- editar la cotización y ya no se recalcula cuando cambian los productos
--- (ej. PC-250726012: 10% de $17,054 = $1,705.40 quedó fijo aunque el
--- subtotal creció a $44,882 — el descuento correcto era $4,488.20).
+-- (ej. PC-250726012: 5% de $34,108 = $1,705.40 quedó fijo aunque el
+-- subtotal creció a $44,882 — el descuento correcto era $2,244.10).
 --
 -- Ejecutar en el SQL Editor de Supabase del proyecto piel-canela-erp.
 
