@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Plus, Trash2, Save, FileDown, Search, FileText } from "lucide-react"
+import { Plus, Trash2, Save, FileDown, Search, FileText, Gift } from "lucide-react"
 import type {
   Cliente,
   CotizacionItem,
@@ -18,6 +18,20 @@ import {
 } from "../actions"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 import { formatMXN2 } from "@/lib/utils"
+import {
+  resumenRegalos,
+  descuentoEfectivoPct,
+  precioReferencia,
+} from "@/lib/regalos"
+
+/**
+ * Identidad de una partida en el editor. NO basta `producto_id`: el mismo SKU
+ * puede ir dos veces — una cobrada y otra de regalo ("compra 10, lleva 1") —
+ * y si se fusionaran por producto se perdería una de las dos.
+ */
+function lineaKey(it: { producto_id: string; es_regalo?: boolean }) {
+  return `${it.producto_id}|${it.es_regalo ? "R" : "N"}`
+}
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -82,6 +96,8 @@ export function CotizacionForm({
   // `cantidad` admite "" como estado intermedio para poder borrar el campo sin
   // que rebote a 1 (se normaliza a ≥1 en blur / al agregar).
   const [cantidad, setCantidad] = useState<number | "">(1)
+  // Agregar la siguiente partida como cortesía (precio $0, el costo sí pesa).
+  const [comoRegalo, setComoRegalo] = useState(false)
   // Borradores de texto por ítem para que el input de cantidad se pueda vaciar
   // mientras se edita (la cantidad real solo se confirma con un número ≥1).
   const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
@@ -141,13 +157,25 @@ export function CotizacionForm({
   const baseGravable = round2(subtotal - descuento)
   const iva = ivaActivo ? round2(baseGravable * 0.16) : 0
   const total = round2(baseGravable + iva)
+  // El costo incluye los regalos: no se cobran, pero salieron del almacén.
   const costoProductos = items.reduce(
     (s, it) => s + it.costo_unitario * it.cantidad,
     0,
   )
-  // Utilidad neta = subtotal − descuento − costo_productos − costo_envio
+  // Utilidad neta = subtotal − descuento − costo_productos − costo_envio.
+  // Como el regalo entra al costo y NO al subtotal, la pérdida ya está restada
+  // aquí: no hay que descontarla otra vez (sería doble castigo).
   const utilidadNeta = subtotal - descuento - costoProductos - costoEnvio
   const margenNeto = total > 0 ? (utilidadNeta / total) * 100 : 0
+
+  // ─── Cortesías: pérdida real (costo) vs valor comercial obsequiado ──
+  const regalos = resumenRegalos(items)
+  const utilidadSinRegalos = utilidadNeta + regalos.costo
+  const descEfectivo = descuentoEfectivoPct({
+    subtotal,
+    descuento,
+    valorRegalos: regalos.valor,
+  })
 
   // ─── Resumen inteligente del pedido (categorización por SKU prefix) ──
   const itemsCount = items.length
@@ -227,6 +255,9 @@ export function CotizacionForm({
   function addItem() {
     const qty = typeof cantidad === "number" && cantidad >= 1 ? cantidad : 1
     if (!selectedProduct) return
+    // Regalo: precio $0 (no lo paga el cliente) pero se congela el precio de
+    // catálogo en `precio_lista` para poder mostrar cuánto se obsequió.
+    const precio = comoRegalo ? 0 : selectedProduct.precio
     const newItem: CotizacionItem = {
       producto_id: selectedProduct.id,
       sku: selectedProduct.sku,
@@ -234,12 +265,16 @@ export function CotizacionForm({
       imagen_url: selectedProduct.imagen_url,
       peso: selectedProduct.peso,
       cantidad: qty,
-      precio_unitario: selectedProduct.precio,
+      precio_unitario: precio,
       costo_unitario: Number(selectedProduct.costo ?? 0),
-      subtotal: selectedProduct.precio * qty,
+      subtotal: precio * qty,
+      es_regalo: comoRegalo,
+      precio_lista: comoRegalo ? selectedProduct.precio : null,
     }
     setItems((prev) => {
-      const i = prev.findIndex((x) => x.producto_id === newItem.producto_id)
+      // Se fusiona solo con una partida del MISMO tipo: lo cobrado y lo
+      // regalado del mismo producto conviven como 2 líneas.
+      const i = prev.findIndex((x) => lineaKey(x) === lineaKey(newItem))
       if (i === -1) return [...prev, newItem]
       const copy = [...prev]
       const merged: CotizacionItem = {
@@ -255,18 +290,58 @@ export function CotizacionForm({
     setSearch("")
   }
 
-  function updateItemCantidad(producto_id: string, value: number) {
+  function updateItemCantidad(key: string, value: number) {
     setItems((prev) =>
       prev.map((it) =>
-        it.producto_id === producto_id
+        lineaKey(it) === key
           ? { ...it, cantidad: value, subtotal: value * it.precio_unitario }
           : it,
       ),
     )
   }
 
-  function removeItem(producto_id: string) {
-    setItems((prev) => prev.filter((it) => it.producto_id !== producto_id))
+  function removeItem(key: string) {
+    setItems((prev) => prev.filter((it) => lineaKey(it) !== key))
+  }
+
+  /** Convierte una partida en cortesía (o la regresa a cobrada). */
+  function toggleRegalo(key: string) {
+    setItems((prev) => {
+      const i = prev.findIndex((it) => lineaKey(it) === key)
+      if (i === -1) return prev
+      const it = prev[i]
+      const regalo = !it.es_regalo
+      const precio = regalo ? 0 : precioReferencia(it)
+      const cambiada: CotizacionItem = {
+        ...it,
+        es_regalo: regalo,
+        precio_unitario: precio,
+        precio_lista: regalo ? precioReferencia(it) : null,
+        subtotal: precio * it.cantidad,
+      }
+      // Si al cambiar de tipo choca con una partida existente del mismo
+      // producto, se fusionan en una sola (evita dos líneas idénticas).
+      const gemela = prev.findIndex(
+        (x, idx) => idx !== i && lineaKey(x) === lineaKey(cambiada),
+      )
+      if (gemela === -1) {
+        const copy = [...prev]
+        copy[i] = cambiada
+        return copy
+      }
+      const cantidadTotal = prev[gemela].cantidad + cambiada.cantidad
+      return prev
+        .map((x, idx) =>
+          idx === gemela
+            ? {
+                ...x,
+                cantidad: cantidadTotal,
+                subtotal: cantidadTotal * x.precio_unitario,
+              }
+            : x,
+        )
+        .filter((_, idx) => idx !== i)
+    })
   }
 
   function handleSave() {
@@ -305,6 +380,8 @@ export function CotizacionForm({
             precio_unitario: it.precio_unitario,
             costo_unitario: it.costo_unitario,
             subtotal: it.subtotal,
+            es_regalo: it.es_regalo ?? false,
+            precio_lista: it.precio_lista ?? null,
           })),
         }
         const result = isEdit
@@ -486,56 +563,118 @@ export function CotizacionForm({
               type="button"
               onClick={addItem}
               disabled={!selectedProduct}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white shadow-sm disabled:cursor-not-allowed disabled:bg-gray-300 ${
+                comoRegalo
+                  ? "bg-fuchsia-600 hover:bg-fuchsia-700"
+                  : "bg-teal-600 hover:bg-teal-700"
+              }`}
             >
-              <Plus className="size-4" />
-              Agregar
+              {comoRegalo ? <Gift className="size-4" /> : <Plus className="size-4" />}
+              {comoRegalo ? "Agregar regalo" : "Agregar"}
             </button>
           </div>
 
+          {/* Modo regalo: la siguiente partida entra con precio $0 */}
+          <label
+            className={`mt-2 flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 transition-colors ${
+              comoRegalo
+                ? "border-fuchsia-200 bg-fuchsia-50/70"
+                : "border-gray-200 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={comoRegalo}
+              onChange={(e) => setComoRegalo(e.target.checked)}
+              className="mt-0.5 size-3.5 accent-fuchsia-600"
+            />
+            <span className="min-w-0">
+              <span
+                className={`flex items-center gap-1 text-xs font-medium ${
+                  comoRegalo ? "text-fuchsia-800" : "text-gray-700"
+                }`}
+              >
+                <Gift className="size-3" />
+                Agregar como regalo
+              </span>
+              <span className="mt-0.5 block text-[10.5px] leading-snug text-gray-500">
+                Va en $0 para el cliente. Su costo se sigue restando de la
+                utilidad y descuenta inventario.
+              </span>
+            </span>
+          </label>
+
           {items.length > 0 && (
             <div className="mt-3 space-y-1 border-t border-gray-100 pt-3">
-              {items.map((it) => (
-                <div
-                  key={it.producto_id}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <span className="flex-1 truncate text-gray-700">
-                    {it.nombre}
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={qtyDrafts[it.producto_id] ?? String(it.cantidad)}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setQtyDrafts((d) => ({ ...d, [it.producto_id]: v }))
-                      const n = parseInt(v, 10)
-                      if (!Number.isNaN(n) && n >= 1)
-                        updateItemCantidad(it.producto_id, n)
-                    }}
-                    onBlur={() =>
-                      setQtyDrafts((d) => {
-                        const next = { ...d }
-                        delete next[it.producto_id]
-                        return next
-                      })
-                    }
-                    className="w-14 rounded border border-gray-200 px-2 py-0.5 text-xs"
-                  />
-                  <span className="w-16 text-right tabular-nums font-medium">
-                    {formatMXN2(it.subtotal)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(it.producto_id)}
-                    className="text-gray-400 hover:text-red-600"
-                    aria-label="Eliminar"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </div>
-              ))}
+              {items.map((it) => {
+                const key = lineaKey(it)
+                return (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <span
+                      className={`flex min-w-0 flex-1 items-center gap-1 truncate ${
+                        it.es_regalo ? "text-fuchsia-700" : "text-gray-700"
+                      }`}
+                    >
+                      {it.es_regalo && (
+                        <Gift className="size-3 shrink-0 text-fuchsia-500" />
+                      )}
+                      <span className="truncate">{it.nombre}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleRegalo(key)}
+                      title={
+                        it.es_regalo
+                          ? "Volver a cobrar esta partida"
+                          : "Marcar como regalo (precio $0)"
+                      }
+                      aria-pressed={!!it.es_regalo}
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                        it.es_regalo
+                          ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-200"
+                          : "text-gray-400 hover:bg-gray-100 hover:text-fuchsia-600"
+                      }`}
+                    >
+                      {it.es_regalo ? "Regalo" : "Regalar"}
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={qtyDrafts[key] ?? String(it.cantidad)}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setQtyDrafts((d) => ({ ...d, [key]: v }))
+                        const n = parseInt(v, 10)
+                        if (!Number.isNaN(n) && n >= 1)
+                          updateItemCantidad(key, n)
+                      }}
+                      onBlur={() =>
+                        setQtyDrafts((d) => {
+                          const next = { ...d }
+                          delete next[key]
+                          return next
+                        })
+                      }
+                      className="w-14 rounded border border-gray-200 px-2 py-0.5 text-xs"
+                    />
+                    <span
+                      className={`w-16 text-right tabular-nums font-medium ${
+                        it.es_regalo ? "text-fuchsia-600" : ""
+                      }`}
+                    >
+                      {it.es_regalo ? "Gratis" : formatMXN2(it.subtotal)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(key)}
+                      className="text-gray-400 hover:text-red-600"
+                      aria-label="Eliminar"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -741,6 +880,13 @@ export function CotizacionForm({
             <Row label="Total" value={formatMXN2(total)} bold />
             <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
               <Row label="Costo productos" value={formatMXN2(costoProductos)} muted />
+              {regalos.costo > 0 && (
+                <Row
+                  label="· de eso, regalos"
+                  value={formatMXN2(regalos.costo)}
+                  accent="text-fuchsia-600"
+                />
+              )}
               {costoEnvio > 0 && (
                 <Row label="Costo envío" value={formatMXN2(costoEnvio)} muted />
               )}
@@ -757,6 +903,49 @@ export function CotizacionForm({
               />
             </div>
           </div>
+
+          {/* Impacto de las cortesías — la pérdida, explícita */}
+          {regalos.lineas > 0 && (
+            <div className="rounded-lg border border-fuchsia-200 bg-fuchsia-50/60 p-3 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider text-fuchsia-700">
+                  <Gift className="size-3" />
+                  Regalos
+                </span>
+                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-fuchsia-700 ring-1 ring-fuchsia-200">
+                  {regalos.lineas} {regalos.lineas === 1 ? "ítem" : "ítems"} ·{" "}
+                  {regalos.piezas} pzs
+                </span>
+              </div>
+              <Row
+                label="Valor obsequiado"
+                value={formatMXN2(regalos.valor)}
+                accent="text-fuchsia-700"
+              />
+              <Row
+                label="Costo (pérdida real)"
+                value={`− ${formatMXN2(regalos.costo)}`}
+                accent="text-rose-600"
+                bold
+              />
+              <Row
+                label="Margen cedido"
+                value={formatMXN2(regalos.margenCedido)}
+                muted
+              />
+              <p className="border-t border-fuchsia-200/70 pt-1.5 text-[10.5px] leading-snug text-fuchsia-900/80">
+                Sin regalar, la utilidad neta sería{" "}
+                <strong className="tabular-nums">
+                  {formatMXN2(utilidadSinRegalos)}
+                </strong>
+                . El cliente recibe un{" "}
+                <strong className="tabular-nums">
+                  {descEfectivo.toFixed(1)}%
+                </strong>{" "}
+                de descuento efectivo (descuento + regalos).
+              </p>
+            </div>
+          )}
 
           <label className="block text-xs">
             <span className="text-gray-600">Notas (opcional)</span>

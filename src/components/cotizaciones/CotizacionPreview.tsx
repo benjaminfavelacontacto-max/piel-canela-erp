@@ -1,9 +1,13 @@
 import type { CotizacionData, CotizacionItem } from "@/lib/cotizacion-types"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
+import { resumenRegalos, precioReferencia } from "@/lib/regalos"
 
 const TEAL = "#1a8f72"
 const TEAL_BG = "#f8fdfb"
 const TEAL_LINE = "#d0ece4"
+// Cortesías: magenta suave. Hex hardcodeado — el PDF no admite oklch/lab.
+const GIFT = "#A21CAF"
+const GIFT_BG = "#FDF4FF"
 const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
@@ -118,6 +122,8 @@ export function CotizacionPreview({
   )
   const totalLineas = data.items.length
   const totalPiezas = data.items.reduce((s, i) => s + Number(i.cantidad), 0)
+  // Cortesías: no suman al total (van en $0), pero se presumen en el documento.
+  const regalos = resumenRegalos(data.items)
 
   return (
     <div
@@ -319,6 +325,7 @@ export function CotizacionPreview({
             )}
             {g.items.map((it, i) => {
               const medida = it.peso ?? extractPesoMl(it.nombre) ?? ""
+              const regalo = it.es_regalo === true
               return (
                 <div
                   key={`${gi}-${i}`}
@@ -330,6 +337,7 @@ export function CotizacionPreview({
                     padding: "7px 24px",
                     borderBottom: "1px solid #f0f0f0",
                     minHeight: 34,
+                    background: regalo ? GIFT_BG : undefined,
                   }}
                 >
                   <ProductThumb src={it.imagen_url} sku={it.sku} />
@@ -343,6 +351,23 @@ export function CotizacionPreview({
                       }}
                     >
                       {it.nombre}
+                      {regalo && (
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            padding: "1px 6px",
+                            borderRadius: 8,
+                            background: GIFT,
+                            color: "#ffffff",
+                            fontSize: 8.5,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          REGALO
+                        </span>
+                      )}
                     </p>
                     {it.sku && (
                       <p
@@ -380,22 +405,25 @@ export function CotizacionPreview({
                     style={{
                       textAlign: "right",
                       fontSize: 12,
-                      color: "#444",
+                      color: regalo ? "#999" : "#444",
+                      textDecoration: regalo ? "line-through" : undefined,
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {formatMXN2(it.precio_unitario)}
+                    {/* En un regalo se tacha el precio de lista: el cliente ve
+                        cuánto vale lo que se le obsequia. */}
+                    {formatMXN2(regalo ? precioReferencia(it) : it.precio_unitario)}
                   </span>
                   <span
                     style={{
                       textAlign: "right",
                       fontSize: 12,
-                      fontWeight: 600,
-                      color: "#222",
+                      fontWeight: 700,
+                      color: regalo ? GIFT : "#222",
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {formatMXN2(it.subtotal)}
+                    {regalo ? "GRATIS" : formatMXN2(it.subtotal)}
                   </span>
                 </div>
               )
@@ -566,6 +594,33 @@ export function CotizacionPreview({
                       }}
                     >
                       − {formatMXN2(data.descuento)}
+                    </p>
+                  </>
+                )}
+                {regalos.lineas > 0 && (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: "#888",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        margin: "4px 0 0 0",
+                      }}
+                    >
+                      Regalo incluido
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: GIFT,
+                        margin: 0,
+                        fontVariantNumeric: "tabular-nums",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {regalos.piezas} pzs · valor {formatMXN2(regalos.valor)}
                     </p>
                   </>
                 )}

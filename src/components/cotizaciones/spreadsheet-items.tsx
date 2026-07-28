@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { CotizacionItem } from "@/lib/cotizacion-types"
 import { formatMXN2 } from "@/lib/utils"
+import { precioReferencia } from "@/lib/regalos"
 
 type ColKey =
   | "#"
@@ -299,7 +300,17 @@ export function SpreadsheetItems({
                       )
                     } else if (c.key === "nombre") {
                       display = (
-                        <span className="text-gray-900">{it.nombre}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-gray-900">{it.nombre}</span>
+                          {it.es_regalo && (
+                            <span
+                              className="shrink-0 rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-700"
+                              title={`Cortesía · valor de lista ${formatMXN2(precioReferencia(it))} c/u`}
+                            >
+                              Regalo
+                            </span>
+                          )}
+                        </span>
                       )
                     } else if (c.key === "peso") {
                       display = (

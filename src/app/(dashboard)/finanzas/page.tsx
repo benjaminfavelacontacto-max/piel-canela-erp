@@ -1,8 +1,9 @@
-import { TrendingUp, Wallet, ChartLine, ScrollText } from "lucide-react"
+import { TrendingUp, Wallet, ChartLine, ScrollText, Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { PageHeader } from "@/components/page-header"
 import { formatMXN2 } from "@/lib/utils"
+import { resumenRegalos, errorSinColumnasRegalo } from "@/lib/regalos"
 import { RecoveryChart } from "./recovery-chart"
 
 import { parseFecha } from "@/lib/fecha"
@@ -110,6 +111,89 @@ export default async function FinanzasPage() {
     (vs) => !excludedVentaIds.has(vs.venta_id),
   )
 
+  const ventaById = new Map(ventas.map((v) => [v.id, v]))
+
+  // ─── Cortesías (productos de regalo) ────────────────────────────
+  // Se leen aparte porque son partidas de venta, no movimientos de socio. Su
+  // costo YA está dentro de `ventas.costo_productos` (y por tanto restado de
+  // `ganancia`): esta sección no vuelve a restarlo, solo lo hace visible.
+  // Sin la migración de regalos la consulta falla → se degrada a "sin datos".
+  const regalosRes = await admin
+    .from("venta_items")
+    .select(
+      "venta_id, cantidad, precio_unitario, costo_unitario, precio_lista, es_regalo, productos(nombre, nombre_display, sku)",
+    )
+    .eq("es_regalo", true)
+  const regalosPendienteMigracion = errorSinColumnasRegalo(regalosRes.error)
+  type RegaloRow = {
+    venta_id: string
+    cantidad: number
+    precio_unitario: number
+    costo_unitario: number
+    precio_lista: number | null
+    es_regalo: boolean
+    productos: {
+      nombre: string
+      nombre_display: string | null
+      sku: string | null
+    } | null
+  }
+  // Mismo criterio que el ROI: fuera internas (Piel Canela) y canceladas.
+  const regalosItems = ((regalosRes.data ?? []) as unknown as RegaloRow[]).filter(
+    (r) => !excludedVentaIds.has(r.venta_id),
+  )
+  const regalosTotales = resumenRegalos(regalosItems)
+
+  // Por venta (para la tabla) y por producto (para saber qué se regala más)
+  type RegaloPorVenta = {
+    ventaId: string
+    numero: string
+    fecha: string
+    piezas: number
+    costo: number
+    valor: number
+  }
+  const regalosPorVentaMap = new Map<string, RegaloPorVenta>()
+  const regalosPorProductoMap = new Map<
+    string,
+    { nombre: string; piezas: number; costo: number }
+  >()
+  for (const r of regalosItems) {
+    const venta = ventaById.get(r.venta_id)
+    if (!venta) continue
+    const cantidad = Number(r.cantidad ?? 0)
+    const costo = Number(r.costo_unitario ?? 0) * cantidad
+    const valor = Number(r.precio_lista ?? 0) * cantidad
+    const cur =
+      regalosPorVentaMap.get(r.venta_id) ??
+      {
+        ventaId: r.venta_id,
+        numero: venta.numero,
+        fecha: venta.fecha,
+        piezas: 0,
+        costo: 0,
+        valor: 0,
+      }
+    cur.piezas += cantidad
+    cur.costo += costo
+    cur.valor += valor
+    regalosPorVentaMap.set(r.venta_id, cur)
+
+    const nombre = r.productos?.nombre_display ?? r.productos?.nombre ?? "Producto"
+    const key = r.productos?.sku ?? nombre
+    const prod =
+      regalosPorProductoMap.get(key) ?? { nombre, piezas: 0, costo: 0 }
+    prod.piezas += cantidad
+    prod.costo += costo
+    regalosPorProductoMap.set(key, prod)
+  }
+  const regalosPorVenta = Array.from(regalosPorVentaMap.values()).sort((a, b) =>
+    a.fecha < b.fecha ? 1 : -1,
+  )
+  const regalosPorProducto = Array.from(regalosPorProductoMap.values()).sort(
+    (a, b) => b.costo - a.costo,
+  )
+
   const inversionesError = invRes.error?.message ?? null
 
   // Fallback si admin no puede leer socios
@@ -121,7 +205,6 @@ export default async function FinanzasPage() {
           { id: BENJAMIN_ID, nombre: "Benjamin" },
         ]
   const nombreById = new Map(socios.map((s) => [s.id, s.nombre]))
-  const ventaById = new Map(ventas.map((v) => [v.id, v]))
 
   // ─── KPIs por socio ────────────────────────────────────────────
   const sociosOrdenados = [
@@ -318,6 +401,26 @@ export default async function FinanzasPage() {
                   : 0,
               ),
             },
+            {
+              label: "Regalos entregados",
+              value: formatMXN2(regalosTotales.costo),
+              sub:
+                regalosTotales.piezas > 0
+                  ? `${regalosTotales.piezas} pzs · costo que salió del bolsillo`
+                  : "sin cortesías registradas",
+              color:
+                regalosTotales.costo > 0 ? "text-fuchsia-700" : undefined,
+              breakdown:
+                regalosTotales.valor > 0
+                  ? [
+                      {
+                        label: "Valor obsequiado",
+                        value: formatMXN2(regalosTotales.valor),
+                        tone: "violet" as const,
+                      },
+                    ]
+                  : undefined,
+            },
           ]
         })()}
       />
@@ -478,6 +581,136 @@ export default async function FinanzasPage() {
         </div>
       </section>
 
+      {/* ─── B2. Cortesías / productos de regalo ─── */}
+      {(regalosPorVenta.length > 0 || regalosPendienteMigracion) && (
+        <section className="pc-card-flush">
+          <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
+            <Gift className="size-4 text-fuchsia-600" />
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+              Productos de regalo
+            </h2>
+            <span className="ml-auto text-xs text-gray-500">
+              {regalosTotales.piezas} pzs en {regalosPorVenta.length}{" "}
+              {regalosPorVenta.length === 1 ? "venta" : "ventas"}
+            </span>
+          </header>
+
+          {regalosPendienteMigracion ? (
+            <div className="px-5 py-4 text-sm text-amber-800">
+              Falta correr <code>scripts/add-regalos-cotizaciones.sql</code> en
+              el SQL Editor de Supabase para registrar cortesías.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 px-5 py-4 sm:grid-cols-3">
+                <ResumenRegalo
+                  label="Costo total (pérdida)"
+                  value={formatMXN2(regalosTotales.costo)}
+                  tone="text-rose-700"
+                  hint="Ya restado de la ganancia de cada venta"
+                />
+                <ResumenRegalo
+                  label="Valor obsequiado"
+                  value={formatMXN2(regalosTotales.valor)}
+                  tone="text-fuchsia-700"
+                  hint="A precio de lista"
+                />
+                <ResumenRegalo
+                  label="Margen cedido"
+                  value={formatMXN2(regalosTotales.margenCedido)}
+                  tone="text-gray-900"
+                  hint="Utilidad que se dejó de ganar"
+                />
+              </div>
+
+              {regalosPorProducto.length > 0 && (
+                <div className="border-t border-gray-100 px-5 py-3">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Lo que más se regala
+                  </p>
+                  <ul className="flex flex-wrap gap-2">
+                    {regalosPorProducto.slice(0, 6).map((p) => (
+                      <li
+                        key={p.nombre}
+                        className="rounded-full bg-fuchsia-50 px-2.5 py-1 text-xs text-fuchsia-800 ring-1 ring-fuchsia-200/70"
+                      >
+                        {p.nombre}
+                        <span className="ml-1.5 tabular-nums font-semibold">
+                          {p.piezas} pzs
+                        </span>
+                        <span className="ml-1.5 tabular-nums text-fuchsia-600">
+                          {formatMXN2(p.costo)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="overflow-x-auto border-t border-gray-100">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+                      <Th>Venta</Th>
+                      <Th>Fecha</Th>
+                      <Th align="right">Piezas</Th>
+                      <Th align="right">Valor obsequiado</Th>
+                      <Th align="right">Costo (pérdida)</Th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {regalosPorVenta.map((r) => (
+                      <tr key={r.ventaId} className="hover:bg-gray-50">
+                        <td className="px-5 py-2 font-mono text-xs text-[#0F766E]">
+                          {r.numero}
+                        </td>
+                        <td className="px-5 py-2 text-xs text-gray-600">
+                          {fechaFmt.format(parseFecha(r.fecha))}
+                        </td>
+                        <td className="px-5 py-2 text-right tabular-nums">
+                          {r.piezas}
+                        </td>
+                        <td className="px-5 py-2 text-right tabular-nums text-fuchsia-700">
+                          {formatMXN2(r.valor)}
+                        </td>
+                        <td className="px-5 py-2 text-right tabular-nums font-semibold text-rose-700">
+                          {formatMXN2(r.costo)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold">
+                      <td
+                        colSpan={2}
+                        className="px-5 py-2 text-xs uppercase tracking-wide text-gray-700"
+                      >
+                        Totales
+                      </td>
+                      <td className="px-5 py-2 text-right tabular-nums">
+                        {regalosTotales.piezas}
+                      </td>
+                      <td className="px-5 py-2 text-right tabular-nums text-fuchsia-700">
+                        {formatMXN2(regalosTotales.valor)}
+                      </td>
+                      <td className="px-5 py-2 text-right tabular-nums text-rose-700">
+                        {formatMXN2(regalosTotales.costo)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <p className="border-t border-gray-100 px-5 py-2 text-[11px] text-gray-500">
+                El costo de los regalos ya está incluido en{" "}
+                <code>costo_productos</code> de cada venta, así que la ganancia
+                y el ROI de arriba ya lo tienen descontado. Esta tabla solo lo
+                hace visible — no se resta dos veces.
+              </p>
+            </>
+          )}
+        </section>
+      )}
+
       {/* ─── D. Gráfica acumulada ─── */}
       <section className="pc-card">
         <header className="mb-3 flex items-center gap-2">
@@ -599,6 +832,30 @@ function Row({
       >
         {value}
       </dd>
+    </div>
+  )
+}
+
+function ResumenRegalo({
+  label,
+  value,
+  tone,
+  hint,
+}: {
+  label: string
+  value: string
+  tone: string
+  hint: string
+}) {
+  return (
+    <div className="rounded-lg border border-fuchsia-200/70 bg-fuchsia-50/40 px-4 py-3">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </div>
+      <div className={`mt-1 text-xl font-bold tabular-nums ${tone}`}>
+        {value}
+      </div>
+      <div className="mt-0.5 text-[11px] text-gray-500">{hint}</div>
     </div>
   )
 }

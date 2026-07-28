@@ -4,10 +4,11 @@ import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Save, ArrowLeft, FileText, X } from "lucide-react"
+import { Save, ArrowLeft, FileText, X, Gift } from "lucide-react"
 import { saveVenta } from "./actions"
 import type { CotizacionLoaded } from "./nueva/page"
 import { formatMXN2 } from "@/lib/utils"
+import { resumenRegalos } from "@/lib/regalos"
 
 export type ProductoOpcion = {
   id: string
@@ -24,6 +25,18 @@ type Linea = {
   cantidad: number
   precio: number
   costo: number
+  /** Cortesía: precio $0 al cliente, el costo sigue pesando en la ganancia. */
+  es_regalo: boolean
+  /** Precio de catálogo congelado al regalar (referencia del valor). */
+  precio_lista: number
+}
+
+/**
+ * Identidad de la partida: el mismo producto puede ir cobrado Y regalado
+ * ("compra 10, lleva 1"), así que la llave incluye el tipo.
+ */
+function lineaKey(l: { producto_id: string; es_regalo: boolean }) {
+  return `${l.producto_id}|${l.es_regalo ? "R" : "N"}`
 }
 
 type Cliente = {
@@ -115,25 +128,56 @@ export function VentaForm({
     const p = productos.find((x) => x.id === prodId)
     if (!p) return
     setLineas((prev) => {
-      const existing = prev.find((l) => l.producto_id === prodId)
+      // Solo fusiona con la partida cobrada; una cortesía del mismo SKU vive
+      // en su propia línea.
+      const existing = prev.find((l) => l.producto_id === prodId && !l.es_regalo)
       if (existing) {
         return prev.map((l) =>
-          l.producto_id === prodId ? { ...l, cantidad: l.cantidad + 1 } : l,
+          l.producto_id === prodId && !l.es_regalo
+            ? { ...l, cantidad: l.cantidad + 1 }
+            : l,
         )
       }
       return [
         ...prev,
-        { producto_id: p.id, nombre: p.nombre, sku: p.sku, cantidad: 1, precio: p.precio, costo: p.costo },
+        {
+          producto_id: p.id,
+          nombre: p.nombre,
+          sku: p.sku,
+          cantidad: 1,
+          precio: p.precio,
+          costo: p.costo,
+          es_regalo: false,
+          precio_lista: p.precio,
+        },
       ]
     })
   }
-  function updateLinea(prodId: string, patch: Partial<Linea>) {
+  function updateLinea(key: string, patch: Partial<Linea>) {
     setLineas((prev) =>
-      prev.map((l) => (l.producto_id === prodId ? { ...l, ...patch } : l)),
+      prev.map((l) => (lineaKey(l) === key ? { ...l, ...patch } : l)),
     )
   }
-  function removeLinea(prodId: string) {
-    setLineas((prev) => prev.filter((l) => l.producto_id !== prodId))
+  function removeLinea(key: string) {
+    setLineas((prev) => prev.filter((l) => lineaKey(l) !== key))
+  }
+  /** Marca/desmarca la partida como cortesía (precio $0 ⇄ precio de lista). */
+  function toggleRegaloLinea(key: string) {
+    setLineas((prev) =>
+      prev.map((l) => {
+        if (lineaKey(l) !== key) return l
+        if (l.es_regalo) {
+          return { ...l, es_regalo: false, precio: l.precio_lista || l.precio }
+        }
+        // Al regalar se congela el precio actual como valor de referencia.
+        return {
+          ...l,
+          es_regalo: true,
+          precio_lista: l.precio || l.precio_lista,
+          precio: 0,
+        }
+      }),
+    )
   }
 
   const totals = useMemo(() => {
@@ -181,6 +225,18 @@ export function VentaForm({
     manualCostoEnvio,
   ])
 
+  // Cortesías de una venta manual: su costo ya está dentro de costo_productos,
+  // así que la ganancia de abajo ya trae la pérdida restada.
+  const regalosLineas = resumenRegalos(
+    lineas.map((l) => ({
+      cantidad: l.cantidad,
+      precio_unitario: l.precio,
+      costo_unitario: l.costo,
+      precio_lista: l.precio_lista,
+      es_regalo: l.es_regalo,
+    })),
+  )
+
   const ganancia = totals.total - totals.iva - totals.costo_productos - totals.costo_envio
   const saldoPendiente = Math.max(0, totals.total - cantidadPagada)
   const estatus = estatusFor(totals.total, cantidadPagada)
@@ -196,7 +252,9 @@ export function VentaForm({
       toast.error("Selecciona un cliente.")
       return
     }
-    if (totals.total <= 0) {
+    // Una venta 100% de cortesía sí es válida (total $0): se registra para
+    // descontar inventario y dejar asentada la pérdida.
+    if (totals.total <= 0 && regalosLineas.lineas === 0) {
       toast.error("El total de la venta debe ser mayor a 0.")
       return
     }
@@ -221,8 +279,10 @@ export function VentaForm({
             ? lineas.map((l) => ({
                 producto_id: l.producto_id,
                 cantidad: l.cantidad,
-                precio_unitario: l.precio,
+                precio_unitario: l.es_regalo ? 0 : l.precio,
                 costo_unitario: l.costo,
+                es_regalo: l.es_regalo,
+                precio_lista: l.es_regalo ? l.precio_lista : null,
               }))
             : undefined,
       })
@@ -374,10 +434,16 @@ export function VentaForm({
 
               {lineas.length > 0 && (
                 <div className="space-y-2">
-                  {lineas.map((l) => (
+                  {lineas.map((l) => {
+                    const key = lineaKey(l)
+                    return (
                     <div
-                      key={l.producto_id}
-                      className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                      key={key}
+                      className={`flex items-center gap-2 rounded-lg border p-2 text-sm ${
+                        l.es_regalo
+                          ? "border-fuchsia-200 bg-fuchsia-50/70"
+                          : "border-gray-100 bg-gray-50"
+                      }`}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-medium text-gray-900">
@@ -387,6 +453,26 @@ export function VentaForm({
                           <div className="text-xs text-gray-400">{l.sku}</div>
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleRegaloLinea(key)}
+                        aria-pressed={l.es_regalo}
+                        title={
+                          l.es_regalo
+                            ? "Volver a cobrar esta partida"
+                            : "Marcar como regalo (precio $0)"
+                        }
+                        className={`inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors ${
+                          l.es_regalo
+                            ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-200"
+                            : "text-gray-400 hover:bg-gray-100 hover:text-fuchsia-600"
+                        }`}
+                      >
+                        <Gift className="size-3.5" />
+                        <span className="hidden sm:inline">
+                          {l.es_regalo ? "Regalo" : "Regalar"}
+                        </span>
+                      </button>
                       <label className="flex items-center gap-1 text-xs text-gray-500">
                         <span className="hidden sm:inline">Cant.</span>
                         <input
@@ -395,7 +481,7 @@ export function VentaForm({
                           step={1}
                           value={l.cantidad}
                           onChange={(e) =>
-                            updateLinea(l.producto_id, {
+                            updateLinea(key, {
                               cantidad: Math.max(1, Math.floor(Number(e.target.value)) || 1),
                             })
                           }
@@ -410,28 +496,34 @@ export function VentaForm({
                           min={0}
                           step="0.01"
                           value={l.precio}
+                          disabled={l.es_regalo}
                           onChange={(e) =>
-                            updateLinea(l.producto_id, {
+                            updateLinea(key, {
                               precio: Math.max(0, Number(e.target.value) || 0),
                             })
                           }
-                          className="w-24 rounded-md border border-gray-200 px-2 py-1 text-right tabular-nums"
+                          className="w-24 rounded-md border border-gray-200 px-2 py-1 text-right tabular-nums disabled:bg-gray-100 disabled:text-gray-400"
                           aria-label={`Precio unitario de ${l.nombre}`}
                         />
                       </label>
-                      <div className="w-24 text-right font-medium tabular-nums text-gray-900">
-                        {formatMXN2(l.precio * l.cantidad)}
+                      <div
+                        className={`w-24 text-right font-medium tabular-nums ${
+                          l.es_regalo ? "text-fuchsia-600" : "text-gray-900"
+                        }`}
+                      >
+                        {l.es_regalo ? "Gratis" : formatMXN2(l.precio * l.cantidad)}
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeLinea(l.producto_id)}
+                        onClick={() => removeLinea(key)}
                         className="text-gray-400 transition-colors hover:text-red-600"
                         aria-label={`Quitar ${l.nombre}`}
                       >
                         <X className="size-4" />
                       </button>
                     </div>
-                  ))}
+                    )
+                  })}
                   <div className="flex justify-between border-t border-gray-100 pt-2 text-sm">
                     <span className="text-gray-600">Subtotal productos</span>
                     <span className="font-semibold tabular-nums text-gray-900">
@@ -444,6 +536,18 @@ export function VentaForm({
                       {formatMXN2(totals.costo_productos)}
                     </span>
                   </div>
+                  {regalosLineas.lineas > 0 && (
+                    <div className="flex justify-between text-xs text-fuchsia-700">
+                      <span className="flex items-center gap-1">
+                        <Gift className="size-3" />
+                        Regalos ({regalosLineas.piezas} pzs) · costo que se
+                        pierde
+                      </span>
+                      <span className="tabular-nums font-semibold">
+                        {formatMXN2(regalosLineas.costo)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -673,6 +777,13 @@ export function VentaForm({
             <div className="mt-2 space-y-1 text-sm">
               <Row label="Total" value={formatMXN2(totals.total)} valueClass="font-bold" />
               <Row label="Ganancia" value={formatMXN2(ganancia)} valueClass="text-emerald-700" />
+              {regalosLineas.costo > 0 && (
+                <Row
+                  label="Regalos (costo)"
+                  value={`− ${formatMXN2(regalosLineas.costo)}`}
+                  valueClass="text-fuchsia-700"
+                />
+              )}
               <Row label="Pagado" value={formatMXN2(cantidadPagada)} valueClass="text-blue-700" />
               <Row
                 label="Saldo"
