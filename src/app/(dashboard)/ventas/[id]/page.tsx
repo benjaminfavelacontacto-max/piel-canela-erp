@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil, Gift } from "lucide-react"
+import { ArrowLeft, Pencil, Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
 import { formatMXN2 } from "@/lib/utils"
 import { resumenRegalos, precioReferencia } from "@/lib/regalos"
+import { VentaKpis } from "./venta-kpis"
 
 import { parseFecha } from "@/lib/fecha"
 
@@ -43,8 +44,8 @@ export default async function VentaDetailPage({
     .from("ventas")
     .select(
       `id, numero, fecha, subtotal, iva, descuento, total, costo_productos, costo_envio,
-       ganancia, cantidad_pagada, saldo_pendiente, estatus, notas, inventario_descontado,
-       cotizacion_id,
+       ganancia, utilidad_neta, cantidad_pagada, saldo_pendiente, estatus, notas,
+       inventario_descontado, cotizacion_id,
        clientes(id, nombre, nombre_negocio, telefono, email, direccion, ciudad)`,
     )
     .eq("id", id)
@@ -163,6 +164,17 @@ export default async function VentaDetailPage({
   // aquí solo se hace visible cuánto fue.
   const regalos = resumenRegalos(items)
 
+  // Suma de las partidas, para que el (?) de los KPIs pueda contrastar el
+  // costo guardado en la venta contra lo que realmente suman los productos.
+  const costoPartidas = items.reduce(
+    (s, it) => s + Number(it.costo_unitario ?? 0) * Number(it.cantidad ?? 0),
+    0,
+  )
+  const subtotalPartidas = items.reduce(
+    (s, it) => s + Number(it.subtotal ?? 0),
+    0,
+  )
+
   const COLORES_CAT: Record<string, { bg: string; text: string }> = {
     CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
     ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
@@ -236,32 +248,24 @@ export default async function VentaDetailPage({
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Total"
-          value={formatMXN2(Number(venta.total ?? 0))}
-          icon={ShoppingBag}
-          tone="text-gray-900"
-        />
-        <StatCard
-          label="Ganancia"
-          value={formatMXN2(Number(venta.ganancia ?? 0))}
-          icon={TrendingUp}
-          tone="text-emerald-700"
-        />
-        <StatCard
-          label="Pagado"
-          value={formatMXN2(Number(venta.cantidad_pagada ?? 0))}
-          icon={CircleDollarSign}
-          tone="text-blue-700"
-        />
-        <StatCard
-          label="Saldo"
-          value={formatMXN2(Number(venta.saldo_pendiente ?? 0))}
-          icon={Wallet}
-          tone={Number(venta.saldo_pendiente ?? 0) > 0 ? "text-amber-700" : "text-gray-900"}
-        />
-      </div>
+      <VentaKpis
+        subtotal={Number(venta.subtotal ?? 0)}
+        iva={Number(venta.iva ?? 0)}
+        descuento={Number(venta.descuento ?? 0)}
+        total={Number(venta.total ?? 0)}
+        costoProductos={Number(venta.costo_productos ?? 0)}
+        costoEnvio={Number(venta.costo_envio ?? 0)}
+        gananciaBD={venta.ganancia == null ? null : Number(venta.ganancia)}
+        utilidadNetaBD={
+          venta.utilidad_neta == null ? null : Number(venta.utilidad_neta)
+        }
+        pagado={Number(venta.cantidad_pagada ?? 0)}
+        saldoBD={Number(venta.saldo_pendiente ?? 0)}
+        costoPartidas={costoPartidas}
+        subtotalPartidas={subtotalPartidas}
+        itemsCount={items.length}
+        regalos={regalos}
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-xl border border-gray-200 bg-white">
@@ -603,32 +607,6 @@ export default async function VentaDetailPage({
             </p>
           </div>
         </aside>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string
-  value: string
-  icon: React.ComponentType<{ className?: string }>
-  tone: string
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          {label}
-        </span>
-        <Icon className={`size-4 ${tone}`} />
-      </div>
-      <div className={`mt-2 text-xl font-semibold tabular-nums ${tone}`}>
-        {value}
       </div>
     </div>
   )
