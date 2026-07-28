@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import {
   ShoppingBag,
   TrendingUp,
@@ -8,10 +7,17 @@ import {
   CircleDollarSign,
   Package,
   Percent,
-  HelpCircle,
-  AlertTriangle,
+  Receipt,
+  Gift,
 } from "lucide-react"
 import { formatMXN2 } from "@/lib/utils"
+import {
+  KpiCards,
+  round2,
+  casiIgual,
+  type KpiCard,
+  type KpiFila,
+} from "@/components/kpi-cards"
 
 /**
  * KPIs del detalle de venta con explicación del cálculo.
@@ -25,9 +31,6 @@ import { formatMXN2 } from "@/lib/utils"
  * esa columna GENERATED no coincide con la fórmula que usan los reportes
  * (ver nota en ventas-dashboard.tsx). El (?) compara ambas y marca cuál cuadra.
  */
-
-const round2 = (n: number) => Math.round(n * 100) / 100
-const casiIgual = (a: number, b: number) => Math.abs(a - b) < 0.02
 
 export type VentaKpisProps = {
   subtotal: number
@@ -51,11 +54,7 @@ export type VentaKpisProps = {
   regalos: { lineas: number; piezas: number; costo: number; valor: number }
 }
 
-type Fila = { texto: string; valor?: string; alerta?: boolean }
-
 export function VentaKpis(p: VentaKpisProps) {
-  const [abierto, setAbierto] = useState<string | null>(null)
-
   // ─── Cálculos (todos derivados de las columnas de la venta) ───────
   const baseNeta = round2(p.subtotal - p.descuento) // lo vendido sin IVA
   const totalCalc = round2(baseNeta + p.iva)
@@ -81,22 +80,14 @@ export function VentaKpis(p: VentaKpisProps) {
   const fmt = (n: number) => formatMXN2(n)
   const pct = (n: number) => `${n.toFixed(1)}%`
 
-  const cards: {
-    id: string
-    label: string
-    value: string
-    sub?: string
-    icon: React.ComponentType<{ className?: string }>
-    tone: string
-    ayuda: { que: string; filas: Fila[]; fuente: string }
-  }[] = [
+  const cards: KpiCard[] = [
     {
       id: "total",
       label: "Total",
       value: fmt(p.total),
       sub: p.iva > 0 ? `incluye IVA ${fmt(p.iva)}` : "sin IVA",
       icon: ShoppingBag,
-      tone: "text-gray-900",
+      tone: "neutral",
       ayuda: {
         que: "Lo que le cobras al cliente por esta venta.",
         filas: [
@@ -106,7 +97,7 @@ export function VentaKpis(p: VentaKpisProps) {
                 {
                   texto: "Σ precio × cantidad de las partidas",
                   valor: fmt(p.subtotalPartidas),
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           ...(subtotalDesfasado
@@ -115,7 +106,7 @@ export function VentaKpis(p: VentaKpisProps) {
                   texto:
                     "No coinciden: el subtotal de la venta se editó a mano y ya no refleja las partidas.",
                   alerta: true,
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           { texto: "− Descuento", valor: fmt(p.descuento) },
@@ -128,11 +119,44 @@ export function VentaKpis(p: VentaKpisProps) {
                 {
                   texto: `El total guardado (${fmt(p.total)}) no coincide con esa cuenta.`,
                   alerta: true,
-                } as Fila,
+                } as KpiFila,
               ]),
         ],
         fuente:
           "ventas.total es una columna GENERATED: la calcula Postgres desde subtotal, iva y descuento. El descuento baja la base antes del IVA (estándar fiscal MX).",
+      },
+    },
+    {
+      id: "iva",
+      label: "IVA real",
+      value: p.iva > 0 ? fmt(p.iva) : "Sin IVA",
+      sub:
+        p.iva > 0 ? "cobrado en esta venta" : "esta venta se cobró sin IVA",
+      icon: Receipt,
+      tone: "teal",
+      valorNeutro: p.iva === 0,
+      ayuda: {
+        que: "El impuesto que efectivamente se cobró en esta venta.",
+        filas: [
+          { texto: "Base gravable (subtotal − descuento)", valor: fmt(baseNeta) },
+          { texto: "× 16%", valor: fmt(round2(baseNeta * 0.16)) },
+          { texto: "IVA guardado en la venta", valor: fmt(p.iva) },
+          ...(p.iva > 0 && !casiIgual(p.iva, round2(baseNeta * 0.16))
+            ? [
+                {
+                  texto:
+                    "No es exactamente el 16% de la base: se capturó o editó a mano.",
+                  alerta: true,
+                } as KpiFila,
+              ]
+            : []),
+          {
+            texto:
+              "Se cobra por cuenta del SAT: entra al total pero NO a la ganancia.",
+          },
+        ],
+        fuente:
+          "Regla del proyecto: cotizaciones.iva = referencial (presentación); ventas.iva = REAL cobrado. Los reportes financieros usan siempre el de ventas.",
       },
     },
     {
@@ -144,7 +168,7 @@ export function VentaKpis(p: VentaKpisProps) {
           ? `productos ${fmt(p.costoProductos)} · envío ${fmt(p.costoEnvio)}`
           : `${p.itemsCount} ${p.itemsCount === 1 ? "partida" : "partidas"}`,
       icon: Package,
-      tone: "text-gray-900",
+      tone: "neutral",
       ayuda: {
         que: "Lo que te costó a ti surtir esta venta (no lo que cobraste).",
         filas: [
@@ -162,7 +186,7 @@ export function VentaKpis(p: VentaKpisProps) {
                   texto:
                     "No coinciden: el costo de la venta se capturó o editó a mano y ya no refleja las partidas.",
                   alerta: true,
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           { texto: "+ Costo de envío", valor: fmt(p.costoEnvio) },
@@ -186,7 +210,7 @@ export function VentaKpis(p: VentaKpisProps) {
       value: fmt(ganancia),
       sub: p.iva > 0 ? "el IVA no cuenta como ganancia" : "base − costos",
       icon: TrendingUp,
-      tone: ganancia >= 0 ? "text-emerald-700" : "text-rose-700",
+      tone: ganancia >= 0 ? "emerald" : "rose",
       ayuda: {
         que: "Lo que realmente te queda de esta venta antes de gastos fijos.",
         filas: [
@@ -198,14 +222,14 @@ export function VentaKpis(p: VentaKpisProps) {
             ? [
                 {
                   texto: `No se parte del total (${fmt(p.total)}) porque ${fmt(p.iva)} de IVA se cobran para el SAT: son de paso, no utilidad. Con el total daría ${fmt(conIva)}.`,
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           ...(p.regalos.costo > 0
             ? [
                 {
                   texto: `Ya trae restados ${fmt(p.regalos.costo)} de regalos (los obsequios no suman a la base pero sí al costo).`,
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           ...(gananciaBD != null
@@ -215,7 +239,7 @@ export function VentaKpis(p: VentaKpisProps) {
                     ? "Columna ventas.ganancia: coincide ✓"
                     : `Columna ventas.ganancia guarda ${fmt(gananciaBD)} — otra fórmula (por eso los reportes no la usan).`,
                   alerta: !casiIgual(gananciaBD, ganancia),
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
           ...(utilidadBD != null
@@ -225,7 +249,7 @@ export function VentaKpis(p: VentaKpisProps) {
                     ? "Columna ventas.utilidad_neta: coincide ✓"
                     : `Columna ventas.utilidad_neta guarda ${fmt(utilidadBD)}.`,
                   alerta: !casiIgual(utilidadBD, ganancia),
-                } as Fila,
+                } as KpiFila,
               ]
             : []),
         ],
@@ -239,12 +263,7 @@ export function VentaKpis(p: VentaKpisProps) {
       value: pct(margen),
       sub: `${fmt(ganancia)} de ${fmt(baseNeta)}`,
       icon: Percent,
-      tone:
-        margen >= 30
-          ? "text-emerald-700"
-          : margen >= 15
-            ? "text-amber-700"
-            : "text-rose-700",
+      tone: margen >= 30 ? "emerald" : margen >= 15 ? "amber" : "rose",
       ayuda: {
         que: "De cada peso vendido (sin IVA), cuánto se queda como ganancia.",
         filas: [
@@ -261,6 +280,39 @@ export function VentaKpis(p: VentaKpisProps) {
       },
     },
     {
+      id: "regalos",
+      label: "Regalos (costo)",
+      value: fmt(p.regalos.costo),
+      sub:
+        p.regalos.piezas > 0
+          ? `${p.regalos.piezas} ${p.regalos.piezas === 1 ? "pza" : "pzs"} · valor ${fmt(p.regalos.valor)}`
+          : "sin cortesías en esta venta",
+      icon: Gift,
+      tone: "fuchsia",
+      valorNeutro: p.regalos.costo === 0,
+      ayuda: {
+        que: "Lo que te costaron los productos que se fueron gratis.",
+        filas: [
+          {
+            texto: "Piezas regaladas",
+            valor: String(p.regalos.piezas),
+          },
+          { texto: "Costo (pérdida real)", valor: fmt(p.regalos.costo) },
+          { texto: "Valor a precio de lista", valor: fmt(p.regalos.valor) },
+          {
+            texto: "Margen cedido (valor − costo)",
+            valor: fmt(round2(p.regalos.valor - p.regalos.costo)),
+          },
+          {
+            texto:
+              "Este costo ya está dentro de \u201cCosto total\u201d y por tanto ya está restado de la ganancia: aquí solo se hace visible.",
+          },
+        ],
+        fuente:
+          "Partidas de venta_items con es_regalo = true: van en $0 para el cliente, con su costo real y el precio de lista congelado en precio_lista.",
+      },
+    },
+    {
       id: "pagado",
       label: "Pagado",
       value: fmt(p.pagado),
@@ -269,7 +321,7 @@ export function VentaKpis(p: VentaKpisProps) {
           ? `${Math.min(100, (p.pagado / p.total) * 100).toFixed(0)}% del total`
           : undefined,
       icon: CircleDollarSign,
-      tone: "text-blue-700",
+      tone: "blue",
       ayuda: {
         que: "Cuánto ha entrado de dinero por esta venta.",
         filas: [
@@ -286,7 +338,7 @@ export function VentaKpis(p: VentaKpisProps) {
       value: fmt(p.saldoBD),
       sub: p.saldoBD > 0 ? "por cobrar" : "liquidada",
       icon: Wallet,
-      tone: p.saldoBD > 0 ? "text-amber-700" : "text-gray-900",
+      tone: p.saldoBD > 0 ? "amber" : "neutral",
       ayuda: {
         que: "Lo que el cliente todavía te debe.",
         filas: [
@@ -299,7 +351,7 @@ export function VentaKpis(p: VentaKpisProps) {
                 {
                   texto: `El saldo guardado (${fmt(p.saldoBD)}) no coincide con esa resta.`,
                   alerta: true,
-                } as Fila,
+                } as KpiFila,
               ]),
         ],
         fuente:
@@ -308,91 +360,5 @@ export function VentaKpis(p: VentaKpisProps) {
     },
   ]
 
-  return (
-    <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-      {cards.map((c) => {
-        const Icon = c.icon
-        const open = abierto === c.id
-        return (
-          <div
-            key={c.id}
-            className="relative rounded-xl border border-gray-200 bg-white p-5"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                {c.label}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setAbierto(open ? null : c.id)}
-                  aria-expanded={open}
-                  aria-label={`¿De dónde sale ${c.label}?`}
-                  title="¿De dónde sale este número?"
-                  className={`rounded-full p-0.5 transition-colors ${
-                    open
-                      ? "bg-[#0F766E] text-white"
-                      : "text-gray-300 hover:bg-gray-100 hover:text-[#0F766E]"
-                  }`}
-                >
-                  <HelpCircle className="size-4" />
-                </button>
-                <Icon className={`size-4 ${c.tone}`} />
-              </div>
-            </div>
-            <div className={`mt-2 text-xl font-semibold tabular-nums ${c.tone}`}>
-              {c.value}
-            </div>
-            {c.sub && (
-              <div className="mt-0.5 text-[11px] text-gray-500">{c.sub}</div>
-            )}
-
-            {open && (
-              <>
-                {/* Capa para cerrar al tocar fuera (mismo patrón que el
-                    selector de cliente de cotizaciones). */}
-                <div
-                  className="fixed inset-0 z-20"
-                  onClick={() => setAbierto(null)}
-                />
-                <div className="absolute left-3 right-3 top-14 z-30 rounded-xl border border-gray-200 bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.18)] sm:left-auto sm:right-4 sm:w-80">
-                  <p className="text-xs font-semibold text-gray-900">
-                    {c.label}
-                  </p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-gray-600">
-                    {c.ayuda.que}
-                  </p>
-                  <ul className="mt-2 space-y-1 border-t border-gray-100 pt-2">
-                    {c.ayuda.filas.map((f, i) => (
-                      <li
-                        key={i}
-                        className={`flex items-start justify-between gap-2 text-[11px] ${
-                          f.alerta ? "text-amber-700" : "text-gray-700"
-                        }`}
-                      >
-                        <span className="flex-1 leading-snug">
-                          {f.alerta && (
-                            <AlertTriangle className="mr-1 inline size-3 -translate-y-px" />
-                          )}
-                          {f.texto}
-                        </span>
-                        {f.valor && (
-                          <span className="shrink-0 font-semibold tabular-nums">
-                            {f.valor}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-2 border-t border-gray-100 pt-2 text-[10.5px] leading-snug text-gray-500">
-                    {c.ayuda.fuente}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
+  return <KpiCards cards={cards} />
 }

@@ -22,6 +22,7 @@ import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 import { resumenRegalos } from "@/lib/regalos"
 import { formatMXN2 } from "@/lib/utils"
+import { CotizacionKpis } from "./cotizacion-kpis"
 import {
   marcarVendida,
   duplicarCotizacion,
@@ -60,6 +61,7 @@ export function CotizacionDetail({
   ventaAsociada,
   faltantes,
   preview,
+  finanzas,
 }: {
   cotizacionId: string
   numero: string
@@ -67,6 +69,12 @@ export function CotizacionDetail({
   ventaAsociada: { id: string; numero: string } | null
   faltantes: Faltante[]
   preview: CotizacionData
+  /** Columnas financieras de la cotización que el preview no trae. */
+  finanzas: {
+    costoProductos: number
+    costoEnvio: number
+    utilidadNetaBD: number | null
+  }
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -356,6 +364,18 @@ export function CotizacionDetail({
           onConfirm={handleRevertir}
         />
       )}
+
+      {/* KPIs financieros con (?) explicativo por tarjeta */}
+      <CotizacionKpis
+        subtotal={preview.subtotal}
+        iva={preview.iva}
+        descuento={preview.descuento}
+        total={preview.total}
+        costoProductos={finanzas.costoProductos}
+        costoEnvio={finanzas.costoEnvio}
+        utilidadNetaBD={finanzas.utilidadNetaBD}
+        items={preview.items}
+      />
 
       {regalos.lineas > 0 && (
         <div className="mb-6 rounded-xl border border-fuchsia-200 bg-fuchsia-50/60 p-4">
