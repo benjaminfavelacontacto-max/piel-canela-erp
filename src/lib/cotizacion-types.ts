@@ -37,6 +37,14 @@ export type CotizacionItem = {
   precio_unitario: number
   costo_unitario: number
   subtotal: number
+  /**
+   * Partida de cortesía: `precio_unitario` y `subtotal` van en 0 (el cliente no
+   * la paga) pero `costo_unitario` es real — esa es la pérdida. Ver
+   * `@/lib/regalos`.
+   */
+  es_regalo?: boolean
+  /** Precio de catálogo congelado; solo referencia del valor obsequiado. */
+  precio_lista?: number | null
 }
 
 export type CotizacionData = {

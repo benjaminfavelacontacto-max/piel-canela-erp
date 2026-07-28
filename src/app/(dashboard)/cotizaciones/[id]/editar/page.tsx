@@ -58,11 +58,30 @@ export default async function EditarCotizacionPage({
       .from("cotizacion_items")
       .select(
         `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
+         es_regalo, precio_lista,
          productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
       )
       .eq("cotizacion_id", id)
       .order("sort_order", { ascending: true }),
   ])
+
+  // Sin la migración de regalos, reintenta sin esas columnas (ver
+  // scripts/add-regalos-cotizaciones.sql).
+  let itemsData = itemsRes.data
+  if (
+    itemsRes.error &&
+    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
+  ) {
+    const retry = await supabase
+      .from("cotizacion_items")
+      .select(
+        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
+         productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
+      )
+      .eq("cotizacion_id", id)
+      .order("sort_order", { ascending: true })
+    itemsData = retry.data as typeof itemsData
+  }
 
   const clientes = (clientesRes.data ?? []) as Cliente[]
   const listaId = listaRes.data?.id as string | undefined
@@ -123,6 +142,8 @@ export default async function EditarCotizacionPage({
     precio_unitario: number
     costo_unitario: number
     subtotal: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
     productos: {
       id: string
       sku: string | null
@@ -132,7 +153,7 @@ export default async function EditarCotizacionPage({
       peso: string | null
     } | null
   }
-  const items: CotizacionItem[] = ((itemsRes.data ?? []) as unknown as ItemRow[]).map(
+  const items: CotizacionItem[] = ((itemsData ?? []) as unknown as ItemRow[]).map(
     (r) => {
       const display =
         r.productos?.nombre_display ?? r.productos?.nombre ?? "—"
@@ -150,6 +171,8 @@ export default async function EditarCotizacionPage({
         precio_unitario: Number(r.precio_unitario),
         costo_unitario: Number(r.costo_unitario ?? 0),
         subtotal: Number(r.subtotal),
+        es_regalo: r.es_regalo === true,
+        precio_lista: r.precio_lista != null ? Number(r.precio_lista) : null,
       }
     },
   )

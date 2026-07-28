@@ -13,12 +13,15 @@ import {
   RotateCcw,
   Trash2,
   AlertTriangle,
+  Gift,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { downloadCotizacionPdf } from "@/lib/pdf"
+import { resumenRegalos } from "@/lib/regalos"
+import { formatMXN2 } from "@/lib/utils"
 import {
   marcarVendida,
   duplicarCotizacion,
@@ -85,6 +88,8 @@ export function CotizacionDetail({
   // Sólo bloquea mientras la venta no exista: si ya se vendió, el inventario ya
   // se descontó y los faltantes de ahora son consecuencia, no impedimento.
   const bloqueadoPorStock = !yaVendida && faltantes.length > 0
+  // Cortesías incluidas: cuánto costaron (pérdida) y cuánto valían.
+  const regalos = resumenRegalos(preview.items)
 
   async function handleEliminar() {
     setDeleting(true)
@@ -352,6 +357,42 @@ export function CotizacionDetail({
         />
       )}
 
+      {regalos.lineas > 0 && (
+        <div className="mb-6 rounded-xl border border-fuchsia-200 bg-fuchsia-50/60 p-4">
+          <div className="flex items-start gap-2">
+            <Gift className="mt-0.5 size-4 shrink-0 text-fuchsia-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-fuchsia-900">
+                Esta cotización incluye {regalos.piezas}{" "}
+                {regalos.piezas === 1 ? "pieza de regalo" : "piezas de regalo"}
+                {" "}en {regalos.lineas}{" "}
+                {regalos.lineas === 1 ? "partida" : "partidas"}
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <GiftStat
+                  label="Costo (pérdida real)"
+                  value={formatMXN2(regalos.costo)}
+                  tone="text-rose-700"
+                  hint="Ya restado de la utilidad neta"
+                />
+                <GiftStat
+                  label="Valor obsequiado"
+                  value={formatMXN2(regalos.valor)}
+                  tone="text-fuchsia-700"
+                  hint="Precio de lista de lo regalado"
+                />
+                <GiftStat
+                  label="Margen cedido"
+                  value={formatMXN2(regalos.margenCedido)}
+                  tone="text-gray-700"
+                  hint="Utilidad que se dejó de ganar"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="mb-6 space-y-2">
         <header className="flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -377,6 +418,30 @@ export function CotizacionDetail({
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
       </div>
+    </div>
+  )
+}
+
+function GiftStat({
+  label,
+  value,
+  tone,
+  hint,
+}: {
+  label: string
+  value: string
+  tone: string
+  hint: string
+}) {
+  return (
+    <div className="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-fuchsia-200/70">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </div>
+      <div className={`mt-0.5 text-base font-bold tabular-nums ${tone}`}>
+        {value}
+      </div>
+      <div className="text-[10px] text-gray-500">{hint}</div>
     </div>
   )
 }

@@ -38,15 +38,35 @@ export default async function CotizacionDetailPage({
   }
   if (!cot) notFound()
 
-  const { data: itemRows } = await supabase
+  // es_regalo / precio_lista llegan con scripts/add-regalos-cotizaciones.sql.
+  // Si aún no se corre, se reintenta sin ellas (la cotización se ve igual, sin
+  // marcas de cortesía) en vez de romper la página.
+  const itemsRes = await supabase
     .from("cotizacion_items")
     .select(
       `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
+       es_regalo, precio_lista,
        productos(id, sku, nombre, nombre_display, imagen_url, peso,
          categorias(nombre))`,
     )
     .eq("cotizacion_id", id)
     .order("sort_order", { ascending: true })
+  let itemRows = itemsRes.data
+  if (
+    itemsRes.error &&
+    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
+  ) {
+    const retry = await supabase
+      .from("cotizacion_items")
+      .select(
+        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
+         productos(id, sku, nombre, nombre_display, imagen_url, peso,
+           categorias(nombre))`,
+      )
+      .eq("cotizacion_id", id)
+      .order("sort_order", { ascending: true })
+    itemRows = retry.data as typeof itemRows
+  }
 
   const imageMap = await buildImageMap()
 
@@ -55,6 +75,8 @@ export default async function CotizacionDetailPage({
     precio_unitario: number
     costo_unitario: number
     subtotal: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
     productos: {
       id: string
       sku: string | null
@@ -79,6 +101,8 @@ export default async function CotizacionDetailPage({
       precio_unitario: r.precio_unitario,
       costo_unitario: r.costo_unitario,
       subtotal: r.subtotal,
+      es_regalo: r.es_regalo === true,
+      precio_lista: r.precio_lista ?? null,
     }
   })
 
@@ -101,14 +125,24 @@ export default async function CotizacionDetailPage({
     }
   }
   // Sin fila de inventario = sin existencias registradas → cuenta como 0.
-  const faltantes: Faltante[] = items
-    .map((i) => ({
+  // Se consolidan las partidas del mismo producto (con regalos, un SKU puede
+  // ir en 2 líneas: la vendida y la regalada) — igual que `faltantesDeStock`
+  // en el servidor. Sin sumarlas, el aviso diría "alcanza" y la venta fallaría.
+  const pedidoPorProducto = new Map<string, Faltante>()
+  for (const i of items) {
+    if (!i.producto_id) continue
+    const cur = pedidoPorProducto.get(i.producto_id) ?? {
       nombre: i.nombre,
       sku: i.sku,
-      cantidad: i.cantidad,
+      cantidad: 0,
       stock: stockPorProducto.get(i.producto_id) ?? 0,
-    }))
-    .filter((f) => f.stock < f.cantidad)
+    }
+    cur.cantidad += Number(i.cantidad ?? 0)
+    pedidoPorProducto.set(i.producto_id, cur)
+  }
+  const faltantes: Faltante[] = [...pedidoPorProducto.values()].filter(
+    (f) => f.stock < f.cantidad,
+  )
 
   // ¿Esta cotización ya generó una venta? Señal fuerte de "vendida" — más
   // confiable que el estatus, que puede quedar en "borrador" aunque ya se vendió.

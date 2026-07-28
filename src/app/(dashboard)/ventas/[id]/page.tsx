@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil } from "lucide-react"
+import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil, Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
 import { formatMXN2 } from "@/lib/utils"
+import { resumenRegalos, precioReferencia } from "@/lib/regalos"
 
 import { parseFecha } from "@/lib/fecha"
 
@@ -60,11 +61,12 @@ export default async function VentaDetailPage({
   }
   if (!venta) notFound()
 
-  const [{ data: itemRows }, { data: socioRows }, imageMap] = await Promise.all([
+  const [itemsRes, { data: socioRows }, imageMap] = await Promise.all([
     supabase
       .from("venta_items")
       .select(
         `cantidad, precio_unitario, costo_unitario, subtotal, costo_total, sort_order,
+         es_regalo, precio_lista,
          productos(id, sku, nombre, nombre_display, imagen_url, categorias(nombre))`,
       )
       .eq("venta_id", id)
@@ -79,12 +81,32 @@ export default async function VentaDetailPage({
     buildImageMap(),
   ])
 
+  // es_regalo / precio_lista llegan con scripts/add-regalos-cotizaciones.sql;
+  // sin la migración la venta se muestra igual, solo sin marcas de cortesía.
+  let itemRows = itemsRes.data
+  if (
+    itemsRes.error &&
+    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
+  ) {
+    const retry = await supabase
+      .from("venta_items")
+      .select(
+        `cantidad, precio_unitario, costo_unitario, subtotal, costo_total, sort_order,
+         productos(id, sku, nombre, nombre_display, imagen_url, categorias(nombre))`,
+      )
+      .eq("venta_id", id)
+      .order("sort_order", { ascending: true })
+    itemRows = retry.data as typeof itemRows
+  }
+
   type ItemRow = {
     cantidad: number
     precio_unitario: number
     costo_unitario: number
     subtotal: number
     costo_total: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
     productos: {
       id: string
       sku: string | null
@@ -135,6 +157,11 @@ export default async function VentaDetailPage({
     .map(([categoria, d]) => ({ categoria, ...d }))
     .sort((a, b) => b.subtotal - a.subtotal)
   const totalUds = desgloseArray.reduce((s, d) => s + d.unidades, 0)
+
+  // Cortesías entregadas en esta venta. Su costo ya está dentro de
+  // `costo_productos`, así que `ganancia` (GENERATED) ya lo tiene restado:
+  // aquí solo se hace visible cuánto fue.
+  const regalos = resumenRegalos(items)
 
   const COLORES_CAT: Record<string, { bg: string; text: string }> = {
     CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
@@ -273,8 +300,12 @@ export default async function VentaDetailPage({
                 {items.map((it, i) => {
                   const display = it.productos?.nombre_display ?? it.productos?.nombre ?? "—"
                   const img = findImageFor(display, it.productos?.imagen_url ?? null, imageMap)
+                  const regalo = it.es_regalo === true
                   return (
-                    <tr key={`${it.productos?.id ?? "row"}-${i}`}>
+                    <tr
+                      key={`${it.productos?.id ?? "row"}-${i}`}
+                      className={regalo ? "bg-fuchsia-50/50" : undefined}
+                    >
                       <td className="px-3 py-2">
                         {img ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -288,7 +319,15 @@ export default async function VentaDetailPage({
                         )}
                       </td>
                       <td className="px-3 py-2 text-gray-900">
-                        <div className="font-medium">{display}</div>
+                        <div className="flex items-center gap-1.5 font-medium">
+                          {display}
+                          {regalo && (
+                            <span className="inline-flex items-center gap-0.5 rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-700">
+                              <Gift className="size-2.5" />
+                              Regalo
+                            </span>
+                          )}
+                        </div>
                         {it.productos?.sku && (
                           <div className="font-mono text-xs text-gray-500">
                             {it.productos.sku}
@@ -296,14 +335,26 @@ export default async function VentaDetailPage({
                         )}
                       </td>
                       <td className="px-3 py-2 text-center tabular-nums">{it.cantidad}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {formatMXN2(Number(it.precio_unitario))}
+                      <td
+                        className={`px-3 py-2 text-right tabular-nums ${
+                          regalo ? "text-gray-400 line-through" : ""
+                        }`}
+                      >
+                        {formatMXN2(
+                          regalo
+                            ? precioReferencia(it)
+                            : Number(it.precio_unitario),
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-500">
                         {formatMXN2(Number(it.costo_unitario))}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                        {formatMXN2(Number(it.subtotal))}
+                      <td
+                        className={`px-3 py-2 text-right font-semibold tabular-nums ${
+                          regalo ? "text-fuchsia-600" : ""
+                        }`}
+                      >
+                        {regalo ? "GRATIS" : formatMXN2(Number(it.subtotal))}
                       </td>
                     </tr>
                   )
@@ -325,6 +376,20 @@ export default async function VentaDetailPage({
                     </td>
                     <td className="px-3 py-1 text-right tabular-nums text-emerald-700">
                       -{formatMXN2(Number(venta.descuento))}
+                    </td>
+                  </tr>
+                )}
+                {regalos.lineas > 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-1 text-right text-xs uppercase tracking-wide text-fuchsia-700"
+                    >
+                      Regalos · {regalos.piezas} pzs (valor{" "}
+                      {formatMXN2(regalos.valor)}) — costo que se pierde
+                    </td>
+                    <td className="px-3 py-1 text-right tabular-nums text-fuchsia-700">
+                      −{formatMXN2(regalos.costo)}
                     </td>
                   </tr>
                 )}

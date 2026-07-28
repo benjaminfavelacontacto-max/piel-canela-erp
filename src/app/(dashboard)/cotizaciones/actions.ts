@@ -9,6 +9,9 @@ import {
   nombreCorto,
   cambiarTipoNumero,
 } from "@/lib/numero-orden"
+// Si la BD aún no tiene es_regalo/precio_lista (migración pendiente) se
+// reintenta sin esas columnas — ver scripts/add-regalos-cotizaciones.sql.
+import { errorSinColumnasRegalo, sinCamposRegalo } from "@/lib/regalos"
 
 export type SaveItem = {
   producto_id: string
@@ -16,6 +19,10 @@ export type SaveItem = {
   precio_unitario: number
   costo_unitario: number
   subtotal: number
+  /** Cortesía: precio_unitario llega en 0 y el costo cuenta como pérdida. */
+  es_regalo?: boolean
+  /** Precio de catálogo congelado (solo referencia del valor obsequiado). */
+  precio_lista?: number | null
 }
 
 export type SaveCotizacionInput = {
@@ -112,6 +119,22 @@ function sinCamposDescuento<T extends Record<string, unknown>>(row: T) {
   return resto
 }
 
+/** Filas de cotizacion_items listas para insertar (subtotal es GENERATED). */
+function filasItems(cotizacionId: string, items: SaveItem[]) {
+  return items.map((it, i) => ({
+    cotizacion_id: cotizacionId,
+    producto_id: it.producto_id,
+    cantidad: it.cantidad,
+    // Un regalo se persiste con precio 0: así `subtotal` (GENERATED) da 0 y
+    // ningún reporte lo cuenta como ingreso. Ver src/lib/regalos.ts.
+    precio_unitario: it.es_regalo ? 0 : it.precio_unitario,
+    costo_unitario: it.costo_unitario,
+    sort_order: i,
+    es_regalo: it.es_regalo ?? false,
+    precio_lista: it.precio_lista ?? null,
+  }))
+}
+
 export async function saveCotizacion(input: SaveCotizacionInput) {
   const supabase = createAdminClient()
 
@@ -162,18 +185,19 @@ export async function saveCotizacion(input: SaveCotizacionInput) {
 
   if (input.items.length > 0) {
     // cotizacion_items.subtotal también es GENERATED — no se inserta.
-    const itemsRows = input.items.map((it, i) => ({
-      cotizacion_id: cot.id,
-      producto_id: it.producto_id,
-      cantidad: it.cantidad,
-      precio_unitario: it.precio_unitario,
-      costo_unitario: it.costo_unitario,
-      sort_order: i,
-    }))
+    const itemsRows = filasItems(cot.id as string, input.items)
 
-    const { error: itemsErr } = await supabase
+    let { error: itemsErr } = await supabase
       .from("cotizacion_items")
       .insert(itemsRows)
+    if (errorSinColumnasRegalo(itemsErr)) {
+      console.warn(
+        "[saveCotizacion] BD sin migración de regalos; guardando sin es_regalo/precio_lista",
+      )
+      ;({ error: itemsErr } = await supabase
+        .from("cotizacion_items")
+        .insert(itemsRows.map(sinCamposRegalo)))
+    }
 
     if (itemsErr) {
       console.error("[saveCotizacion] insert items falló:", JSON.stringify(itemsErr, null, 2))
@@ -377,10 +401,22 @@ export async function duplicarCotizacion(id: string) {
     throw new Error(insErr?.message ?? "No se pudo duplicar")
   }
 
-  const { data: items, error: itemsErr } = await supabase
+  let { data: items, error: itemsErr } = await supabase
     .from("cotizacion_items")
-    .select("producto_id, cantidad, precio_unitario, costo_unitario, sort_order")
+    .select(
+      "producto_id, cantidad, precio_unitario, costo_unitario, sort_order, es_regalo, precio_lista",
+    )
     .eq("cotizacion_id", id)
+  if (errorSinColumnasRegalo(itemsErr)) {
+    const retry = await supabase
+      .from("cotizacion_items")
+      .select(
+        "producto_id, cantidad, precio_unitario, costo_unitario, sort_order",
+      )
+      .eq("cotizacion_id", id)
+    items = retry.data as typeof items
+    itemsErr = retry.error
+  }
   if (itemsErr) {
     console.error(
       "[duplicarCotizacion] items fetch error:",
@@ -388,17 +424,30 @@ export async function duplicarCotizacion(id: string) {
     )
   }
   if (items && items.length > 0) {
-    const newItems = items.map((it) => ({
+    // La copia conserva las cortesías: duplicar una cotización con regalos
+    // debe volver a regalar lo mismo, no cobrarlo.
+    type ItemDup = (typeof items)[number] & {
+      es_regalo?: boolean
+      precio_lista?: number | null
+    }
+    const newItems = (items as ItemDup[]).map((it) => ({
       cotizacion_id: cot.id,
       producto_id: it.producto_id,
       cantidad: it.cantidad,
       precio_unitario: it.precio_unitario,
       costo_unitario: it.costo_unitario,
       sort_order: it.sort_order,
+      es_regalo: it.es_regalo ?? false,
+      precio_lista: it.precio_lista ?? null,
     }))
-    const { error: insItemsErr } = await supabase
+    let { error: insItemsErr } = await supabase
       .from("cotizacion_items")
       .insert(newItems)
+    if (errorSinColumnasRegalo(insItemsErr)) {
+      ;({ error: insItemsErr } = await supabase
+        .from("cotizacion_items")
+        .insert(newItems.map(sinCamposRegalo)))
+    }
     if (insItemsErr) {
       console.error(
         "[duplicarCotizacion] insert items error:",
@@ -469,17 +518,18 @@ export async function updateCotizacion(
     return { ok: false as const, error: delErr.message }
   }
   if (input.items.length > 0) {
-    const rows = input.items.map((it, i) => ({
-      cotizacion_id: id,
-      producto_id: it.producto_id,
-      cantidad: it.cantidad,
-      precio_unitario: it.precio_unitario,
-      costo_unitario: it.costo_unitario,
-      sort_order: i,
-    }))
-    const { error: insErr } = await supabase
+    const rows = filasItems(id, input.items)
+    let { error: insErr } = await supabase
       .from("cotizacion_items")
       .insert(rows)
+    if (errorSinColumnasRegalo(insErr)) {
+      console.warn(
+        "[updateCotizacion] BD sin migración de regalos; guardando sin es_regalo/precio_lista",
+      )
+      ;({ error: insErr } = await supabase
+        .from("cotizacion_items")
+        .insert(rows.map(sinCamposRegalo)))
+    }
     if (insErr) {
       console.error(
         "[updateCotizacion] insert items error:",
