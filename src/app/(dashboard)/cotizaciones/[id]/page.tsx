@@ -21,7 +21,7 @@ export default async function CotizacionDetailPage({
     .from("cotizaciones")
     .select(
       `id, numero, fecha, valida_hasta, moneda, subtotal, iva, descuento, total,
-       costo_productos, estatus, notas,
+       costo_productos, costo_envio, utilidad_neta, estatus, notas,
        clientes(id, nombre, nombre_negocio, telefono, email, direccion, colonia, codigo_postal, ciudad, estado)`,
     )
     .eq("id", id)
@@ -181,6 +181,12 @@ export default async function CotizacionDetailPage({
       ventaAsociada={ventaAsociada}
       faltantes={faltantes}
       preview={preview}
+      finanzas={{
+        costoProductos: Number(cot.costo_productos ?? 0),
+        costoEnvio: Number(cot.costo_envio ?? 0),
+        utilidadNetaBD:
+          cot.utilidad_neta == null ? null : Number(cot.utilidad_neta),
+      }}
     />
   )
 }
