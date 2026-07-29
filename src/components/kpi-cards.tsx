@@ -11,8 +11,9 @@ import { HelpCircle, AlertTriangle } from "lucide-react"
  * escribe con los importes REALES del documento — nunca una fórmula genérica —
  * y las inconsistencias se marcan con `alerta` en vez de esconderse.
  *
- * Estética alineada al resto del ERP (PageHeader / Finanzas): icono en chip
- * entintado, etiqueta uppercase pequeña, número grande tabular y sub sutil.
+ * Estética glass estilo Apple, alineada a .pc-kpi-card (PageHeader/Finanzas):
+ * tarjeta translúcida con blur, borde blanco, highlight interior superior,
+ * icono en chip entintado, etiqueta uppercase pequeña y número tabular.
  *
  * El popover usa el patrón de capa-para-cerrar (mismo que el selector de
  * cliente de cotizaciones): sin efectos ni listeners globales.
@@ -74,11 +75,11 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
         return (
           <div
             key={c.id}
-            className="relative rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
+            className="relative rounded-2xl border border-white/65 bg-white/60 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-200 hover:-translate-y-px hover:bg-white/75 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-4"
           >
             <div className="flex items-start justify-between gap-2">
               <span
-                className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${t.chip}`}
+                className={`flex size-9 shrink-0 items-center justify-center rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-inset ring-white/50 ${t.chip}`}
               >
                 <Icon className={`size-4 ${t.icon}`} />
               </span>
@@ -102,7 +103,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
               {c.label}
             </div>
             <div
-              className={`mt-0.5 text-xl font-bold tabular-nums leading-tight ${
+              className={`mt-0.5 truncate text-lg font-bold tabular-nums leading-tight sm:text-xl ${
                 c.valorNeutro ? "text-gray-900" : t.value
               }`}
             >
@@ -120,7 +121,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   className="fixed inset-0 z-20"
                   onClick={() => setAbierto(null)}
                 />
-                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 rounded-2xl border border-[rgba(15,23,42,0.08)] bg-white p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18)] sm:left-auto sm:w-[21rem]">
+                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 rounded-2xl border border-white/70 bg-white/85 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
                   <div className="flex items-center gap-2">
                     <span
                       className={`flex size-6 items-center justify-center rounded-lg ${t.chip}`}
@@ -134,7 +135,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   <p className="mt-1.5 text-[11px] leading-snug text-gray-600">
                     {c.ayuda.que}
                   </p>
-                  <ul className="mt-2 space-y-1.5 rounded-xl bg-gray-50/80 p-2.5">
+                  <ul className="mt-2 space-y-1.5 rounded-xl bg-white/70 p-2.5 ring-1 ring-inset ring-[rgba(15,23,42,0.05)]">
                     {c.ayuda.filas.map((f, i) => (
                       <li
                         key={i}
