@@ -65,22 +65,13 @@ export default function DashboardLayout({
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
         style={{
-          borderRight: "1px solid rgba(0,0,0,0.06)",
-          background: "rgba(240,244,240,0.95)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
+          borderRight: "1px solid rgba(0,0,0,0.05)",
+          background: "var(--pc-bg-sidebar)",
         }}
       >
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div
-              className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl"
-              style={{
-                background: "rgba(255,255,255,0.8)",
-                boxShadow:
-                  "0 2px 8px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.9) inset",
-              }}
-            >
+            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-black/5 bg-white">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png"
@@ -122,9 +113,9 @@ export default function DashboardLayout({
         <div
           className="mx-3 mb-4 flex items-center justify-between gap-2 rounded-2xl px-3 py-3"
           style={{
-            background: "rgba(255,255,255,0.6)",
-            border: "1px solid rgba(255,255,255,0.7)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            background: "#FFFFFF",
+            border: "1px solid rgba(0,0,0,0.05)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
           }}
         >
           <div className="flex min-w-0 items-center gap-2.5">
