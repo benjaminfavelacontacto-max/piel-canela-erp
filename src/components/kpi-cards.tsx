@@ -11,9 +11,9 @@ import { HelpCircle, AlertTriangle } from "lucide-react"
  * escribe con los importes REALES del documento — nunca una fórmula genérica —
  * y las inconsistencias se marcan con `alerta` en vez de esconderse.
  *
- * Estética glass estilo Apple, alineada a .pc-kpi-card (PageHeader/Finanzas):
- * tarjeta translúcida con blur, borde blanco, highlight interior superior,
- * icono en chip entintado, etiqueta uppercase pequeña y número tabular.
+ * Estética limpia (Linear/Stripe): tarjeta sólida con borde suave y sombra
+ * casi imperceptible; el glass queda SOLO en el popover del (?) — regla del
+ * design system: glassmorphism únicamente en menús/popovers/modales.
  *
  * El popover usa el patrón de capa-para-cerrar (mismo que el selector de
  * cliente de cotizaciones): sin efectos ni listeners globales.
@@ -75,11 +75,11 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
         return (
           <div
             key={c.id}
-            className="relative rounded-2xl border border-white/65 bg-white/60 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-200 hover:-translate-y-px hover:bg-white/75 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] sm:p-4"
+            className="relative rounded-2xl border border-black/5 bg-white p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-px hover:border-[rgba(15,118,110,0.22)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.05)] sm:p-4"
           >
             <div className="flex items-start justify-between gap-2">
               <span
-                className={`flex size-9 shrink-0 items-center justify-center rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-inset ring-white/50 ${t.chip}`}
+                className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${t.chip}`}
               >
                 <Icon className={`size-4 ${t.icon}`} />
               </span>
@@ -135,7 +135,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   <p className="mt-1.5 text-[11px] leading-snug text-gray-600">
                     {c.ayuda.que}
                   </p>
-                  <ul className="mt-2 space-y-1.5 rounded-xl bg-white/70 p-2.5 ring-1 ring-inset ring-[rgba(15,23,42,0.05)]">
+                  <ul className="mt-2 space-y-1.5 rounded-xl bg-[#FAFAFA] p-2.5 ring-1 ring-inset ring-black/5">
                     {c.ayuda.filas.map((f, i) => (
                       <li
                         key={i}
