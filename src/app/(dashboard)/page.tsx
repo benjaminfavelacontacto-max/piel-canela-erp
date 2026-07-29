@@ -19,11 +19,13 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { formatMXN } from "@/lib/utils"
+import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 import { PortalBadge, type PortalCotizacion } from "./portal-badge"
 import { DashboardHero } from "./dashboard-hero"
 import { DashboardWidgets, type WidgetSlot } from "./dashboard-widgets"
 import { GoalCard } from "./goal-card"
+import { TopProductos, type ProductoRank } from "./top-productos"
 import type { SearchItem } from "./global-search"
 
 import { parseFecha } from "@/lib/fecha"
@@ -121,6 +123,7 @@ export default async function DashboardPage() {
     inversionesRes,
     ventaSociosRes,
     itemsTopMesRes,
+    itemsAllRes,
     todasCotsRecRes,
     todasVentasRecRes,
     cotizacionesPortalRes,
@@ -182,6 +185,11 @@ export default async function DashboardPage() {
       .select("venta_id, cantidad, precio_unitario, productos(nombre, sku)")
       .gte("created_at", monthStart),
     admin
+      .from("venta_items")
+      .select(
+        "venta_id, cantidad, precio_unitario, costo_unitario, productos(nombre, nombre_display, sku, imagen_url, categorias(nombre))",
+      ),
+    admin
       .from("cotizaciones")
       .select(
         "id, numero, total, fecha, created_at, cliente_id, clientes(nombre, nombre_negocio)",
@@ -218,7 +226,10 @@ export default async function DashboardPage() {
   ])
 
   // Excluir clientes internos (Piel Canela) de KPIs y feeds.
-  const internalIds = await getInternalClienteIds()
+  const [internalIds, imageMap] = await Promise.all([
+    getInternalClienteIds(),
+    buildImageMap(),
+  ])
   const isInternalCli = (cli: string | null | undefined) =>
     !!cli && internalIds.has(cli)
 
@@ -460,6 +471,78 @@ export default async function DashboardPage() {
           ? "Se recomienda dar seguimiento a las cotizaciones enviadas."
           : "Todo en orden — buen momento para impulsar ventas."
 
+  // ─── Top productos: qué se mueve, qué deja utilidad, qué cintas gustan ──
+  type ItemAllRow = {
+    venta_id: string
+    cantidad: number
+    precio_unitario: number
+    costo_unitario: number | null
+    productos: {
+      nombre: string
+      nombre_display: string | null
+      sku: string | null
+      imagen_url: string | null
+      categorias: { nombre: string } | null
+    } | null
+  }
+  const itemsAll = (
+    (itemsAllRes.data ?? []) as unknown as ItemAllRow[]
+  ).filter((it) => !excludedVentaIds.has(it.venta_id))
+
+  // Piezas de ESTE mes por producto (badge "+N este mes")
+  const piezasMesPorKey = new Map<string, number>()
+  for (const it of itemsMes) {
+    const k = it.productos?.sku ?? it.productos?.nombre ?? "?"
+    piezasMesPorKey.set(k, (piezasMesPorKey.get(k) ?? 0) + Number(it.cantidad ?? 0))
+  }
+
+  const esCinta = (r: ItemAllRow) => {
+    const sku = (r.productos?.sku ?? "").toUpperCase()
+    const cat = (r.productos?.categorias?.nombre ?? "").toUpperCase()
+    return sku.startsWith("CN-") || cat.includes("CINTA")
+  }
+
+  const prodAgg = new Map<string, ProductoRank & { cinta: boolean }>()
+  for (const it of itemsAll) {
+    const key = it.productos?.sku ?? it.productos?.nombre ?? "?"
+    const display = it.productos?.nombre_display ?? it.productos?.nombre ?? "Producto"
+    const cantidad = Number(it.cantidad ?? 0)
+    const ingresos = cantidad * Number(it.precio_unitario ?? 0)
+    // Utilidad de la partida: (precio − costo) × cantidad. Los regalos van con
+    // precio $0, así que restan utilidad solos — no hay que tratarlos aparte.
+    const utilidad =
+      cantidad * (Number(it.precio_unitario ?? 0) - Number(it.costo_unitario ?? 0))
+    const cur =
+      prodAgg.get(key) ??
+      {
+        nombre: display,
+        sku: it.productos?.sku ?? null,
+        imagen: findImageFor(display, it.productos?.imagen_url ?? null, imageMap),
+        piezas: 0,
+        ingresos: 0,
+        utilidad: 0,
+        margen: 0,
+        piezasMes: piezasMesPorKey.get(key) ?? 0,
+        cinta: esCinta(it),
+      }
+    cur.piezas += cantidad
+    cur.ingresos += ingresos
+    cur.utilidad += utilidad
+    prodAgg.set(key, cur)
+  }
+  const rankBase = Array.from(prodAgg.values()).map((p) => ({
+    ...p,
+    margen: p.ingresos > 0 ? (p.utilidad / p.ingresos) * 100 : 0,
+  }))
+  const masVendidos = [...rankBase].sort((a, b) => b.piezas - a.piezas).slice(0, 5)
+  const masUtilidad = [...rankBase]
+    .sort((a, b) => b.utilidad - a.utilidad)
+    .slice(0, 5)
+  const cintasTop = rankBase
+    .filter((p) => p.cinta)
+    .sort((a, b) => b.piezas - a.piezas)
+    .slice(0, 5)
+
   // ─── Acciones sugeridas (26: ¿qué debo hacer ahora?) ──────────────
   const acciones: { label: string; href: string }[] = []
   if (stockBajoCount > 0)
@@ -658,6 +741,17 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+      ),
+    },
+    {
+      id: "productos",
+      nombre: "Top productos",
+      node: (
+        <TopProductos
+          masVendidos={masVendidos}
+          masUtilidad={masUtilidad}
+          cintasTop={cintasTop}
+        />
       ),
     },
     {
