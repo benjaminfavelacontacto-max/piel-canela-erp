@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, FileText } from "lucide-react"
+import { Plus, FileText, Zap } from "lucide-react"
 import { AnimatedNumber } from "./ventas/estadisticas/animated-number"
 import { GlobalSearch, type SearchItem } from "./global-search"
 
@@ -176,7 +176,15 @@ export function DashboardHero(p: HeroProps) {
             </span>
           </div>
           <div className="flex items-center gap-2 lg:justify-end">
-            <Link href="/cotizaciones/nueva" className="pc-btn-secondary">
+            {/* Móvil → flujo rápido de una mano; desktop → formulario completo */}
+            <Link href="/cotizaciones/rapida" className="pc-btn-secondary sm:hidden">
+              <Zap className="size-4" />
+              Cotización rápida
+            </Link>
+            <Link
+              href="/cotizaciones/nueva"
+              className="pc-btn-secondary hidden sm:inline-flex"
+            >
               <FileText className="size-4" />
               Nueva cotización
             </Link>

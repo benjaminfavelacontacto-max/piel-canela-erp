@@ -98,6 +98,9 @@ export function CotizacionForm({
   const [cantidad, setCantidad] = useState<number | "">(1)
   // Agregar la siguiente partida como cortesía (precio $0, el costo sí pesa).
   const [comoRegalo, setComoRegalo] = useState(false)
+  // En iPhone el documento de 816px se ve diminuto y empuja el formulario:
+  // se muestra solo si el usuario lo pide (en ≥lg siempre está visible).
+  const [verPreviewMovil, setVerPreviewMovil] = useState(false)
   // Borradores de texto por ítem para que el input de cantidad se pueda vaciar
   // mientras se edita (la cantidad real solo se confirma con un número ≥1).
   const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
@@ -958,31 +961,63 @@ export function CotizacionForm({
           </label>
         </div>
 
-        <div className="flex flex-col gap-2">
+        {/* Acciones: barra fija sobre el contenido en móvil (siempre a la
+            mano, respetando el home indicator) y bloque normal en desktop. */}
+        <div className="pc-safe-bottom fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-black/5 bg-white/95 px-4 pt-3 backdrop-blur-xl lg:static lg:z-auto lg:flex-col lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          <div className="flex min-w-0 flex-1 flex-col justify-center lg:hidden">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+              Total
+            </span>
+            <span className="text-[19px] font-bold leading-none tabular-nums text-gray-900">
+              {formatMXN2(total)}
+            </span>
+          </div>
           <button
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="flex items-center justify-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
+            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 lg:h-auto lg:w-full lg:py-2.5"
           >
             <Save className="size-4" />
-            {pending ? "Guardando…" : "Guardar Cotización"}
+            {pending ? "Guardando…" : "Guardar"}
           </button>
           <button
             type="button"
             onClick={handlePdf}
-            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="pc-tap hidden h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:flex lg:h-auto lg:w-full lg:py-2.5"
           >
             <FileDown className="size-4" />
-            Descargar PDF
+            <span className="hidden lg:inline">Descargar </span>PDF
           </button>
         </div>
+        {/* Espacio para que la barra fija no tape el último campo en móvil */}
+        <div className="h-16 lg:hidden" />
       </aside>
 
       <section className="min-w-0">
+        {/* Toggle del preview solo en móvil */}
+        <button
+          type="button"
+          onClick={() => setVerPreviewMovil((v) => !v)}
+          aria-expanded={verPreviewMovil}
+          className="pc-tap mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-black/5 bg-white px-4 py-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50 lg:hidden"
+        >
+          <span className="min-w-0">
+            <span className="block text-[13.5px] font-semibold text-gray-900">
+              {verPreviewMovil ? "Ocultar" : "Ver"} vista previa del PDF
+            </span>
+            <span className="block text-[11.5px] text-gray-500">
+              {items.length} {items.length === 1 ? "producto" : "productos"} ·{" "}
+              {formatMXN2(total)}
+            </span>
+          </span>
+          <FileText className="size-4 shrink-0 text-gray-400" />
+        </button>
         <div
           ref={previewBoxRef}
-          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:block ${
+            verPreviewMovil ? "block" : "hidden"
+          }`}
           style={{ height: previewH * previewScale }}
         >
           <div
