@@ -207,7 +207,11 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
           {kpi.currency && <CurrencyChip code={kpi.currency} />}
         </div>
         {kpi.sparkline && kpi.sparkline.length > 1 && (
-          <Sparkline points={kpi.sparkline} />
+          <div className="flex min-w-0 flex-1 justify-end">
+            <div className="w-full max-w-[80px]">
+              <Sparkline points={kpi.sparkline} />
+            </div>
+          </div>
         )}
       </div>
 
@@ -349,13 +353,15 @@ function Sparkline({ points }: { points: number[] }) {
   const positive = last >= first
   const stroke = positive ? "#0F766E" : "#94A3B8"
   return (
+    // Fluido: sin width fijo ni shrink-0 — con 5-6 KPIs por fila el SVG de
+    // 80px se salía del borde de la tarjeta. preserveAspectRatio="none" deja
+    // que se comprima al ancho disponible (máx. 80px, ver el wrapper).
     <svg
-      width={w}
-      height={h}
       viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
       fill="none"
-      className="shrink-0 transition-opacity duration-180 group-hover:opacity-100"
-      style={{ opacity: 0.45, transform: "scale(0.92)", transformOrigin: "right center" }}
+      className="h-6 w-full transition-opacity duration-180 group-hover:opacity-100"
+      style={{ opacity: 0.45 }}
       aria-hidden
     >
       <path
