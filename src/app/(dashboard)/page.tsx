@@ -14,6 +14,7 @@ import {
   BrainCircuit,
   AlertTriangle,
   CircleDollarSign,
+  Zap,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -1002,6 +1003,12 @@ export default async function DashboardPage() {
         className="pc-enter flex flex-wrap gap-2"
         style={{ animationDelay: "60ms" }}
       >
+        <Link
+          href="/cotizaciones/rapida"
+          className="pc-quick-action !border-[#0F766E]/25 !text-[#0F766E]"
+        >
+          <Zap className="size-4" /> Cotización rápida
+        </Link>
         <Link href="/ventas/nueva" className="pc-quick-action">
           <Plus className="size-4" /> Nueva venta
         </Link>

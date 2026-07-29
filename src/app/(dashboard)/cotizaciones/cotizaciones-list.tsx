@@ -1215,13 +1215,26 @@ export function CotizacionesList({
           },
         ]}
         actions={
-          <Link
-            href="/cotizaciones/nueva"
-            className="inline-flex items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#115E59]"
-          >
-            <Plus className="size-4" />
-            Nueva cotización
-          </Link>
+          <>
+            {/* En móvil manda el flujo rápido (una mano, con el cliente
+                enfrente); el formulario completo queda un toque más lejos. */}
+            <Link
+              href="/cotizaciones/rapida"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition hover:bg-[#115E59] active:scale-[0.98]"
+            >
+              <Zap className="size-4" />
+              <span className="sm:hidden">Cotización rápida</span>
+              <span className="hidden sm:inline">Rápida</span>
+            </Link>
+            <Link
+              href="/cotizaciones/nueva"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-black/10 bg-white px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+            >
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Nueva cotización</span>
+              <span className="sm:hidden">Completa</span>
+            </Link>
+          </>
         }
       />
 

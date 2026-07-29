@@ -358,6 +358,54 @@
     }
   }
 
+  /* ─── iPhone / táctil ─────────────────────────────────────────
+     1) iOS hace ZOOM automático al enfocar un input con font-size < 16px.
+        En pantallas chicas forzamos 16px para que no salte el layout.
+     2) Sin highlight gris al tocar y sin delay de 300ms.
+     3) Barra de acción fija que respeta el home indicator. */
+  @media (max-width: 640px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+  .pc-tap {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  /* Fila táctil: mínimo 44px de alto (Apple HIG) */
+  .pc-touch-row {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pc-safe-bottom {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Stepper de cantidad (− valor +) */
+  .pc-stepper-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-color: var(--pc-bg-hover);
+    color: var(--pc-text);
+    font-weight: 600;
+    transition: all 120ms var(--pc-ease);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pc-stepper-btn:active {
+    transform: scale(0.92);
+    background-color: #E5E9EC;
+  }
+  .pc-stepper-btn:disabled {
+    opacity: 0.4;
+  }
+
   /* ─── Indicador "en vivo" (22) ─── */
   @keyframes pc-pulse {
     0%, 100% { opacity: 1; }
