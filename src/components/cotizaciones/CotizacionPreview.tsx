@@ -26,6 +26,93 @@ const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
+/**
+ * Etiqueta tipo píldora (REGALO, −15%…).
+ *
+ * `display: inline-block` + `lineHeight` FIJO no es cosmético: html2canvas
+ * (el rasterizador del PDF) calcula la caja de un `<span>` inline con la
+ * métrica de la línea del padre, y cuando la fuente real difiere de la que
+ * mide —pasa en Chrome/macOS con `-apple-system`— el fondo redondeado sale
+ * desalineado y corta el texto. Con una caja de bloque y altura de línea
+ * propia, el fondo se dibuja según el layout real y ya no depende de la
+ * fuente. Mismo motivo para `whiteSpace: nowrap`.
+ */
+function Pildora({
+  children,
+  bg,
+  color = "#ffffff",
+  borde,
+}: {
+  children: React.ReactNode
+  bg: string
+  color?: string
+  borde?: string
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "1px 6px",
+        borderRadius: 8,
+        background: bg,
+        border: borde ? `1px solid ${borde}` : undefined,
+        color,
+        fontSize: 8.5,
+        fontWeight: 700,
+        lineHeight: "12px",
+        letterSpacing: "0.04em",
+        whiteSpace: "nowrap",
+        verticalAlign: "middle",
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+/**
+ * Precio tachado (el de antes del descuento).
+ *
+ * La línea NO usa `text-decoration: line-through`: html2canvas la dibuja a
+ * partir de la métrica de la fuente y en el PDF salía flotando ARRIBA del
+ * número, pareciendo un borde. Aquí es un rectángulo absoluto de 1px —
+ * una caja normal, que el rasterizador sí coloca bien.
+ */
+function PrecioTachado({
+  children,
+  color = "#9a9a9a",
+  fontSize = 10,
+}: {
+  children: React.ReactNode
+  color?: string
+  fontSize?: number
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        position: "relative",
+        color,
+        fontSize,
+        lineHeight: `${Math.round(fontSize * 1.3)}px`,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+      <span
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "50%",
+          height: 1,
+          background: color,
+        }}
+      />
+    </span>
+  )
+}
+
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
   month: "2-digit",
@@ -372,57 +459,32 @@ export function CotizacionPreview({
                       }}
                     >
                       {it.nombre}
+                    </p>
+                    {/* La marca va en el 2º renglón, con el SKU: en la línea
+                        del nombre (13px) competía con su altura de línea y
+                        con nombres largos se encimaba. */}
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "#888",
+                        lineHeight: "14px",
+                        margin: "2px 0 0 0",
+                      }}
+                    >
+                      {it.sku}
                       {regalo && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            padding: "1px 6px",
-                            borderRadius: 8,
-                            background: GIFT,
-                            color: "#ffffff",
-                            fontSize: 8.5,
-                            fontWeight: 700,
-                            letterSpacing: "0.08em",
-                            verticalAlign: "middle",
-                          }}
-                        >
-                          REGALO
+                        <span style={{ marginLeft: it.sku ? 6 : 0 }}>
+                          <Pildora bg={GIFT}>REGALO</Pildora>
                         </span>
                       )}
                       {conDesc && (
-                        // Etiqueta corta ("−15%", "−$25.00 c/u"): con la
-                        // palabra "DESCUENTO" el badge se partía en dos líneas
-                        // y pisaba el SKU.
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            padding: "1px 6px",
-                            borderRadius: 8,
-                            background: SAVE,
-                            color: "#ffffff",
-                            fontSize: 8.5,
-                            fontWeight: 700,
-                            letterSpacing: "0.06em",
-                            verticalAlign: "middle",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {`−${etiquetaDescuento(it)}`}
+                        <span style={{ marginLeft: it.sku ? 6 : 0 }}>
+                          <Pildora bg={SAVE}>
+                            {`−${etiquetaDescuento(it)}`}
+                          </Pildora>
                         </span>
                       )}
                     </p>
-                    {it.sku && (
-                      <p
-                        style={{
-                          fontSize: 11,
-                          color: "#888",
-                          lineHeight: 1.2,
-                          margin: "1px 0 0 0",
-                        }}
-                      >
-                        {it.sku}
-                      </p>
-                    )}
                   </div>
                   <span
                     style={{
@@ -454,27 +516,23 @@ export function CotizacionPreview({
                         cuánto vale lo que se le obsequia. Con descuento se
                         tacha arriba el de catálogo y abajo va el rebajado. */}
                     {conDesc && (
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "#9a9a9a",
-                          textDecoration: "line-through",
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {formatMXN2(lista)}
+                      <div style={{ lineHeight: "13px" }}>
+                        <PrecioTachado>{formatMXN2(lista)}</PrecioTachado>
                       </div>
                     )}
                     <div
                       style={{
                         color: regalo ? "#999" : conDesc ? SAVE : "#444",
                         fontWeight: conDesc ? 700 : 400,
-                        textDecoration: regalo ? "line-through" : undefined,
-                        lineHeight: 1.2,
+                        lineHeight: "15px",
                       }}
                     >
-                      {formatMXN2(
-                        regalo ? precioReferencia(it) : it.precio_unitario,
+                      {regalo ? (
+                        <PrecioTachado fontSize={12}>
+                          {formatMXN2(precioReferencia(it))}
+                        </PrecioTachado>
+                      ) : (
+                        formatMXN2(it.precio_unitario)
                       )}
                     </div>
                   </div>
@@ -633,17 +691,22 @@ export function CotizacionPreview({
                   siguiente. Con descuento por producto arranca en el precio de
                   lista para que el ahorro se vea desde el primer renglón. */}
               <div style={{ marginBottom: 10 }}>
+                {/* Etiquetas cortas a propósito: en 250px las de dos palabras
+                    largas se partían en dos renglones y ensuciaban la
+                    cascada. */}
                 {hayDescProductos && (
                   <>
                     <LineaTotal
-                      label="Subtotal precios de lista"
+                      label="Subtotal de lista"
                       value={formatMXN2(descuentos.brutoLista)}
                       color="#777"
                     />
                     <LineaTotal
-                      label={`Descuento en ${descuentos.lineas} ${
-                        descuentos.lineas === 1 ? "producto" : "productos"
-                      }`}
+                      label={
+                        descuentos.lineas === 1
+                          ? "Descuento producto"
+                          : "Descuento productos"
+                      }
                       value={`− ${formatMXN2(descuentos.monto)}`}
                       color={SAVE}
                       strong
@@ -651,7 +714,7 @@ export function CotizacionPreview({
                   </>
                 )}
                 <LineaTotal
-                  label={hayDescProductos ? "Subtotal con descuento" : "Subtotal"}
+                  label={hayDescProductos ? "Subtotal con desc." : "Subtotal"}
                   value={formatMXN2(data.subtotal)}
                   color="#333"
                   strong
@@ -660,7 +723,7 @@ export function CotizacionPreview({
                 {hayDescGlobal && (
                   <>
                     <LineaTotal
-                      label={`Descuento general ${pctGlobal.toFixed(1)}%`}
+                      label={`Desc. general ${pctGlobal.toFixed(1)}%`}
                       value={`− ${formatMXN2(data.descuento)}`}
                       color={SAVE}
                       strong
@@ -863,20 +926,10 @@ export function CotizacionPreview({
             >
               <span style={{ color: "#333" }}>
                 {d.concepto}
-                <span
-                  style={{
-                    marginLeft: 6,
-                    padding: "1px 5px",
-                    borderRadius: 6,
-                    background: SAVE_BG,
-                    border: `1px solid ${SAVE_LINE}`,
-                    color: SAVE,
-                    fontSize: 8.5,
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {`−${d.etiqueta}`}
+                <span style={{ marginLeft: 6 }}>
+                  <Pildora bg={SAVE_BG} color={SAVE} borde={SAVE_LINE}>
+                    {`−${d.etiqueta}`}
+                  </Pildora>
                 </span>
                 {d.detalle && (
                   <span
@@ -899,12 +952,16 @@ export function CotizacionPreview({
                 style={{
                   textAlign: "right",
                   color: "#999",
-                  textDecoration:
-                    d.precioLista == null ? undefined : "line-through",
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {d.precioLista == null ? "varios" : formatMXN2(d.precioLista)}
+                {d.precioLista == null ? (
+                  "varios"
+                ) : (
+                  <PrecioTachado fontSize={11}>
+                    {formatMXN2(d.precioLista)}
+                  </PrecioTachado>
+                )}
               </span>
               <span
                 style={{
@@ -944,19 +1001,10 @@ export function CotizacionPreview({
             >
               <span style={{ color: "#333" }}>
                 Descuento general sobre el pedido
-                <span
-                  style={{
-                    marginLeft: 6,
-                    padding: "1px 5px",
-                    borderRadius: 6,
-                    background: SAVE_BG,
-                    border: `1px solid ${SAVE_LINE}`,
-                    color: SAVE,
-                    fontSize: 8.5,
-                    fontWeight: 700,
-                  }}
-                >
-                  {`−${pctGlobal.toFixed(1)}%`}
+                <span style={{ marginLeft: 6 }}>
+                  <Pildora bg={SAVE_BG} color={SAVE} borde={SAVE_LINE}>
+                    {`−${pctGlobal.toFixed(1)}%`}
+                  </Pildora>
                 </span>
                 <span style={{ color: "#999", marginLeft: 6, fontSize: 10 }}>
                   {`sobre ${formatMXN2(data.subtotal)}`}
@@ -1074,11 +1122,14 @@ function LineaTotal({
     >
       <span
         style={{
-          fontSize: 9,
+          fontSize: 8.5,
           color: "#888",
-          letterSpacing: "0.05em",
+          letterSpacing: "0.03em",
           textTransform: "uppercase",
           lineHeight: 1.3,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {label}
