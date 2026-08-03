@@ -211,6 +211,17 @@ Para fechas y labels generados dinámicamente (especialmente cuando vienen de Py
 - Fórmula ganancia: `ventas.total - ventas.costo_productos - ventas.costo_envio` (donde `total = subtotal + iva − descuento`)
 - Banner ámbar en formularios deja claro que el toggle define el IVA real cobrado
 
+## Regla: Descuentos (por producto vs global)
+Son DOS cosas distintas y no se suman en la misma columna:
+- **Por producto** (`cotizacion_items` / `venta_items`): la partida guarda el precio YA REBAJADO en `precio_unitario`, el de catálogo congelado en `precio_lista` y CÓMO se capturó en `descuento_tipo` (`pct` | `monto`) + `descuento_valor` (15 = 15%, 25 = **$25 por pieza**). Como el precio rebajado es el que se persiste, `subtotal` (GENERATED), `cotizaciones.subtotal`, el IVA, la utilidad y la venta espejo cuadran solos — no hay que tocar ninguna columna generada.
+- **Global** (`cotizaciones.descuento`): se resta DESPUÉS del subtotal y antes del IVA. **NUNCA** sumarle el descuento por producto: ya está dentro del subtotal, se descontaría dos veces.
+- El subtotal a precio de lista NO se guarda: se reconstruye desde las partidas con `resumenDescuentos()`.
+- Regalo ≠ descuento: la cortesía es 100% y se contabiliza aparte (`src/lib/regalos.ts`); al marcar una partida como regalo se limpia su descuento, y los regalos se excluyen del subtotal bruto para no inflar el "descuento por productos".
+- **Descuento por lote**: `aplicarDescuentoLote(items, filtro, tipo, valor)` aplica la misma rebaja a toda una familia (típico "10% a todas las cintas"). Siempre calcula sobre `precio_lista`, así que reaplicar NO encadena descuentos. Las familias las define `src/lib/grupos-productos.ts` (`grupoProducto` por prefijo de SKU → categoría → nombre).
+- En el PDF, las partidas de la misma familia con el mismo descuento se presentan como UN renglón de lote (`renglonesDescuento`).
+- Matemática única en `src/lib/descuentos.ts` (`totalesCotizacion` la usan el form de escritorio, la cotización rápida y el PDF). Verificación: `node scripts/verify-descuentos-math.mjs`.
+- Migración: `scripts/add-descuento-por-producto.sql` (columnas + RPC `crear_venta_desde_cotizacion` recreada para copiarlas a la venta). La app degrada si no se ha corrido: guarda el precio rebajado pero pierde la etiqueta "−15%".
+
 ## Regla: Costos USD/MXN y tipo de cambio (inventario)
 - `productos` tiene 4 columnas dolarizadas:
   - `precio_usd` — precio público referencial en USD por SKU

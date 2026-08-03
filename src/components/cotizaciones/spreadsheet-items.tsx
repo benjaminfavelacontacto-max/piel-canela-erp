@@ -4,6 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { CotizacionItem } from "@/lib/cotizacion-types"
 import { formatMXN2 } from "@/lib/utils"
 import { precioReferencia } from "@/lib/regalos"
+import {
+  precioLista,
+  descuentoUnitario,
+  tieneDescuento,
+  etiquetaDescuento,
+} from "@/lib/descuentos"
+
+const round2 = (n: number) => Math.round(n * 100) / 100
 
 type ColKey =
   | "#"
@@ -11,6 +19,8 @@ type ColKey =
   | "nombre"
   | "peso"
   | "cantidad"
+  | "precio_lista"
+  | "descuento"
   | "precio_unitario"
   | "costo_unitario"
   | "subtotal"
@@ -30,6 +40,8 @@ const COLS: Col[] = [
   { key: "nombre", label: "Producto", selectable: false },
   { key: "peso", label: "Peso", selectable: false },
   { key: "cantidad", label: "Cant.", selectable: true, align: "right", format: "number" },
+  { key: "precio_lista", label: "P. Lista", selectable: true, align: "right", format: "currency" },
+  { key: "descuento", label: "Desc.", selectable: true, align: "right", format: "currency" },
   { key: "precio_unitario", label: "P. Unit.", selectable: true, align: "right", format: "currency" },
   { key: "costo_unitario", label: "Costo unit.", selectable: true, align: "right", format: "currency" },
   { key: "subtotal", label: "Subtotal", selectable: true, align: "right", format: "currency" },
@@ -42,6 +54,12 @@ function cellValue(it: CotizacionItem, key: ColKey): number | null {
   switch (key) {
     case "cantidad":
       return Number(it.cantidad)
+    case "precio_lista":
+      // Sin descuento ni regalo, el precio de lista ES el cobrado.
+      return precioLista(it)
+    case "descuento":
+      // Ahorro de toda la partida (por pieza × cantidad).
+      return round2(descuentoUnitario(it) * Number(it.cantidad))
     case "precio_unitario":
       return Number(it.precio_unitario)
     case "costo_unitario":
@@ -310,6 +328,14 @@ export function SpreadsheetItems({
                               Regalo
                             </span>
                           )}
+                          {tieneDescuento(it) && (
+                            <span
+                              className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-700"
+                              title={`Precio de lista ${formatMXN2(precioLista(it))} c/u · se cobra ${formatMXN2(it.precio_unitario)}`}
+                            >
+                              −{etiquetaDescuento(it)}
+                            </span>
+                          )}
                         </span>
                       )
                     } else if (c.key === "peso") {
@@ -318,6 +344,16 @@ export function SpreadsheetItems({
                           {it.peso ?? "—"}
                         </span>
                       )
+                    } else if (c.key === "descuento") {
+                      const v = cellValue(it, c.key) ?? 0
+                      display =
+                        v > 0 ? (
+                          <span className="font-medium text-emerald-700">
+                            − {formatMXN2(v)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )
                     } else {
                       const v = cellValue(it, c.key)
                       display = fmt(v, c.format)

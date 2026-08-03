@@ -61,7 +61,9 @@ export function esRegalo(it: LineaRegalo): boolean {
  * el cobrado. En un regalo `precio_unitario` es 0, así que sin `precio_lista`
  * el valor obsequiado se reporta como 0 (nunca infla la cifra).
  */
-export function precioReferencia(it: LineaRegalo): number {
+export function precioReferencia(
+  it: Pick<LineaRegalo, "precio_unitario" | "precio_lista">,
+): number {
   const lista = Number(it.precio_lista ?? 0)
   if (lista > 0) return lista
   return Number(it.precio_unitario ?? 0)
@@ -87,18 +89,29 @@ export function resumenRegalos(items: readonly LineaRegalo[]): ResumenRegalos {
 }
 
 /**
- * Descuento EFECTIVO que recibió el cliente: el descuento explícito más el
- * valor de lo regalado, sobre lo que habría pagado sin cortesías.
+ * Descuento EFECTIVO que recibió el cliente: todo lo que se le rebajó
+ * (descuento global + descuentos por producto + valor de lo regalado) sobre lo
+ * que habría pagado a precio de lista y sin cortesías.
  * Sirve para detectar el caso "0% de descuento" que en realidad regaló 15%.
+ *
+ * `brutoLista`/`descuentoProductos` son opcionales por compatibilidad: sin
+ * ellos el cálculo es el de antes (solo descuento global + regalos).
  */
 export function descuentoEfectivoPct(args: {
   subtotal: number
   descuento: number
   valorRegalos: number
+  /** Subtotal a precio de lista, antes de los descuentos por producto. */
+  brutoLista?: number
+  /** Suma de los descuentos por producto. */
+  descuentoProductos?: number
 }): number {
-  const base = args.subtotal + args.valorRegalos
+  const bruto = args.brutoLista ?? args.subtotal
+  const base = bruto + args.valorRegalos
   if (base <= 0) return 0
-  return ((args.descuento + args.valorRegalos) / base) * 100
+  const ahorro =
+    args.descuento + args.valorRegalos + (args.descuentoProductos ?? 0)
+  return (ahorro / base) * 100
 }
 
 /**

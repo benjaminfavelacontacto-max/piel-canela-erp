@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import type { Cliente, CotizacionItem, Producto } from "@/lib/cotizacion-types"
+import { fetchCotizacionItems } from "@/lib/cotizacion-items-query"
+import type { TipoDescuento } from "@/lib/descuentos"
 import { CotizacionForm } from "../../nueva/cotizacion-form"
 import type { CotizacionFormInitial } from "../../nueva/cotizacion-form"
 
@@ -54,34 +56,16 @@ export default async function EditarCotizacionPage({
       .select("id")
       .eq("nombre", "Pública MXN")
       .maybeSingle(),
-    supabase
-      .from("cotizacion_items")
-      .select(
-        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-         es_regalo, precio_lista,
-         productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
-      )
-      .eq("cotizacion_id", id)
-      .order("sort_order", { ascending: true }),
+    // Degrada solo si falta alguna migración de partidas (regalos / descuento
+    // por producto) — ver src/lib/cotizacion-items-query.ts.
+    fetchCotizacionItems(
+      supabase,
+      id,
+      `productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
+    ),
   ])
 
-  // Sin la migración de regalos, reintenta sin esas columnas (ver
-  // scripts/add-regalos-cotizaciones.sql).
-  let itemsData = itemsRes.data
-  if (
-    itemsRes.error &&
-    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
-  ) {
-    const retry = await supabase
-      .from("cotizacion_items")
-      .select(
-        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-         productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
-      )
-      .eq("cotizacion_id", id)
-      .order("sort_order", { ascending: true })
-    itemsData = retry.data as typeof itemsData
-  }
+  const itemsData = itemsRes.rows
 
   const clientes = (clientesRes.data ?? []) as Cliente[]
   const listaId = listaRes.data?.id as string | undefined
@@ -144,6 +128,8 @@ export default async function EditarCotizacionPage({
     subtotal: number
     es_regalo?: boolean | null
     precio_lista?: number | null
+    descuento_tipo?: TipoDescuento | null
+    descuento_valor?: number | null
     productos: {
       id: string
       sku: string | null
@@ -173,6 +159,8 @@ export default async function EditarCotizacionPage({
         subtotal: Number(r.subtotal),
         es_regalo: r.es_regalo === true,
         precio_lista: r.precio_lista != null ? Number(r.precio_lista) : null,
+        descuento_tipo: r.descuento_tipo ?? null,
+        descuento_valor: Number(r.descuento_valor ?? 0),
       }
     },
   )
