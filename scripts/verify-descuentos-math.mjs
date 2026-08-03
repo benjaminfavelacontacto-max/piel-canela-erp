@@ -34,7 +34,9 @@ const {
   renglonesDescuento,
   aplicarDescuentoLinea,
   aplicarDescuentoLote,
+  conCantidad,
   precioConDescuento,
+  descuentoPartida,
   etiquetaDescuento,
 } = await import(salida)
 
@@ -66,10 +68,15 @@ function linea(nombre, precio, cantidad, desc, sku = null) {
   return { ...base, ...aplicarDescuentoLinea(base, desc.tipo, desc.valor) }
 }
 
-console.log("— Precio con descuento (pieza a pieza) —")
+console.log("— Precio con descuento —")
 check("15% de 2,113", precioConDescuento(2113, "pct", 15), 1796.05)
-check("$25 por pieza sobre 150", precioConDescuento(150, "monto", 25), 125)
-check("descuento mayor al precio se topa en 0", precioConDescuento(150, "monto", 900), 0)
+check("$250 en 10 pzs de $150 → $25 menos c/u", precioConDescuento(150, "monto", 250, 10), 125)
+check("$500 en 4 pzs de $2,113 → $125 menos c/u", precioConDescuento(2113, "monto", 500, 4), 1988)
+check(
+  "monto mayor al importe de la partida se topa en 0",
+  precioConDescuento(150, "monto", 9000, 10),
+  0,
+)
 check("101% se topa en 100%", precioConDescuento(150, "pct", 101), 0)
 check("sin descuento deja el precio", precioConDescuento(150, "pct", 0), 150)
 
@@ -94,10 +101,32 @@ console.log("\n— Cambiar de 15% a 20% recalcula sobre la LISTA, no en cascada 
 const l1b = { ...l1, ...aplicarDescuentoLinea(l1, "pct", 20) }
 check("precio con 20% de 2,113", l1b.precio_unitario, 1690.4)
 
+console.log("\n— Descuento en MONTO: es de la partida, no por pieza —")
+const enMonto = linea("Cinta Naranja", 150, 10, { tipo: "monto", valor: 250 })
+check("precio unitario (250 ÷ 10 piezas)", enMonto.precio_unitario, 125)
+check("ahorro de la partida = lo tecleado", descuentoPartida(enMonto), 250)
+check("etiqueta muestra el monto de la partida", etiquetaDescuento(enMonto), "$250.00")
+
+console.log("\n— Cambiar la cantidad NO congela el monto tecleado —")
+let reCantidad = conCantidad(enMonto, 20)
+check("ahorro sigue siendo $250 con 20 pzs", descuentoPartida(reCantidad), 250)
+check("precio unitario baja a la mitad del descuento", reCantidad.precio_unitario, 137.5)
+reCantidad = conCantidad(enMonto, 5)
+check("ahorro sigue siendo $250 con 5 pzs", descuentoPartida(reCantidad), 250)
+check("precio unitario", reCantidad.precio_unitario, 100)
+const rePct = conCantidad(l1, 10)
+check("un descuento en % no cambia de precio al variar cantidad", rePct.precio_unitario, 1796.05)
+check("y su ahorro escala con las piezas", descuentoPartida(rePct), 3169.5)
+
+console.log("\n— Monto que no divide exacto: el centavo se ve, no se inventa —")
+const impar = linea("Café Fit", 1498, 3, { tipo: "monto", valor: 100 })
+check("precio unitario redondeado", impar.precio_unitario, 1464.67)
+check("ahorro real (3 × 33.33)", descuentoPartida(impar), 99.99)
+
 console.log("\n— Cotización mixta: 2 con descuento + 1 sin + 1 regalo —")
 const items = [
   linea("Ametista UV 1", 2113, 4, { tipo: "pct", valor: 15 }), // ahorra 1,267.80
-  linea("Cinta Naranja", 150, 10, { tipo: "monto", valor: 25 }), // ahorra   250.00
+  linea("Cinta Naranja", 150, 10, { tipo: "monto", valor: 250 }), // ahorra 250.00
   linea("Café Fit", 1498, 4), // sin descuento
   {
     nombre: "Cinta regalo",

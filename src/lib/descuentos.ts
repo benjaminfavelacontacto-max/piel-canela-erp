@@ -8,7 +8,8 @@
  *     · `precio_lista`     → precio de catálogo congelado (el de ANTES)
  *     · `precio_unitario`  → precio YA con el descuento aplicado (el que paga)
  *     · `descuento_tipo`   → 'pct' | 'monto' (cómo se capturó)
- *     · `descuento_valor`  → el número tecleado (15 = 15%, 25 = $25 por pieza)
+ *     · `descuento_valor`  → el número tecleado (15 = 15%, 500 = $500 a TODA
+ *                            la partida, que se reparte entre sus piezas)
  *
  *   Guardar el precio ya rebajado en `precio_unitario` es lo que hace que NADA
  *   aguas abajo tenga que cambiar: `subtotal` (GENERATED = cantidad ×
@@ -44,7 +45,7 @@ export type LineaDescuento = {
   precio_lista?: number | null
   es_regalo?: boolean | null
   descuento_tipo?: TipoDescuento | null
-  /** % (15 = 15%) o $ POR PIEZA, según `descuento_tipo`. */
+  /** % (15 = 15%) o $ de TODA la partida (500 = $500), según `descuento_tipo`. */
   descuento_valor?: number | null
 }
 
@@ -65,19 +66,29 @@ export function precioLista(it: LineaDescuento): number {
 
 /**
  * Precio unitario final tras aplicar un descuento al precio de lista.
- * `valor` es % cuando `tipo === 'pct'` y $ POR PIEZA cuando es 'monto'.
- * Nunca deja el precio por debajo de 0 ni el descuento por encima del precio.
+ * `valor` es % cuando `tipo === 'pct'`, y $ de TODA LA PARTIDA cuando es
+ * 'monto' — en ese caso se reparte entre las piezas (por eso hace falta
+ * `cantidad`). Nunca deja el precio por debajo de 0 ni el descuento por
+ * encima del importe de la partida.
+ *
+ * OJO con 'monto': el precio unitario se redondea a centavos, así que un
+ * monto que no divide exacto (p. ej. $100 entre 3 piezas) deja el ahorro real
+ * en $99.99. La fuente de verdad es siempre `precio_unitario`.
  */
 export function precioConDescuento(
   lista: number,
   tipo: TipoDescuento | null | undefined,
   valor: number | null | undefined,
+  cantidad: number = 1,
 ): number {
   const base = Number(lista ?? 0)
   const v = Number(valor ?? 0)
+  const piezas = Math.max(1, Number(cantidad ?? 1))
   if (!(base > 0) || !(v > 0)) return round2(Math.max(0, base))
   const rebaja =
-    tipo === "pct" ? base * (Math.min(100, v) / 100) : Math.min(base, v)
+    tipo === "pct"
+      ? base * (Math.min(100, v) / 100)
+      : Math.min(base * piezas, v) / piezas
   return round2(Math.max(0, base - rebaja))
 }
 
@@ -94,6 +105,11 @@ export function descuentoUnitario(it: LineaDescuento): number {
   return round2(precioLista(it) - Number(it.precio_unitario ?? 0))
 }
 
+/** Descuento en pesos de TODA la partida (por pieza × cantidad). */
+export function descuentoPartida(it: LineaDescuento): number {
+  return round2(descuentoUnitario(it) * Number(it.cantidad ?? 0))
+}
+
 /** % real de descuento de la partida (derivado de los precios, no del input). */
 export function descuentoPct(it: LineaDescuento): number {
   const lista = precioLista(it)
@@ -102,7 +118,9 @@ export function descuentoPct(it: LineaDescuento): number {
 }
 
 /**
- * Etiqueta corta de cómo se capturó el descuento: "15%" o "$25.00 c/u".
+ * Etiqueta corta de cómo se capturó el descuento: "15%" o "$500.00".
+ * En 'monto' se muestra lo que se rebajó de la partida completa (derivado de
+ * los precios, no del input: así refleja el redondeo real).
  * Si no se guardó el tipo (cotización vieja), se deriva el % de los precios.
  */
 export function etiquetaDescuento(it: LineaDescuento): string {
@@ -112,7 +130,7 @@ export function etiquetaDescuento(it: LineaDescuento): string {
     return `${trimPct(valor)}%`
   }
   if (it.descuento_tipo === "monto" && valor > 0) {
-    return `${fmt2(descuentoUnitario(it))} c/u`
+    return fmt2(descuentoPartida(it))
   }
   return `${trimPct(descuentoPct(it))}%`
 }
@@ -146,8 +164,10 @@ export type DetalleDescuento = {
   monto: number
   /** % de descuento de la partida. */
   pct: number
-  /** "15%" o "$25.00 c/u". */
+  /** "15%" o "$500.00". */
   etiqueta: string
+  /** Cómo se capturó (null en cotizaciones previas a la migración). */
+  tipo: TipoDescuento | null
 }
 
 export type ResumenDescuentos = {
@@ -210,6 +230,7 @@ export function resumenDescuentos(
       monto: round2(unitario * cantidad),
       pct: descuentoPct(it),
       etiqueta: etiquetaDescuento(it),
+      tipo: it.descuento_tipo ?? null,
     })
   }
 
@@ -291,7 +312,12 @@ export function renglonesDescuento(
       cantidad: partidas.reduce((s, p) => s + p.cantidad, 0),
       precioLista: mismoPrecio ? partidas[0].precioLista : null,
       precioFinal: mismoPrecio ? partidas[0].precioFinal : null,
-      etiqueta: partidas[0].etiqueta,
+      // En monto, la etiqueta es el descuento de UNA partida: hay que decir
+      // que se aplicó a cada producto, o parecería el total del lote.
+      etiqueta:
+        partidas[0].tipo === "monto"
+          ? `${partidas[0].etiqueta} c/producto`
+          : partidas[0].etiqueta,
       monto: round2(partidas.reduce((s, p) => s + p.monto, 0)),
       esLote: true,
     })
@@ -415,8 +441,30 @@ export function aplicarDescuentoLinea(
   return {
     descuento_tipo: tipo,
     descuento_valor: v,
-    precio_unitario: precioConDescuento(lista, tipo, v),
+    precio_unitario: precioConDescuento(lista, tipo, v, Number(it.cantidad ?? 1)),
     precio_lista: round2(lista),
+  }
+}
+
+/**
+ * Cambia la cantidad de una partida RECALCULANDO su precio unitario.
+ *
+ * Es obligatorio pasar por aquí: con un descuento en monto ($500 a la
+ * partida), el precio por pieza depende de cuántas piezas hay. Si solo se
+ * cambiara `cantidad`, el ahorro dejaría de ser el que se tecleó — el mismo
+ * error que tuvo el descuento global porcentual antes del fix de 2026-07-27.
+ */
+export function conCantidad<T extends LineaDescuento>(
+  it: T,
+  cantidad: number,
+): T {
+  const base = { ...it, cantidad }
+  if (it.es_regalo === true) return base
+  const valor = Number(it.descuento_valor ?? 0)
+  if (!(valor > 0)) return base
+  return {
+    ...base,
+    ...aplicarDescuentoLinea(base, it.descuento_tipo ?? "pct", valor),
   }
 }
 

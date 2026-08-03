@@ -38,9 +38,11 @@ import {
   resumenDescuentos,
   aplicarDescuentoLinea,
   aplicarDescuentoLote,
+  conCantidad,
   tieneDescuento,
   precioLista,
   descuentoUnitario,
+  descuentoPartida,
   etiquetaDescuento,
   type TipoDescuento,
 } from "@/lib/descuentos"
@@ -311,12 +313,14 @@ export function CotizacionForm({
       const i = prev.findIndex((x) => lineaKey(x) === lineaKey(newItem))
       if (i === -1) return [...prev, newItem]
       const copy = [...prev]
-      const merged: CotizacionItem = {
-        ...copy[i],
-        cantidad: copy[i].cantidad + qty,
-        subtotal: (copy[i].cantidad + qty) * copy[i].precio_unitario,
+      // Se conserva el descuento de la partida y se recalcula el precio con
+      // la nueva cantidad (relevante si el descuento es un monto fijo).
+      const total = copy[i].cantidad + qty
+      const actualizada = conCantidad(copy[i], total)
+      copy[i] = {
+        ...actualizada,
+        subtotal: round2(actualizada.precio_unitario * total),
       }
-      copy[i] = merged
       return copy
     })
     setSelectedProductId("")
@@ -326,11 +330,16 @@ export function CotizacionForm({
 
   function updateItemCantidad(key: string, value: number) {
     setItems((prev) =>
-      prev.map((it) =>
-        lineaKey(it) === key
-          ? { ...it, cantidad: value, subtotal: value * it.precio_unitario }
-          : it,
-      ),
+      prev.map((it) => {
+        if (lineaKey(it) !== key) return it
+        // `conCantidad` recalcula el precio: con un descuento en monto ($500 a
+        // la partida), el precio por pieza depende de cuántas piezas hay.
+        const actualizada = conCantidad(it, value)
+        return {
+          ...actualizada,
+          subtotal: round2(actualizada.precio_unitario * value),
+        }
+      }),
     )
   }
 
@@ -1352,9 +1361,10 @@ function DescuentoLoteEditor({
 }
 
 /**
- * Editor del descuento de UNA partida. El valor se teclea como % o como $ por
- * pieza y el eco de abajo muestra en vivo el efecto en toda la línea — sin
- * eso, "$25" es ambiguo (¿por pieza o por partida?).
+ * Editor del descuento de UNA partida. El valor se teclea como % o como $
+ * sobre la partida completa (que se reparte entre las piezas), y el eco de
+ * abajo muestra en vivo el precio unitario resultante — sin eso, "$500" es
+ * ambiguo.
  */
 function DescuentoLineaEditor({
   item,
@@ -1368,7 +1378,7 @@ function DescuentoLineaEditor({
   const tipo: TipoDescuento = item.descuento_tipo ?? "pct"
   const valor = Number(item.descuento_valor ?? 0)
   const lista = precioLista(item)
-  const ahorroLinea = round2(descuentoUnitario(item) * item.cantidad)
+  const ahorroLinea = descuentoPartida(item)
 
   return (
     <div className="mt-1.5 rounded-md bg-white p-2 ring-1 ring-emerald-100">
@@ -1409,7 +1419,7 @@ function DescuentoLineaEditor({
           className="w-16 rounded border border-gray-200 px-2 py-1 text-xs tabular-nums focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
         <span className="text-[10px] text-gray-500">
-          {tipo === "pct" ? "% de descuento" : "$ menos por pieza"}
+          {tipo === "pct" ? "% de descuento" : "$ menos en esta partida"}
         </span>
         <div className="ml-auto flex shrink-0 items-center gap-1">
           {valor > 0 && (

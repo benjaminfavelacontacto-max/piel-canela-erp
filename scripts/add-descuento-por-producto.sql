@@ -16,8 +16,9 @@
 --   `cotizaciones.subtotal`, el IVA, la utilidad y la venta espejo siguen
 --   cuadrando SOLOS, sin tocar ninguna columna generada ni ningún reporte.
 --   `descuento_tipo`/`descuento_valor` solo recuerdan CÓMO se capturó
---   (15 = 15%, o 25 = $25 por pieza) para mostrarlo en el PDF y poder
---   recalcular el precio si cambia la cantidad.
+--   (15 = 15%, o 500 = $500 sobre la PARTIDA COMPLETA) para mostrarlo en el
+--   PDF y poder recalcular el precio si cambia la cantidad — con un monto
+--   fijo, el precio por pieza depende de cuántas piezas hay.
 --
 --   OJO: el descuento por producto NO se suma a `cotizaciones.descuento` —
 --   esa columna es el descuento GLOBAL, que se resta después del subtotal y
@@ -45,11 +46,11 @@ alter table venta_items
 comment on column cotizacion_items.descuento_tipo is
   'Cómo se capturó el descuento de ESTA partida: pct (%) o monto ($ por pieza).';
 comment on column cotizacion_items.descuento_valor is
-  'Valor tecleado del descuento de la partida (15 = 15%, 25 = $25 por pieza). El precio ya rebajado vive en precio_unitario y el de catálogo en precio_lista.';
+  'Valor tecleado del descuento de la partida (15 = 15%, 500 = $500 sobre la partida completa, repartidos entre sus piezas). El precio ya rebajado vive en precio_unitario y el de catálogo en precio_lista.';
 comment on column venta_items.descuento_tipo is
   'Cómo se capturó el descuento de ESTA partida: pct (%) o monto ($ por pieza).';
 comment on column venta_items.descuento_valor is
-  'Valor tecleado del descuento de la partida (15 = 15%, 25 = $25 por pieza). El precio ya rebajado vive en precio_unitario y el de catálogo en precio_lista.';
+  'Valor tecleado del descuento de la partida (15 = 15%, 500 = $500 sobre la partida completa, repartidos entre sus piezas). El precio ya rebajado vive en precio_unitario y el de catálogo en precio_lista.';
 
 -- Los reportes de "qué se descontó" filtran por partidas con descuento.
 create index if not exists idx_cotizacion_items_descuento

@@ -29,9 +29,11 @@ import {
   resumenDescuentos,
   aplicarDescuentoLinea,
   aplicarDescuentoLote,
+  conCantidad,
   tieneDescuento,
   precioLista,
   descuentoUnitario,
+  descuentoPartida,
   etiquetaDescuento,
   type TipoDescuento,
 } from "@/lib/descuentos"
@@ -168,7 +170,8 @@ export function QuickQuote({
       const i = prev.findIndex((l) => lineaKey(l) === lineaKey(nueva))
       if (i === -1) return [...prev, nueva]
       const copy = [...prev]
-      copy[i] = { ...copy[i], cantidad: copy[i].cantidad + 1 }
+      // Conserva el descuento de la partida y recalcula el precio unitario.
+      copy[i] = conCantidad(copy[i], copy[i].cantidad + 1)
       return copy
     })
   }
@@ -178,7 +181,9 @@ export function QuickQuote({
       prev.flatMap((l) => {
         if (lineaKey(l) !== key) return [l]
         const n = l.cantidad + delta
-        return n <= 0 ? [] : [{ ...l, cantidad: n }]
+        // `conCantidad` recalcula el precio: con un descuento en monto, el
+        // precio por pieza depende de cuántas piezas hay.
+        return n <= 0 ? [] : [conCantidad(l, n)]
       }),
     )
   }
@@ -472,10 +477,7 @@ export function QuickQuote({
                             <span className="font-semibold text-emerald-700">
                               {formatMXN2(l.precio_unitario)}
                             </span>{" "}
-                            c/u · ahorra{" "}
-                            {formatMXN2(
-                              round2(descuentoUnitario(l) * l.cantidad),
-                            )}
+                            c/u · ahorra {formatMXN2(descuentoPartida(l))}
                           </>
                         ) : (
                           `${formatMXN2(l.precio_unitario)} c/u`
