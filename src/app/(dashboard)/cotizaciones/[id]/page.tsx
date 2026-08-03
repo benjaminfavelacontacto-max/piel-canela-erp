@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
+import { fetchCotizacionItems } from "@/lib/cotizacion-items-query"
+import type { TipoDescuento } from "@/lib/descuentos"
 import type {
   Cliente,
   CotizacionItem,
@@ -38,35 +40,15 @@ export default async function CotizacionDetailPage({
   }
   if (!cot) notFound()
 
-  // es_regalo / precio_lista llegan con scripts/add-regalos-cotizaciones.sql.
-  // Si aún no se corre, se reintenta sin ellas (la cotización se ve igual, sin
-  // marcas de cortesía) en vez de romper la página.
-  const itemsRes = await supabase
-    .from("cotizacion_items")
-    .select(
-      `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-       es_regalo, precio_lista,
-       productos(id, sku, nombre, nombre_display, imagen_url, peso,
-         categorias(nombre))`,
-    )
-    .eq("cotizacion_id", id)
-    .order("sort_order", { ascending: true })
-  let itemRows = itemsRes.data
-  if (
-    itemsRes.error &&
-    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
-  ) {
-    const retry = await supabase
-      .from("cotizacion_items")
-      .select(
-        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-         productos(id, sku, nombre, nombre_display, imagen_url, peso,
-           categorias(nombre))`,
-      )
-      .eq("cotizacion_id", id)
-      .order("sort_order", { ascending: true })
-    itemRows = retry.data as typeof itemRows
-  }
+  // Las columnas de regalo y de descuento por producto llegan con
+  // scripts/add-regalos-cotizaciones.sql y add-descuento-por-producto.sql. Si
+  // alguna falta, el helper degrada el select en vez de romper la página.
+  const { rows: itemRows } = await fetchCotizacionItems(
+    supabase,
+    id,
+    `productos(id, sku, nombre, nombre_display, imagen_url, peso,
+       categorias(nombre))`,
+  )
 
   const imageMap = await buildImageMap()
 
@@ -77,6 +59,8 @@ export default async function CotizacionDetailPage({
     subtotal: number
     es_regalo?: boolean | null
     precio_lista?: number | null
+    descuento_tipo?: TipoDescuento | null
+    descuento_valor?: number | null
     productos: {
       id: string
       sku: string | null
@@ -103,6 +87,8 @@ export default async function CotizacionDetailPage({
       subtotal: r.subtotal,
       es_regalo: r.es_regalo === true,
       precio_lista: r.precio_lista ?? null,
+      descuento_tipo: r.descuento_tipo ?? null,
+      descuento_valor: Number(r.descuento_valor ?? 0),
     }
   })
 

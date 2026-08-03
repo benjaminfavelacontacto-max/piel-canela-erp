@@ -13,6 +13,7 @@ import {
 import { formatMXN2 } from "@/lib/utils"
 import type { CotizacionItem } from "@/lib/cotizacion-types"
 import { resumenRegalos, descuentoEfectivoPct } from "@/lib/regalos"
+import { resumenDescuentos } from "@/lib/descuentos"
 import {
   KpiCards,
   round2,
@@ -74,10 +75,18 @@ export function CotizacionKpis(p: CotizacionKpisProps) {
   const margen = baseNeta > 0 ? (utilidad / baseNeta) * 100 : 0
   const utilidadBD = p.utilidadNetaBD == null ? null : round2(p.utilidadNetaBD)
   const descPctSubtotal = p.subtotal > 0 ? (p.descuento / p.subtotal) * 100 : 0
+  // Descuentos por producto: ya vienen restados dentro del subtotal guardado,
+  // así que el precio de lista se reconstruye desde las partidas.
+  const descProductos = resumenDescuentos(p.items)
+  const brutoLista = descProductos.brutoLista
+  const descuentoTotal = round2(descProductos.monto + p.descuento)
+  const descTotalPct = brutoLista > 0 ? (descuentoTotal / brutoLista) * 100 : 0
   const descEfectivo = descuentoEfectivoPct({
     subtotal: p.subtotal,
     descuento: p.descuento,
     valorRegalos: regalos.valor,
+    brutoLista,
+    descuentoProductos: descProductos.monto,
   })
 
   const piezasTotal = p.items.reduce((s, it) => s + Number(it.cantidad ?? 0), 0)
@@ -98,7 +107,24 @@ export function CotizacionKpis(p: CotizacionKpisProps) {
       ayuda: {
         que: "Lo que pagaría el cliente si acepta esta cotización.",
         filas: [
-          { texto: "Subtotal", valor: fmt(p.subtotal) },
+          ...(descProductos.monto > 0
+            ? [
+                {
+                  texto: "Subtotal a precios de lista",
+                  valor: fmt(brutoLista),
+                } as KpiFila,
+                {
+                  texto: `− Descuento en ${descProductos.lineas} ${
+                    descProductos.lineas === 1 ? "producto" : "productos"
+                  }`,
+                  valor: fmt(descProductos.monto),
+                } as KpiFila,
+              ]
+            : []),
+          {
+            texto: descProductos.monto > 0 ? "= Subtotal" : "Subtotal",
+            valor: fmt(p.subtotal),
+          },
           ...(conPartidas
             ? [
                 {
@@ -116,7 +142,7 @@ export function CotizacionKpis(p: CotizacionKpisProps) {
                 } as KpiFila,
               ]
             : []),
-          { texto: "− Descuento", valor: fmt(p.descuento) },
+          { texto: "− Descuento general", valor: fmt(p.descuento) },
           { texto: "= Base neta (sin IVA)", valor: fmt(baseNeta) },
           { texto: "+ IVA 16% sobre la base", valor: fmt(p.iva) },
           { texto: "= Total", valor: fmt(totalCalc) },
@@ -253,19 +279,38 @@ export function CotizacionKpis(p: CotizacionKpisProps) {
     {
       id: "descuento",
       label: "Descuento",
-      value: fmt(p.descuento),
+      value: fmt(descuentoTotal),
       sub:
-        p.descuento > 0
-          ? `${descPctSubtotal.toFixed(1)}% del subtotal`
+        descuentoTotal > 0
+          ? `${descTotalPct.toFixed(1)}% sobre precios de lista`
           : "sin descuento",
       icon: BadgePercent,
-      tone: p.descuento > 0 ? "rose" : "neutral",
+      tone: descuentoTotal > 0 ? "rose" : "neutral",
       ayuda: {
-        que: "Lo que se le rebajó al cliente sobre el precio de lista.",
+        que: "Todo lo que se le rebajó al cliente: por producto y sobre el pedido.",
         filas: [
-          { texto: "Descuento aplicado", valor: fmt(p.descuento) },
-          { texto: "Sobre un subtotal de", valor: fmt(p.subtotal) },
-          { texto: "= % explícito", valor: pct(descPctSubtotal) },
+          { texto: "Subtotal a precios de lista", valor: fmt(brutoLista) },
+          ...(descProductos.monto > 0
+            ? [
+                {
+                  texto: `− Descuento en ${descProductos.lineas} ${
+                    descProductos.lineas === 1 ? "producto" : "productos"
+                  } (ya restado del subtotal)`,
+                  valor: fmt(descProductos.monto),
+                } as KpiFila,
+              ]
+            : []),
+          { texto: "= Subtotal guardado", valor: fmt(p.subtotal) },
+          { texto: "− Descuento general sobre el pedido", valor: fmt(p.descuento) },
+          ...(p.descuento > 0
+            ? [
+                {
+                  texto: "El general es este % del subtotal",
+                  valor: pct(descPctSubtotal),
+                } as KpiFila,
+              ]
+            : []),
+          { texto: "= Descuento total", valor: fmt(descuentoTotal) },
           ...(regalos.valor > 0
             ? [
                 {
@@ -276,7 +321,7 @@ export function CotizacionKpis(p: CotizacionKpisProps) {
             : []),
         ],
         fuente:
-          "cotizaciones.descuento guarda el monto; descuento_tipo/descuento_valor recuerdan si se capturó como % o como $. El descuento efectivo suma el valor de lo regalado — lo que el cliente recibe de más en total.",
+          "El descuento por producto vive en cada partida (precio_unitario ya rebajado + precio_lista congelado) y por eso YA está dentro de cotizaciones.subtotal — no se suma a cotizaciones.descuento, que es el descuento general. El efectivo añade el valor de lo regalado.",
       },
     },
     {

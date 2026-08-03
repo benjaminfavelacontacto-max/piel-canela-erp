@@ -3,7 +3,17 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Plus, Trash2, Save, FileDown, Search, FileText, Gift } from "lucide-react"
+import {
+  Plus,
+  Trash2,
+  Save,
+  FileDown,
+  Search,
+  FileText,
+  Gift,
+  BadgePercent,
+  X,
+} from "lucide-react"
 import type {
   Cliente,
   CotizacionItem,
@@ -23,6 +33,20 @@ import {
   descuentoEfectivoPct,
   precioReferencia,
 } from "@/lib/regalos"
+import {
+  totalesCotizacion,
+  resumenDescuentos,
+  aplicarDescuentoLinea,
+  aplicarDescuentoLote,
+  conCantidad,
+  tieneDescuento,
+  precioLista,
+  descuentoUnitario,
+  descuentoPartida,
+  etiquetaDescuento,
+  type TipoDescuento,
+} from "@/lib/descuentos"
+import { grupoProducto } from "@/lib/grupos-productos"
 
 /**
  * Identidad de una partida en el editor. NO basta `producto_id`: el mismo SKU
@@ -32,6 +56,9 @@ import {
 function lineaKey(it: { producto_id: string; es_regalo?: boolean }) {
   return `${it.producto_id}|${it.es_regalo ? "R" : "N"}`
 }
+
+/** Todo importe se redondea a centavos para que pantalla, PDF y BD cuadren. */
+const round2 = (n: number) => Math.round(n * 100) / 100
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -104,6 +131,10 @@ export function CotizacionForm({
   // Borradores de texto por ítem para que el input de cantidad se pueda vaciar
   // mientras se edita (la cantidad real solo se confirma con un número ≥1).
   const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
+  // Partida cuyo editor de descuento está abierto (una a la vez).
+  const [descAbierto, setDescAbierto] = useState<string | null>(null)
+  // Familia (Cintas, Potenciadores…) con el editor de descuento por lote abierto.
+  const [loteAbierto, setLoteAbierto] = useState<string | null>(null)
 
   // Escalado responsivo del preview: el documento es de ancho fijo (816px) por
   // fidelidad con el PDF; en móvil se desbordaría, así que lo escalamos para que
@@ -146,20 +177,20 @@ export function CotizacionForm({
     [selectedProductId, productos],
   )
 
-  // Todo importe se redondea a centavos al calcularse, para que subtotal,
-  // descuento, IVA y total cuadren exactos entre pantalla, PDF y BD.
-  const round2 = (n: number) => Math.round(n * 100) / 100
-  const subtotal = round2(items.reduce((s, it) => s + it.subtotal, 0))
-  // Descuento global (% o monto fijo). Reduce la BASE GRAVABLE antes del IVA
-  // (estándar fiscal MX: el descuento comercial baja la base sobre la que se calcula el 16%).
-  const descuento = round2(
-    descuentoTipo === "pct"
-      ? Math.max(0, Math.min(subtotal, subtotal * (descuentoValor / 100)))
-      : Math.max(0, Math.min(subtotal, descuentoValor)),
-  )
-  const baseGravable = round2(subtotal - descuento)
-  const iva = ivaActivo ? round2(baseGravable * 0.16) : 0
-  const total = round2(baseGravable + iva)
+  // La cascada completa vive en `@/lib/descuentos` (misma fórmula que usan el
+  // PDF y la cotización rápida del iPhone).
+  const t = totalesCotizacion({
+    items,
+    descuentoTipo,
+    descuentoValor,
+    ivaActivo,
+  })
+  const subtotal = t.subtotal
+  const descuento = t.descuentoGlobal
+  const iva = t.iva
+  const total = t.total
+  // Descuentos por producto: ya vienen restados dentro de `subtotal`.
+  const descProductos = resumenDescuentos(items)
   // El costo incluye los regalos: no se cobran, pero salieron del almacén.
   const costoProductos = items.reduce(
     (s, it) => s + it.costo_unitario * it.cantidad,
@@ -178,6 +209,8 @@ export function CotizacionForm({
     subtotal,
     descuento,
     valorRegalos: regalos.valor,
+    brutoLista: t.brutoLista,
+    descuentoProductos: t.descuentoProductos,
   })
 
   // ─── Resumen inteligente del pedido (categorización por SKU prefix) ──
@@ -186,27 +219,19 @@ export function CotizacionForm({
   const resumenCategorias = useMemo(() => {
     const map = new Map<
       string,
-      { label: string; cantidad: number; piezas: number; monto: number; tone: string }
+      {
+        label: string
+        cantidad: number
+        piezas: number
+        monto: number
+        tone: string
+        /** Partidas cobradas: las únicas a las que se les puede descontar. */
+        cobradas: number
+        ahorro: number
+      }
     >()
-    const SKU_LABELS: Array<[RegExp, { label: string; tone: string }]> = [
-      [/^CN-/i, { label: "Cintas", tone: "text-[#0F766E] bg-[#F9FAFB]" }],
-      [/^AC-/i, { label: "Activadores", tone: "text-emerald-700 bg-emerald-50" }],
-      [/^OX/i, { label: "Emulsión", tone: "text-teal-700 bg-teal-50" }],
-      [/^PB-/i, { label: "Polvo blanquear", tone: "text-violet-700 bg-violet-50" }],
-      [/^AE-/i, { label: "Aerografía", tone: "text-amber-700 bg-amber-50" }],
-      [/^PO-/i, { label: "Potenciadores", tone: "text-rose-700 bg-rose-50" }],
-      [/^HI-/i, { label: "Humectantes", tone: "text-blue-700 bg-blue-50" }],
-      [/^EX-/i, { label: "Exfoliants", tone: "text-orange-700 bg-orange-50" }],
-      [/^SM/i, { label: "Sombrillas", tone: "text-cyan-700 bg-cyan-50" }],
-      [/^DYE/i, { label: "Dye Color", tone: "text-purple-700 bg-purple-50" }],
-      [/^DOL/i, { label: "Aceite", tone: "text-yellow-700 bg-yellow-50" }],
-    ]
     for (const it of items) {
-      const sku = it.sku ?? ""
-      const match = SKU_LABELS.find(([rx]) => rx.test(sku))
-      const cat = match
-        ? match[1]
-        : { label: "Otros", tone: "text-gray-700 bg-gray-100" }
+      const cat = grupoProducto(it)
       const cur =
         map.get(cat.label) ?? {
           label: cat.label,
@@ -214,10 +239,16 @@ export function CotizacionForm({
           piezas: 0,
           monto: 0,
           tone: cat.tone,
+          cobradas: 0,
+          ahorro: 0,
         }
       cur.cantidad += 1
       cur.piezas += Number(it.cantidad ?? 0)
       cur.monto += Number(it.subtotal ?? 0)
+      if (!it.es_regalo) {
+        cur.cobradas += 1
+        cur.ahorro += descuentoUnitario(it) * Number(it.cantidad ?? 0)
+      }
       map.set(cat.label, cur)
     }
     return Array.from(map.values()).sort((a, b) => b.piezas - a.piezas)
@@ -273,6 +304,8 @@ export function CotizacionForm({
       subtotal: precio * qty,
       es_regalo: comoRegalo,
       precio_lista: comoRegalo ? selectedProduct.precio : null,
+      descuento_tipo: null,
+      descuento_valor: 0,
     }
     setItems((prev) => {
       // Se fusiona solo con una partida del MISMO tipo: lo cobrado y lo
@@ -280,12 +313,14 @@ export function CotizacionForm({
       const i = prev.findIndex((x) => lineaKey(x) === lineaKey(newItem))
       if (i === -1) return [...prev, newItem]
       const copy = [...prev]
-      const merged: CotizacionItem = {
-        ...copy[i],
-        cantidad: copy[i].cantidad + qty,
-        subtotal: (copy[i].cantidad + qty) * copy[i].precio_unitario,
+      // Se conserva el descuento de la partida y se recalcula el precio con
+      // la nueva cantidad (relevante si el descuento es un monto fijo).
+      const total = copy[i].cantidad + qty
+      const actualizada = conCantidad(copy[i], total)
+      copy[i] = {
+        ...actualizada,
+        subtotal: round2(actualizada.precio_unitario * total),
       }
-      copy[i] = merged
       return copy
     })
     setSelectedProductId("")
@@ -295,16 +330,67 @@ export function CotizacionForm({
 
   function updateItemCantidad(key: string, value: number) {
     setItems((prev) =>
-      prev.map((it) =>
-        lineaKey(it) === key
-          ? { ...it, cantidad: value, subtotal: value * it.precio_unitario }
-          : it,
-      ),
+      prev.map((it) => {
+        if (lineaKey(it) !== key) return it
+        // `conCantidad` recalcula el precio: con un descuento en monto ($500 a
+        // la partida), el precio por pieza depende de cuántas piezas hay.
+        const actualizada = conCantidad(it, value)
+        return {
+          ...actualizada,
+          subtotal: round2(actualizada.precio_unitario * value),
+        }
+      }),
     )
   }
 
   function removeItem(key: string) {
     setItems((prev) => prev.filter((it) => lineaKey(it) !== key))
+  }
+
+  /**
+   * Descuento de UNA partida. El precio de catálogo se congela en
+   * `precio_lista` y `precio_unitario` guarda el precio ya rebajado — así el
+   * subtotal, el IVA y la venta espejo siguen cuadrando sin tocar nada más.
+   */
+  function setDescuentoItem(
+    key: string,
+    tipo: TipoDescuento,
+    valor: number,
+  ) {
+    setItems((prev) =>
+      prev.map((it) => {
+        if (lineaKey(it) !== key) return it
+        const campos = aplicarDescuentoLinea(it, tipo, valor)
+        return {
+          ...it,
+          ...campos,
+          subtotal: round2(campos.precio_unitario * it.cantidad),
+        }
+      }),
+    )
+  }
+
+  /**
+   * Descuento POR LOTE: la misma rebaja a toda una familia (típico "15% a
+   * todas las cintas"), sin teclearla partida por partida. Los regalos se
+   * saltan solos dentro de `aplicarDescuentoLote`.
+   */
+  function setDescuentoGrupo(
+    grupo: string,
+    tipo: TipoDescuento,
+    valor: number,
+  ) {
+    setItems((prev) =>
+      aplicarDescuentoLote(
+        prev,
+        (it) => grupoProducto(it).label === grupo,
+        tipo,
+        valor,
+      ).map((it) => ({
+        ...it,
+        subtotal: round2(it.precio_unitario * it.cantidad),
+      })),
+    )
   }
 
   /** Convierte una partida en cortesía (o la regresa a cobrada). */
@@ -314,12 +400,17 @@ export function CotizacionForm({
       if (i === -1) return prev
       const it = prev[i]
       const regalo = !it.es_regalo
+      // Un regalo ya es una cortesía al 100%: se suelta el descuento por
+      // producto para no contar dos veces la misma rebaja. Al volver a
+      // cobrarla, la partida regresa a precio de lista.
       const precio = regalo ? 0 : precioReferencia(it)
       const cambiada: CotizacionItem = {
         ...it,
         es_regalo: regalo,
         precio_unitario: precio,
         precio_lista: regalo ? precioReferencia(it) : null,
+        descuento_tipo: null,
+        descuento_valor: 0,
         subtotal: precio * it.cantidad,
       }
       // Si al cambiar de tipo choca con una partida existente del mismo
@@ -385,6 +476,8 @@ export function CotizacionForm({
             subtotal: it.subtotal,
             es_regalo: it.es_regalo ?? false,
             precio_lista: it.precio_lista ?? null,
+            descuento_tipo: it.descuento_tipo ?? null,
+            descuento_valor: it.descuento_valor ?? 0,
           })),
         }
         const result = isEdit
@@ -608,73 +701,126 @@ export function CotizacionForm({
           </label>
 
           {items.length > 0 && (
-            <div className="mt-3 space-y-1 border-t border-gray-100 pt-3">
+            <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-3">
               {items.map((it) => {
                 const key = lineaKey(it)
+                const conDesc = tieneDescuento(it)
+                const editorAbierto = descAbierto === key
                 return (
-                  <div key={key} className="flex items-center gap-2 text-xs">
-                    <span
-                      className={`flex min-w-0 flex-1 items-center gap-1 truncate ${
-                        it.es_regalo ? "text-fuchsia-700" : "text-gray-700"
-                      }`}
-                    >
-                      {it.es_regalo && (
-                        <Gift className="size-3 shrink-0 text-fuchsia-500" />
+                  <div
+                    key={key}
+                    className={`rounded-lg text-xs ${
+                      conDesc || editorAbierto
+                        ? "bg-emerald-50/50 p-1.5 ring-1 ring-emerald-100"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`flex min-w-0 flex-1 items-center gap-1 truncate ${
+                          it.es_regalo ? "text-fuchsia-700" : "text-gray-700"
+                        }`}
+                      >
+                        {it.es_regalo && (
+                          <Gift className="size-3 shrink-0 text-fuchsia-500" />
+                        )}
+                        <span className="truncate">{it.nombre}</span>
+                      </span>
+                      {/* Descuento por producto — deshabilitado en regalos:
+                          una cortesía ya es 100% de rebaja. */}
+                      {!it.es_regalo && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDescAbierto(editorAbierto ? null : key)
+                          }
+                          title="Descuento a este producto"
+                          aria-expanded={editorAbierto}
+                          className={`flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+                            conDesc
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : "text-gray-400 hover:bg-gray-100 hover:text-emerald-600"
+                          }`}
+                        >
+                          <BadgePercent className="size-3" />
+                          {conDesc ? `−${etiquetaDescuento(it)}` : "Desc."}
+                        </button>
                       )}
-                      <span className="truncate">{it.nombre}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => toggleRegalo(key)}
-                      title={
-                        it.es_regalo
-                          ? "Volver a cobrar esta partida"
-                          : "Marcar como regalo (precio $0)"
-                      }
-                      aria-pressed={!!it.es_regalo}
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                        it.es_regalo
-                          ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-200"
-                          : "text-gray-400 hover:bg-gray-100 hover:text-fuchsia-600"
-                      }`}
-                    >
-                      {it.es_regalo ? "Regalo" : "Regalar"}
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      value={qtyDrafts[key] ?? String(it.cantidad)}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        setQtyDrafts((d) => ({ ...d, [key]: v }))
-                        const n = parseInt(v, 10)
-                        if (!Number.isNaN(n) && n >= 1)
-                          updateItemCantidad(key, n)
-                      }}
-                      onBlur={() =>
-                        setQtyDrafts((d) => {
-                          const next = { ...d }
-                          delete next[key]
-                          return next
-                        })
-                      }
-                      className="w-14 rounded border border-gray-200 px-2 py-0.5 text-xs"
-                    />
-                    <span
-                      className={`w-16 text-right tabular-nums font-medium ${
-                        it.es_regalo ? "text-fuchsia-600" : ""
-                      }`}
-                    >
-                      {it.es_regalo ? "Gratis" : formatMXN2(it.subtotal)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(key)}
-                      className="text-gray-400 hover:text-red-600"
-                      aria-label="Eliminar"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleRegalo(key)}
+                        title={
+                          it.es_regalo
+                            ? "Volver a cobrar esta partida"
+                            : "Marcar como regalo (precio $0)"
+                        }
+                        aria-pressed={!!it.es_regalo}
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                          it.es_regalo
+                            ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-200"
+                            : "text-gray-400 hover:bg-gray-100 hover:text-fuchsia-600"
+                        }`}
+                      >
+                        {it.es_regalo ? "Regalo" : "Regalar"}
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={qtyDrafts[key] ?? String(it.cantidad)}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setQtyDrafts((d) => ({ ...d, [key]: v }))
+                          const n = parseInt(v, 10)
+                          if (!Number.isNaN(n) && n >= 1)
+                            updateItemCantidad(key, n)
+                        }}
+                        onBlur={() =>
+                          setQtyDrafts((d) => {
+                            const next = { ...d }
+                            delete next[key]
+                            return next
+                          })
+                        }
+                        className="w-14 shrink-0 rounded border border-gray-200 px-2 py-0.5 text-xs"
+                      />
+                      <span
+                        className={`w-16 shrink-0 text-right tabular-nums font-medium ${
+                          it.es_regalo ? "text-fuchsia-600" : ""
+                        }`}
+                      >
+                        {it.es_regalo ? "Gratis" : formatMXN2(it.subtotal)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(key)}
+                        className="shrink-0 text-gray-400 hover:text-red-600"
+                        aria-label="Eliminar"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Resumen del descuento cuando el editor está cerrado */}
+                    {conDesc && !editorAbierto && (
+                      <p className="mt-1 pl-0.5 text-[10px] tabular-nums text-emerald-700">
+                        {formatMXN2(precioLista(it))} →{" "}
+                        <strong>{formatMXN2(it.precio_unitario)}</strong> c/u ·
+                        ahorra{" "}
+                        {formatMXN2(
+                          round2(descuentoUnitario(it) * it.cantidad),
+                        )}
+                      </p>
+                    )}
+
+                    {editorAbierto && !it.es_regalo && (
+                      <DescuentoLineaEditor
+                        item={it}
+                        onChange={(tipo, valor) =>
+                          setDescuentoItem(key, tipo, valor)
+                        }
+                        onClose={() => setDescAbierto(null)}
+                      />
+                    )}
                   </div>
                 )
               })}
@@ -768,22 +914,60 @@ export function CotizacionForm({
               </div>
               <ul className="space-y-1">
                 {resumenCategorias.map((c) => (
-                  <li
-                    key={c.label}
-                    className="flex items-center justify-between text-[11px]"
-                  >
-                    <span
-                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${c.tone}`}
-                    >
-                      {c.label}
-                    </span>
-                    <span className="flex items-center gap-2 tabular-nums text-gray-700">
-                      <span className="text-gray-500">{c.cantidad} ítems</span>
-                      <span className="font-semibold">{c.piezas} pzs</span>
-                      <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-900 ring-1 ring-gray-200/60">
-                        {formatMXN2(c.monto)}
+                  <li key={c.label}>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="flex min-w-0 items-center gap-1">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${c.tone}`}
+                        >
+                          {c.label}
+                        </span>
+                        {/* Descuento por lote: toda la familia de una vez */}
+                        {c.cobradas > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLoteAbierto(
+                                loteAbierto === c.label ? null : c.label,
+                              )
+                            }
+                            title={`Descuento a ${
+                              c.cobradas === 1
+                                ? "este producto"
+                                : `los ${c.cobradas} productos`
+                            } de ${c.label}`}
+                            aria-expanded={loteAbierto === c.label}
+                            className={`flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold transition-colors ${
+                              c.ahorro > 0
+                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                : "text-gray-400 hover:bg-white hover:text-emerald-600"
+                            }`}
+                          >
+                            <BadgePercent className="size-3" />
+                            {c.ahorro > 0
+                              ? `− ${formatMXN2(round2(c.ahorro))}`
+                              : "Lote"}
+                          </button>
+                        )}
                       </span>
-                    </span>
+                      <span className="flex items-center gap-2 tabular-nums text-gray-700">
+                        <span className="text-gray-500">{c.cantidad} ítems</span>
+                        <span className="font-semibold">{c.piezas} pzs</span>
+                        <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-900 ring-1 ring-gray-200/60">
+                          {formatMXN2(c.monto)}
+                        </span>
+                      </span>
+                    </div>
+                    {loteAbierto === c.label && (
+                      <DescuentoLoteEditor
+                        grupo={c.label}
+                        partidas={c.cobradas}
+                        onAplicar={(tipo, valor) =>
+                          setDescuentoGrupo(c.label, tipo, valor)
+                        }
+                        onClose={() => setLoteAbierto(null)}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -871,16 +1055,56 @@ export function CotizacionForm({
             </div>
           </div>
 
-          {/* Resumen financiero (lectura) */}
+          {/* Resumen financiero (lectura) — misma cascada que ve el cliente */}
           <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-3 space-y-1.5 text-xs">
-            <Row label="Subtotal" value={formatMXN2(subtotal)} />
+            {t.descuentoProductos > 0 && (
+              <>
+                <Row
+                  label="Subtotal precios de lista"
+                  value={formatMXN2(t.brutoLista)}
+                />
+                <Row
+                  label={`Descuento en ${descProductos.lineas} ${
+                    descProductos.lineas === 1 ? "producto" : "productos"
+                  }`}
+                  value={`− ${formatMXN2(t.descuentoProductos)}`}
+                  accent="text-emerald-700"
+                />
+              </>
+            )}
+            <Row
+              label={
+                t.descuentoProductos > 0 ? "Subtotal con descuento" : "Subtotal"
+              }
+              value={formatMXN2(subtotal)}
+            />
             {descuento > 0 && (
-              <Row label="Descuento" value={`− ${formatMXN2(descuento)}`} accent="text-rose-600" />
+              <>
+                <Row
+                  label="Descuento general"
+                  value={`− ${formatMXN2(descuento)}`}
+                  accent="text-emerald-700"
+                />
+                <Row
+                  label="Subtotal final"
+                  value={formatMXN2(t.baseGravable)}
+                />
+              </>
             )}
             {iva > 0 && (
               <Row label="IVA 16%" value={formatMXN2(iva)} accent="text-teal-700" />
             )}
             <Row label="Total" value={formatMXN2(total)} bold />
+            {t.ahorroCliente > 0 && (
+              <div className="rounded-md bg-emerald-50 px-2 py-1 ring-1 ring-emerald-100">
+                <Row
+                  label="Ahorro del cliente"
+                  value={`${formatMXN2(t.ahorroCliente)} (${t.ahorroPct.toFixed(1)}%)`}
+                  accent="text-emerald-700"
+                  bold
+                />
+              </div>
+            )}
             <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-1">
               <Row label="Costo productos" value={formatMXN2(costoProductos)} muted />
               {regalos.costo > 0 && (
@@ -1031,6 +1255,216 @@ export function CotizacionForm({
           </div>
         </div>
       </section>
+    </div>
+  )
+}
+
+/**
+ * Descuento a TODA una familia de productos ("15% a todas las cintas"). Los
+ * botones rápidos cubren el caso normal; el campo libre queda para un % o un
+ * monto por pieza exacto. Se aplica sobre el precio de LISTA de cada partida,
+ * así que volver a aplicar no encadena descuentos.
+ */
+function DescuentoLoteEditor({
+  grupo,
+  partidas,
+  onAplicar,
+  onClose,
+}: {
+  grupo: string
+  partidas: number
+  onAplicar: (tipo: TipoDescuento, valor: number) => void
+  onClose: () => void
+}) {
+  const [tipo, setTipo] = useState<TipoDescuento>("pct")
+  const [valor, setValor] = useState<number>(0)
+
+  function aplicar(t: TipoDescuento, v: number) {
+    setTipo(t)
+    setValor(v)
+    onAplicar(t, v)
+  }
+
+  return (
+    <div className="mt-1.5 rounded-lg bg-white p-2 ring-1 ring-emerald-100">
+      <p className="mb-1.5 text-[10.5px] text-gray-600">
+        Descuento a <strong>{grupo}</strong> · {partidas}{" "}
+        {partidas === 1 ? "producto cobrado" : "productos cobrados"}
+      </p>
+      <div className="flex flex-wrap items-center gap-1">
+        {[5, 10, 15, 20].map((pct) => (
+          <button
+            key={pct}
+            type="button"
+            onClick={() => aplicar("pct", pct)}
+            className={`rounded px-2 py-1 text-[11px] font-semibold tabular-nums transition-colors ${
+              tipo === "pct" && valor === pct
+                ? "bg-emerald-600 text-white"
+                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            }`}
+          >
+            {pct}%
+          </button>
+        ))}
+        <div className="inline-flex shrink-0 items-center rounded bg-gray-100 p-0.5 text-[10px]">
+          <button
+            type="button"
+            onClick={() => aplicar("pct", valor)}
+            className={`rounded px-1.5 py-0.5 font-semibold transition ${
+              tipo === "pct" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            %
+          </button>
+          <button
+            type="button"
+            onClick={() => aplicar("monto", valor)}
+            className={`rounded px-1.5 py-0.5 font-semibold transition ${
+              tipo === "monto"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500"
+            }`}
+          >
+            $
+          </button>
+        </div>
+        <input
+          type="number"
+          min="0"
+          step={tipo === "pct" ? "0.5" : "0.01"}
+          value={valor || ""}
+          onChange={(e) => aplicar(tipo, Number(e.target.value) || 0)}
+          placeholder="0"
+          className="w-14 rounded border border-gray-200 px-1.5 py-1 text-[11px] tabular-nums focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+        <button
+          type="button"
+          onClick={() => aplicar(tipo, 0)}
+          className="rounded px-1.5 py-1 text-[10px] font-medium text-gray-500 hover:bg-gray-100 hover:text-rose-600"
+        >
+          Quitar
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar descuento por lote"
+          className="ml-auto rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <p className="mt-1 text-[10px] leading-snug text-gray-500">
+        Se aplica a cada producto de {grupo}; los regalos no se tocan.
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Editor del descuento de UNA partida. El valor se teclea como % o como $
+ * sobre la partida completa (que se reparte entre las piezas), y el eco de
+ * abajo muestra en vivo el precio unitario resultante — sin eso, "$500" es
+ * ambiguo.
+ */
+function DescuentoLineaEditor({
+  item,
+  onChange,
+  onClose,
+}: {
+  item: CotizacionItem
+  onChange: (tipo: TipoDescuento, valor: number) => void
+  onClose: () => void
+}) {
+  const tipo: TipoDescuento = item.descuento_tipo ?? "pct"
+  const valor = Number(item.descuento_valor ?? 0)
+  const lista = precioLista(item)
+  const ahorroLinea = descuentoPartida(item)
+
+  return (
+    <div className="mt-1.5 rounded-md bg-white p-2 ring-1 ring-emerald-100">
+      <div className="flex items-center gap-1.5">
+        <div className="inline-flex shrink-0 items-center rounded bg-gray-100 p-0.5 text-[10px]">
+          <button
+            type="button"
+            onClick={() => onChange("pct", valor)}
+            className={`rounded px-1.5 py-0.5 font-semibold transition ${
+              tipo === "pct"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            %
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange("monto", valor)}
+            className={`rounded px-1.5 py-0.5 font-semibold transition ${
+              tipo === "monto"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            $
+          </button>
+        </div>
+        <input
+          type="number"
+          min="0"
+          max={tipo === "pct" ? 100 : undefined}
+          step={tipo === "pct" ? "0.5" : "0.01"}
+          value={valor || ""}
+          onChange={(e) => onChange(tipo, Number(e.target.value) || 0)}
+          placeholder="0"
+          autoFocus
+          className="w-16 rounded border border-gray-200 px-2 py-1 text-xs tabular-nums focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+        <span className="text-[10px] text-gray-500">
+          {tipo === "pct" ? "% de descuento" : "$ menos en esta partida"}
+        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          {valor > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange(tipo, 0)}
+              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-gray-500 hover:bg-gray-100 hover:text-rose-600"
+            >
+              Quitar
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar descuento"
+            className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      </div>
+      <p className="mt-1.5 text-[10px] leading-snug tabular-nums text-gray-600">
+        {valor > 0 ? (
+          <>
+            Precio de lista{" "}
+            <span className="text-gray-400 line-through">
+              {formatMXN2(lista)}
+            </span>{" "}
+            →{" "}
+            <strong className="text-emerald-700">
+              {formatMXN2(item.precio_unitario)}
+            </strong>{" "}
+            c/u · el cliente ahorra{" "}
+            <strong className="text-emerald-700">
+              {formatMXN2(ahorroLinea)}
+            </strong>{" "}
+            en {item.cantidad} {item.cantidad === 1 ? "pieza" : "piezas"}
+          </>
+        ) : (
+          <>
+            Precio de lista {formatMXN2(lista)} c/u. Captura un descuento y
+            aparecerá marcado en la cotización del cliente.
+          </>
+        )}
+      </p>
     </div>
   )
 }

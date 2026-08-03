@@ -14,6 +14,7 @@ import {
   Trash2,
   AlertTriangle,
   Gift,
+  BadgePercent,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
@@ -21,6 +22,7 @@ import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { downloadCotizacionPdf } from "@/lib/pdf"
 import { resumenRegalos } from "@/lib/regalos"
+import { resumenDescuentos } from "@/lib/descuentos"
 import { formatMXN2 } from "@/lib/utils"
 import { CotizacionKpis } from "./cotizacion-kpis"
 import {
@@ -98,6 +100,8 @@ export function CotizacionDetail({
   const bloqueadoPorStock = !yaVendida && faltantes.length > 0
   // Cortesías incluidas: cuánto costaron (pérdida) y cuánto valían.
   const regalos = resumenRegalos(preview.items)
+  // Descuentos por producto: a qué partida se le rebajó y cuánto.
+  const descuentos = resumenDescuentos(preview.items)
 
   async function handleEliminar() {
     setDeleting(true)
@@ -376,6 +380,62 @@ export function CotizacionDetail({
         utilidadNetaBD={finanzas.utilidadNetaBD}
         items={preview.items}
       />
+
+      {descuentos.lineas > 0 && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="flex items-start gap-2">
+            <BadgePercent className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-emerald-900">
+                {descuentos.lineas}{" "}
+                {descuentos.lineas === 1
+                  ? "producto con descuento"
+                  : "productos con descuento"}{" "}
+                · {formatMXN2(descuentos.monto)} menos para el cliente
+              </p>
+              <ul className="mt-2 space-y-1">
+                {descuentos.detalle.map((d) => (
+                  <li
+                    key={`${d.sku ?? d.nombre}-${d.precioFinal}`}
+                    className="flex flex-wrap items-baseline gap-x-2 text-xs text-emerald-900"
+                  >
+                    <span className="font-medium">{d.nombre}</span>
+                    {d.sku && (
+                      <span className="font-mono text-[11px] text-emerald-700">
+                        {d.sku}
+                      </span>
+                    )}
+                    <span className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                      −{d.etiqueta}
+                    </span>
+                    <span className="tabular-nums text-emerald-800">
+                      <span className="text-emerald-600/70 line-through">
+                        {formatMXN2(d.precioLista)}
+                      </span>{" "}
+                      → <b>{formatMXN2(d.precioFinal)}</b> c/u ·{" "}
+                      {d.cantidad} pzs · ahorro{" "}
+                      <b>{formatMXN2(d.monto)}</b>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {preview.descuento > 0 && (
+                <p className="mt-2 border-t border-emerald-200/70 pt-2 text-xs text-emerald-900">
+                  Además, descuento general de{" "}
+                  <b className="tabular-nums">
+                    {formatMXN2(preview.descuento)}
+                  </b>{" "}
+                  sobre el subtotal ⇒ ahorro total{" "}
+                  <b className="tabular-nums">
+                    {formatMXN2(descuentos.monto + preview.descuento)}
+                  </b>
+                  .
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {regalos.lineas > 0 && (
         <div className="mb-6 rounded-xl border border-fuchsia-200 bg-fuchsia-50/60 p-4">

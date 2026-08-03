@@ -75,7 +75,13 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
         return (
           <div
             key={c.id}
-            className="relative rounded-2xl border border-black/5 bg-white p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-px hover:border-[rgba(15,118,110,0.22)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.05)] sm:p-4"
+            // z-40 SOLO cuando su ayuda está abierta: el hover de las demás
+            // tarjetas anima `transform`, y un transform ≠ none crea stacking
+            // context — sin este z-index la tarjeta de al lado se pintaba
+            // ENCIMA del popover (que iba antes en el DOM) y lo tapaba.
+            className={`relative rounded-2xl border border-black/5 bg-white p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-200 hover:border-[rgba(15,118,110,0.22)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.05)] sm:p-4 ${
+              open ? "z-40" : "hover:-translate-y-px"
+            }`}
           >
             <div className="flex items-start justify-between gap-2">
               <span
@@ -121,7 +127,9 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   className="fixed inset-0 z-20"
                   onClick={() => setAbierto(null)}
                 />
-                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 rounded-2xl border border-white/70 bg-white/85 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
+                {/* bg casi opaco: con /85 el texto de la tarjeta de abajo se
+                    transparentaba y la cuenta se volvía ilegible. */}
+                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 rounded-2xl border border-white/70 bg-white/95 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
                   <div className="flex items-center gap-2">
                     <span
                       className={`flex size-6 items-center justify-center rounded-lg ${t.chip}`}

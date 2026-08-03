@@ -1,6 +1,14 @@
 import type { CotizacionData, CotizacionItem } from "@/lib/cotizacion-types"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 import { resumenRegalos, precioReferencia } from "@/lib/regalos"
+import {
+  resumenDescuentos,
+  renglonesDescuento,
+  tieneDescuento,
+  etiquetaDescuento,
+  precioLista,
+} from "@/lib/descuentos"
+import { esCinta } from "@/lib/grupos-productos"
 
 const TEAL = "#1a8f72"
 const TEAL_BG = "#f8fdfb"
@@ -8,7 +16,15 @@ const TEAL_LINE = "#d0ece4"
 // Cortesías: magenta suave. Hex hardcodeado — el PDF no admite oklch/lab.
 const GIFT = "#A21CAF"
 const GIFT_BG = "#FDF4FF"
+// Descuentos: verde ahorro (el cliente lee "esto me lo bajaron").
+const SAVE = "#047857"
+const SAVE_BG = "#ECFDF5"
+const SAVE_LINE = "#A7F3D0"
+// Rejilla de la tabla de productos — una sola constante para header y filas.
+const GRID_COLS = "30px 1fr 60px 38px 92px 96px"
 const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
+
+const round2 = (n: number) => Math.round(n * 100) / 100
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -41,21 +57,6 @@ function initials(name: string | null | undefined): string {
       .map((w) => w[0]?.toUpperCase() ?? "")
       .join("") || "?"
   )
-}
-
-function esCinta(it: CotizacionItem): boolean {
-  const sku = (it.sku ?? "").toUpperCase().trim()
-  const categoria = (it.categoria ?? "").toUpperCase().trim()
-  const nombre = (it.nombre ?? "").toUpperCase().trim()
-  // SKU CN-XXX → más confiable
-  if (sku.startsWith("CN-")) return true
-  // Categoría con cualquier variante de "CINTA"
-  if (categoria.includes("CINTA")) return true
-  // Fallback por nombre
-  if (nombre.startsWith("CINTA ")) return true
-  if (nombre.includes("CORTADA")) return true
-  if (nombre.includes("ENTERA") && !nombre.includes("ML")) return true
-  return false
 }
 
 function groupByCategoria(
@@ -124,6 +125,21 @@ export function CotizacionPreview({
   const totalPiezas = data.items.reduce((s, i) => s + Number(i.cantidad), 0)
   // Cortesías: no suman al total (van en $0), pero se presumen en el documento.
   const regalos = resumenRegalos(data.items)
+  // Descuentos por producto: `data.subtotal` ya viene NETO de ellos, así que
+  // el bruto a precio de lista se reconstruye desde las partidas.
+  const descuentos = resumenDescuentos(data.items)
+  // Partidas de la misma familia con el mismo descuento se presentan como un
+  // lote ("Cintas · 5 productos −15%") en vez de renglón por renglón.
+  const renglonesDesc = renglonesDescuento(descuentos.detalle)
+  const hayDescProductos = descuentos.monto > 0
+  const hayDescGlobal = Number(data.descuento) > 0
+  // % real del descuento global sobre el subtotal (sirva o no que se haya
+  // capturado como monto: lo que se enseña es la proporción verdadera).
+  const pctGlobal =
+    data.subtotal > 0 ? (Number(data.descuento) / data.subtotal) * 100 : 0
+  const ahorroTotal = round2(descuentos.monto + Number(data.descuento ?? 0))
+  const ahorroPct =
+    descuentos.brutoLista > 0 ? (ahorroTotal / descuentos.brutoLista) * 100 : 0
 
   return (
     <div
@@ -263,11 +279,11 @@ export function CotizacionPreview({
       </div>
 
       {/* ─── TABLA DE PRODUCTOS ─── */}
-      {/* Header columnas: imagen 32px · producto 1fr · medida · cant · p.unit · total */}
+      {/* Header columnas: imagen · producto 1fr · medida · cant · p.unit · total */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "32px 1fr 70px 44px 88px 88px",
+          gridTemplateColumns: GRID_COLS,
           gap: 8,
           padding: "8px 24px",
           background: TEAL_BG,
@@ -326,18 +342,23 @@ export function CotizacionPreview({
             {g.items.map((it, i) => {
               const medida = it.peso ?? extractPesoMl(it.nombre) ?? ""
               const regalo = it.es_regalo === true
+              // Partida con descuento: se enseña el precio de lista tachado y
+              // el rebajado debajo, para que el cliente vea el ahorro en la
+              // línea misma y no solo en el total.
+              const conDesc = !regalo && tieneDescuento(it)
+              const lista = conDesc ? precioLista(it) : 0
               return (
                 <div
                   key={`${gi}-${i}`}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "32px 1fr 70px 44px 88px 88px",
+                    gridTemplateColumns: GRID_COLS,
                     gap: 8,
                     alignItems: "center",
                     padding: "7px 24px",
                     borderBottom: "1px solid #f0f0f0",
                     minHeight: 34,
-                    background: regalo ? GIFT_BG : undefined,
+                    background: regalo ? GIFT_BG : conDesc ? SAVE_BG : undefined,
                   }}
                 >
                   <ProductThumb src={it.imagen_url} sku={it.sku} />
@@ -366,6 +387,27 @@ export function CotizacionPreview({
                           }}
                         >
                           REGALO
+                        </span>
+                      )}
+                      {conDesc && (
+                        // Etiqueta corta ("−15%", "−$25.00 c/u"): con la
+                        // palabra "DESCUENTO" el badge se partía en dos líneas
+                        // y pisaba el SKU.
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            padding: "1px 6px",
+                            borderRadius: 8,
+                            background: SAVE,
+                            color: "#ffffff",
+                            fontSize: 8.5,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            verticalAlign: "middle",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {`−${etiquetaDescuento(it)}`}
                         </span>
                       )}
                     </p>
@@ -401,30 +443,71 @@ export function CotizacionPreview({
                   >
                     {it.cantidad}
                   </span>
-                  <span
+                  <div
                     style={{
                       textAlign: "right",
                       fontSize: 12,
-                      color: regalo ? "#999" : "#444",
-                      textDecoration: regalo ? "line-through" : undefined,
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     {/* En un regalo se tacha el precio de lista: el cliente ve
-                        cuánto vale lo que se le obsequia. */}
-                    {formatMXN2(regalo ? precioReferencia(it) : it.precio_unitario)}
-                  </span>
-                  <span
+                        cuánto vale lo que se le obsequia. Con descuento se
+                        tacha arriba el de catálogo y abajo va el rebajado. */}
+                    {conDesc && (
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "#9a9a9a",
+                          textDecoration: "line-through",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {formatMXN2(lista)}
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        color: regalo ? "#999" : conDesc ? SAVE : "#444",
+                        fontWeight: conDesc ? 700 : 400,
+                        textDecoration: regalo ? "line-through" : undefined,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {formatMXN2(
+                        regalo ? precioReferencia(it) : it.precio_unitario,
+                      )}
+                    </div>
+                  </div>
+                  <div
                     style={{
                       textAlign: "right",
                       fontSize: 12,
-                      fontWeight: 700,
-                      color: regalo ? GIFT : "#222",
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {regalo ? "GRATIS" : formatMXN2(it.subtotal)}
-                  </span>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        color: regalo ? GIFT : "#222",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {regalo ? "GRATIS" : formatMXN2(it.subtotal)}
+                    </div>
+                    {conDesc && (
+                      <div
+                        style={{
+                          fontSize: 9.5,
+                          color: SAVE,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {`ahorra ${formatMXN2(
+                          round2((lista - Number(it.precio_unitario)) * Number(it.cantidad)),
+                        )}`}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -482,7 +565,7 @@ export function CotizacionPreview({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 220px",
+              gridTemplateColumns: "1fr 250px",
             }}
           >
             {/* COLUMNA IZQUIERDA — desglose por categoría */}
@@ -546,110 +629,64 @@ export function CotizacionPreview({
                 background: "#fafdfc",
               }}
             >
-              <div style={{ textAlign: "right", marginBottom: 10 }}>
-                <p
-                  style={{
-                    fontSize: 10,
-                    color: "#888",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    margin: 0,
-                  }}
-                >
-                  Subtotal
-                </p>
-                <p
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#333",
-                    margin: 0,
-                    fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {formatMXN2(data.subtotal)}
-                </p>
-                {data.descuento > 0 && (
+              {/* Cascada de importes: cada renglón dice de dónde sale el
+                  siguiente. Con descuento por producto arranca en el precio de
+                  lista para que el ahorro se vea desde el primer renglón. */}
+              <div style={{ marginBottom: 10 }}>
+                {hayDescProductos && (
                   <>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "#888",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        margin: "4px 0 0 0",
-                      }}
-                    >
-                      Descuento
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#059669",
-                        margin: 0,
-                        fontVariantNumeric: "tabular-nums",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      − {formatMXN2(data.descuento)}
-                    </p>
+                    <LineaTotal
+                      label="Subtotal precios de lista"
+                      value={formatMXN2(descuentos.brutoLista)}
+                      color="#777"
+                    />
+                    <LineaTotal
+                      label={`Descuento en ${descuentos.lineas} ${
+                        descuentos.lineas === 1 ? "producto" : "productos"
+                      }`}
+                      value={`− ${formatMXN2(descuentos.monto)}`}
+                      color={SAVE}
+                      strong
+                    />
+                  </>
+                )}
+                <LineaTotal
+                  label={hayDescProductos ? "Subtotal con descuento" : "Subtotal"}
+                  value={formatMXN2(data.subtotal)}
+                  color="#333"
+                  strong
+                  destacado={hayDescProductos}
+                />
+                {hayDescGlobal && (
+                  <>
+                    <LineaTotal
+                      label={`Descuento general ${pctGlobal.toFixed(1)}%`}
+                      value={`− ${formatMXN2(data.descuento)}`}
+                      color={SAVE}
+                      strong
+                    />
+                    <LineaTotal
+                      label="Subtotal final"
+                      value={formatMXN2(round2(data.subtotal - data.descuento))}
+                      color="#333"
+                      strong
+                      destacado
+                    />
                   </>
                 )}
                 {regalos.lineas > 0 && (
-                  <>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "#888",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        margin: "4px 0 0 0",
-                      }}
-                    >
-                      Regalo incluido
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: GIFT,
-                        margin: 0,
-                        fontVariantNumeric: "tabular-nums",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {regalos.piezas} pzs · valor {formatMXN2(regalos.valor)}
-                    </p>
-                  </>
+                  <LineaTotal
+                    label="Regalo incluido"
+                    value={`${regalos.piezas} pzs · ${formatMXN2(regalos.valor)}`}
+                    color={GIFT}
+                  />
                 )}
                 {data.ivaActivo && (
-                  <>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "#888",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        margin: "4px 0 0 0",
-                      }}
-                    >
-                      IVA
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#333",
-                        margin: 0,
-                        fontVariantNumeric: "tabular-nums",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {formatMXN2(data.iva)}
-                    </p>
-                  </>
+                  <LineaTotal
+                    label="IVA 16%"
+                    value={formatMXN2(data.iva)}
+                    color="#333"
+                  />
                 )}
               </div>
 
@@ -660,7 +697,7 @@ export function CotizacionPreview({
                   color: "#ffffff",
                   padding: 10,
                   borderRadius: 6,
-                  width: 180,
+                  width: 218,
                   boxSizing: "border-box",
                   marginLeft: "auto",
                   textAlign: "center",
@@ -696,8 +733,260 @@ export function CotizacionPreview({
                   })}
                 </div>
               </div>
+
+              {/* Cierre en positivo: cuánto se llevó de más el cliente. */}
+              {ahorroTotal > 0 && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    marginLeft: "auto",
+                    width: 218,
+                    boxSizing: "border-box",
+                    background: SAVE_BG,
+                    border: `1px solid ${SAVE_LINE}`,
+                    borderRadius: 6,
+                    padding: "6px 8px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 8.5,
+                      letterSpacing: "0.10em",
+                      textTransform: "uppercase",
+                      color: SAVE,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Ahorro total
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: SAVE,
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {formatMXN2(ahorroTotal)}
+                    <span style={{ fontSize: 10, fontWeight: 500 }}>
+                      {` (${ahorroPct.toFixed(1)}%)`}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ─── DETALLE DE DESCUENTOS: a qué producto corresponde cada uno ─── */}
+      {(hayDescProductos || hayDescGlobal) && (
+        <div
+          style={{
+            margin: "10px 24px 0",
+            border: `1px solid ${SAVE_LINE}`,
+            borderRadius: 8,
+            overflow: "hidden",
+            pageBreakInside: "avoid",
+            breakInside: "avoid",
+          }}
+        >
+          <div
+            style={{
+              background: SAVE_BG,
+              padding: "7px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: `1px solid ${SAVE_LINE}`,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                color: SAVE,
+              }}
+            >
+              Descuentos aplicados
+            </span>
+            <span
+              style={{
+                fontSize: 10.5,
+                color: SAVE,
+                fontWeight: 600,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatMXN2(ahorroTotal)} en total
+            </span>
+          </div>
+
+          {/* Encabezado de columnas */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 40px 78px 78px 82px",
+              gap: 8,
+              padding: "5px 16px",
+              borderBottom: "1px solid #f0f0f0",
+              fontSize: 8.5,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "#999",
+            }}
+          >
+            <span>Concepto</span>
+            <span style={{ textAlign: "center" }}>Cant.</span>
+            <span style={{ textAlign: "right" }}>Precio lista</span>
+            <span style={{ textAlign: "right" }}>Con desc.</span>
+            <span style={{ textAlign: "right" }}>Ahorro</span>
+          </div>
+
+          {renglonesDesc.map((d, i) => (
+            <div
+              key={`desc-${i}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 40px 78px 78px 82px",
+                gap: 8,
+                alignItems: "center",
+                padding: "6px 16px",
+                borderBottom: "1px solid #f5f5f5",
+                fontSize: 11,
+              }}
+            >
+              <span style={{ color: "#333" }}>
+                {d.concepto}
+                <span
+                  style={{
+                    marginLeft: 6,
+                    padding: "1px 5px",
+                    borderRadius: 6,
+                    background: SAVE_BG,
+                    border: `1px solid ${SAVE_LINE}`,
+                    color: SAVE,
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {`−${d.etiqueta}`}
+                </span>
+                {d.detalle && (
+                  <span
+                    style={{ color: "#999", marginLeft: 6, fontSize: 9.5 }}
+                  >
+                    {d.esLote ? `todo el lote · ${d.detalle}` : d.detalle}
+                  </span>
+                )}
+              </span>
+              <span
+                style={{
+                  textAlign: "center",
+                  color: "#666",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {d.cantidad}
+              </span>
+              <span
+                style={{
+                  textAlign: "right",
+                  color: "#999",
+                  textDecoration:
+                    d.precioLista == null ? undefined : "line-through",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {d.precioLista == null ? "varios" : formatMXN2(d.precioLista)}
+              </span>
+              <span
+                style={{
+                  textAlign: "right",
+                  color: "#333",
+                  fontWeight: 600,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {d.precioFinal == null ? "varios" : formatMXN2(d.precioFinal)}
+              </span>
+              <span
+                style={{
+                  textAlign: "right",
+                  color: SAVE,
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                − {formatMXN2(d.monto)}
+              </span>
+            </div>
+          ))}
+
+          {hayDescGlobal && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 82px",
+                gap: 8,
+                alignItems: "center",
+                padding: "6px 16px",
+                borderBottom: "1px solid #f5f5f5",
+                fontSize: 11,
+                background: "#fbfefd",
+              }}
+            >
+              <span style={{ color: "#333" }}>
+                Descuento general sobre el pedido
+                <span
+                  style={{
+                    marginLeft: 6,
+                    padding: "1px 5px",
+                    borderRadius: 6,
+                    background: SAVE_BG,
+                    border: `1px solid ${SAVE_LINE}`,
+                    color: SAVE,
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                  }}
+                >
+                  {`−${pctGlobal.toFixed(1)}%`}
+                </span>
+                <span style={{ color: "#999", marginLeft: 6, fontSize: 10 }}>
+                  {`sobre ${formatMXN2(data.subtotal)}`}
+                </span>
+              </span>
+              <span
+                style={{
+                  textAlign: "right",
+                  color: SAVE,
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                − {formatMXN2(data.descuento)}
+              </span>
+            </div>
+          )}
+
+          {regalos.lineas > 0 && (
+            <div
+              style={{
+                padding: "6px 16px",
+                fontSize: 10,
+                color: GIFT,
+                background: GIFT_BG,
+              }}
+            >
+              {`Además se incluyen ${regalos.piezas} pzs de regalo con valor de ${formatMXN2(regalos.valor)}, sin costo para ti.`}
+            </div>
+          )}
         </div>
       )}
 
@@ -747,6 +1036,66 @@ export function CotizacionPreview({
           @pielcanela_spabronceado
         </a>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Renglón de la cascada de importes: etiqueta a la izquierda, importe a la
+ * derecha. `destacado` marca los subtotales "de corte" (los que el cliente
+ * debe leer como cifra nueva) con fondo y borde.
+ */
+function LineaTotal({
+  label,
+  value,
+  color,
+  strong,
+  destacado,
+}: {
+  label: string
+  value: string
+  color: string
+  strong?: boolean
+  destacado?: boolean
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        gap: 6,
+        alignItems: "baseline",
+        padding: destacado ? "4px 6px" : "2px 6px",
+        marginTop: 2,
+        borderRadius: 4,
+        background: destacado ? "#ffffff" : undefined,
+        border: destacado ? `1px solid ${TEAL_LINE}` : "1px solid transparent",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 9,
+          color: "#888",
+          letterSpacing: "0.05em",
+          textTransform: "uppercase",
+          lineHeight: 1.3,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: strong ? 700 : 500,
+          color,
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.3,
+          textAlign: "right",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </span>
     </div>
   )
 }

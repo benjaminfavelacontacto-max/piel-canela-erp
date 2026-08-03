@@ -10,6 +10,7 @@ import {
   Minus,
   Trash2,
   Gift,
+  BadgePercent,
   X,
   Check,
   ChevronRight,
@@ -22,6 +23,20 @@ import {
 import type { Cliente, Producto } from "@/lib/cotizacion-types"
 import { formatMXN2 } from "@/lib/utils"
 import { resumenRegalos } from "@/lib/regalos"
+import { grupoProducto } from "@/lib/grupos-productos"
+import {
+  totalesCotizacion,
+  resumenDescuentos,
+  aplicarDescuentoLinea,
+  aplicarDescuentoLote,
+  conCantidad,
+  tieneDescuento,
+  precioLista,
+  descuentoUnitario,
+  descuentoPartida,
+  etiquetaDescuento,
+  type TipoDescuento,
+} from "@/lib/descuentos"
 import { saveCotizacion, siguienteNumeroCotizacion } from "../actions"
 
 /**
@@ -53,6 +68,9 @@ type Linea = {
   costo_unitario: number
   es_regalo: boolean
   precio_lista: number | null
+  descuento_tipo: TipoDescuento | null
+  /** % o $ por pieza, según `descuento_tipo`. */
+  descuento_valor: number
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100
@@ -95,6 +113,8 @@ export function QuickQuote({
   const [notas, setNotas] = useState("")
 
   const [sheet, setSheet] = useState<null | "cliente" | "producto" | "ajustes">(null)
+  // Partida cuyos chips de descuento están abiertos (una a la vez).
+  const [descAbierto, setDescAbierto] = useState<string | null>(null)
   const [guardada, setGuardada] = useState<{ id: string; numero: string } | null>(
     null,
   )
@@ -104,29 +124,23 @@ export function QuickQuote({
     [clienteId, clientes],
   )
 
-  // ─── Totales (idénticos al formulario de escritorio) ──────────────
-  const subtotal = round2(
-    lineas.reduce((s, l) => s + l.precio_unitario * l.cantidad, 0),
-  )
-  const descuento = round2(
-    Math.max(0, Math.min(subtotal, subtotal * (descuentoPct / 100))),
-  )
-  const baseGravable = round2(subtotal - descuento)
-  const iva = ivaActivo ? round2(baseGravable * 0.16) : 0
-  const total = round2(baseGravable + iva)
+  // ─── Totales (misma lib que el formulario de escritorio y el PDF) ──
+  const t = totalesCotizacion({
+    items: lineas,
+    descuentoTipo: "pct",
+    descuentoValor: descuentoPct,
+    ivaActivo,
+  })
+  const subtotal = t.subtotal
+  const descuento = t.descuentoGlobal
+  const iva = t.iva
+  const total = t.total
+  const descProductos = resumenDescuentos(lineas)
   const costoProductos = round2(
     lineas.reduce((s, l) => s + l.costo_unitario * l.cantidad, 0),
   )
   const utilidad = round2(subtotal - descuento - costoProductos)
-  const regalos = resumenRegalos(
-    lineas.map((l) => ({
-      cantidad: l.cantidad,
-      precio_unitario: l.precio_unitario,
-      costo_unitario: l.costo_unitario,
-      precio_lista: l.precio_lista,
-      es_regalo: l.es_regalo,
-    })),
-  )
+  const regalos = resumenRegalos(lineas)
   const piezas = lineas.reduce((s, l) => s + l.cantidad, 0)
 
   function elegirCliente(id: string) {
@@ -149,12 +163,15 @@ export function QuickQuote({
       costo_unitario: Number(p.costo ?? 0),
       es_regalo: comoRegalo,
       precio_lista: comoRegalo ? p.precio : null,
+      descuento_tipo: null,
+      descuento_valor: 0,
     }
     setLineas((prev) => {
       const i = prev.findIndex((l) => lineaKey(l) === lineaKey(nueva))
       if (i === -1) return [...prev, nueva]
       const copy = [...prev]
-      copy[i] = { ...copy[i], cantidad: copy[i].cantidad + 1 }
+      // Conserva el descuento de la partida y recalcula el precio unitario.
+      copy[i] = conCantidad(copy[i], copy[i].cantidad + 1)
       return copy
     })
   }
@@ -164,7 +181,9 @@ export function QuickQuote({
       prev.flatMap((l) => {
         if (lineaKey(l) !== key) return [l]
         const n = l.cantidad + delta
-        return n <= 0 ? [] : [{ ...l, cantidad: n }]
+        // `conCantidad` recalcula el precio: con un descuento en monto, el
+        // precio por pieza depende de cuántas piezas hay.
+        return n <= 0 ? [] : [conCantidad(l, n)]
       }),
     )
   }
@@ -173,6 +192,45 @@ export function QuickQuote({
     setLineas((prev) => prev.filter((l) => lineaKey(l) !== key))
   }
 
+  /** Descuento de UNA partida (mismo modelo que el formulario completo). */
+  function setDescuentoLinea(
+    key: string,
+    tipo: TipoDescuento,
+    valor: number,
+  ) {
+    setLineas((prev) =>
+      prev.map((l) =>
+        lineaKey(l) === key ? { ...l, ...aplicarDescuentoLinea(l, tipo, valor) } : l,
+      ),
+    )
+  }
+
+  /** Descuento POR LOTE: "15% a todas las cintas" de un toque. */
+  function setDescuentoGrupo(grupo: string, pct: number) {
+    setLineas((prev) =>
+      aplicarDescuentoLote(
+        prev,
+        (l) => grupoProducto(l).label === grupo,
+        "pct",
+        pct,
+      ),
+    )
+  }
+
+  // Familias presentes en la cotización, para el descuento por lote.
+  const gruposLote = useMemo(() => {
+    const map = new Map<string, { label: string; partidas: number; ahorro: number }>()
+    for (const l of lineas) {
+      if (l.es_regalo) continue
+      const label = grupoProducto(l).label
+      const cur = map.get(label) ?? { label, partidas: 0, ahorro: 0 }
+      cur.partidas += 1
+      cur.ahorro += descuentoUnitario(l) * l.cantidad
+      map.set(label, cur)
+    }
+    return Array.from(map.values()).sort((a, b) => b.partidas - a.partidas)
+  }, [lineas])
+
   function alternarRegaloLinea(key: string) {
     setLineas((prev) => {
       const i = prev.findIndex((l) => lineaKey(l) === key)
@@ -180,11 +238,14 @@ export function QuickQuote({
       const l = prev[i]
       const regalo = !l.es_regalo
       const lista = l.precio_lista ?? l.precio_unitario
+      // El regalo ya es cortesía al 100%: se suelta el descuento por producto.
       const cambiada: Linea = {
         ...l,
         es_regalo: regalo,
         precio_unitario: regalo ? 0 : lista,
         precio_lista: regalo ? lista : null,
+        descuento_tipo: null,
+        descuento_valor: 0,
       }
       // Si al cambiar de tipo choca con una línea igual, se fusionan.
       const gemela = prev.findIndex(
@@ -238,6 +299,8 @@ export function QuickQuote({
           subtotal: round2(l.precio_unitario * l.cantidad),
           es_regalo: l.es_regalo,
           precio_lista: l.precio_lista,
+          descuento_tipo: l.descuento_tipo,
+          descuento_valor: l.descuento_valor,
         })),
       })
       if (!result.ok) {
@@ -255,6 +318,7 @@ export function QuickQuote({
     setNumero("")
     setLineas([])
     setDescuentoPct(0)
+    setDescAbierto(null)
     setNotas("")
     router.refresh()
   }
@@ -360,13 +424,16 @@ export function QuickQuote({
           <ul className="space-y-2">
             {lineas.map((l) => {
               const key = lineaKey(l)
+              const conDesc = tieneDescuento(l)
               return (
                 <li
                   key={key}
                   className={`rounded-2xl border p-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] ${
                     l.es_regalo
                       ? "border-fuchsia-200 bg-fuchsia-50/60"
-                      : "border-black/5 bg-white"
+                      : conDesc
+                        ? "border-emerald-200 bg-emerald-50/50"
+                        : "border-black/5 bg-white"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -393,11 +460,28 @@ export function QuickQuote({
                             Regalo
                           </span>
                         )}
+                        {conDesc && (
+                          <span className="ml-1.5 rounded bg-emerald-600 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
+                            −{etiquetaDescuento(l)}
+                          </span>
+                        )}
                       </p>
                       <p className="mt-0.5 text-[11.5px] text-gray-500">
-                        {l.es_regalo
-                          ? `Cortesía · valor ${formatMXN2(l.precio_lista ?? 0)} c/u`
-                          : `${formatMXN2(l.precio_unitario)} c/u`}
+                        {l.es_regalo ? (
+                          `Cortesía · valor ${formatMXN2(l.precio_lista ?? 0)} c/u`
+                        ) : conDesc ? (
+                          <>
+                            <span className="text-gray-400 line-through">
+                              {formatMXN2(precioLista(l))}
+                            </span>{" "}
+                            <span className="font-semibold text-emerald-700">
+                              {formatMXN2(l.precio_unitario)}
+                            </span>{" "}
+                            c/u · ahorra {formatMXN2(descuentoPartida(l))}
+                          </>
+                        ) : (
+                          `${formatMXN2(l.precio_unitario)} c/u`
+                        )}
                       </p>
                     </div>
                     <button
@@ -431,6 +515,24 @@ export function QuickQuote({
                       >
                         <Plus className="size-4" />
                       </button>
+                      {!l.es_regalo && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDescAbierto(descAbierto === key ? null : key)
+                          }
+                          aria-expanded={descAbierto === key}
+                          aria-label="Descuento a este producto"
+                          className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
+                            conDesc
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "text-gray-400 active:bg-black/5"
+                          }`}
+                        >
+                          <BadgePercent className="size-4" />
+                          {conDesc ? etiquetaDescuento(l) : "Desc."}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => alternarRegaloLinea(key)}
@@ -455,6 +557,42 @@ export function QuickQuote({
                         : formatMXN2(l.precio_unitario * l.cantidad)}
                     </span>
                   </div>
+
+                  {/* Descuento por producto — chips de % con el pulgar. Para
+                      un monto exacto por pieza está el modo completo: aquí
+                      manda la velocidad frente al cliente. */}
+                  {descAbierto === key && !l.es_regalo && (
+                    <div className="mt-2.5 border-t border-black/5 pt-2.5">
+                      <p className="mb-1.5 text-[11.5px] text-gray-500">
+                        Descuento a este producto ·{" "}
+                        <span className="tabular-nums">
+                          lista {formatMXN2(precioLista(l))}
+                        </span>
+                      </p>
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {[0, 5, 10, 15, 20, 25].map((pct) => {
+                          const activo =
+                            (l.descuento_tipo === "pct" ? l.descuento_valor : 0) ===
+                            pct
+                          return (
+                            <button
+                              key={pct}
+                              type="button"
+                              onClick={() => setDescuentoLinea(key, "pct", pct)}
+                              aria-pressed={activo}
+                              className={`pc-tap h-10 rounded-xl text-[13px] font-semibold tabular-nums transition-colors ${
+                                activo
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-[#F5F7F6] text-gray-600"
+                              }`}
+                            >
+                              {pct === 0 ? "Sin" : `${pct}%`}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </li>
               )
             })}
@@ -474,7 +612,10 @@ export function QuickQuote({
               </span>
               <span className="block truncate text-[11.5px] text-gray-500">
                 {ivaActivo ? "Con IVA 16%" : "Sin IVA"}
-                {descuentoPct > 0 ? ` · ${descuentoPct}% descuento` : ""}
+                {descuentoPct > 0 ? ` · ${descuentoPct}% general` : ""}
+                {descProductos.lineas > 0
+                  ? ` · ${descProductos.lineas} con descuento`
+                  : ""}
                 {regalos.lineas > 0
                   ? ` · ${regalos.piezas} pzs de regalo`
                   : ""}
@@ -549,6 +690,13 @@ export function QuickQuote({
           descuento={descuento}
           iva={iva}
           total={total}
+          brutoLista={t.brutoLista}
+          descuentoProductos={t.descuentoProductos}
+          lineasConDescuento={descProductos.lineas}
+          ahorroCliente={t.ahorroCliente}
+          ahorroPct={t.ahorroPct}
+          grupos={gruposLote}
+          onDescuentoGrupo={setDescuentoGrupo}
           onClose={() => setSheet(null)}
         />
       )}
@@ -872,6 +1020,13 @@ function AjustesSheet({
   descuento,
   iva,
   total,
+  brutoLista,
+  descuentoProductos,
+  lineasConDescuento,
+  ahorroCliente,
+  ahorroPct,
+  grupos,
+  onDescuentoGrupo,
   onClose,
 }: {
   ivaActivo: boolean
@@ -884,6 +1039,13 @@ function AjustesSheet({
   descuento: number
   iva: number
   total: number
+  brutoLista: number
+  descuentoProductos: number
+  lineasConDescuento: number
+  ahorroCliente: number
+  ahorroPct: number
+  grupos: { label: string; partidas: number; ahorro: number }[]
+  onDescuentoGrupo: (grupo: string, pct: number) => void
   onClose: () => void
 }) {
   return (
@@ -957,6 +1119,51 @@ function AjustesSheet({
           )}
         </div>
 
+        {/* Descuento por lote — toda una familia de un toque */}
+        {grupos.length > 0 && (
+          <div className="rounded-2xl border border-black/5 bg-white p-4">
+            <p className="text-[14.5px] font-semibold text-gray-900">
+              Descuento por lote
+            </p>
+            <p className="mt-0.5 text-[11.5px] text-gray-500">
+              Aplica el mismo % a todos los productos de una familia — no hace
+              falta capturarlo uno por uno.
+            </p>
+            <div className="mt-3 space-y-3">
+              {grupos.map((g) => (
+                <div key={g.label}>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-[12.5px] font-medium text-gray-800">
+                      {g.label}{" "}
+                      <span className="text-gray-400">
+                        · {g.partidas}{" "}
+                        {g.partidas === 1 ? "producto" : "productos"}
+                      </span>
+                    </span>
+                    {g.ahorro > 0 && (
+                      <span className="text-[11.5px] font-semibold tabular-nums text-emerald-700">
+                        − {formatMXN2(round2(g.ahorro))}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {[0, 5, 10, 15, 20].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => onDescuentoGrupo(g.label, pct)}
+                        className="pc-tap h-10 rounded-xl bg-[#F5F7F6] text-[13px] font-semibold tabular-nums text-gray-600 transition-colors active:bg-emerald-600 active:text-white"
+                      >
+                        {pct === 0 ? "Sin" : `${pct}%`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Notas */}
         <div className="rounded-2xl border border-black/5 bg-white p-4">
           <label className="block">
@@ -973,20 +1180,55 @@ function AjustesSheet({
           </label>
         </div>
 
-        {/* Resumen */}
+        {/* Resumen — la misma cascada que verá el cliente en el PDF */}
         <div className="rounded-2xl bg-[#FAFAFA] p-4 text-[13px]">
-          <Row label="Subtotal" value={formatMXN2(subtotal)} />
+          {descuentoProductos > 0 && (
+            <>
+              <Row
+                label="Subtotal precios de lista"
+                value={formatMXN2(brutoLista)}
+              />
+              <Row
+                label={`Descuento en ${lineasConDescuento} ${
+                  lineasConDescuento === 1 ? "producto" : "productos"
+                }`}
+                value={`− ${formatMXN2(descuentoProductos)}`}
+                tone="text-emerald-700"
+              />
+            </>
+          )}
+          <Row
+            label={
+              descuentoProductos > 0 ? "Subtotal con descuento" : "Subtotal"
+            }
+            value={formatMXN2(subtotal)}
+          />
           {descuento > 0 && (
-            <Row
-              label="Descuento"
-              value={`− ${formatMXN2(descuento)}`}
-              tone="text-rose-600"
-            />
+            <>
+              <Row
+                label="Descuento general"
+                value={`− ${formatMXN2(descuento)}`}
+                tone="text-emerald-700"
+              />
+              <Row
+                label="Subtotal final"
+                value={formatMXN2(round2(subtotal - descuento))}
+              />
+            </>
           )}
           {iva > 0 && <Row label="IVA 16%" value={formatMXN2(iva)} />}
           <div className="mt-2 border-t border-black/5 pt-2">
             <Row label="Total" value={formatMXN2(total)} bold />
           </div>
+          {ahorroCliente > 0 && (
+            <div className="mt-2 rounded-xl bg-emerald-50 px-2.5 py-1.5">
+              <Row
+                label="Ahorro del cliente"
+                value={`${formatMXN2(ahorroCliente)} (${ahorroPct.toFixed(1)}%)`}
+                tone="text-emerald-700"
+              />
+            </div>
+          )}
         </div>
       </div>
     </Sheet>
