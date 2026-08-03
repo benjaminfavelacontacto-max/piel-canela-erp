@@ -27,42 +27,39 @@ const INSTAGRAM_URL = "https://www.instagram.com/pielcanela_spabronceado/"
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 /**
- * Etiqueta tipo píldora (REGALO, −15%…).
+ * ⚠️ REGLA DE ESTE DOCUMENTO: nada de cajas ajustadas al texto.
  *
- * `display: inline-block` + `lineHeight` FIJO no es cosmético: html2canvas
- * (el rasterizador del PDF) calcula la caja de un `<span>` inline con la
- * métrica de la línea del padre, y cuando la fuente real difiere de la que
- * mide —pasa en Chrome/macOS con `-apple-system`— el fondo redondeado sale
- * desalineado y corta el texto. Con una caja de bloque y altura de línea
- * propia, el fondo se dibuja según el layout real y ya no depende de la
- * fuente. Mismo motivo para `whiteSpace: nowrap`.
+ * html2canvas (el rasterizador de la exportación a PDF) pinta el texto unos
+ * píxeles MÁS ABAJO de donde calcula su caja de línea. En cajas holgadas
+ * —filas, el bloque del TOTAL, la banda del encabezado— no se nota. Pero
+ * cualquier adorno pegado al texto se rompe:
+ *   · píldora con fondo y padding de 1-2px → el texto se sale del fondo
+ *   · `text-decoration: line-through`       → la raya sale ARRIBA del número
+ *   · `overflow: hidden` sobre una línea    → recorta el texto corrido
+ * Se probaron `inline-block` + line-height fijo y una raya absoluta de 1px:
+ * el desplazamiento persiste porque no depende del layout, sino de cómo
+ * html2canvas resuelve la baseline con la fuente sustituida.
+ *
+ * Por eso el énfasis se hace SOLO con color, peso y palabras — que rasterizan
+ * perfecto — y no con fondos, rayas ni recortes.
  */
-function Pildora({
+
+/** Marca de descuento/cortesía: color + negrita, sin fondo. */
+function MarcaTexto({
   children,
-  bg,
-  color = "#ffffff",
-  borde,
+  color,
 }: {
   children: React.ReactNode
-  bg: string
-  color?: string
-  borde?: string
+  color: string
 }) {
   return (
     <span
       style={{
-        display: "inline-block",
-        padding: "1px 6px",
-        borderRadius: 8,
-        background: bg,
-        border: borde ? `1px solid ${borde}` : undefined,
         color,
-        fontSize: 8.5,
+        fontSize: 9.5,
         fontWeight: 700,
-        lineHeight: "12px",
         letterSpacing: "0.04em",
         whiteSpace: "nowrap",
-        verticalAlign: "middle",
       }}
     >
       {children}
@@ -71,44 +68,19 @@ function Pildora({
 }
 
 /**
- * Precio tachado (el de antes del descuento).
- *
- * La línea NO usa `text-decoration: line-through`: html2canvas la dibuja a
- * partir de la métrica de la fuente y en el PDF salía flotando ARRIBA del
- * número, pareciendo un borde. Aquí es un rectángulo absoluto de 1px —
- * una caja normal, que el rasterizador sí coloca bien.
+ * Precio anterior al descuento. Sin tachado: la palabra "antes" comunica lo
+ * mismo y no depende de que el rasterizador acierte la posición de la raya.
  */
-function PrecioTachado({
+function PrecioAntes({
   children,
-  color = "#9a9a9a",
   fontSize = 10,
 }: {
   children: React.ReactNode
-  color?: string
   fontSize?: number
 }) {
   return (
-    <span
-      style={{
-        display: "inline-block",
-        position: "relative",
-        color,
-        fontSize,
-        lineHeight: `${Math.round(fontSize * 1.3)}px`,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-      <span
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: "50%",
-          height: 1,
-          background: color,
-        }}
-      />
+    <span style={{ color: "#9a9a9a", fontSize, whiteSpace: "nowrap" }}>
+      antes {children}
     </span>
   )
 }
@@ -473,15 +445,15 @@ export function CotizacionPreview({
                     >
                       {it.sku}
                       {regalo && (
-                        <span style={{ marginLeft: it.sku ? 6 : 0 }}>
-                          <Pildora bg={GIFT}>REGALO</Pildora>
+                        <span style={{ marginLeft: it.sku ? 8 : 0 }}>
+                          <MarcaTexto color={GIFT}>DE REGALO</MarcaTexto>
                         </span>
                       )}
                       {conDesc && (
-                        <span style={{ marginLeft: it.sku ? 6 : 0 }}>
-                          <Pildora bg={SAVE}>
-                            {`−${etiquetaDescuento(it)}`}
-                          </Pildora>
+                        <span style={{ marginLeft: it.sku ? 8 : 0 }}>
+                          <MarcaTexto color={SAVE}>
+                            {`${etiquetaDescuento(it)} DE DESCUENTO`}
+                          </MarcaTexto>
                         </span>
                       )}
                     </p>
@@ -516,24 +488,20 @@ export function CotizacionPreview({
                         cuánto vale lo que se le obsequia. Con descuento se
                         tacha arriba el de catálogo y abajo va el rebajado. */}
                     {conDesc && (
-                      <div style={{ lineHeight: "13px" }}>
-                        <PrecioTachado>{formatMXN2(lista)}</PrecioTachado>
+                      <div style={{ lineHeight: 1.5 }}>
+                        <PrecioAntes>{formatMXN2(lista)}</PrecioAntes>
                       </div>
                     )}
                     <div
                       style={{
                         color: regalo ? "#999" : conDesc ? SAVE : "#444",
                         fontWeight: conDesc ? 700 : 400,
-                        lineHeight: "15px",
+                        lineHeight: 1.5,
                       }}
                     >
-                      {regalo ? (
-                        <PrecioTachado fontSize={12}>
-                          {formatMXN2(precioReferencia(it))}
-                        </PrecioTachado>
-                      ) : (
-                        formatMXN2(it.precio_unitario)
-                      )}
+                      {regalo
+                        ? `valor ${formatMXN2(precioReferencia(it))}`
+                        : formatMXN2(it.precio_unitario)}
                     </div>
                   </div>
                   <div
@@ -926,14 +894,12 @@ export function CotizacionPreview({
             >
               <span style={{ color: "#333" }}>
                 {d.concepto}
-                <span style={{ marginLeft: 6 }}>
-                  <Pildora bg={SAVE_BG} color={SAVE} borde={SAVE_LINE}>
-                    {`−${d.etiqueta}`}
-                  </Pildora>
+                <span style={{ marginLeft: 8 }}>
+                  <MarcaTexto color={SAVE}>{`−${d.etiqueta}`}</MarcaTexto>
                 </span>
                 {d.detalle && (
                   <span
-                    style={{ color: "#999", marginLeft: 6, fontSize: 9.5 }}
+                    style={{ color: "#999", marginLeft: 8, fontSize: 9.5 }}
                   >
                     {d.esLote ? `todo el lote · ${d.detalle}` : d.detalle}
                   </span>
@@ -955,13 +921,7 @@ export function CotizacionPreview({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {d.precioLista == null ? (
-                  "varios"
-                ) : (
-                  <PrecioTachado fontSize={11}>
-                    {formatMXN2(d.precioLista)}
-                  </PrecioTachado>
-                )}
+                {d.precioLista == null ? "varios" : formatMXN2(d.precioLista)}
               </span>
               <span
                 style={{
@@ -1001,10 +961,10 @@ export function CotizacionPreview({
             >
               <span style={{ color: "#333" }}>
                 Descuento general sobre el pedido
-                <span style={{ marginLeft: 6 }}>
-                  <Pildora bg={SAVE_BG} color={SAVE} borde={SAVE_LINE}>
+                <span style={{ marginLeft: 8 }}>
+                  <MarcaTexto color={SAVE}>
                     {`−${pctGlobal.toFixed(1)}%`}
-                  </Pildora>
+                  </MarcaTexto>
                 </span>
                 <span style={{ color: "#999", marginLeft: 6, fontSize: 10 }}>
                   {`sobre ${formatMXN2(data.subtotal)}`}
@@ -1113,23 +1073,24 @@ function LineaTotal({
         gridTemplateColumns: "1fr auto",
         gap: 6,
         alignItems: "baseline",
-        padding: destacado ? "4px 6px" : "2px 6px",
+        padding: destacado ? "5px 6px" : "3px 6px",
         marginTop: 2,
         borderRadius: 4,
         background: destacado ? "#ffffff" : undefined,
         border: destacado ? `1px solid ${TEAL_LINE}` : "1px solid transparent",
       }}
     >
+      {/* Sin overflow/ellipsis: el rasterizador del PDF baja el texto unos
+          píxeles y el recorte se lo comía por arriba. Line-height holgado por
+          el mismo motivo. Las etiquetas ya son cortas para no necesitarlo. */}
       <span
         style={{
           fontSize: 8.5,
           color: "#888",
           letterSpacing: "0.03em",
           textTransform: "uppercase",
-          lineHeight: 1.3,
+          lineHeight: 1.6,
           whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
         }}
       >
         {label}
@@ -1140,7 +1101,7 @@ function LineaTotal({
           fontWeight: strong ? 700 : 500,
           color,
           fontVariantNumeric: "tabular-nums",
-          lineHeight: 1.3,
+          lineHeight: 1.6,
           textAlign: "right",
           whiteSpace: "nowrap",
         }}
