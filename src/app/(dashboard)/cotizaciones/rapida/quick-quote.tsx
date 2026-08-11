@@ -484,78 +484,78 @@ export function QuickQuote({
                         )}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => quitar(key)}
-                      aria-label={`Quitar ${l.nombre}`}
-                      className="pc-tap -mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-300 active:bg-black/5 active:text-rose-600"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-
-                  <div className="mt-2.5 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => cambiarCantidad(key, -1)}
-                        aria-label="Quitar una pieza"
-                        className="pc-stepper-btn"
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span
+                        className={`text-[15px] font-bold tabular-nums ${
+                          l.es_regalo ? "text-fuchsia-600" : "text-gray-900"
+                        }`}
                       >
-                        <Minus className="size-4" />
-                      </button>
-                      <span className="min-w-8 text-center text-[16px] font-bold tabular-nums text-gray-900">
-                        {l.cantidad}
+                        {l.es_regalo
+                          ? "Gratis"
+                          : formatMXN2(l.precio_unitario * l.cantidad)}
                       </span>
                       <button
                         type="button"
-                        onClick={() => cambiarCantidad(key, 1)}
-                        aria-label="Agregar una pieza"
-                        className="pc-stepper-btn"
+                        onClick={() => quitar(key)}
+                        aria-label={`Quitar ${l.nombre}`}
+                        className="pc-tap -mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-300 active:bg-black/5 active:text-rose-600"
                       >
-                        <Plus className="size-4" />
+                        <Trash2 className="size-4" />
                       </button>
-                      {!l.es_regalo && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setDescAbierto(descAbierto === key ? null : key)
-                          }
-                          aria-expanded={descAbierto === key}
-                          aria-label="Descuento a este producto"
-                          className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
-                            conDesc
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "text-gray-400 active:bg-black/5"
-                          }`}
-                        >
-                          <BadgePercent className="size-4" />
-                          {conDesc ? etiquetaDescuento(l) : "Desc."}
-                        </button>
-                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => cambiarCantidad(key, -1)}
+                      aria-label="Quitar una pieza"
+                      className="pc-stepper-btn"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <span className="min-w-8 text-center text-[16px] font-bold tabular-nums text-gray-900">
+                      {l.cantidad}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => cambiarCantidad(key, 1)}
+                      aria-label="Agregar una pieza"
+                      className="pc-stepper-btn"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                    {!l.es_regalo && (
                       <button
                         type="button"
-                        onClick={() => alternarRegaloLinea(key)}
-                        aria-pressed={l.es_regalo}
+                        onClick={() =>
+                          setDescAbierto(descAbierto === key ? null : key)
+                        }
+                        aria-expanded={descAbierto === key}
+                        aria-label="Descuento a este producto"
                         className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
-                          l.es_regalo
-                            ? "bg-fuchsia-100 text-fuchsia-700"
+                          conDesc
+                            ? "bg-emerald-100 text-emerald-700"
                             : "text-gray-400 active:bg-black/5"
                         }`}
                       >
-                        <Gift className="size-4" />
-                        {l.es_regalo ? "Regalo" : "Regalar"}
+                        <BadgePercent className="size-4" />
+                        {conDesc ? etiquetaDescuento(l) : "Desc."}
                       </button>
-                    </div>
-                    <span
-                      className={`text-[15px] font-bold tabular-nums ${
-                        l.es_regalo ? "text-fuchsia-600" : "text-gray-900"
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => alternarRegaloLinea(key)}
+                      aria-pressed={l.es_regalo}
+                      className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
+                        l.es_regalo
+                          ? "bg-fuchsia-100 text-fuchsia-700"
+                          : "text-gray-400 active:bg-black/5"
                       }`}
                     >
-                      {l.es_regalo
-                        ? "Gratis"
-                        : formatMXN2(l.precio_unitario * l.cantidad)}
-                    </span>
+                      <Gift className="size-4" />
+                      {l.es_regalo ? "Regalo" : "Regalar"}
+                    </button>
                   </div>
 
                   {/* Descuento por producto — chips de % con el pulgar. Para
@@ -675,6 +675,8 @@ export function QuickQuote({
           productos={productos}
           lineas={lineas}
           onAdd={agregar}
+          onCantidad={cambiarCantidad}
+          onDescuento={setDescuentoLinea}
           onClose={() => setSheet(null)}
         />
       )}
@@ -860,29 +862,27 @@ function ProductoSheet({
   productos,
   lineas,
   onAdd,
+  onCantidad,
+  onDescuento,
   onClose,
 }: {
   productos: Producto[]
   lineas: Linea[]
   onAdd: (p: Producto, comoRegalo?: boolean) => void
+  onCantidad: (key: string, delta: number) => void
+  onDescuento: (key: string, tipo: TipoDescuento, valor: number) => void
   onClose: () => void
 }) {
   const [q, setQ] = useState("")
   const [modoRegalo, setModoRegalo] = useState(false)
+  // Producto (por id) cuyos chips de descuento están abiertos — uno a la vez.
+  const [descAbiertoId, setDescAbiertoId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 120)
     return () => clearTimeout(t)
   }, [])
-
-  // Cuántas piezas de cada producto ya van en la cotización (badge)
-  const yaEn = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const l of lineas)
-      m.set(l.producto_id, (m.get(l.producto_id) ?? 0) + l.cantidad)
-    return m
-  }, [lineas])
 
   const filtrados = useMemo(() => {
     const s = norm(q.trim())
@@ -946,59 +946,171 @@ function ProductoSheet({
           </li>
         ) : (
           filtrados.map((p) => {
-            const n = yaEn.get(p.id) ?? 0
+            // Partida de ESTE producto en el modo actual (normal o regalo).
+            const linea = lineas.find(
+              (l) => l.producto_id === p.id && l.es_regalo === modoRegalo,
+            )
+            const otra = lineas.find(
+              (l) => l.producto_id === p.id && l.es_regalo !== modoRegalo,
+            )
+            const key = linea ? lineaKey(linea) : null
+            const conDesc = linea ? tieneDescuento(linea) : false
+            const descAbierto = descAbiertoId === p.id
+
             return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  onClick={() => onAdd(p, modoRegalo)}
-                  className="pc-touch-row flex w-full items-center gap-3 py-3 text-left active:bg-gray-50"
-                >
-                  {p.imagen_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.imagen_url}
-                      alt=""
-                      className="size-11 shrink-0 rounded-xl border border-black/5 object-cover"
-                    />
-                  ) : (
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F7F6] font-mono text-[10px] font-semibold text-gray-400">
-                      {(p.sku ?? p.nombre)
-                        .replace(/[^A-Z0-9]/gi, "")
-                        .slice(0, 3)
-                        .toUpperCase()}
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium text-gray-900">
-                      {p.nombre}
-                    </span>
-                    <span className="block truncate text-[12px] text-gray-500">
-                      {p.sku ? `${p.sku} · ` : ""}
-                      <span className="font-semibold text-[#0F766E]">
-                        {formatMXN2(p.precio)}
-                      </span>
-                      {p.peso ? ` · ${p.peso}` : ""}
-                    </span>
-                  </span>
-                  {n > 0 && (
-                    <span className="shrink-0 rounded-full bg-[#DFF7F4] px-2 py-0.5 text-[11px] font-bold tabular-nums text-[#0F766E]">
-                      {n}
-                    </span>
-                  )}
-                  <span
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl text-white ${
-                      modoRegalo ? "bg-fuchsia-600" : "bg-[#0F766E]"
-                    }`}
-                    aria-hidden
+              <li key={p.id} className="py-2.5">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!linea) onAdd(p, modoRegalo)
+                    }}
+                    className="pc-touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
                   >
-                    {modoRegalo ? (
-                      <Gift className="size-4" />
+                    {p.imagen_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.imagen_url}
+                        alt=""
+                        className="size-11 shrink-0 rounded-xl border border-black/5 object-cover"
+                      />
                     ) : (
-                      <Plus className="size-4" />
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F7F6] font-mono text-[10px] font-semibold text-gray-400">
+                        {(p.sku ?? p.nombre)
+                          .replace(/[^A-Z0-9]/gi, "")
+                          .slice(0, 3)
+                          .toUpperCase()}
+                      </span>
                     )}
-                  </span>
-                </button>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-medium text-gray-900">
+                        {p.nombre}
+                        {conDesc && (
+                          <span className="ml-1.5 rounded bg-emerald-600 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
+                            −{etiquetaDescuento(linea!)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="block truncate text-[12px] text-gray-500">
+                        {conDesc ? (
+                          <>
+                            <span className="text-gray-400 line-through">
+                              {formatMXN2(precioLista(linea!))}
+                            </span>{" "}
+                            <span className="font-semibold text-emerald-700">
+                              {formatMXN2(linea!.precio_unitario)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {p.sku ? `${p.sku} · ` : ""}
+                            <span
+                              className={`font-semibold ${modoRegalo ? "text-fuchsia-600" : "text-[#0F766E]"}`}
+                            >
+                              {modoRegalo ? "Gratis" : formatMXN2(p.precio)}
+                            </span>
+                            {p.peso ? ` · ${p.peso}` : ""}
+                          </>
+                        )}
+                      </span>
+                      {otra && (
+                        <span className="block truncate text-[11px] text-gray-400">
+                          + {otra.cantidad}{" "}
+                          {otra.es_regalo ? "de regalo" : "a precio normal"} ya
+                          agregado{otra.cantidad === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+
+                  {!linea ? (
+                    <button
+                      type="button"
+                      onClick={() => onAdd(p, modoRegalo)}
+                      aria-label={`Agregar ${p.nombre}`}
+                      className={`pc-tap flex size-9 shrink-0 items-center justify-center rounded-xl text-white ${
+                        modoRegalo ? "bg-fuchsia-600" : "bg-[#0F766E]"
+                      }`}
+                    >
+                      {modoRegalo ? (
+                        <Gift className="size-4" />
+                      ) : (
+                        <Plus className="size-4" />
+                      )}
+                    </button>
+                  ) : (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onCantidad(key!, -1)}
+                        aria-label="Quitar una pieza"
+                        className="pc-stepper-btn"
+                      >
+                        <Minus className="size-4" />
+                      </button>
+                      <span className="min-w-6 text-center text-[15px] font-bold tabular-nums text-gray-900">
+                        {linea.cantidad}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onCantidad(key!, 1)}
+                        aria-label="Agregar una pieza"
+                        className="pc-stepper-btn"
+                      >
+                        <Plus className="size-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {linea && !modoRegalo && (
+                  <div className="mt-1.5 pl-14">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDescAbiertoId(descAbierto ? null : p.id)
+                      }
+                      aria-expanded={descAbierto}
+                      aria-label={`Descuento a ${p.nombre}`}
+                      className={`pc-tap flex h-8 items-center gap-1 rounded-lg px-2.5 text-[11.5px] font-medium ${
+                        conDesc
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-[#F5F7F6] text-gray-500"
+                      }`}
+                    >
+                      <BadgePercent className="size-3.5" />
+                      {conDesc ? etiquetaDescuento(linea) : "Sin descuento"}
+                    </button>
+                  </div>
+                )}
+
+                {descAbierto && linea && !modoRegalo && (
+                  <div className="mt-2 pl-14 pr-1">
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {[0, 5, 10, 15, 20, 25].map((pct) => {
+                        const activo =
+                          (linea.descuento_tipo === "pct"
+                            ? linea.descuento_valor
+                            : 0) === pct
+                        return (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => onDescuento(key!, "pct", pct)}
+                            aria-pressed={activo}
+                            className={`pc-tap h-9 rounded-lg text-[12px] font-semibold tabular-nums transition-colors ${
+                              activo
+                                ? "bg-emerald-600 text-white"
+                                : "bg-[#F5F7F6] text-gray-600"
+                            }`}
+                          >
+                            {pct === 0 ? "Sin" : `${pct}%`}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </li>
             )
           })
