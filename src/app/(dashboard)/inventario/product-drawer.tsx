@@ -42,14 +42,14 @@ const monthShort = new Intl.DateTimeFormat("es-MX", {
 })
 
 /** Meses (inclusive) entre dos claves "YYYY-MM". monthSpan("2025-01","2025-03") = 3 */
-function monthSpan(a: string, b: string): number {
+export function monthSpan(a: string, b: string): number {
   const [ay, am] = a.split("-").map(Number)
   const [by, bm] = b.split("-").map(Number)
   return (by - ay) * 12 + (bm - am) + 1
 }
 
 /** Texto legible para "se agota en" a partir de los meses estimados. */
-function fmtAgotar(meses: number | null, stock: number): string {
+export function fmtAgotar(meses: number | null, stock: number): string {
   if (stock <= 0) return "Agotado"
   if (meses == null) return "Sin datos"
   if (meses < 1) return "~" + Math.max(1, Math.round(meses * 30)) + " días"

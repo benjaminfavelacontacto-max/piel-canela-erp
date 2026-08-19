@@ -16,6 +16,7 @@ import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
 import { ExportInventarioButton } from "./export-inventario-button"
 import { InventoryStats } from "./inventory-stats"
+import { SugerenciaPedido } from "./sugerencia-pedido"
 import { actualizarTipoCambio } from "./actions"
 import { ImageUpload } from "./image-upload"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
@@ -82,7 +83,7 @@ function categoriaClass(c: string): string {
   return categoriaBadgeColor[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
 }
 
-const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
+export const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
   ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
   POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
   CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
@@ -481,6 +482,8 @@ export function InventarioView({
           {error}
         </div>
       )}
+
+      <SugerenciaPedido productos={productos} sales={sales} />
 
       {/* Dashboard por tipo: stock por categoría */}
       <section
