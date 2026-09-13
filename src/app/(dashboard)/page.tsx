@@ -19,14 +19,15 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
-import { formatMXN } from "@/lib/utils"
+import { formatMXN, formatPP } from "@/lib/utils"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
-import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
+import { ChartMetricSelector } from "./chart-metric-selector"
 import { PortalBadge, type PortalCotizacion } from "./portal-badge"
 import { DashboardHero } from "./dashboard-hero"
 import { DashboardWidgets, type WidgetSlot } from "./dashboard-widgets"
-import { GoalCard } from "./goal-card"
 import { TopProductos, type ProductoRank } from "./top-productos"
+import { FinancialHealth } from "./financial-health"
+import { AttentionBanner } from "./attention-banner"
 import type { SearchItem } from "./global-search"
 
 import { parseFecha } from "@/lib/fecha"
@@ -74,6 +75,19 @@ function pctChange(now: number, prev: number): number {
   return ((now - prev) / prev) * 100
 }
 
+// Estado de cobranza — un solo cálculo, usado en el KPI "Por cobrar" y en el
+// row "Liquidez" de Estado del negocio (regla: no duplicar fórmulas).
+function pagosPendEstado(
+  pagosPendTotal: number,
+  ventasMes: number,
+): { emoji: string; label: string; ok: boolean } {
+  const ratio = ventasMes > 0 ? pagosPendTotal / ventasMes : pagosPendTotal > 0 ? 1 : 0
+  if (ratio === 0) return { emoji: "🟢", label: "Saludable", ok: true }
+  if (ratio <= 0.15) return { emoji: "🟢", label: "Saludable", ok: true }
+  if (ratio <= 0.35) return { emoji: "🟠", label: "Atención", ok: false }
+  return { emoji: "🔴", label: "Crítico", ok: false }
+}
+
 // Avatares por hash del nombre (estable entre renders y filtros)
 const AVATAR_GRADIENTS = [
   "linear-gradient(135deg, #0F766E, #14B8A6)",
@@ -107,17 +121,16 @@ export default async function DashboardPage() {
   const en3dias = new Date(
     today.getFullYear(), today.getMonth(), today.getDate() + 3,
   ).toISOString().slice(0, 10)
-  const hace7dias = new Date(
-    today.getFullYear(), today.getMonth(), today.getDate() - 7,
-  ).toISOString()
 
   const [
     ventasMesRes,
     ventasMesAntRes,
     ventasAllRes,
     clientesCountRes,
-    clientesNuevosRes,
+    clientesNuevosMesRes,
     cotizacionesPendCountRes,
+    cotAceptadasCountRes,
+    cotRechazadasCountRes,
     cotPorVencerRes,
     pagosPendRes,
     inventarioBajoRes,
@@ -150,11 +163,19 @@ export default async function DashboardPage() {
     supabase
       .from("clientes")
       .select("*", { count: "exact", head: true })
-      .gte("created_at", hace7dias),
+      .gte("created_at", monthStart),
     supabase
       .from("cotizaciones")
       .select("*", { count: "exact", head: true })
       .eq("estatus", "enviada"),
+    supabase
+      .from("cotizaciones")
+      .select("*", { count: "exact", head: true })
+      .eq("estatus", "aceptada"),
+    supabase
+      .from("cotizaciones")
+      .select("*", { count: "exact", head: true })
+      .eq("estatus", "rechazada"),
     admin
       .from("cotizaciones")
       .select(
@@ -327,6 +348,10 @@ export default async function DashboardPage() {
   )
   const cambioGanancia = pctChange(gananciaMes, gananciaMesAnt)
   const margenMes = totalVentasMes > 0 ? (gananciaMes / totalVentasMes) * 100 : 0
+  const margenMesAnt =
+    totalVentasMesAnt > 0 ? (gananciaMesAnt / totalVentasMesAnt) * 100 : 0
+  const cambioMargenPP = margenMes - margenMesAnt
+  const costosMes = totalVentasMes - gananciaMes
   const ticketMes = ventasMes.length > 0 ? totalVentasMes / ventasMes.length : 0
   const ticketMesAnt =
     ventasMesAnt.length > 0
@@ -334,15 +359,31 @@ export default async function DashboardPage() {
       : 0
   const cambioTicket = pctChange(ticketMes, ticketMesAnt)
   const totalClientes = clientesCountRes.count ?? 0
-  const clientesNuevos = clientesNuevosRes.count ?? 0
+  const clientesNuevosMes = clientesNuevosMesRes.count ?? 0
+  // Recurrentes = mismo umbral que clientes-dashboard.tsx (≥3 ventas, sin canceladas).
+  const ventasPorCliente = new Map<string, number>()
+  for (const v of ventasAll) {
+    if (v.estatus === "cancelada" || !v.cliente_id) continue
+    ventasPorCliente.set(v.cliente_id, (ventasPorCliente.get(v.cliente_id) ?? 0) + 1)
+  }
+  const clientesRecurrentes = Array.from(ventasPorCliente.values()).filter(
+    (n) => n >= 3,
+  ).length
   const cotPendCount = cotizacionesPendCountRes.count ?? 0
+  const cotAceptadasCount = cotAceptadasCountRes.count ?? 0
+  const cotRechazadasCount = cotRechazadasCountRes.count ?? 0
+  const cotDecididas = cotAceptadasCount + cotRechazadasCount
+  const conversionCot = cotDecididas > 0 ? (cotAceptadasCount / cotDecididas) * 100 : null
   const stockBajoCount = inventarioBajo.length
+  const agotadosCount = inventarioBajo.filter((p) => p.estatus === "agotado").length
+  const stockBajoSoloCount = inventarioBajo.filter((p) => p.estatus === "bajo").length
   const ventasHoyArr = ventasMes.filter((v) => v.fecha === todayIso)
   const ventasHoy = ventasHoyArr.reduce((s, v) => s + Number(v.total ?? 0), 0)
   const pagosPendTotal = pagosPend.reduce(
     (s, v) => s + Number(v.saldo_pendiente ?? 0),
     0,
   )
+  const estadoCobranza = pagosPendEstado(pagosPendTotal, totalVentasMes)
 
   // Portal badge
   type CotPortalRaw = {
@@ -392,6 +433,19 @@ export default async function DashboardPage() {
   const mejorMes = Math.max(...chartData.map((d) => d.total), 0)
   const metaSugerida = Math.max(50000, Math.ceil(mejorMes / 10000) * 10000)
 
+  // ─── Frase contextual del Hero (regla 4: solo datos reales, con prioridad) ──
+  const frase = (() => {
+    if (agotadosCount > 0)
+      return `Hay ${agotadosCount} producto${agotadosCount === 1 ? "" : "s"} agotado${agotadosCount === 1 ? "" : "s"}.`
+    if (cambioMargenPP <= -3)
+      return `Las ventas suben, pero el margen bajó ${formatPP(cambioMargenPP)}.`
+    if (metaSugerida > 0 && totalVentasMes < metaSugerida * 0.5)
+      return `Tu facturación va ${(100 - (totalVentasMes / metaSugerida) * 100).toFixed(0)}% debajo de tu objetivo.`
+    if (cambioVentas >= 15) return "Las ventas crecieron fuerte este mes."
+    if (cambioVentas >= 0) return "Tu negocio va en buen camino este mes."
+    return `Las ventas bajaron ${Math.abs(cambioVentas).toFixed(0)}% vs el mes anterior — hay que empujar.`
+  })()
+
   // ─── Socios ───────────────────────────────────────────────────────
   const socioStats = (id: string) => {
     const totalInvertido = inversiones
@@ -417,7 +471,7 @@ export default async function DashboardPage() {
   if (margenMes >= 30) score += 2
   else if (margenMes >= 15) score += 1
   if (stockBajoCount === 0) score += 1
-  if (pagosPend.length === 0) score += 1
+  if (estadoCobranza.ok) score += 1
   const estado =
     score >= 5
       ? { nivel: "Excelente", emoji: "🟢", tone: "#059669" }
@@ -458,6 +512,16 @@ export default async function DashboardPage() {
   if (pagosPendTotal > 0) {
     iaLineas.push(
       `Tienes ${formatMXN(pagosPendTotal)} por cobrar en ${pagosPend.length} venta${pagosPend.length === 1 ? "" : "s"}.`,
+    )
+  }
+  if (conversionCot != null) {
+    iaLineas.push(
+      `Tus cotizaciones tienen una conversión del ${conversionCot.toFixed(0)}%.`,
+    )
+  }
+  if (totalClientes > 0) {
+    iaLineas.push(
+      `El ${((clientesRecurrentes / totalClientes) * 100).toFixed(0)}% de tus clientes son recurrentes.`,
     )
   }
   const iaRecomendacion =
@@ -665,7 +729,7 @@ export default async function DashboardPage() {
                 Ver reportes <ArrowRight className="size-3" />
               </Link>
             </header>
-            <MonthlyChart data={chartData} height={224} />
+            <ChartMetricSelector data={chartData} height={224} />
           </div>
 
           {/* Columna: Estado del negocio + Panel IA */}
@@ -691,9 +755,9 @@ export default async function DashboardPage() {
                   ok={cambioVentas >= 0}
                 />
                 <EstadoRow
-                  label={margenMes >= 30 ? "Margen saludable" : "Margen ajustado"}
-                  value={`${margenMes.toFixed(0)}%`}
-                  ok={margenMes >= 30}
+                  label="Rentabilidad"
+                  value={formatPP(cambioMargenPP)}
+                  ok={cambioMargenPP >= 0}
                 />
                 <EstadoRow
                   label={
@@ -705,17 +769,26 @@ export default async function DashboardPage() {
                   ok={stockBajoCount === 0}
                 />
                 <EstadoRow
-                  label={
-                    pagosPend.length === 0
-                      ? "Sin pagos pendientes"
-                      : "Pagos por cobrar"
-                  }
-                  value={
-                    pagosPend.length === 0 ? "✓" : formatMXN(pagosPendTotal)
-                  }
-                  ok={pagosPend.length === 0}
+                  label="Liquidez"
+                  value={`${estadoCobranza.emoji} ${estadoCobranza.label}`}
+                  ok={estadoCobranza.ok}
                 />
               </dl>
+              {(() => {
+                const areas = [
+                  cambioVentas >= 0,
+                  cambioMargenPP >= 0,
+                  stockBajoCount === 0,
+                  estadoCobranza.ok,
+                ].filter((ok) => !ok).length
+                return (
+                  <p className="mt-3 text-[11px] text-gray-500">
+                    {areas === 0
+                      ? "Todo en orden."
+                      : `${areas} área${areas === 1 ? "" : "s"} requiere${areas === 1 ? "" : "n"} atención.`}
+                  </p>
+                )
+              })()}
             </div>
 
             {/* Panel IA (11) — reglas del negocio, no LLM */}
@@ -761,6 +834,15 @@ export default async function DashboardPage() {
       node: (
         <div>
           <SectionTitle>¿Qué necesita atención?</SectionTitle>
+          <div className="mb-4">
+            <AttentionBanner
+              pagosPendTotal={pagosPendTotal}
+              pagosPendCount={pagosPend.length}
+              agotadosCount={agotadosCount}
+              stockBajoCount={stockBajoSoloCount}
+              cotPorVencerCount={cotPorVencer.length}
+            />
+          </div>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <PanelCard
               title="Stock bajo"
@@ -894,6 +976,18 @@ export default async function DashboardPage() {
       ),
     },
     {
+      id: "salud",
+      nombre: "Salud financiera",
+      node: (
+        <FinancialHealth
+          ventas={totalVentasMes}
+          costos={costosMes}
+          utilidad={gananciaMes}
+          margen={margenMes}
+        />
+      ),
+    },
+    {
       id: "socios",
       nombre: "Socios",
       node: (
@@ -987,12 +1081,14 @@ export default async function DashboardPage() {
       <DashboardHero
         nombre="Benjamín"
         fechaLarga={fechaLarga.format(today)}
+        frase={frase}
         ventasHoy={ventasHoy}
         ordenesHoy={ventasHoyArr.length}
         ventasMes={totalVentasMes}
         ventasMesAnt={totalVentasMesAnt}
         cambioVentas={cambioVentas}
         ordenesMes={ventasMes.length}
+        metaSugerida={metaSugerida}
         estado={estado}
         searchItems={searchItems}
       />
@@ -1000,18 +1096,18 @@ export default async function DashboardPage() {
       {/* 2. Acciones rápidas */}
       <nav
         aria-label="Acciones rápidas"
-        className="pc-enter flex flex-wrap gap-2"
+        className="pc-enter flex flex-wrap items-center gap-2"
         style={{ animationDelay: "60ms" }}
       >
-        <Link
-          href="/cotizaciones/rapida"
-          className="pc-quick-action !border-[#0F766E]/25 !text-[#0F766E]"
-        >
-          <Zap className="size-4" /> Cotización rápida
-        </Link>
-        <Link href="/ventas/nueva" className="pc-quick-action">
+        {/* Primarias — las dos acciones que más se usan */}
+        <Link href="/ventas/nueva" className="pc-btn-primary">
           <Plus className="size-4" /> Nueva venta
         </Link>
+        <Link href="/cotizaciones/rapida" className="pc-btn-secondary">
+          <Zap className="size-4" /> Cotización rápida
+        </Link>
+        <span aria-hidden className="mx-1 hidden h-5 w-px bg-black/10 sm:block" />
+        {/* Secundarias */}
         <Link href="/cotizaciones/nueva" className="pc-quick-action">
           <FileText className="size-4" /> Nueva cotización
         </Link>
@@ -1047,8 +1143,18 @@ export default async function DashboardPage() {
             icon={<TrendingUp className="size-4 text-[#0F766E]" />}
             title="Suma de utilidad_neta de las ventas del mes (sin internas ni canceladas)"
           />
-          <GoalCard ventasMes={totalVentasMes} metaSugerida={metaSugerida} />
           <KpiTile
+            label="Margen neto"
+            value={`${margenMes.toFixed(1)}%`}
+            trend={cambioMargenPP}
+            trendUnit="pp"
+            sub="vs mes anterior"
+            spark={chartData.map((d) => (d.total > 0 ? (d.ganancia / d.total) * 100 : 0))}
+            icon={<BarChart3 className="size-4 text-[#0F766E]" />}
+            title="Ganancia neta ÷ ventas del mes. El cambio se muestra en puntos porcentuales (pp), no en %"
+          />
+          <KpiTile
+            href="/ventas"
             label="Ticket promedio"
             value={formatMXN(ticketMes)}
             trend={cambioTicket}
@@ -1064,13 +1170,17 @@ export default async function DashboardPage() {
             label="Clientes"
             value={totalClientes.toLocaleString("es-MX")}
             sub={
-              clientesNuevos > 0
-                ? `+${clientesNuevos} esta semana`
-                : "sin altas esta semana"
+              <>
+                {clientesNuevosMes > 0
+                  ? `+${clientesNuevosMes} nuevos este mes`
+                  : "sin altas este mes"}
+                <br />
+                {clientesRecurrentes} recurrente{clientesRecurrentes === 1 ? "" : "s"}
+              </>
             }
             icon={<Users className="size-4 text-gray-500" />}
             href="/clientes"
-            title="Clientes en la base · altas de los últimos 7 días"
+            title="Clientes en la base · altas del mes · recurrentes = 3 o más compras (sin canceladas)"
           />
           <PortalBadge cotizaciones={cotizacionesPortal}>
             <KpiTile
@@ -1078,19 +1188,32 @@ export default async function DashboardPage() {
               label="Cotizaciones"
               value={cotPendCount.toLocaleString("es-MX")}
               sub={
-                cotPorVencer.length > 0
-                  ? `${cotPorVencer.length} vencen pronto`
-                  : "ninguna por vencer"
+                <>
+                  Aceptadas: {cotAceptadasCount} · Pendientes: {cotPendCount}
+                  <br />
+                  Conversión:{" "}
+                  {conversionCot == null ? "N/D" : `${conversionCot.toFixed(0)}%`}
+                </>
               }
               icon={<FileText className="size-4 text-amber-600" />}
-              title="Cotizaciones en estatus enviada · vencen en ≤3 días"
+              title="Pendientes = enviadas sin responder. Conversión = aceptadas ÷ (aceptadas + rechazadas)"
             />
           </PortalBadge>
           <KpiTile
             small
             label="Stock bajo"
             value={stockBajoCount.toLocaleString("es-MX")}
-            sub="Ver inventario →"
+            sub={
+              agotadosCount > 0 ? (
+                <>
+                  🔴 {agotadosCount} agotado{agotadosCount === 1 ? "" : "s"}
+                  <br />
+                  Ver inventario →
+                </>
+              ) : (
+                "Ver inventario →"
+              )
+            }
             icon={<Package className="size-4 text-rose-500" />}
             href="/inventario"
             urgent={stockBajoCount > 0}
@@ -1100,7 +1223,13 @@ export default async function DashboardPage() {
             small
             label="Por cobrar"
             value={formatMXN(pagosPendTotal)}
-            sub={`${pagosPend.length} venta${pagosPend.length === 1 ? "" : "s"} con saldo`}
+            sub={
+              <>
+                {pagosPend.length} venta{pagosPend.length === 1 ? "" : "s"} con saldo
+                <br />
+                {estadoCobranza.emoji} {estadoCobranza.label}
+              </>
+            }
             icon={<CircleDollarSign className="size-4 text-amber-600" />}
             href="/ventas"
             urgent={pagosPendTotal > 0}
@@ -1168,6 +1297,7 @@ function KpiTile({
   value,
   sub,
   trend,
+  trendUnit = "%",
   spark,
   icon,
   href,
@@ -1179,8 +1309,10 @@ function KpiTile({
 }: {
   label: string
   value: string
-  sub?: string
+  sub?: React.ReactNode
   trend?: number
+  /** "%" (default) o "pp" — nunca mostrar un delta en pp con signo "%". */
+  trendUnit?: "%" | "pp"
   spark?: number[]
   icon?: React.ReactNode
   href?: string
@@ -1211,7 +1343,8 @@ function KpiTile({
               {trend >= 0 ? "▲" : "▼"}
             </span>
             {trend >= 0 ? "+" : ""}
-            {trend.toFixed(1)}%
+            {trend.toFixed(1)}
+            {trendUnit === "pp" ? " pp" : "%"}
           </span>
         )}
       </div>

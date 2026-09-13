@@ -37,3 +37,10 @@ export function formatMXNshort(value: number | null | undefined): string {
   if (Math.abs(v) >= 1_000) return `$${(v / 1_000).toFixed(0)}k`
   return `$${Math.round(v)}`
 }
+
+/** Delta en puntos porcentuales: +4.2 pp / -1.8 pp. Nunca usar "%" para esto. */
+export function formatPP(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "N/D"
+  const sign = value >= 0 ? "+" : ""
+  return `${sign}${value.toFixed(1)} pp`
+}

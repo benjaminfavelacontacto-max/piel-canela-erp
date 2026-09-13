@@ -1,31 +1,34 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, FileText, Zap } from "lucide-react"
 import { AnimatedNumber } from "./ventas/estadisticas/animated-number"
 import { GlobalSearch, type SearchItem } from "./global-search"
+import { GoalCard } from "./goal-card"
 
 /**
  * Hero del dashboard — resumen ejecutivo (nivel 1 de la jerarquía).
  *
- * Izquierda: saludo, lectura del negocio en una frase, ventas del mes con
- * contador animado, comparativa visual este-mes-vs-anterior (barras, no solo
- * texto) y ventas de hoy. Derecha: buscador global (⌘K), acciones primarias
- * y el indicador "en vivo" — la página se refresca sola cada 60s con
- * router.refresh() y el contador de segundos se reinicia.
+ * Izquierda: saludo, lectura del negocio en una frase (calculada en el
+ * servidor a partir de datos reales — ver `frase`), ventas del mes con
+ * contador animado, objetivo mensual y ventas de hoy. Derecha: buscador
+ * global (⌘K) y el indicador "en vivo" — la página se refresca sola cada
+ * 60s con router.refresh() y el contador de segundos se reinicia. Las
+ * acciones (Nueva venta, Cotización rápida, etc.) viven solo en la barra
+ * "Acciones rápidas" debajo del Hero, para no repetir botones.
  */
 
 export type HeroProps = {
   nombre: string
   fechaLarga: string
+  frase: string
   ventasHoy: number
   ordenesHoy: number
   ventasMes: number
   ventasMesAnt: number
   cambioVentas: number
   ordenesMes: number
+  metaSugerida: number
   estado: { nivel: string; emoji: string }
   searchItems: SearchItem[]
 }
@@ -34,13 +37,6 @@ function saludoPorHora(h: number): string {
   if (h < 12) return "Buenos días"
   if (h < 18) return "Buenas tardes"
   return "Buenas noches"
-}
-
-function fraseDelDia(cambio: number, ventasHoy: number): string {
-  if (ventasHoy > 0) return "Hoy ya hay ventas registradas."
-  if (cambio >= 15) return "Tu negocio está creciendo fuerte este mes."
-  if (cambio >= 0) return "Tu negocio va en buen camino este mes."
-  return "Este mes va por debajo del anterior — hay que empujar."
 }
 
 export function DashboardHero(p: HeroProps) {
@@ -98,7 +94,7 @@ export function DashboardHero(p: HeroProps) {
             </span>
           </div>
           <p className="mt-0.5 text-sm text-gray-500">
-            {p.fechaLarga} · {fraseDelDia(p.cambioVentas, p.ventasHoy)}
+            {p.fechaLarga} · {p.frase}
           </p>
 
           <div className="mt-5 flex flex-wrap items-end gap-x-8 gap-y-4">
@@ -126,6 +122,8 @@ export function DashboardHero(p: HeroProps) {
                 </span>
               </p>
             </div>
+
+            <GoalCard compact ventasMes={p.ventasMes} metaSugerida={p.metaSugerida} />
 
             <div>
               <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-500">
@@ -162,7 +160,7 @@ export function DashboardHero(p: HeroProps) {
           </div>
         </div>
 
-        {/* ─── Derecha: buscador, acciones y en-vivo ─── */}
+        {/* ─── Derecha: buscador y en-vivo (acciones viven en la barra de abajo) ─── */}
         <div className="flex shrink-0 flex-col items-stretch gap-3 lg:items-end">
           <div className="flex items-center gap-2">
             <GlobalSearch items={p.searchItems} />
@@ -174,30 +172,6 @@ export function DashboardHero(p: HeroProps) {
             >
               {p.nombre[0] ?? "B"}
             </span>
-          </div>
-          <div className="flex items-center gap-2 lg:justify-end">
-            {/* Móvil → flujo rápido de una mano; desktop → formulario completo */}
-            <Link href="/cotizaciones/rapida" className="pc-btn-secondary sm:hidden">
-              <Zap className="size-4" />
-              Cotización rápida
-            </Link>
-            <Link
-              href="/cotizaciones/nueva"
-              className="pc-btn-secondary hidden sm:inline-flex"
-            >
-              <FileText className="size-4" />
-              Nueva cotización
-            </Link>
-            <Link
-              href="/ventas/nueva"
-              className="pc-btn-primary"
-              style={{
-                background: "linear-gradient(135deg, #0F766E, #0D6A62)",
-              }}
-            >
-              <Plus className="size-4" />
-              Nueva venta
-            </Link>
           </div>
           <p className="flex items-center gap-1.5 text-[11px] text-gray-400 lg:justify-end">
             <span className="pc-live-dot inline-block size-1.5 rounded-full bg-emerald-500" aria-hidden />

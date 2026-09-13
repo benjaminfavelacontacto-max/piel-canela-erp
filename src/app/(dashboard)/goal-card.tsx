@@ -17,9 +17,12 @@ const LS_KEY = "pc-meta-mensual-v1"
 export function GoalCard({
   ventasMes,
   metaSugerida,
+  compact,
 }: {
   ventasMes: number
   metaSugerida: number
+  /** Variante angosta para vivir dentro del Hero, junto a Ventas del mes / Hoy. */
+  compact?: boolean
 }) {
   const [meta, setMeta] = useState(metaSugerida)
   const [editing, setEditing] = useState(false)
@@ -53,12 +56,14 @@ export function GoalCard({
       maximumFractionDigits: 0,
     })
 
+  const valueSize = compact ? "text-xl" : "text-[26px]"
+
   return (
-    <div className="pc-kpi-card group">
+    <div className={compact ? "group min-w-[160px]" : "pc-kpi-card group"}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-500">
           <Target className="size-3.5 text-[#0F766E]" />
-          Meta mensual
+          Objetivo mensual
         </p>
         {editing ? (
           <button
@@ -94,15 +99,17 @@ export function GoalCard({
           onKeyDown={(e) => e.key === "Enter" && commit()}
           onBlur={commit}
           aria-label="Nueva meta mensual en pesos"
-          className="w-full rounded-lg border border-[#0F766E]/30 bg-white px-2 py-1 text-xl font-bold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+          className="mt-1 w-full rounded-lg border border-[#0F766E]/30 bg-white px-2 py-1 text-xl font-bold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
         />
       ) : (
-        <p className="text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900">
+        <p
+          className={`mt-1 font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900 ${valueSize}`}
+        >
           {fmt(meta)}
         </p>
       )}
 
-      <div>
+      <div className={compact ? "mt-2" : ""}>
         <div className="h-2 overflow-hidden rounded-full bg-black/[0.05]">
           <div
             className="h-full rounded-full bg-[#0F766E] transition-all duration-700 ease-out"
