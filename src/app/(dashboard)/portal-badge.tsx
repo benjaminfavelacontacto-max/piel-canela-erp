@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { formatMXN } from "@/lib/utils"
 
@@ -27,20 +28,46 @@ export function PortalBadge({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // El dropdown se porta a document.body (ver abajo): cualquier ancestro con
+  // animación CSS de transform/opacity (las secciones "pc-enter" del
+  // dashboard) crea su propio stacking context y atrapa el z-index del
+  // dropdown por debajo de las secciones que vienen después en el DOM —
+  // por eso se veía "escondido" detrás de la tarjeta de Ventas.
+  function updatePosition() {
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right })
+  }
+
+  useLayoutEffect(() => {
+    if (open) updatePosition()
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
+      const target = e.target as Node
       if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
+        wrapperRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
       ) {
-        setOpen(false)
+        return
       }
+      setOpen(false)
     }
+    const onViewportChange = () => updatePosition()
     document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
+    window.addEventListener("resize", onViewportChange)
+    window.addEventListener("scroll", onViewportChange, true)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      window.removeEventListener("resize", onViewportChange)
+      window.removeEventListener("scroll", onViewportChange, true)
+    }
   }, [open])
 
   if (cotizaciones.length === 0) {
@@ -80,24 +107,28 @@ export function PortalBadge({
         {cotizaciones.length > 9 ? "9+" : cotizaciones.length}
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            right: 0,
-            width: 360,
-            maxHeight: 400,
-            overflowY: "auto",
-            background: "#0f172a",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 14,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
-            zIndex: 99999,
-            marginTop: 8,
-          }}
-        >
+      {/* Dropdown — portado a document.body para escapar el stacking context
+          de las secciones "pc-enter" (ver comentario en updatePosition). */}
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            style={{
+              position: "fixed",
+              top: pos.top,
+              right: pos.right,
+              width: 360,
+              maxWidth: "calc(100vw - 24px)",
+              maxHeight: 400,
+              overflowY: "auto",
+              background: "#0f172a",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 14,
+              boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
+              zIndex: 9999,
+            }}
+          >
           {/* Header */}
           <div
             style={{
@@ -290,7 +321,8 @@ export function PortalBadge({
               Ver todas las cotizaciones →
             </Link>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
