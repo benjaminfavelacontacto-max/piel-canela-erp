@@ -78,6 +78,7 @@ export default async function EditarVentaPage({
 
       <EditVentaForm
         id={id}
+        fechaInicial={String(venta.fecha ?? "").slice(0, 10)}
         subtotal={Number(venta.subtotal ?? 0)}
         descuento={Number(venta.descuento ?? 0)}
         ivaInicial={Number(venta.iva ?? 0)}
