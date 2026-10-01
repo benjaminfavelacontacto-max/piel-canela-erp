@@ -501,6 +501,8 @@ export type UpdateVentaInput = {
   notas: string
   ivaActivo: boolean
   cantidad_pagada: number
+  // Fecha de la venta (YYYY-MM-DD). Solo se actualiza si viene definida.
+  fecha?: string
   // Campos financieros opcionales — solo se actualizan si vienen definidos
   descuento?: number
   costo_envio?: number
@@ -565,6 +567,12 @@ export async function updateVenta(input: UpdateVentaInput) {
     cantidad_pagada: input.cantidad_pagada,
     estatus,
     notas: newNotas,
+  }
+  if (input.fecha) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.fecha)) {
+      return { ok: false as const, error: "Fecha inválida" }
+    }
+    updatePayload.fecha = input.fecha
   }
   if (input.descuento != null) updatePayload.descuento = input.descuento
   if (input.costo_envio != null) updatePayload.costo_envio = input.costo_envio
