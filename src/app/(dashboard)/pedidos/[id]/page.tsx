@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -520,10 +521,12 @@ export default async function PedidoDetailPage({
                           >
                             <td className="px-3 py-2.5">
                               {prod?.imagen_url ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <Image
                                   src={buildProductoImageUrl(prod.imagen_url) ?? ""}
                                   alt={prod.nombre ?? ""}
+                                  width={40}
+                                  height={40}
+                                  sizes="40px"
                                   className="size-10 rounded-lg border border-gray-100 object-cover"
                                 />
                               ) : (

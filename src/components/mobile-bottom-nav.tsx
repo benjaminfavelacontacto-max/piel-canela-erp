@@ -31,9 +31,9 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
       aria-label="Navegación principal"
       className="fixed inset-x-0 bottom-0 z-30 border-t md:hidden"
       style={{
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        // Fondo casi sólido (sin backdrop-filter): el blur sobre una barra fija
+        // vuelve a pintar en cada frame del scroll y se nota en Android de gama media.
+        background: "rgba(255,255,255,0.97)",
         borderColor: "rgba(15,23,42,0.08)",
         paddingBottom: "var(--pc-safe-bottom)",
         paddingLeft: "var(--pc-safe-left)",

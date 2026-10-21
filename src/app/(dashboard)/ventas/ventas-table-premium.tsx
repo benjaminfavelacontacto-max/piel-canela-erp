@@ -1,13 +1,6 @@
 "use client"
 
-import {
-  Fragment,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition, useDeferredValue } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -738,6 +731,8 @@ export function VentasTablePremium({
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "fecha", desc: true }])
   const [globalFilter, setGlobalFilter] = useState("")
+  // Búsqueda diferida: el input responde al instante y el filtrado (tabla grande) no bloquea el teclado
+  const deferredFilter = useDeferredValue(globalFilter)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   // Default: solo columnas esenciales visibles (Fecha, Número, Cliente, Total,
   // Estatus, Notas, Sandra, Benjamin). El resto togglable desde el menú.
@@ -1144,7 +1139,7 @@ export function VentasTablePremium({
     columns,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: deferredFilter,
       columnFilters,
       columnVisibility,
       columnSizing,

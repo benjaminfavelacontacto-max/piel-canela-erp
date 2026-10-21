@@ -15,7 +15,7 @@ export default function OrderLayout({
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/icons/icon-192.png"
             alt="Piel Canela"
             className="size-10 rounded-xl object-contain"
           />

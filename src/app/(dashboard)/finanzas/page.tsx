@@ -56,6 +56,8 @@ type Socio = {
 
 export default async function FinanzasPage() {
   const supabase = await createClient()
+  // Se lanza ya y se espera después: corre en paralelo con las demás consultas (antes iba en cascada)
+  const internalIdsP = import("@/lib/internal-clientes").then((m) => m.getInternalClienteIds())
   const admin = createAdminClient()
 
   // Inversiones, venta_socios y socios pueden estar RLS-bloqueados → admin.
@@ -80,9 +82,7 @@ export default async function FinanzasPage() {
   ])
 
   // Excluir ventas internas (Piel Canela) — no entran en ROI ni capital recuperado
-  const internalIds = await (
-    await import("@/lib/internal-clientes")
-  ).getInternalClienteIds()
+  const internalIds = await internalIdsP
   const inversionesData = (invRes.data ?? []) as Inversion[]
   const sociosDb = (sociosRes.data ?? []) as Socio[]
   const ventasRaw = (ventasRes.data ?? []) as (Venta & {

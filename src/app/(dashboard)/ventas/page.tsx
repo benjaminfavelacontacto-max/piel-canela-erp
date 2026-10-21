@@ -16,7 +16,6 @@ export default async function VentasPage() {
   // venta_socios y socios están RLS-bloqueados para anon; usamos admin client
   // server-side para garantizar lectura. Nunca llega al navegador.
   const admin = createAdminClient()
-  const internalIds = await getInternalClienteIds()
 
   const [
     ventasRes,
@@ -25,6 +24,7 @@ export default async function VentasPage() {
     ventaItemsRes,
     stockRes,
     inversionesRes,
+    internalIds,
   ] = await Promise.all([
     supabase
       .from("ventas")
@@ -49,13 +49,15 @@ export default async function VentasPage() {
       .from("venta_items")
       .select(
         `venta_id, cantidad, precio_unitario, costo_unitario, subtotal,
-         productos(id, sku, nombre, peso, imagen_url)`,
+         productos(id, sku, nombre, peso, imagen_url, categorias(nombre))`,
       )
       .order("sort_order", { ascending: true }),
     supabase
       .from("vista_inventario")
       .select("sku, stock_actual, stock_minimo, estatus"),
     admin.from("inversiones").select("socio_id, monto_mxn"),
+    // en paralelo con el resto (antes se esperaba antes de lanzar las demás consultas)
+    getInternalClienteIds(),
   ])
 
   const ventasRaw = (ventasRes.data ?? []) as unknown as VentaRow[]
@@ -73,39 +75,33 @@ export default async function VentasPage() {
     (ventaSociosRes.data ?? []) as VentaSocioRow[]
   ).filter((vs) => !internalVentaIds.has(vs.venta_id))
   const socios = (sociosRes.data ?? []) as SocioInfo[]
+  // Items completos (con categoría) para el agregado por tipo; el cliente recibe una versión recortada.
+  type VentaItemFull = VentaItemRow & {
+    productos: (NonNullable<VentaItemRow["productos"]> & {
+      categorias?: { nombre: string } | null
+    }) | null
+  }
+  const ventaItemsFull = (
+    (ventaItemsRes.data ?? []) as unknown as VentaItemFull[]
+  ).filter((it) => !internalVentaIds.has(it.venta_id))
   // La BD guarda solo el filename de la imagen; el drawer (client) necesita la URL pública completa.
-  const venta_items = (
-    (ventaItemsRes.data ?? []) as unknown as VentaItemRow[]
-  )
-    .filter((it) => !internalVentaIds.has(it.venta_id))
-    .map((it) =>
-      it.productos?.imagen_url
-        ? {
-            ...it,
-            productos: {
-              ...it.productos,
-              imagen_url: buildProductoImageUrl(it.productos.imagen_url),
-            },
-          }
-        : it,
-    )
+  const venta_items: VentaItemRow[] = ventaItemsFull.map((it) => {
+    if (!it.productos) return it
+    const { categorias: _categorias, ...prod } = it.productos
+    void _categorias
+    return {
+      ...it,
+      productos: {
+        ...prod,
+        imagen_url: it.productos.imagen_url
+          ? buildProductoImageUrl(it.productos.imagen_url)
+          : it.productos.imagen_url,
+      },
+    }
+  })
 
   // ── Datos para "Ventas por Tipo de Producto" ──
-  const ventasPorTipoRes = await admin
-    .from("venta_items")
-    .select(
-      `cantidad, subtotal, venta_id,
-       productos(categorias(nombre))`,
-    )
-  type VentaItemConCat = {
-    cantidad: number
-    subtotal: number
-    venta_id: string
-    productos: { categorias: { nombre: string } | null } | null
-  }
-  const itemsConCat = ((ventasPorTipoRes.data ?? []) as unknown as VentaItemConCat[]).filter(
-    (it) => !internalVentaIds.has(it.venta_id),
-  )
+  const itemsConCat = ventaItemsFull
   // Index ventas por id para acceso rápido a fecha/total/estatus/cliente
   const ventasById = new Map<
     string,

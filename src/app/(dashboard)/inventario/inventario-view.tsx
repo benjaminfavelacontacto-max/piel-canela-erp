@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react"
+import Image from "next/image"
+import { useEffect, useMemo, useRef, useState, useTransition, useDeferredValue } from "react"
 import {
   Search,
   Package,
@@ -17,10 +18,11 @@ import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
 import { ExportInventarioButton } from "./export-inventario-button"
 import { InventoryStats } from "./inventory-stats"
-import { actualizarTipoCambio } from "./actions"
+import { actualizarTipoCambio, cargarVentasProducto } from "./actions"
 import { ImageUpload } from "./image-upload"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 import { ListCard, ListCardGroup } from "@/components/list-card"
+import { useMediaQuery } from "@/lib/use-media-query"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -154,7 +156,6 @@ export function InventarioView({
   proveedores,
   categoriaOptions,
   proveedorOptions,
-  sales,
   error,
   initialSku = null,
 }: {
@@ -163,7 +164,6 @@ export function InventarioView({
   proveedores: string[]
   categoriaOptions: Opcion[]
   proveedorOptions: Opcion[]
-  sales: Record<string, ProductoSales>
   error: string | null
   initialSku?: string | null
 }) {
@@ -173,6 +173,22 @@ export function InventarioView({
     () => productos.find((p) => p.sku === selectedSku) ?? null,
     [productos, selectedSku],
   )
+  // Historial de ventas del producto abierto: se pide al abrir el drawer (no viaja en el payload de la página)
+  const [salesCache, setSalesCache] = useState<
+    Record<string, ProductoSales | null>
+  >({})
+  useEffect(() => {
+    if (!selectedSku || selectedSku in salesCache) return
+    let cancelled = false
+    cargarVentasProducto(selectedSku)
+      .catch(() => null)
+      .then((r) => {
+        if (!cancelled) setSalesCache((c) => ({ ...c, [selectedSku]: r }))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedSku, salesCache])
   const [editSku, setEditSku] = useState<string | null>(null)
   const editing = useMemo(
     () => productos.find((p) => p.sku === editSku) ?? null,
@@ -180,12 +196,17 @@ export function InventarioView({
   )
   const [createOpen, setCreateOpen] = useState(false)
   const [search, setSearch] = useState("")
+  // Búsqueda diferida: el input responde al instante y filtrar 227 productos / pintar tarjetas no bloquea el teclado
+  const deferredSearch = useDeferredValue(search)
   const [estatusF, setEstatusF] = useState("")
   const [categoriaF, setCategoriaF] = useState("")
   const [proveedorF, setProveedorF] = useState("")
   const [topSellersOnly, setTopSellersOnly] = useState(false)
   // Móvil: filtros plegables + paginado incremental de tarjetas
   const [filtersOpenM, setFiltersOpenM] = useState(false)
+  // La tabla completa (227 filas × 17 columnas ≈ 900 KB de HTML) solo se pinta en escritorio.
+  // El servidor entrega las primeras filas y, ya hidratado, escritorio completa el resto.
+  const isDesktop = useMediaQuery("(min-width: 768px)")
   const [mobileLimit, setMobileLimit] = useState(30)
   const [sortKey, setSortKey] = useState<SortKey>("nombre")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -261,7 +282,7 @@ export function InventarioView({
 
   const filtered = useMemo(() => {
     let list = productos
-    if (search) list = list.filter((p) => fuzzyMatch(search, p))
+    if (deferredSearch) list = list.filter((p) => fuzzyMatch(deferredSearch, p))
     if (estatusF) list = list.filter((p) => p.estatus === estatusF)
     if (categoriaF) list = list.filter((p) => p.categoria === categoriaF)
     if (proveedorF) list = list.filter((p) => p.proveedor === proveedorF)
@@ -269,7 +290,7 @@ export function InventarioView({
     return list
   }, [
     productos,
-    search,
+    deferredSearch,
     estatusF,
     categoriaF,
     proveedorF,
@@ -702,7 +723,8 @@ export function InventarioView({
 
       <ProductDrawer
         producto={selected}
-        sales={selected ? sales[selected.sku] : undefined}
+        sales={selected ? (salesCache[selected.sku] ?? undefined) : undefined}
+        salesLoading={!!selected && !(selected.sku in salesCache)}
         onClose={() => setSelectedSku(null)}
         onEdit={() => {
           if (selected) {
@@ -855,7 +877,7 @@ export function InventarioView({
                   </td>
                 </tr>
               ) : (
-                sorted.map((p) => (
+                (isDesktop ? sorted : sorted.slice(0, 40)).map((p) => (
                   <ProductRow
                     key={p.sku}
                     p={p}
@@ -954,11 +976,12 @@ function ProductCard({
       ariaLabel={`${nombre}, ${p.stock_actual} piezas, ${stockLabel}`}
       leading={
         p.imagen_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={p.imagen_url}
             alt=""
-            loading="lazy"
+            width={56}
+            height={56}
+            sizes="56px"
             className="size-14 shrink-0 rounded-xl border border-gray-100 object-cover"
           />
         ) : (

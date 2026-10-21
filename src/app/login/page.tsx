@@ -36,7 +36,7 @@ export default function LoginPage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/icons/icon-192.png"
               alt="Piel Canela"
               className="size-10 object-contain"
             />

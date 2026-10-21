@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -430,10 +431,12 @@ export function CotizacionForm({
                     }`}
                   >
                     {p.imagen_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={p.imagen_url}
                         alt={p.nombre}
+                        width={36}
+                        height={36}
+                        sizes="36px"
                         className="size-9 shrink-0 rounded border border-gray-200 object-cover"
                       />
                     ) : (

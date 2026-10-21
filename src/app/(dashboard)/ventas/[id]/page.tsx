@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil } from "lucide-react"
@@ -275,10 +276,12 @@ export default async function VentaDetailPage({
                     <tr key={`${it.productos?.id ?? "row"}-${i}`}>
                       <td className="px-3 py-2">
                         {img ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <Image
                             src={img}
                             alt={display}
+                            width={36}
+                            height={36}
+                            sizes="36px"
                             className="size-9 rounded border border-gray-200 object-cover"
                           />
                         ) : (

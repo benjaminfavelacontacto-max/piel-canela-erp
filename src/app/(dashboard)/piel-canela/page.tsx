@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
@@ -37,7 +38,22 @@ type ItemRow = {
 
 export default async function PielCanelaPage() {
   const supabase = await createClient()
-  const internalIds = [...(await getInternalClienteIds())]
+
+  // Consultas independientes en paralelo (antes: 6 viajes a la BD en cascada)
+  const [internalSet, { data: prodList }, { data: prc }] = await Promise.all([
+    getInternalClienteIds(),
+    // Productos + precio público para el buscador de "Nueva salida"
+    supabase
+      .from("productos")
+      .select("id, sku, nombre, nombre_display")
+      .eq("activo", true)
+      .order("nombre"),
+    supabase
+      .from("precios_producto")
+      .select("producto_id, precio, listas_precios!inner(nombre)")
+      .eq("listas_precios.nombre", "Pública MXN"),
+  ])
+  const internalIds = [...internalSet]
 
   const { data: ventasData } = internalIds.length
     ? await supabase
@@ -59,25 +75,8 @@ export default async function PielCanelaPage() {
     : { data: [] }
   const items = (itemsData ?? []) as unknown as ItemRow[]
 
-  // Productos + precio público para el buscador de "Nueva salida"
-  const { data: prodList } = await supabase
-    .from("productos")
-    .select("id, sku, nombre, nombre_display")
-    .eq("activo", true)
-    .order("nombre")
-  const { data: listaPub } = await supabase
-    .from("listas_precios")
-    .select("id")
-    .eq("nombre", "Pública MXN")
-    .maybeSingle()
   const precioBy = new Map<string, number>()
-  if (listaPub?.id) {
-    const { data: prc } = await supabase
-      .from("precios_producto")
-      .select("producto_id, precio")
-      .eq("lista_id", listaPub.id)
-    for (const p of prc ?? []) precioBy.set(p.producto_id as string, Number(p.precio))
-  }
+  for (const p of prc ?? []) precioBy.set(p.producto_id as string, Number(p.precio))
   const productosPicker = ((prodList ?? []) as {
     id: string
     sku: string | null
@@ -296,10 +295,12 @@ export default async function PielCanelaPage() {
                             title="Ver detalle del producto"
                           >
                             {p.imagen ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
+                              <Image
                                 src={buildProductoImageUrl(p.imagen) ?? ""}
                                 alt={p.nombre}
+                                width={36}
+                                height={36}
+                                sizes="36px"
                                 className="size-9 rounded-lg border border-gray-100 object-cover"
                               />
                             ) : (

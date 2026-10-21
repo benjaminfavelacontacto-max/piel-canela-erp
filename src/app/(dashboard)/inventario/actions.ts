@@ -2,6 +2,8 @@
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
+import { getInternalClienteIds } from "@/lib/internal-clientes"
+import type { ProductoSales } from "./inventario-view"
 
 const TIPOS_PERMITIDOS = [
   "image/jpeg",
@@ -345,4 +347,73 @@ export async function actualizarTipoCambio(nuevoTC: number) {
   if (error) return { ok: false as const, error: error.message }
   revalidatePath("/inventario")
   return { ok: true as const }
+}
+
+/**
+ * Historial de ventas de UN producto (lista + agregado mensual) para el drawer.
+ * Se pide al abrir el detalle: antes se enviaba el historial de TODOS los SKUs
+ * dentro del payload de la página (~1 MB de HTML en /inventario).
+ */
+export async function cargarVentasProducto(
+  sku: string,
+): Promise<ProductoSales | null> {
+  const admin = createAdminClient()
+  const { data: prod } = await admin
+    .from("productos")
+    .select("id")
+    .eq("sku", sku)
+    .maybeSingle()
+  if (!prod) return null
+
+  const [internalIds, itemsRes] = await Promise.all([
+    getInternalClienteIds(),
+    admin
+      .from("venta_items")
+      .select(
+        "cantidad, precio_unitario, ventas(id, numero, fecha, cliente_id, clientes(nombre, nombre_negocio))",
+      )
+      .eq("producto_id", prod.id),
+  ])
+
+  type Row = {
+    cantidad: number
+    precio_unitario: number
+    ventas: {
+      id: string
+      numero: string
+      fecha: string
+      cliente_id: string | null
+      clientes: { nombre: string; nombre_negocio: string | null } | null
+    } | null
+  }
+  const ventas: ProductoSales["ventas"] = []
+  for (const it of (itemsRes.data ?? []) as unknown as Row[]) {
+    if (!it.ventas) continue
+    const cantidad = Number(it.cantidad ?? 0)
+    const precio = Number(it.precio_unitario ?? 0)
+    ventas.push({
+      venta_id: it.ventas.id,
+      venta_numero: it.ventas.numero,
+      fecha: it.ventas.fecha,
+      cliente:
+        it.ventas.clientes?.nombre_negocio ?? it.ventas.clientes?.nombre ?? null,
+      cantidad,
+      precio_unitario: precio,
+      subtotal: cantidad * precio,
+      interno: !!it.ventas.cliente_id && internalIds.has(it.ventas.cliente_id),
+    })
+  }
+  const byMes = new Map<string, { cantidad: number; revenue: number }>()
+  for (const v of ventas) {
+    const mes = v.fecha.slice(0, 7)
+    const cur = byMes.get(mes) ?? { cantidad: 0, revenue: 0 }
+    cur.cantidad += v.cantidad
+    cur.revenue += v.subtotal
+    byMes.set(mes, cur)
+  }
+  const monthly = Array.from(byMes, ([mes, v]) => ({ mes, ...v })).sort((a, b) =>
+    a.mes.localeCompare(b.mes),
+  )
+  ventas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
+  return { ventas, monthly }
 }

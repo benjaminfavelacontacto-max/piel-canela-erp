@@ -20,6 +20,22 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    // Fotos de producto (Supabase Storage). Los archivos pesan ~290 KB c/u y se
+    // muestran en miniaturas de 32–200 px → next/image las sirve en WebP y al tamaño real.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "szjzaajjpuomvpnghvzu.supabase.co",
+        pathname: "/storage/v1/object/public/productos/**",
+      },
+    ],
+    // Los nombres de archivo llevan timestamp (inmutables) → caché larga
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Menos tamaños candidatos → srcset más corto en el HTML (hay ~230 miniaturas por página)
+    deviceSizes: [640, 828, 1200],
+    imageSizes: [32, 64, 96, 128, 240, 480],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

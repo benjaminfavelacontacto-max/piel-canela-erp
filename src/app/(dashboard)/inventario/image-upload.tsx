@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useRef, useState, useTransition } from "react"
 import { subirImagenProducto, eliminarImagenProducto } from "./actions"
 
@@ -130,10 +131,12 @@ export function ImageUpload({
       >
         {imagen ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={imagen}
               alt={productoNombre}
+              width={32}
+              height={32}
+              sizes="32px"
               className="size-full rounded-md object-cover"
             />
             {/* Overlay hover */}

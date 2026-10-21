@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useId, useMemo, useState, useTransition } from "react"
+import { Fragment, useId, useMemo, useState, useTransition, useDeferredValue } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -50,9 +50,22 @@ import { PageHeader } from "@/components/page-header"
 import { ExportClientesButton } from "./export-clientes-button"
 import { ClienteDrawer } from "./cliente-drawer"
 import { ClienteDeleteDialog, type DeleteTarget } from "./cliente-delete-dialog"
-import { RecurrenciaAnalytics } from "./recurrencia-analytics"
-import { EstimadoIngresos } from "./estimado-ingresos"
-import { PrediccionInsights } from "./prediccion-insights"
+import dynamic from "next/dynamic"
+import { ChartSkeleton, LazyOnView } from "@/components/lazy-on-view"
+
+// Paneles con gráficas (Recharts): se cargan al acercarse al viewport
+const RecurrenciaAnalytics = dynamic(
+  () => import("./clientes-charts").then((m) => m.RecurrenciaAnalytics),
+  { ssr: false, loading: () => <ChartSkeleton height={480} /> },
+)
+const EstimadoIngresos = dynamic(
+  () => import("./clientes-charts").then((m) => m.EstimadoIngresos),
+  { ssr: false, loading: () => <ChartSkeleton height={420} /> },
+)
+const PrediccionInsights = dynamic(
+  () => import("./clientes-charts").then((m) => m.PrediccionInsights),
+  { ssr: false, loading: () => <ChartSkeleton height={260} /> },
+)
 import {
   predecirCompra,
   calcularGlobalFrecuencia,
@@ -524,6 +537,8 @@ export function ClientesDashboard({
 
   // ─── Filtros ──────────────────────────────────────────────────────
   const [globalFilter, setGlobalFilter] = useState("")
+  // Búsqueda diferida: el input responde al instante y el filtrado (tabla grande) no bloquea el teclado
+  const deferredFilter = useDeferredValue(globalFilter)
   const [statusFilter, setStatusFilter] = useState<"todos" | ClienteStatus>(
     "todos",
   )
@@ -1066,7 +1081,7 @@ export function ClientesDashboard({
   const table = useReactTable({
     data: filtered,
     columns,
-    state: { sorting, globalFilter, columnVisibility, expanded },
+    state: { sorting, globalFilter: deferredFilter, columnVisibility, expanded },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
@@ -1278,28 +1293,34 @@ export function ClientesDashboard({
       <div className="space-y-4 max-md:contents">
         {/* Estimado de ingresos predictivo */}
         <div className="max-md:order-3">
-          <EstimadoIngresos clientes={enriched} ventas={ventas} />
+          <LazyOnView minHeight={420}>
+            <EstimadoIngresos clientes={enriched} ventas={ventas} />
+          </LazyOnView>
         </div>
 
         {/* Predicción de compras — panel compacto de insights.
             La lista por cliente vive en la tabla unificada de abajo
             (columnas Próxima compra · Prob. 60d · Revenue esp. + filtros). */}
         <div className="max-md:order-3">
-          <PrediccionInsights
-            clientes={enriched}
-            predByCliente={predByCliente}
-            onClienteClick={setSelectedCliente}
-          />
+          <LazyOnView minHeight={260}>
+            <PrediccionInsights
+              clientes={enriched}
+              predByCliente={predByCliente}
+              onClienteClick={setSelectedCliente}
+            />
+          </LazyOnView>
         </div>
 
         {/* Recurrencia analytics con heatmap interactivo */}
         <div className="max-md:order-3">
-          <RecurrenciaAnalytics
-            clientes={enriched}
-            ventas={ventas}
-            cotizaciones={cotizaciones}
-            venta_items={venta_items}
-          />
+          <LazyOnView minHeight={480}>
+            <RecurrenciaAnalytics
+              clientes={enriched}
+              ventas={ventas}
+              cotizaciones={cotizaciones}
+              venta_items={venta_items}
+            />
+          </LazyOnView>
         </div>
 
       {/* Tabla */}

@@ -96,6 +96,8 @@ function greeting(now: Date): string {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  // Se lanza ya y se espera después: corre en paralelo con las demás consultas (antes iba en cascada)
+  const internalIdsP = getInternalClienteIds()
   const admin = createAdminClient()
 
   const today = new Date()
@@ -208,7 +210,7 @@ export default async function DashboardPage() {
   ])
 
   // Excluir ventas/cotizaciones de clientes internos (Piel Canela) de KPIs.
-  const internalIds = await getInternalClienteIds()
+  const internalIds = await internalIdsP
   const isInternalCli = (cli: string | null | undefined) =>
     !!cli && internalIds.has(cli)
 

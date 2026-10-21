@@ -12,6 +12,8 @@ import type {
 
 export default async function ClientesPage() {
   const supabase = await createClient()
+  // Se lanza ya y se espera después: corre en paralelo con las demás consultas (antes iba en cascada)
+  const internalIdsP = getInternalClienteIds()
   const admin = createAdminClient()
 
   const [clientesRes, ventasRes, cotizacionesRes, ventaItemsRes, sociosRes] =
@@ -50,7 +52,7 @@ export default async function ClientesPage() {
     ])
 
   // Excluir cliente interno (Piel Canela) del CRM y sus métricas
-  const internalIds = await getInternalClienteIds()
+  const internalIds = await internalIdsP
   const clientes = ((clientesRes.data ?? []) as unknown as ClienteRow[])
     .filter((c) => !internalIds.has(c.id))
   const ventas = ((ventasRes.data ?? []) as VentaSummaryRow[]).filter(

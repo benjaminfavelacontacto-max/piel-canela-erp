@@ -1,9 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { buildProductoImageUrl } from "@/lib/storage-images"
-import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { InventarioView } from "./inventario-view"
-import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
+import type { ProductoEnriquecido } from "./inventario-view"
 
 export default async function InventarioPage({
   searchParams,
@@ -14,7 +13,7 @@ export default async function InventarioPage({
   const supabase = await createClient()
   const admin = createAdminClient()
 
-  const [vistaRes, prodRes, categoriasRes, proveedoresRes, listaRes, ventaItemsRes] =
+  const [vistaRes, prodRes, categoriasRes, proveedoresRes, preciosRes, ventaItemsRes] =
     await Promise.all([
       supabase
         .from("vista_inventario")
@@ -32,19 +31,16 @@ export default async function InventarioPage({
         ),
       supabase.from("categorias").select("id, nombre").order("nombre"),
       supabase.from("proveedores").select("id, nombre").order("nombre"),
+      // Precios de la lista 'Pública MXN' en una sola consulta (join con listas_precios)
       supabase
-        .from("listas_precios")
-        .select("id")
-        .eq("nombre", "Pública MXN")
-        .maybeSingle(),
-      // venta_items para top sellers + historial de ventas — admin (RLS)
-      admin
-        .from("venta_items")
-        .select(
-          "producto_id, cantidad, costo_unitario, precio_unitario, ventas(id, numero, fecha, cliente_id, clientes(nombre, nombre_negocio))",
-        ),
+        .from("precios_producto")
+        .select("producto_id, precio, listas_precios!inner(nombre)")
+        .eq("listas_precios.nombre", "Pública MXN"),
+      // venta_items: solo lo mínimo para unidades vendidas + costo promedio.
+      // El historial detallado por producto se pide al abrir el drawer
+      // (acción cargarVentasProducto) para no inflar el payload.
+      admin.from("venta_items").select("producto_id, cantidad, costo_unitario"),
     ])
-  const internalIds = await getInternalClienteIds()
 
   type ProdRow = {
     id: string
@@ -60,37 +56,11 @@ export default async function InventarioPage({
     proveedores: { nombre: string } | null
   }
   const prodRows = (prodRes.data ?? []) as unknown as ProdRow[]
-  const listaId = listaRes.data?.id as string | undefined
-
-  // Precios públicos — query separada
-  const preciosBySku = new Map<string, number>()
-  if (listaId) {
-    const { data: prc } = await supabase
-      .from("precios_producto")
-      .select("producto_id, precio")
-      .eq("lista_id", listaId)
-    const idToPrice = new Map<string, number>()
-    for (const p of prc ?? []) {
-      idToPrice.set(p.producto_id as string, Number(p.precio))
-    }
-    for (const r of prodRows) {
-      if (!r.sku) continue
-      const v = idToPrice.get(r.id)
-      if (v != null) preciosBySku.set(r.sku, v)
-    }
-    void preciosBySku
-  }
   // Map producto_id → sku (para los items)
   const idToSku = new Map(prodRows.map((p) => [p.id, p.sku ?? ""]))
   const idToPriceMap = new Map<string, number>()
-  if (listaId) {
-    const { data: prc } = await supabase
-      .from("precios_producto")
-      .select("producto_id, precio")
-      .eq("lista_id", listaId)
-    for (const p of prc ?? []) {
-      idToPriceMap.set(p.producto_id as string, Number(p.precio))
-    }
+  for (const p of preciosRes.data ?? []) {
+    idToPriceMap.set(p.producto_id as string, Number(p.precio))
   }
 
   // Aggregate venta_items por producto: unidades_vendidas + costo_promedio
@@ -98,22 +68,12 @@ export default async function InventarioPage({
     producto_id: string
     cantidad: number
     costo_unitario: number
-    precio_unitario: number
-    ventas: {
-      id: string
-      numero: string
-      fecha: string
-      cliente_id: string | null
-      clientes: { nombre: string; nombre_negocio: string | null } | null
-    } | null
   }
   const items = (ventaItemsRes.data ?? []) as unknown as VI[]
   const aggBySku = new Map<
     string,
     { unidades: number; costo_sum: number; costo_n: number }
   >()
-  // Sales detail por sku — para el drawer (lista + mini-chart mensual)
-  const salesBySku = new Map<string, ProductoSales>()
   for (const it of items) {
     const sku = idToSku.get(it.producto_id) ?? ""
     if (!sku) continue
@@ -124,49 +84,7 @@ export default async function InventarioPage({
       cur.costo_n += 1
     }
     aggBySku.set(sku, cur)
-
-    // Sales detail
-    if (it.ventas) {
-      const sales =
-        salesBySku.get(sku) ??
-        { ventas: [], monthly: [] }
-      sales.ventas.push({
-        venta_id: it.ventas.id,
-        venta_numero: it.ventas.numero,
-        fecha: it.ventas.fecha,
-        cliente:
-          it.ventas.clientes?.nombre_negocio ??
-          it.ventas.clientes?.nombre ??
-          null,
-        cantidad: Number(it.cantidad ?? 0),
-        precio_unitario: Number(it.precio_unitario ?? 0),
-        subtotal:
-          Number(it.cantidad ?? 0) * Number(it.precio_unitario ?? 0),
-        interno:
-          !!it.ventas.cliente_id && internalIds.has(it.ventas.cliente_id),
-      })
-      salesBySku.set(sku, sales)
-    }
   }
-  // Build monthly aggregation per sku
-  for (const [sku, s] of salesBySku) {
-    const byMes = new Map<string, { cantidad: number; revenue: number }>()
-    for (const v of s.ventas) {
-      const mes = v.fecha.slice(0, 7)
-      const cur = byMes.get(mes) ?? { cantidad: 0, revenue: 0 }
-      cur.cantidad += v.cantidad
-      cur.revenue += v.subtotal
-      byMes.set(mes, cur)
-    }
-    s.monthly = Array.from(byMes, ([mes, v]) => ({ mes, ...v })).sort((a, b) =>
-      a.mes.localeCompare(b.mes),
-    )
-    // Sort ventas desc by fecha
-    s.ventas.sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
-    salesBySku.set(sku, s)
-  }
-  const salesObj: Record<string, ProductoSales> = {}
-  for (const [sku, s] of salesBySku) salesObj[sku] = s
 
   // Vista (stock + costos USD/MXN) por sku
   type Vista = {
@@ -285,7 +203,6 @@ export default async function InventarioPage({
       proveedores={proveedores}
       categoriaOptions={categoriaOptions}
       proveedorOptions={proveedorOptions}
-      sales={salesObj}
       error={error}
       initialSku={initialSku ?? null}
     />

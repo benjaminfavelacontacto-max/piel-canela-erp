@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect } from "react"
 import Link from "next/link"
 import {
@@ -17,16 +18,14 @@ import {
   Zap,
   Receipt,
 } from "lucide-react"
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
+import dynamic from "next/dynamic"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
+
+// Recharts (~380 KB) solo se descarga cuando el drawer muestra la gráfica
+const ProductSalesChart = dynamic(() => import("./product-sales-chart"), {
+  ssr: false,
+  loading: () => <div className="h-[140px] animate-pulse rounded-lg bg-gray-100" />,
+})
 import { formatMXN, formatMXN2 } from "@/lib/utils"
 import { SheetHandle, useSheetDrag } from "@/components/sheet-handle"
 
@@ -77,11 +76,14 @@ function categoriaClass(c: string): string {
 export function ProductDrawer({
   producto,
   sales,
+  salesLoading = false,
   onClose,
   onEdit,
 }: {
   producto: ProductoEnriquecido | null
   sales: ProductoSales | undefined
+  /** true mientras se pide el historial de ventas (muestra skeleton en lugar de "sin ventas") */
+  salesLoading?: boolean
   onClose: () => void
   onEdit: () => void
 }) {
@@ -193,10 +195,12 @@ export function ProductDrawer({
           {/* Hero — image + key metadata */}
           <section className="flex items-start gap-4">
             {producto.imagen_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={producto.imagen_url}
                 alt={producto.nombre}
+                width={96}
+                height={96}
+                sizes="96px"
                 className="size-24 shrink-0 rounded-2xl border border-gray-100 object-cover shadow-sm"
               />
             ) : (
@@ -374,7 +378,13 @@ export function ProductDrawer({
               <Zap className="size-3.5 text-amber-500" />
               Velocidad de venta
             </h3>
-            {totalUnidades > 0 ? (
+            {salesLoading ? (
+              <div className="grid grid-cols-2 gap-3" aria-busy="true">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-100" />
+                ))}
+              </div>
+            ) : totalUnidades > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 <MiniStat
                   label="Vendidas"
@@ -427,41 +437,7 @@ export function ProductDrawer({
                 </div>
               </header>
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3">
-                <ResponsiveContainer width="100%" height={140}>
-                  <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                    <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fill: "#9CA3AF", fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fill: "#9CA3AF", fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "#f3f4f6" }}
-                      contentStyle={{
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 8,
-                        fontSize: 11,
-                      }}
-                      formatter={(v, key) =>
-                        key === "cantidad"
-                          ? `${Number(v ?? 0)} u`
-                          : formatMXN2(Number(v ?? 0))
-                      }
-                    />
-                    <Bar
-                      dataKey="cantidad"
-                      fill="#0F766E"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                <ProductSalesChart data={monthlyData} />
               </div>
             </section>
           )}
@@ -481,7 +457,13 @@ export function ProductDrawer({
                 </p>
               </div>
             </header>
-            {ventasList.length === 0 ? (
+            {salesLoading ? (
+              <div className="space-y-2" aria-busy="true">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-9 animate-pulse rounded-lg bg-gray-100" />
+                ))}
+              </div>
+            ) : ventasList.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/40 px-4 py-6 text-center text-xs text-gray-400">
                 Este producto no tiene ventas registradas.
               </div>

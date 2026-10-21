@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import {
@@ -366,9 +367,12 @@ export function VentaDrawer({
                     >
                       <div className="size-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
                         {it.productos?.imagen_url && (
-                          <img
+                          <Image
                             src={it.productos.imagen_url}
                             alt=""
+                            width={40}
+                            height={40}
+                            sizes="40px"
                             className="size-full object-cover"
                           />
                         )}

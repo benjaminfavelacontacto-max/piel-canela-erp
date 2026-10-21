@@ -12,6 +12,8 @@ import type {
 
 export default async function CotizacionesPage() {
   const supabase = await createClient()
+  // Se lanza ya y se espera después: corre en paralelo con las demás consultas (antes iba en cascada)
+  const internalIdsP = getInternalClienteIds()
   const admin = createAdminClient()
 
   const [cotsRes, clientesRes, itemsRes, ventasRes] = await Promise.all([
@@ -44,7 +46,7 @@ export default async function CotizacionesPage() {
 
   // Set de cliente_ids internos (Piel Canela) — para split de KPIs
   // y para badge "Interno" en la tabla.
-  const internalIds = await getInternalClienteIds()
+  const internalIds = await internalIdsP
   const cotizaciones = (cotsRes.data ?? []) as unknown as CotizacionRow[]
   const clientes = (clientesRes.data ?? []) as ClienteOption[]
   const items = (itemsRes.data ?? []) as unknown as CotItemRow[]

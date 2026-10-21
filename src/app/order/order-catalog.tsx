@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useMemo, useState } from "react"
 import {
   submitOrder,
@@ -333,10 +334,12 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                       </span>
                     )}
                     {producto.imagen_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={producto.imagen_url}
                         alt={producto.nombre}
+                        width={240}
+                        height={144}
+                        sizes="240px"
                         className={`h-full w-full object-contain p-2 ${
                           agotado ? "grayscale" : ""
                         }`}
@@ -721,10 +724,12 @@ function CintaGroupCard({
           </span>
         )}
         {grupo.imagen_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={grupo.imagen_url}
             alt={grupo.base}
+            width={240}
+            height={144}
+            sizes="240px"
             className={`h-full w-full object-contain p-2 ${agotado ? "grayscale" : ""}`}
           />
         ) : (
