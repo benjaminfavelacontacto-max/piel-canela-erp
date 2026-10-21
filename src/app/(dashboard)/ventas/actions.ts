@@ -587,10 +587,31 @@ export async function cambiarEstatusVenta(id: string, estatus: string) {
     return { ok: false as const, error: `Estatus inválido: ${estatus}` }
   }
   const supabase = createAdminClient()
-  const { error } = await supabase
+
+  // El estatus y lo cobrado deben ir juntos: si solo se cambia el estatus,
+  // "Pagada" queda con cantidad_pagada = 0 y saldo_pendiente (GENERATED) fantasma.
+  const { data: actual, error: fetchErr } = await supabase
     .from("ventas")
-    .update({ estatus })
+    .select("total, cantidad_pagada")
     .eq("id", id)
+    .single()
+  if (fetchErr || !actual) {
+    return { ok: false as const, error: fetchErr?.message ?? "Venta no encontrada" }
+  }
+  const total = Number(actual.total ?? 0)
+  const pagado = Number(actual.cantidad_pagada ?? 0)
+
+  const payload: { estatus: string; cantidad_pagada?: number } = { estatus }
+  if (estatus === "pagada_total") {
+    // Liquidada: lo cobrado = total
+    payload.cantidad_pagada = total
+  } else if (estatus === "pendiente" && pagado >= total) {
+    // Deshacer un "Pagada": nada cobrado. Un abono parcial real NO se borra.
+    payload.cantidad_pagada = 0
+  }
+  // pagada_parcial / cancelada: se conserva lo cobrado (el monto se captura al editar la venta)
+
+  const { error } = await supabase.from("ventas").update(payload).eq("id", id)
   if (error) {
     return { ok: false as const, error: error.message }
   }
