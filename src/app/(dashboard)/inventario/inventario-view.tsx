@@ -11,6 +11,7 @@ import {
   Pencil,
   Plus,
   SlidersHorizontal,
+  LayoutGrid,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { ProductEditModal } from "./product-edit-modal"
@@ -18,7 +19,8 @@ import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
 import { ExportInventarioButton } from "./export-inventario-button"
 import { InventoryStats } from "./inventory-stats"
-import { SugerenciaPedido } from "./sugerencia-pedido"
+import { useSugerencia, SugerenciaContenido } from "./sugerencia-pedido"
+import { PanelesPlegables } from "@/components/paneles-plegables"
 import { actualizarTipoCambio, cargarVentasProducto } from "./actions"
 import { ImageUpload } from "./image-upload"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
@@ -211,6 +213,7 @@ export function InventarioView({
   // La tabla completa (227 filas × 17 columnas ≈ 900 KB de HTML) solo se pinta en escritorio.
   // El servidor entrega las primeras filas y, ya hidratado, escritorio completa el resto.
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const sug = useSugerencia(productos, salesTop)
   const [mobileLimit, setMobileLimit] = useState(30)
   const [sortKey, setSortKey] = useState<SortKey>("nombre")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -471,13 +474,14 @@ export function InventarioView({
   }, [])
 
   return (
-    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-6 md:px-8 md:py-7 md:pb-7">
+    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-4 md:px-8 md:py-6 md:pb-7">
       <PageHeader
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
         icon={<Package className="size-5" />}
         actions={
           <>
+            <TipoCambioChip tc={tcVigente} />
             <ExportInventarioButton productos={productos} />
             <button
               type="button"
@@ -512,36 +516,54 @@ export function InventarioView({
         </div>
       )}
 
-      <SugerenciaPedido productos={productos} sales={salesTop} />
-
-      {/* Dashboard por tipo: stock por categoría */}
-      <section className="rounded-2xl border border-pc-line bg-pc-card p-4 shadow-sm max-md:order-3 md:mt-2 md:p-5">
-        <div
-          className="flex flex-wrap items-end justify-between gap-2"
-          style={{ marginBottom: 16 }}
-        >
-          <div>
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
-              Stock por categoría
-            </h2>
-            <p className="text-[11.5px] text-pc-ink-3">
-              Click en una categoría para filtrar la tabla · {stockPorCategoria.length} categorías
-            </p>
-          </div>
+      {/* Paneles plegados: la primera vista es la tabla de productos con sus fotos.
+          Se abren al tocar su botón (uno a la vez). */}
+      <PanelesPlegables
+        paneles={[
+          ...(sug.filas.length > 0
+            ? [
+                {
+                  id: "top",
+                  titulo: "Más vendidos · pedido sugerido",
+                  corto: "Más vendidos",
+                  icono: <Sparkles className="size-3.5" />,
+                  resumen:
+                    sug.porPedir > 0 ? (
+                      <span className="rounded-full bg-pc-amber-soft px-2 py-0.5 text-pc-amber-ink">
+                        {sug.porPedir} por pedir
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-pc-green-soft px-2 py-0.5 text-pc-green-ink">Todo cubierto</span>
+                    ),
+                  contenido: <SugerenciaContenido sug={sug} />,
+                },
+              ]
+            : []),
+          {
+            id: "categorias",
+            titulo: "Stock por categoría",
+            corto: "Por categoría",
+            icono: <LayoutGrid className="size-3.5" />,
+            resumen: categoriaF ? (
+              <span className="rounded-full bg-pc-teal-soft px-2 py-0.5 text-pc-teal-ink">Filtro: {categoriaF}</span>
+            ) : (
+              `${stockPorCategoria.length} categorías`
+            ),
+            contenido: (
+              <>
+                <p className="mb-3 text-[11.5px] text-pc-ink-3">Toca una categoría para filtrar la tabla.</p>
           {categoriaF && (
-            <button
-              type="button"
-              onClick={() => setCategoriaF("")}
-              className="rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-[11.5px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
-            >
-              ✕ Quitar filtro: {categoriaF}
-            </button>
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setCategoriaF("")}
+                className="rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-[11.5px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+              >
+                ✕ Quitar filtro: {categoriaF}
+              </button>
+            </div>
           )}
-        </div>
-        <div
-          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-          style={{ marginTop: 16 }}
-        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {stockPorCategoria.map((c) => {
             const isActive = categoriaF === c.categoria
             const palette = CATEGORIA_COLOR[c.categoria] ?? CATEGORIA_COLOR.OTROS
@@ -611,13 +633,17 @@ export function InventarioView({
               </button>
             )
           })}
-        </div>
-      </section>
+          </div>
+              </>
+            ),
+          },
+        ]}
+      />
 
       {/* Search + filters */}
       <section className="rounded-2xl border border-gray-200 bg-pc-card p-3 shadow-sm max-md:order-1 md:p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex min-w-0 flex-1 items-center gap-2 md:min-w-[260px]">
+        <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
+          <div className="relative flex min-w-0 flex-1 items-center gap-2 md:min-w-[140px]">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <input
@@ -626,7 +652,7 @@ export function InventarioView({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por SKU, nombre, categoría…"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-pc-card pl-10 pr-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-pc-card pl-10 pr-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2"
             />
           </div>
           <button
@@ -666,7 +692,7 @@ export function InventarioView({
             aria-label="Filtrar por estatus de stock"
             value={estatusF}
             onChange={(e) => setEstatusF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2 md:text-[13px]"
           >
             {ESTATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -678,7 +704,7 @@ export function InventarioView({
             aria-label="Filtrar por categoría"
             value={categoriaF}
             onChange={(e) => setCategoriaF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2 md:text-[13px]"
           >
             <option value="">Todas las categorías</option>
             {categorias.map((c) => (
@@ -691,7 +717,7 @@ export function InventarioView({
             aria-label="Filtrar por proveedor"
             value={proveedorF}
             onChange={(e) => setProveedorF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2"
             disabled={proveedores.length === 0}
           >
             <option value="">Todos los proveedores</option>
@@ -704,7 +730,7 @@ export function InventarioView({
           <button
             type="button"
             onClick={() => setTopSellersOnly((v) => !v)}
-            className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors md:h-auto md:py-2.5 ${
+            className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors md:h-auto md:py-2 ${
               topSellersOnly
                 ? "border-amber-200 bg-amber-50 text-amber-700"
                 : "border-gray-200 bg-pc-card text-gray-700 hover:bg-gray-50"
@@ -723,9 +749,11 @@ export function InventarioView({
               Limpiar
             </button>
           )}
-          <span className="text-xs text-gray-500 md:ml-auto">
-            {sorted.length} de {productos.length}
-          </span>
+          {hasFilters && (
+            <span className="text-xs tabular-nums text-gray-500 md:ml-auto">
+              {sorted.length} de {productos.length}
+            </span>
+          )}
           </div>
         </div>
       </section>
@@ -759,7 +787,7 @@ export function InventarioView({
       )}
 
       {/* Tipo de cambio note */}
-      <div className="max-md:order-3">
+      <div className="max-md:order-3 md:hidden">
         <TipoCambioNote tc={tcVigente} />
       </div>
 
@@ -1412,7 +1440,23 @@ function TipoCambioNote({ tc }: { tc: number }) {
   )
 }
 
-function ActualizarTCButton({ tcActual }: { tcActual: number }) {
+/** Pastilla compacta de tipo de cambio (escritorio, al final de la fila de filtros). */
+function TipoCambioChip({ tc }: { tc: number }) {
+  return (
+    <div
+      className="hidden items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/50 py-1 pl-2.5 pr-1 text-xs md:inline-flex"
+      title="Tipo de cambio referencial · costo MXN = costo USD × TC"
+    >
+      <span className="font-semibold text-blue-900">TC</span>
+      <span className="tabular-nums text-gray-700">
+        ${tc.toFixed(2)} <span className="text-gray-500">MXN/USD</span>
+      </span>
+      <ActualizarTCButton tcActual={tc} compacto />
+    </div>
+  )
+}
+
+function ActualizarTCButton({ tcActual, compacto = false }: { tcActual: number; compacto?: boolean }) {
   const [pending, startTransition] = useTransition()
 
   function onClick() {
@@ -1437,10 +1481,17 @@ function ActualizarTCButton({ tcActual }: { tcActual: number }) {
       type="button"
       onClick={onClick}
       disabled={pending}
+      title={compacto ? "Actualizar tipo de cambio" : undefined}
       className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-pc-card px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
     >
       <RefreshCw className={`size-3 ${pending ? "animate-spin" : ""}`} />
-      {pending ? "Actualizando…" : "Actualizar TC"}
+      {compacto ? (
+        <span className="sr-only">Actualizar tipo de cambio</span>
+      ) : pending ? (
+        "Actualizando…"
+      ) : (
+        "Actualizar TC"
+      )}
     </button>
   )
 }

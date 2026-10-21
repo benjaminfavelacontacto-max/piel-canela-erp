@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Sparkles } from "lucide-react"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 import { CATEGORIA_COLOR } from "./inventario-view"
 import { monthSpan, fmtAgotar } from "./product-drawer"
@@ -14,6 +13,14 @@ type Fila = {
   mesesParaAgotar: number | null
 }
 
+export type Sugerencia = {
+  filas: Fila[]
+  horizonte: (typeof HORIZONTES)[number]
+  setHorizonte: (h: (typeof HORIZONTES)[number]) => void
+  /** Cuántos del top necesitan pedido con el horizonte elegido. */
+  porPedir: number
+}
+
 /**
  * Ranking de los 20 productos más vendidos (histórico) con ritmo mensual real
  * y pedido sugerido para cubrir los próximos N meses. Reusa exactamente el
@@ -21,13 +28,10 @@ type Fila = {
  * (`monthSpan` / `fmtAgotar` de ./product-drawer) para que ambas vistas
  * siempre cuadren entre sí.
  */
-export function SugerenciaPedido({
-  productos,
-  sales,
-}: {
-  productos: ProductoEnriquecido[]
-  sales: Record<string, ProductoSales>
-}) {
+export function useSugerencia(
+  productos: ProductoEnriquecido[],
+  sales: Record<string, ProductoSales>,
+): Sugerencia {
   const [horizonte, setHorizonte] = useState<(typeof HORIZONTES)[number]>(2)
 
   const filas = useMemo<Fila[]>(() => {
@@ -49,20 +53,27 @@ export function SugerenciaPedido({
       })
   }, [productos, sales])
 
-  if (filas.length === 0) return null
+  const porPedir = useMemo(
+    () =>
+      filas.filter(({ producto: p, ritmoMensual }) => {
+        const objetivo = Math.max(Math.ceil(ritmoMensual * horizonte), p.stock_minimo)
+        return objetivo - p.stock_actual > 0
+      }).length,
+    [filas, horizonte],
+  )
+
+  return { filas, horizonte, setHorizonte, porPedir }
+}
+
+/** Contenido del panel «Más vendidos · sugerencia de pedido» (el marco lo pone PanelesPlegables). */
+export function SugerenciaContenido({ sug }: { sug: Sugerencia }) {
+  const { filas, horizonte, setHorizonte } = sug
+  if (filas.length === 0) return <p className="text-sm text-pc-ink-3">Aún no hay ventas para sugerir pedidos.</p>
 
   return (
-    <section className="rounded-2xl border border-pc-line bg-pc-card p-5 shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
-            <Sparkles className="size-4 text-pc-teal-ink" />
-            Más vendidos · sugerencia de pedido
-          </h2>
-          <p className="text-[11.5px] text-pc-ink-3">
-            Top 20 por unidades vendidas (histórico), con el ritmo mensual real de cada uno
-          </p>
-        </div>
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[11.5px] text-pc-ink-3">Top 20 por unidades vendidas · elige cuántos meses cubrir</p>
         <div className="flex items-center gap-1.5">
           <span className="text-[11.5px] text-pc-ink-3">Cubrir:</span>
           {HORIZONTES.map((h) => (
@@ -83,7 +94,7 @@ export function SugerenciaPedido({
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Tabla de productos más vendidos">
         <table className="w-full text-[12.5px]">
           <thead>
             <tr className="border-b border-pc-line-soft text-left">
@@ -170,6 +181,6 @@ export function SugerenciaPedido({
         Pedido sugerido = ritmo mensual real × meses a cubrir (o el stock
         mínimo del producto, lo que sea mayor) − stock actual.
       </p>
-    </section>
+    </>
   )
 }

@@ -2,6 +2,7 @@
 
 import { Package, TrendingUp, AlertTriangle, DollarSign } from "lucide-react"
 import { formatMXN } from "@/lib/utils"
+import { useMediaQuery } from "@/lib/use-media-query"
 
 interface CategoryPill {
   label: string
@@ -45,6 +46,8 @@ export function InventoryStats({
   categorias,
 }: InventoryStatsProps) {
   const topCats = categorias.slice(0, 3)
+  // En móvil el carrusel hace scroll: debe poder enfocarse con teclado (WCAG 2.1.1)
+  const esMovil = useMediaQuery("(max-width: 767px)")
 
   // Pills tonales sobre fondo claro — tonos saturados con bg suave
   const pillColors: Record<string, { bg: string; text: string }> = {
@@ -114,16 +117,17 @@ export function InventoryStats({
 
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 12,
-        marginBottom: 0,
-      }}
+      tabIndex={esMovil ? 0 : undefined}
+      role="group"
+      aria-label="Indicadores del inventario"
+      // Móvil: una sola fila deslizable (las 4 tarjetas en 375px se cortaban y ocupaban mucho);
+      // escritorio: 4 columnas.
+      className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-4 md:gap-3 md:overflow-visible md:px-0 md:pb-0"
     >
       {cards.map((card, i) => (
         <div
           key={i}
+          className="w-[220px] shrink-0 snap-start md:w-auto"
           style={{
             background: "var(--pc-bg-card)",
             border: "1px solid var(--pc-border)",
@@ -208,7 +212,7 @@ export function InventoryStats({
               style={{
                 fontSize: 11,
                 color: "var(--pc-text-secondary)",
-                marginBottom: card.pills ? 6 : 0,
+                marginBottom: 0,
                 lineHeight: 1.35,
               }}
             >
@@ -217,8 +221,9 @@ export function InventoryStats({
 
             {card.pills && card.pills.length > 0 && (
               <div
+                // En móvil se omiten: el mismo conteo está en el panel «Por categoría»
+                className="mt-1.5 hidden md:flex"
                 style={{
-                  display: "flex",
                   flexWrap: "wrap",
                   gap: 4,
                   alignItems: "center",
