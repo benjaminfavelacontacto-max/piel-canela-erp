@@ -27,7 +27,7 @@ import {
   updateCotizacion,
   siguienteNumeroCotizacion,
 } from "../actions"
-import { downloadCotizacionPdf } from "@/lib/pdf"
+import { usePdfDownload } from "@/lib/use-pdf-download"
 import { formatMXN2 } from "@/lib/utils"
 import {
   resumenRegalos,
@@ -500,14 +500,8 @@ export function CotizacionForm({
     })
   }
 
-  async function handlePdf() {
-    if (!previewRef.current) return
-    try {
-      await downloadCotizacionPdf(previewRef.current, numero)
-    } catch (e) {
-      toast.error(`Error al generar PDF: ${(e as Error).message}`)
-    }
-  }
+  const { generando: generandoPdf, descargar } = usePdfDownload()
+  const handlePdf = () => descargar(previewRef.current, numero)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4 p-4 sm:gap-6 sm:p-6">
@@ -1211,10 +1205,18 @@ export function CotizacionForm({
           <button
             type="button"
             onClick={handlePdf}
-            className="pc-tap hidden h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:flex lg:h-auto lg:w-full lg:py-2.5"
+            disabled={generandoPdf}
+            aria-label="Descargar PDF"
+            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 lg:h-auto lg:w-full lg:py-2.5"
           >
             <FileDown className="size-4" />
-            <span className="hidden lg:inline">Descargar </span>PDF
+            {generandoPdf ? (
+              "Generando…"
+            ) : (
+              <>
+                <span className="hidden lg:inline">Descargar </span>PDF
+              </>
+            )}
           </button>
         </div>
         {/* Espacio para que la barra fija no tape el último campo en móvil */}

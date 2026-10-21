@@ -21,7 +21,8 @@ import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
-import { cotizacionPdfFile, downloadCotizacionPdf } from "@/lib/pdf"
+import { cotizacionPdfFile, guardarPdfEnDispositivo } from "@/lib/pdf"
+import { usePdfDownload } from "@/lib/use-pdf-download"
 import { whatsappUrl } from "@/lib/whatsapp"
 import { resumenRegalos } from "@/lib/regalos"
 import { resumenDescuentos } from "@/lib/descuentos"
@@ -215,12 +216,7 @@ export function CotizacionDetail({
           // otro error → cae al método de escritorio
         }
       }
-      const url = URL.createObjectURL(file)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = file.name
-      a.click()
-      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      await guardarPdfEnDispositivo(file)
       const wa = whatsappUrl(preview.cliente?.telefono, texto)
       if (ventana) ventana.location.href = wa
       else window.open(wa, "_blank", "noopener")
@@ -235,14 +231,8 @@ export function CotizacionDetail({
     }
   }
 
-  async function handlePdf() {
-    if (!previewRef.current) return
-    try {
-      await downloadCotizacionPdf(previewRef.current, numero)
-    } catch (e) {
-      toast.error(`Error al generar PDF: ${(e as Error).message}`)
-    }
-  }
+  const { generando: generandoPdf, descargar } = usePdfDownload()
+  const handlePdf = () => descargar(previewRef.current, numero)
 
   return (
     <div className="p-4">
@@ -357,10 +347,11 @@ export function CotizacionDetail({
           <button
             type="button"
             onClick={handlePdf}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            disabled={generandoPdf}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 md:min-h-0"
           >
             <FileDown className="size-4" />
-            PDF
+            {generandoPdf ? "Generando…" : "Descargar PDF"}
           </button>
           {!yaVendida && (
             <button

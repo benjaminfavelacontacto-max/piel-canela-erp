@@ -16,6 +16,9 @@ export default function DashboardLayout({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+  // Flujos de captura con su propia barra de acciones fija abajo (cotización rápida / nueva / editar):
+  // ahí la barra inferior de navegación estorbaría, así que se oculta y la pantalla usa todo el alto.
+  const flujoConBarraPropia = /^\/cotizaciones\/(rapida|nueva)(\/|$)|^\/cotizaciones\/[^/]+\/editar(\/|$)/.test(pathname)
 
   // Cerrar drawer al cambiar de ruta
   useEffect(() => {
@@ -149,12 +152,16 @@ export default function DashboardLayout({
         style={{ background: "transparent" }}
       >
         {/* Móvil: respeta notch arriba y deja espacio para la barra inferior */}
-        <div className="pt-[var(--pc-safe-top)] pb-[calc(var(--pc-nav-h)+var(--pc-safe-bottom))] md:pb-0 md:pt-0">
+        <div
+          className={`pt-[var(--pc-safe-top)] md:pb-0 md:pt-0 ${
+            flujoConBarraPropia ? "" : "pb-[calc(var(--pc-nav-h)+var(--pc-safe-bottom))]"
+          }`}
+        >
           {children}
         </div>
       </main>
 
-      <MobileBottomNav onMore={() => setMobileOpen(true)} />
+      {!flujoConBarraPropia && <MobileBottomNav onMore={() => setMobileOpen(true)} />}
       <CommandPalette />
     </div>
   )

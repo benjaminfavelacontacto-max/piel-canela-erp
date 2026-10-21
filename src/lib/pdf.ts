@@ -34,11 +34,23 @@ const PDF_RESET_CSS = `
 html, body { background: #ffffff !important; color: #111827 !important; }
 `
 
+/**
+ * Nombre del archivo = nombre de la cotización (su número, p. ej.
+ * "PC-211026002-C-KanelaBronze.pdf"), tal cual: solo se quitan los caracteres
+ * que el sistema de archivos no admite (/ \\ : * ? " < > |). Se conservan
+ * espacios y acentos para que coincida exactamente con lo que se ve en pantalla.
+ */
+export function nombreArchivoPdf(numeroOrden: string): string {
+  const base = numeroOrden
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[.\- ]+|[. ]+$/g, "")
+  return `${base || "cotizacion"}.pdf`
+}
+
 function pdfOptions(numeroOrden: string) {
-  // El archivo se llama EXACTAMENTE como la cotización (su número), para no
-  // tener que renombrarlo. El número ya es filename-safe (PC-DDMMYY-NNN-TIPO-
-  // NombreCorto); safeFilenamePart solo actúa como red de seguridad.
-  const filename = `${safeFilenamePart(numeroOrden)}.pdf`
+  const filename = nombreArchivoPdf(numeroOrden)
 
   // `pagebreak` no está en los tipos de html2pdf.js pero sí existe en runtime
   // y respeta `page-break-inside: avoid` para evitar cortes entre páginas.
@@ -68,17 +80,7 @@ function pdfOptions(numeroOrden: string) {
   return { opts, filename }
 }
 
-export async function downloadCotizacionPdf(
-  element: HTMLElement,
-  numeroOrden: string,
-) {
-  const mod = await import("html2pdf.js")
-  const html2pdf = mod.default ?? mod
-  const { opts } = pdfOptions(numeroOrden)
-  await html2pdf().from(element).set(opts).save()
-}
-
-/** Genera el PDF como archivo (sin descargarlo) — para compartir por WhatsApp. */
+/** Genera el PDF como archivo (sin descargarlo), con el nombre de la cotización. */
 export async function cotizacionPdfFile(
   element: HTMLElement,
   numeroOrden: string,
@@ -88,4 +90,56 @@ export async function cotizacionPdfFile(
   const { opts, filename } = pdfOptions(numeroOrden)
   const blob: Blob = await html2pdf().from(element).set(opts).outputPdf("blob")
   return new File([blob], filename, { type: "application/pdf" })
+}
+
+export type ResultadoGuardado = "descargado" | "compartido" | "cancelado"
+
+/**
+ * Guarda el PDF en el dispositivo CON EL NOMBRE DEL ARCHIVO:
+ * - Android / escritorio / Safari de iPhone: descarga directa (<a download> sobre un blob;
+ *   a diferencia de `file-saver`, respeta el nombre también en iOS Safari 13+).
+ * - App instalada en el iPhone (pantalla de inicio): la WebView no permite descargas con
+ *   <a download>, así que se abre la hoja de compartir → "Guardar en Archivos" (conserva el nombre).
+ */
+export async function guardarPdfEnDispositivo(file: File): Promise<ResultadoGuardado> {
+  const ua = navigator.userAgent
+  const esIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  const instalada =
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+  if (esIOS && instalada && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: file.name })
+      return "compartido"
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return "cancelado"
+      // cualquier otro error → intentamos la descarga normal
+    }
+  }
+
+  const url = URL.createObjectURL(file)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = file.name
+  a.rel = "noopener"
+  a.style.display = "none"
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  // Margen amplio: en móvil la descarga puede tardar en arrancar
+  setTimeout(() => URL.revokeObjectURL(url), 120_000)
+  return "descargado"
+}
+
+/** Genera y guarda el PDF de la cotización con el nombre de la cotización. */
+export async function downloadCotizacionPdf(
+  element: HTMLElement,
+  numeroOrden: string,
+): Promise<{ resultado: ResultadoGuardado; nombre: string }> {
+  const file = await cotizacionPdfFile(element, numeroOrden)
+  const resultado = await guardarPdfEnDispositivo(file)
+  return { resultado, nombre: file.name }
 }
