@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
-import { Menu, X } from "lucide-react"
+import { X } from "lucide-react"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { NotificationBell } from "@/components/notifications"
 import { LogoutButton } from "@/components/logout-button"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 
 export default function DashboardLayout({
   children,
@@ -34,22 +35,6 @@ export default function DashboardLayout({
 
   return (
     <div className="glass-app-bg flex h-dvh overflow-hidden">
-      {/* ─── Hamburger móvil — visible solo en < md ─── */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        aria-label="Abrir menú"
-        className="fixed left-3 top-3 z-30 flex size-9 items-center justify-center rounded-xl md:hidden"
-        style={{
-          background: "rgba(255,255,255,0.85)",
-          border: "1px solid rgba(0,0,0,0.06)",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          color: "#0F172A",
-        }}
-      >
-        <Menu className="size-4" strokeWidth={2} />
-      </button>
-
       {/* ─── Overlay backdrop móvil ─── */}
       {mobileOpen && (
         <div
@@ -152,9 +137,13 @@ export default function DashboardLayout({
         className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
         style={{ background: "transparent" }}
       >
-        {/* Padding-top extra en móvil para que el contenido no quede debajo del hamburger */}
-        <div className="pt-12 md:pt-0">{children}</div>
+        {/* Móvil: respeta notch arriba y deja espacio para la barra inferior */}
+        <div className="pt-[var(--pc-safe-top)] pb-[calc(var(--pc-nav-h)+var(--pc-safe-bottom))] md:pb-0 md:pt-0">
+          {children}
+        </div>
       </main>
+
+      <MobileBottomNav onMore={() => setMobileOpen(true)} />
     </div>
   )
 }

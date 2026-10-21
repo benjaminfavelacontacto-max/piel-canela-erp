@@ -28,6 +28,7 @@ import {
 } from "recharts"
 import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
+import { SheetHandle, useSheetDrag } from "@/components/sheet-handle"
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -84,6 +85,9 @@ export function ProductDrawer({
   onClose: () => void
   onEdit: () => void
 }) {
+  // Hoja desde abajo en móvil (arrastrar el asa para cerrar)
+  const sheet = useSheetDrag(onClose)
+
   // Esc cierra
   useEffect(() => {
     if (!producto) return
@@ -159,9 +163,12 @@ export function ProductDrawer({
       />
       {/* Drawer */}
       <aside
-        className="fixed inset-y-0 right-0 z-50 w-full max-w-[520px] overflow-y-auto bg-white shadow-2xl animate-in slide-in-from-right duration-300"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-2xl animate-in slide-in-from-bottom duration-300 md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-[520px] md:rounded-none md:slide-in-from-right"
+        style={sheet.style}
         onClick={(e) => e.stopPropagation()}
       >
+        <SheetHandle {...sheet.handleProps} />
+        <div className="min-h-0 flex-1 overflow-y-auto">
         {/* Sticky header */}
         <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur">
           <div className="flex-1">
@@ -175,7 +182,7 @@ export function ProductDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            className="flex size-11 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 md:size-9"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -614,6 +621,7 @@ export function ProductDrawer({
               Editar producto
             </button>
           </section>
+        </div>
         </div>
       </aside>
     </>

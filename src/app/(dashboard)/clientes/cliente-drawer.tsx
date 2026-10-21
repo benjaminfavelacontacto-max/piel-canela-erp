@@ -28,6 +28,7 @@ import {
   Wallet,
   X,
 } from "lucide-react"
+import { SheetHandle, sheetClass, useSheetDrag } from "@/components/sheet-handle"
 import type {
   CotizacionSummaryRow,
   EnrichedCliente,
@@ -115,6 +116,9 @@ export function ClienteDrawer({
   venta_items: VentaItemSummary[]
   onDelete?: (cliente: EnrichedCliente) => void
 }) {
+  // Hoja desde abajo en móvil (arrastrar el asa para cerrar)
+  const sheet = useSheetDrag(onClose)
+
   // Body scroll lock
   useEffect(() => {
     if (open) {
@@ -225,17 +229,20 @@ export function ClienteDrawer({
         className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-200 ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-[600px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={sheetClass({ open, dragging: sheet.dragging, maxW: "md:max-w-[600px]" })}
+        style={sheet.style}
         role="dialog"
         aria-modal="true"
         aria-label={`Detalle cliente ${display}`}
       >
+        <SheetHandle {...sheet.handleProps} />
         {/* Hero */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-6 pb-5 pt-6">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 transition hover:bg-white hover:text-gray-700"
+            aria-label="Cerrar"
+            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 md:right-4 md:top-4 md:size-8"
           >
             <X className="size-4" />
           </button>
@@ -824,7 +831,7 @@ export function ClienteDrawer({
             </Section>
           )}
 
-          <div className="h-6" />
+          <div className="min-h-6 pc-pb-safe" />
         </div>
       </aside>
     </>

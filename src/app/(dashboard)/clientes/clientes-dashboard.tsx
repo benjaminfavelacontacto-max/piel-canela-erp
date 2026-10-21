@@ -28,6 +28,7 @@ declare module "@tanstack/react-table" {
   }
 }
 import {
+  SlidersHorizontal,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -44,6 +45,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react"
+import { ListCard, ListCardGroup } from "@/components/list-card"
 import { PageHeader } from "@/components/page-header"
 import { ExportClientesButton } from "./export-clientes-button"
 import { ClienteDrawer } from "./cliente-drawer"
@@ -567,6 +569,9 @@ export function ClientesDashboard({
   })
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [showColumnMenu, setShowColumnMenu] = useState(false)
+  // Móvil: filtros plegables + paginado incremental de tarjetas
+  const [filtersOpenM, setFiltersOpenM] = useState(false)
+  const [mobileLimit, setMobileLimit] = useState(30)
 
   const columns: ColumnDef<EnrichedCliente>[] = useMemo(
     () => [
@@ -1095,7 +1100,7 @@ export function ClientesDashboard({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-6 md:p-6 md:pb-6">
       {/* ─── Header ejecutivo (custom) ─── */}
       {(() => {
         const len = monthlyKpi.length
@@ -1174,7 +1179,7 @@ export function ClientesDashboard({
               actions={
                 <>
                   <ExportClientesButton clientes={enriched} />
-                  <Link href="/clientes/nuevo" className="pc-btn-primary">
+                  <Link href="/clientes/nuevo" className="pc-btn-primary max-md:!hidden">
                     <UserPlus className="size-4" strokeWidth={1.75} />
                     Nuevo cliente
                   </Link>
@@ -1182,7 +1187,7 @@ export function ClientesDashboard({
               }
             />
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-md:order-3">
 
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -1270,31 +1275,37 @@ export function ClientesDashboard({
         )
       })()}
 
-      <div className="space-y-4">
+      <div className="space-y-4 max-md:contents">
         {/* Estimado de ingresos predictivo */}
-        <EstimadoIngresos clientes={enriched} ventas={ventas} />
+        <div className="max-md:order-3">
+          <EstimadoIngresos clientes={enriched} ventas={ventas} />
+        </div>
 
         {/* Predicción de compras — panel compacto de insights.
             La lista por cliente vive en la tabla unificada de abajo
             (columnas Próxima compra · Prob. 60d · Revenue esp. + filtros). */}
-        <PrediccionInsights
-          clientes={enriched}
-          predByCliente={predByCliente}
-          onClienteClick={setSelectedCliente}
-        />
+        <div className="max-md:order-3">
+          <PrediccionInsights
+            clientes={enriched}
+            predByCliente={predByCliente}
+            onClienteClick={setSelectedCliente}
+          />
+        </div>
 
         {/* Recurrencia analytics con heatmap interactivo */}
-        <RecurrenciaAnalytics
-          clientes={enriched}
-          ventas={ventas}
-          cotizaciones={cotizaciones}
-          venta_items={venta_items}
-        />
+        <div className="max-md:order-3">
+          <RecurrenciaAnalytics
+            clientes={enriched}
+            ventas={ventas}
+            cotizaciones={cotizaciones}
+            venta_items={venta_items}
+          />
+        </div>
 
       {/* Tabla */}
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm max-md:order-1">
         {/* Toolbar */}
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 md:px-5">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-[#0F766E]" />
             <h2 className="text-sm font-semibold text-gray-900">
@@ -1304,23 +1315,53 @@ export function ClientesDashboard({
               {filteredCount}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+            <div className="flex w-full items-center gap-2 md:contents">
+            <div className="relative min-w-0 flex-1 md:flex-none">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
               <input
-                type="text"
+                type="search"
+                enterKeyHint="search"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar nombre, negocio, RFC, email, ciudad…"
-                className="h-10 w-72 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                className="h-11 w-full rounded-xl md:h-10 md:w-72 border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setFiltersOpenM((o) => !o)}
+              aria-expanded={filtersOpenM}
+              aria-label="Filtros y orden"
+              className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 md:hidden"
+            >
+              <SlidersHorizontal className="size-4" />
+            </button>
+            </div>
+            <div
+              className={`${filtersOpenM ? "flex" : "hidden"} w-full flex-col gap-2 md:contents`}
+            >
+            <select
+              aria-label="Ordenar clientes"
+              value={`${sorting[0]?.id ?? "ltv"}:${sorting[0]?.desc ? "desc" : "asc"}`}
+              onChange={(e) => {
+                const [id, dir] = e.target.value.split(":")
+                setSorting([{ id, desc: dir === "desc" }])
+              }}
+              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none md:hidden"
+            >
+              <option value="ltv:desc">Mayor LTV</option>
+              <option value="ultimo_pedido:desc">Compra más reciente</option>
+              <option value="saldo_total:desc">Mayor saldo</option>
+              <option value="prox_compra:asc">Próxima compra</option>
+              <option value="cliente:asc">Nombre A–Z</option>
+            </select>
             <select
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(e.target.value as "todos" | ClienteStatus)
               }
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-10"
             >
               <option value="todos">Todos los estatus</option>
               <option value="activo">Activos</option>
@@ -1333,7 +1374,7 @@ export function ClientesDashboard({
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-10"
             >
               <option value="todos">Todos los tipos</option>
               {TIPOS_CLIENTE.map((t) => (
@@ -1342,7 +1383,7 @@ export function ClientesDashboard({
                 </option>
               ))}
             </select>
-            <div className="relative">
+            <div className="relative hidden md:block">
               <button
                 type="button"
                 onClick={() => setShowColumnMenu((s) => !s)}
@@ -1386,11 +1427,12 @@ export function ClientesDashboard({
                 </>
               )}
             </div>
+            </div>
           </div>
         </header>
 
-        {/* Filtros inteligentes de predicción */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-[rgba(15,23,42,0.04)] bg-[#FBFCFD] px-5 py-2">
+        {/* Filtros inteligentes de predicción (móvil: una fila deslizable) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[rgba(15,23,42,0.04)] bg-[#FBFCFD] px-4 py-2 md:flex-wrap md:overflow-visible md:px-5">
           <span className="mr-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
             <Sparkles className="size-3 text-[#4F46E5]" />
             Predicción
@@ -1402,7 +1444,7 @@ export function ClientesDashboard({
                 key={f.key}
                 type="button"
                 onClick={() => setPredFilter(f.key)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all md:py-1 md:text-[11px]"
                 style={{
                   background: active ? "rgba(99,102,241,0.10)" : "white",
                   color: active ? "#4F46E5" : "#64748B",
@@ -1426,8 +1468,35 @@ export function ClientesDashboard({
           })}
         </div>
 
+        {/* Tarjetas (móvil) */}
+        <ListCardGroup
+          empty={
+            table.getRowModel().rows.length === 0
+              ? "Sin clientes con esos filtros."
+              : undefined
+          }
+        >
+          {table.getRowModel().rows.slice(0, mobileLimit).map((row) => (
+            <ClienteCard
+              key={row.id}
+              c={row.original}
+              pred={predByCliente.get(row.original.id)}
+              onOpen={() => setSelectedCliente(row.original)}
+            />
+          ))}
+          {table.getRowModel().rows.length > mobileLimit && (
+            <button
+              type="button"
+              onClick={() => setMobileLimit((n) => n + 30)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700"
+            >
+              Mostrar más ({table.getRowModel().rows.length - mobileLimit})
+            </button>
+          )}
+        </ListCardGroup>
+
         {/* Body */}
-        <div className="relative max-w-full overflow-auto">
+        <div className="relative hidden max-w-full overflow-auto md:block">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
               {table.getHeaderGroups().map((hg) => (
@@ -1511,7 +1580,7 @@ export function ClientesDashboard({
         </div>
 
         {/* Pagination */}
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-5 py-3 text-xs">
+        <footer className="hidden flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-5 py-3 text-xs md:flex">
           <div className="flex items-center gap-2 text-gray-600">
             <span>
               {pageIdx * pageSize + 1}–
@@ -1563,6 +1632,17 @@ export function ClientesDashboard({
       </section>
       </div>
 
+      {/* FAB móvil: nuevo cliente */}
+      <Link
+        href="/clientes/nuevo"
+        aria-label="Nuevo cliente"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.35)] transition-transform active:scale-95 md:hidden"
+        style={{ background: "#7C3AED" }}
+      >
+        <UserPlus className="size-5" strokeWidth={2.25} />
+        Nuevo cliente
+      </Link>
+
       {/* Drawer */}
       <ClienteDrawer
         cliente={selectedCliente}
@@ -1588,6 +1668,96 @@ export function ClientesDashboard({
         onClose={() => setDeleteTarget(null)}
       />
     </div>
+  )
+}
+
+/**
+ * Tarjeta de cliente para móvil. Tocar abre la ficha (hoja inferior).
+ * Muestra LTV, estatus, saldo y la próxima compra predicha.
+ */
+function ClienteCard({
+  c,
+  pred,
+  onOpen,
+}: {
+  c: EnrichedCliente
+  pred: PrediccionResult | undefined
+  onOpen: () => void
+}) {
+  const display = c.nombre_negocio ?? c.nombre
+  const sub = c.nombre_negocio ? c.nombre : null
+  const iniciales =
+    display
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  let proxima: { texto: string; color: string } | null = null
+  if (pred && pred.metodo !== "insufficient" && pred.fechaProxima) {
+    const dias = pred.diasParaProxima ?? 0
+    proxima = {
+      texto:
+        dias === 0
+          ? "Compra hoy"
+          : dias < 0
+            ? "Compra atrasada " + -dias + "d"
+            : "Compra en " + dias + "d",
+      color:
+        dias < -7 ? "#B91C1C" : dias < 0 ? "#B45309" : dias <= 14 ? "#047857" : "#475569",
+    }
+  }
+  return (
+    <ListCard
+      onOpen={onOpen}
+      ariaLabel={`Cliente ${display}, LTV ${formatMXN(c.ltv)}`}
+      leading={
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F3F5F7] text-sm font-semibold text-gray-700 ring-1 ring-[#E7EAF0]">
+          {iniciales}
+        </div>
+      }
+      title={display}
+      amount={c.ltv > 0 ? formatMXN(c.ltv) : "—"}
+      meta={
+        <>
+          {sub && <span className="truncate">{sub}</span>}
+          {sub && c.ciudad && <span aria-hidden>·</span>}
+          {c.ciudad && <span className="truncate">{c.ciudad}</span>}
+          {!sub && !c.ciudad && (
+            <span>
+              {c.ventas_count} {c.ventas_count === 1 ? "compra" : "compras"}
+            </span>
+          )}
+        </>
+      }
+      footer={
+        <>
+          <StatusPill status={c.status} />
+          {c.saldo_total > 0 && (
+            <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2 py-1 text-[11px] font-semibold tabular-nums text-[#B45309]">
+              Debe {formatMXN(c.saldo_total)}
+            </span>
+          )}
+          {proxima && (
+            <span
+              className="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-[11px] font-semibold"
+              style={{ color: proxima.color }}
+            >
+              {proxima.texto}
+            </span>
+          )}
+        </>
+      }
+      actions={
+        <Link
+          href={`/clientes/${c.id}/editar`}
+          aria-label="Editar cliente"
+          className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+        >
+          <Pencil className="size-4" />
+        </Link>
+      }
+    />
   )
 }
 

@@ -416,7 +416,7 @@ export function VentasDashboard({
   ].filter(Boolean).length
 
   return (
-    <div className="flex flex-col gap-4 p-4 pb-28 md:gap-6 md:p-6 md:pb-6">
+    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-6 md:p-6 md:pb-6">
       <PageHeader
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}

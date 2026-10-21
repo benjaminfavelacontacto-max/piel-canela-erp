@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import {
   Calendar,
@@ -26,6 +26,7 @@ import type {
 } from "./ventas-dashboard"
 import type { EnrichedVenta } from "./ventas-table-premium"
 import { formatMXN2 } from "@/lib/utils"
+import { SheetHandle, sheetClass, useSheetDrag } from "@/components/sheet-handle"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
@@ -126,9 +127,7 @@ export function VentaDrawer({
   }, [open])
 
   // Bottom sheet (móvil): arrastrar el asa hacia abajo para cerrar
-  const [dragY, setDragY] = useState(0)
-  const dragStart = useRef<number | null>(null)
-  const [dragging, setDragging] = useState(false)
+  const sheet = useSheetDrag(onClose)
 
   // Esc to close
   useEffect(() => {
@@ -186,40 +185,13 @@ export function VentaDrawer({
       />
       {/* Panel */}
       <aside
-        className={`fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-2xl ease-out md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-[560px] md:rounded-none ${dragging ? "" : "transition-transform duration-300"} ${open ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full md:translate-y-0"}`}
-        style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : undefined}
+        className={sheetClass({ open, dragging: sheet.dragging, maxW: "md:max-w-[560px]" })}
+        style={sheet.style}
         role="dialog"
         aria-modal="true"
         aria-label={`Detalle de venta ${venta.numero}`}
       >
-        {/* Asa de arrastre — solo móvil */}
-        <div
-          className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-t-3xl bg-pink-50 md:hidden"
-          onPointerDown={(e) => {
-            dragStart.current = e.clientY
-            setDragging(true)
-            e.currentTarget.setPointerCapture(e.pointerId)
-          }}
-          onPointerMove={(e) => {
-            if (dragStart.current === null) return
-            setDragY(Math.max(0, e.clientY - dragStart.current))
-          }}
-          onPointerUp={() => {
-            const closeIt = dragY > 90
-            dragStart.current = null
-            setDragging(false)
-            setDragY(0)
-            if (closeIt) onClose()
-          }}
-          onPointerCancel={() => {
-            dragStart.current = null
-            setDragging(false)
-            setDragY(0)
-          }}
-          aria-hidden
-        >
-          <span className="h-1.5 w-10 rounded-full bg-gray-300" />
-        </div>
+        <SheetHandle {...sheet.handleProps} />
         {/* Hero / Header */}
         <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
           <button

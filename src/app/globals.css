@@ -550,15 +550,17 @@
   --pc-safe-right: env(safe-area-inset-right, 0px);
   --pc-safe-bottom: env(safe-area-inset-bottom, 0px);
   --pc-safe-left: env(safe-area-inset-left, 0px);
+  /* Alto de la barra de navegación inferior móvil */
+  --pc-nav-h: 3.5rem;
 }
 
 /* Padding inferior que respeta la barra de gestos del iPhone */
 .pc-pb-safe {
   padding-bottom: max(1rem, var(--pc-safe-bottom));
 }
-/* Offset inferior para elementos flotantes (FAB, barras fijas) */
+/* Offset inferior para elementos flotantes (FAB): queda POR ENCIMA de la barra inferior */
 .pc-bottom-safe {
-  bottom: max(1rem, calc(var(--pc-safe-bottom) + 0.5rem));
+  bottom: calc(var(--pc-nav-h) + max(0.75rem, var(--pc-safe-bottom)));
 }
 /* Área táctil mínima de 44px */
 .pc-tap-target {

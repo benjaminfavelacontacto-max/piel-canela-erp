@@ -19,6 +19,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table"
 import {
+  ChevronDown,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -55,6 +56,7 @@ import {
 } from "recharts"
 import { cambiarEstatusCotizacion, eliminarCotizacion } from "./actions"
 import { PageHeader } from "@/components/page-header"
+import { ListCard, ListCardGroup } from "@/components/list-card"
 import { formatMXN } from "@/lib/utils"
 import {
   calcularProbabilidad,
@@ -330,7 +332,14 @@ function StatusCell({
  * - Si la cotización ya tiene venta (esConvertida), reemplaza todo
  *   el cluster por un indicador "Vendida" sutil (siempre visible).
  */
-function ActionsCell({ cot }: { cot: EnrichedCot }) {
+function ActionsCell({
+  cot,
+  compact = false,
+}: {
+  cot: EnrichedCot
+  /** Tarjeta móvil: solo Editar + menú ⋯ (el detalle se abre tocando la tarjeta) */
+  compact?: boolean
+}) {
   const router = useRouter()
   const [pending, setPending] = useState<string | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
@@ -382,22 +391,24 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
   return (
     <>
       <div
-        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100 [data-state=open]:opacity-100"
+        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 [data-state=open]:opacity-100"
         data-state={menuOpen ? "open" : "closed"}
       >
+        {!compact && (
         <Link
           href={`/cotizaciones/${cot.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
           title="Ver detalle"
           aria-label="Ver detalle"
         >
           <ExternalLink className="size-4" strokeWidth={1.8} />
         </Link>
+        )}
         <Link
           href={`/cotizaciones/${cot.id}/editar`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
           title="Editar"
           aria-label="Editar"
         >
@@ -410,7 +421,7 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
               e.stopPropagation()
               setMenuOpen((o) => !o)
             }}
-            className={`rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
+            className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
             title="Más acciones"
             aria-label="Más acciones"
             aria-expanded={menuOpen}
@@ -421,7 +432,7 @@ function ActionsCell({ cot }: { cot: EnrichedCot }) {
           {menuOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
+              className={`absolute right-0 z-50 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)] ${compact ? "bottom-full mb-1" : "top-full mt-1"}`}
               onClick={(e) => e.stopPropagation()}
             >
               {canSend && (
@@ -501,7 +512,7 @@ function ActionMenuItem({
       role="menuitem"
       onClick={onClick}
       disabled={loading}
-      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
+      className={`flex w-full items-center gap-2 px-3 py-2 pointer-coarse:py-3 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
     >
       <span className="text-gray-400">{icon}</span>
       <span className="flex-1">{children}</span>
@@ -797,6 +808,8 @@ export function CotizacionesList({
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
   const [showColumnMenu, setShowColumnMenu] = useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  // Filtros plegables solo en móvil (el buscador siempre visible)
+  const [filtersOpenM, setFiltersOpenM] = useState(false)
 
   const columns: ColumnDef<EnrichedCot>[] = useMemo(
     () => [
@@ -1169,7 +1182,7 @@ export function CotizacionesList({
   const dTicket = pct(ticketCurr, ticketPrev)
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-8 md:p-8 md:pb-8">
       <PageHeader
         title="Cotizaciones"
         subtitle={`${kpis.totalCotizaciones} cotizaciones · ${kpis.convertidas} convertidas · ${kpis.activas} activas · ${kpis.perdidas} perdidas`}
@@ -1215,7 +1228,7 @@ export function CotizacionesList({
         actions={
           <Link
             href="/cotizaciones/nueva"
-            className="inline-flex items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#115E59]"
+            className="hidden items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#115E59] md:inline-flex"
           >
             <Plus className="size-4" />
             Nueva cotización
@@ -1230,7 +1243,7 @@ export function CotizacionesList({
       )}
 
       {/* KPIs secundarios — pipeline, oportunidades, perdidas */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-4 max-md:order-3 lg:grid-cols-4">
         <Kpi
           label="Pipeline potencial"
           value={formatMXN(kpis.pipelinePotencial)}
@@ -1259,7 +1272,7 @@ export function CotizacionesList({
       </section>
 
       {/* Charts: conversiones por mes + valor convertido vs pipeline */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 max-md:order-3 lg:grid-cols-2">
         <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
           <header className="mb-3">
             <h3 className="text-sm font-semibold text-gray-900">
@@ -1365,9 +1378,14 @@ export function CotizacionesList({
       </section>
 
       {/* Filtros */}
-      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] px-5 py-3">
-          <div className="flex items-center gap-2">
+      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm max-md:order-1">
+        <div className="flex items-center justify-between px-4 py-1 md:border-b md:border-[rgba(15,23,42,0.04)] md:px-5 md:py-3">
+          <button
+            type="button"
+            onClick={() => setFiltersOpenM((o) => !o)}
+            aria-expanded={filtersOpenM}
+            className="flex min-h-11 items-center gap-2 text-left md:pointer-events-none md:min-h-0"
+          >
             <span className="inline-flex size-6 items-center justify-center rounded-md bg-teal-50 text-teal-700">
               <Sparkles className="size-3.5" />
             </span>
@@ -1377,9 +1395,13 @@ export function CotizacionesList({
                 {activeFilters} activos
               </span>
             )}
-          </div>
+            <ChevronDown
+              className={`size-4 text-gray-400 transition-transform md:hidden ${filtersOpenM ? "rotate-180" : ""}`}
+              aria-hidden
+            />
+          </button>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] tabular-nums text-gray-500">
+            <span className="hidden text-[11px] tabular-nums text-gray-500 sm:inline">
               Mostrando{" "}
               <strong className="text-gray-900">{filtered.length}</strong> de{" "}
               {cotizaciones.length}
@@ -1387,7 +1409,7 @@ export function CotizacionesList({
             <button
               type="button"
               onClick={() => setShowAdvancedFilters((s) => !s)}
-              className="text-[11px] font-medium text-teal-700 hover:text-teal-900"
+              className={`min-h-11 text-xs font-medium text-teal-700 hover:text-teal-900 md:min-h-0 md:text-[11px] ${filtersOpenM ? "" : "max-md:hidden"}`}
             >
               {showAdvancedFilters ? "Ocultar avanzados" : "Avanzados"}
             </button>
@@ -1404,23 +1426,24 @@ export function CotizacionesList({
                   setMontoMin("")
                   setMontoMax("")
                 }}
-                className="text-[11px] font-medium text-[#DC2626] hover:text-rose-800"
+                className="min-h-11 text-xs font-medium text-[#DC2626] hover:text-rose-800 md:min-h-0 md:text-[11px]"
               >
                 Limpiar
               </button>
             )}
           </div>
         </div>
-        <div className="space-y-3 px-5 py-4">
+        <div className="space-y-3 px-4 pb-4 pt-1 md:px-5 md:py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="relative sm:col-span-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
               <input
-                type="text"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar número, cliente, RFC, ciudad, producto…"
-                className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                type="search"
+                enterKeyHint="search"
+                className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs md:h-9 text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
               />
             </div>
             <select
@@ -1428,7 +1451,7 @@ export function CotizacionesList({
               onChange={(e) =>
                 setEstatusFiltro(e.target.value as "todos" | Estatus)
               }
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className={`h-11 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-9 ${filtersOpenM ? "" : "max-md:hidden"}`}
             >
               <option value="todos">Todos los estatus</option>
               {ESTATUS_OPTIONS.map((o) => (
@@ -1440,7 +1463,7 @@ export function CotizacionesList({
             <select
               value={clienteFiltro}
               onChange={(e) => setClienteFiltro(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+              className={`h-11 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-9 ${filtersOpenM ? "" : "max-md:hidden"}`}
             >
               <option value="todos">Todos los clientes</option>
               {clientes.map((c) => (
@@ -1452,7 +1475,7 @@ export function CotizacionesList({
           </div>
 
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className={`${filtersOpenM ? "grid" : "max-md:hidden"} md:grid grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-5`}>
               <div className="lg:col-span-2">
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                   Producto contiene
@@ -1462,7 +1485,7 @@ export function CotizacionesList({
                   value={productoQuery}
                   onChange={(e) => setProductoQuery(e.target.value)}
                   placeholder="ej. Activador, CN-FUC…"
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs md:h-8 text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1473,7 +1496,7 @@ export function CotizacionesList({
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs md:h-8 text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1484,7 +1507,7 @@ export function CotizacionesList({
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs md:h-8 text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                 />
               </div>
               <div>
@@ -1497,14 +1520,14 @@ export function CotizacionesList({
                     placeholder="min"
                     value={montoMin}
                     onChange={(e) => setMontoMin(e.target.value)}
-                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                    className="h-11 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs md:h-8 tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                   />
                   <input
                     type="number" inputMode="decimal"
                     placeholder="max"
                     value={montoMax}
                     onChange={(e) => setMontoMax(e.target.value)}
-                    className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                    className="h-11 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs md:h-8 tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                   />
                 </div>
               </div>
@@ -1514,8 +1537,8 @@ export function CotizacionesList({
       </section>
 
       {/* Tabla */}
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <header className="flex items-center justify-between border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm max-md:order-2">
+        <header className="flex items-center justify-between gap-2 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 md:px-5">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-teal-600" />
             <h2 className="text-sm font-semibold text-gray-900">
@@ -1525,7 +1548,22 @@ export function CotizacionesList({
               {filteredCount}
             </span>
           </div>
-          <div className="relative">
+          <select
+            aria-label="Ordenar cotizaciones"
+            value={`${sorting[0]?.id ?? "fecha"}:${sorting[0]?.desc ? "desc" : "asc"}`}
+            onChange={(e) => {
+              const [id, dir] = e.target.value.split(":")
+              setSorting([{ id, desc: dir === "desc" }])
+            }}
+            className="h-11 shrink-0 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none md:hidden"
+          >
+            <option value="fecha:desc">Más recientes</option>
+            <option value="fecha:asc">Más antiguas</option>
+            <option value="total:desc">Mayor monto</option>
+            <option value="total:asc">Menor monto</option>
+            <option value="cliente:asc">Cliente A–Z</option>
+          </select>
+          <div className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setShowColumnMenu((s) => !s)}
@@ -1570,7 +1608,24 @@ export function CotizacionesList({
           </div>
         </header>
 
-        <div className="relative max-w-full overflow-auto">
+        {/* Tarjetas (móvil) — misma data/filtros/orden/paginación que la tabla */}
+        <ListCardGroup
+          empty={
+            table.getRowModel().rows.length === 0
+              ? "Sin cotizaciones con esos filtros."
+              : undefined
+          }
+        >
+          {table.getRowModel().rows.map((row) => (
+            <CotCard
+              key={row.id}
+              cot={row.original}
+              onOpen={() => router.push(`/cotizaciones/${row.original.id}`)}
+            />
+          ))}
+        </ListCardGroup>
+
+        <div className="relative hidden max-w-full overflow-auto md:block">
           <table
             className="w-full text-sm"
             style={{ width: table.getTotalSize(), minWidth: "100%" }}
@@ -1639,7 +1694,7 @@ export function CotizacionesList({
           </table>
         </div>
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3 text-xs">
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 text-xs md:px-5">
           <div className="flex items-center gap-2 text-gray-600">
             <span>
               {pageIdx * pageSize + 1}–
@@ -1651,7 +1706,7 @@ export function CotizacionesList({
             <select
               value={pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none"
+              className="hidden h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none sm:block"
             >
               {[10, 25, 50, 100].map((n) => (
                 <option key={n} value={n}>
@@ -1665,7 +1720,7 @@ export function CotizacionesList({
               type="button"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
             >
               <ChevronLeft className="size-3" />
               Anterior
@@ -1681,7 +1736,7 @@ export function CotizacionesList({
               type="button"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
             >
               Siguiente
               <ChevronRight className="size-3" />
@@ -1689,7 +1744,79 @@ export function CotizacionesList({
           </div>
         </footer>
       </section>
+
+      {/* FAB móvil: nueva cotización siempre al alcance del pulgar */}
+      <Link
+        href="/cotizaciones/nueva"
+        aria-label="Nueva cotización"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
+      >
+        <Plus className="size-5" strokeWidth={2.25} />
+        Nueva cotización
+      </Link>
     </div>
+  )
+}
+
+/**
+ * Tarjeta de cotización para móvil. Tocar abre el detalle; el estatus se cambia
+ * con el selector nativo y las acciones (editar / ⋯) quedan visibles.
+ */
+function CotCard({ cot, onOpen }: { cot: EnrichedCot; onOpen: () => void }) {
+  const c = cot.clientes
+  const cliente = c?.nombre_negocio ?? c?.nombre ?? "Sin cliente"
+  const abierta = !cot.esConvertida && (cot.estatus === "borrador" || cot.estatus === "enviada")
+  return (
+    <ListCard
+      onOpen={onOpen}
+      ariaLabel={`Cotización ${cot.numero} de ${cliente}, ${formatMXN(Number(cot.total ?? 0))}`}
+      title={cliente}
+      badge={
+        c?.is_internal ? (
+          <span className="shrink-0 rounded-full bg-gray-200 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-gray-700">
+            🏠 Interno
+          </span>
+        ) : undefined
+      }
+      amount={formatMXN(Number(cot.total ?? 0))}
+      meta={
+        <>
+          <span className="whitespace-nowrap tabular-nums">
+            {fechaFmt.format(new Date(cot.fecha))}
+          </span>
+          <span aria-hidden>·</span>
+          <span className="truncate font-mono text-[11px] text-[#0F766E]">
+            {cot.numero}
+          </span>
+        </>
+      }
+      footer={
+        <>
+          {cot.esConvertida ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200/60">
+              <CheckCircle2 className="size-3" strokeWidth={2.25} />
+              Vendida
+            </span>
+          ) : (
+            <StatusCell cotId={cot.id} estatus={cot.estatus} />
+          )}
+          {abierta && (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                cot.prob.label === "alta"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : cot.prob.label === "media"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              Prob. {cot.prob.label} · {cot.prob.score}
+            </span>
+          )}
+        </>
+      }
+      actions={<ActionsCell cot={cot} compact />}
+    />
   )
 }
 

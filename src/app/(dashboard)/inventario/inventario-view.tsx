@@ -9,6 +9,7 @@ import {
   X,
   Pencil,
   Plus,
+  SlidersHorizontal,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { ProductEditModal } from "./product-edit-modal"
@@ -19,6 +20,7 @@ import { InventoryStats } from "./inventory-stats"
 import { actualizarTipoCambio } from "./actions"
 import { ImageUpload } from "./image-upload"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
+import { ListCard, ListCardGroup } from "@/components/list-card"
 
 export type ProductoSales = {
   ventas: Array<{
@@ -182,6 +184,9 @@ export function InventarioView({
   const [categoriaF, setCategoriaF] = useState("")
   const [proveedorF, setProveedorF] = useState("")
   const [topSellersOnly, setTopSellersOnly] = useState(false)
+  // Móvil: filtros plegables + paginado incremental de tarjetas
+  const [filtersOpenM, setFiltersOpenM] = useState(false)
+  const [mobileLimit, setMobileLimit] = useState(30)
   const [sortKey, setSortKey] = useState<SortKey>("nombre")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
@@ -441,7 +446,7 @@ export function InventarioView({
   }, [])
 
   return (
-    <div className="space-y-6" style={{ padding: "28px 32px" }}>
+    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-6 md:px-8 md:py-7 md:pb-7">
       <PageHeader
         title="Inventario"
         subtitle={`${productos.length} productos · ${categorias.length} categorías`}
@@ -452,7 +457,7 @@ export function InventarioView({
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c]"
+              className="hidden items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c] md:inline-flex"
             >
               <Plus className="size-4" />
               Nuevo producto
@@ -483,10 +488,7 @@ export function InventarioView({
       )}
 
       {/* Dashboard por tipo: stock por categoría */}
-      <section
-        className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-sm"
-        style={{ marginTop: 32 }}
-      >
+      <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-sm max-md:order-3 md:mt-2 md:p-5">
         <div
           className="flex flex-wrap items-end justify-between gap-2"
           style={{ marginBottom: 16 }}
@@ -586,22 +588,57 @@ export function InventarioView({
       </section>
 
       {/* Search + filters */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm max-md:order-1 md:p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[260px] flex-1">
+          <div className="relative flex min-w-0 flex-1 items-center gap-2 md:min-w-[260px]">
+          <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <input
-              type="text"
+              type="search"
+              enterKeyHint="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por SKU, nombre, categoría…"
-              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setFiltersOpenM((o) => !o)}
+            aria-expanded={filtersOpenM}
+            aria-label="Filtros y orden"
+            className="relative flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 md:hidden"
+          >
+            <SlidersHorizontal className="size-4" />
+            {hasFilters && (
+              <span className="absolute right-2 top-2 size-2 rounded-full bg-[#0F766E]" />
+            )}
+          </button>
+          </div>
+          <div
+            className={`${filtersOpenM ? "flex" : "hidden"} w-full flex-col gap-3 md:contents`}
+          >
+          <select
+            aria-label="Ordenar productos"
+            value={`${sortKey}:${sortDir}`}
+            onChange={(e) => {
+              const [k, d] = e.target.value.split(":")
+              setSortKey(k as SortKey)
+              setSortDir(d as SortDir)
+            }}
+            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:outline-none md:hidden"
+          >
+            <option value="nombre:asc">Nombre A–Z</option>
+            <option value="stock_actual:asc">Menos stock primero</option>
+            <option value="stock_actual:desc">Más stock primero</option>
+            <option value="unidades_vendidas:desc">Más vendidos</option>
+            <option value="precio_publico:desc">Precio mayor</option>
+            <option value="margen_pct:desc">Mayor margen</option>
+          </select>
           <select
             value={estatusF}
             onChange={(e) => setEstatusF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
           >
             {ESTATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -612,7 +649,7 @@ export function InventarioView({
           <select
             value={categoriaF}
             onChange={(e) => setCategoriaF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
           >
             <option value="">Todas las categorías</option>
             {categorias.map((c) => (
@@ -624,7 +661,7 @@ export function InventarioView({
           <select
             value={proveedorF}
             onChange={(e) => setProveedorF(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
             disabled={proveedores.length === 0}
           >
             <option value="">Todos los proveedores</option>
@@ -637,7 +674,7 @@ export function InventarioView({
           <button
             type="button"
             onClick={() => setTopSellersOnly((v) => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors md:h-auto md:py-2.5 ${
               topSellersOnly
                 ? "border-amber-200 bg-amber-50 text-amber-700"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -650,15 +687,16 @@ export function InventarioView({
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs text-gray-500 hover:text-gray-700"
+              className="inline-flex h-11 items-center justify-center gap-1 rounded-xl px-3 text-xs text-gray-500 hover:text-gray-700 md:h-auto md:py-2"
             >
               <X className="size-3" />
               Limpiar
             </button>
           )}
-          <span className="ml-auto text-xs text-gray-500">
+          <span className="text-xs text-gray-500 md:ml-auto">
             {sorted.length} de {productos.length}
           </span>
+          </div>
         </div>
       </section>
 
@@ -690,12 +728,14 @@ export function InventarioView({
       )}
 
       {/* Tipo de cambio note */}
-      <TipoCambioNote tc={tcVigente} />
+      <div className="max-md:order-3">
+        <TipoCambioNote tc={tcVigente} />
+      </div>
 
       {/* Table */}
       <section
         ref={tableRef}
-        className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden scroll-mt-6"
+        className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden scroll-mt-6 max-md:order-2"
       >
         {categoriaF && (
           <div
@@ -726,7 +766,41 @@ export function InventarioView({
             </button>
           </div>
         )}
-        <div className="overflow-x-auto">
+        {/* Tarjetas (móvil) */}
+        <ListCardGroup
+          empty={
+            sorted.length === 0 ? "Sin resultados con esos filtros." : undefined
+          }
+        >
+          {sorted.length > 0 && (
+            <p className="px-1 text-xs text-gray-500">
+              <strong className="text-gray-900">{sorted.length}</strong> productos ·{" "}
+              {totals.stock.toLocaleString("es-MX")} pzas en stock · profit pot.{" "}
+              <strong className="text-emerald-700">
+                {formatMXN(totals.profitTotal)}
+              </strong>
+            </p>
+          )}
+          {sorted.slice(0, mobileLimit).map((p) => (
+            <ProductCard
+              key={p.sku}
+              p={p}
+              onOpen={() => setSelectedSku(p.sku)}
+              onEdit={() => setEditSku(p.sku)}
+            />
+          ))}
+          {sorted.length > mobileLimit && (
+            <button
+              type="button"
+              onClick={() => setMobileLimit((n) => n + 30)}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700"
+            >
+              Mostrar más ({sorted.length - mobileLimit})
+            </button>
+          )}
+        </ListCardGroup>
+
+        <div className="hidden overflow-x-auto md:block">
           <table
             className="border-collapse"
             style={{ minWidth: "1400px", width: "max-content" }}
@@ -831,7 +905,114 @@ export function InventarioView({
           </table>
         </div>
       </section>
+
+      {/* FAB móvil: nuevo producto */}
+      <button
+        type="button"
+        onClick={() => setCreateOpen(true)}
+        aria-label="Nuevo producto"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
+      >
+        <Plus className="size-5" strokeWidth={2.25} />
+        Nuevo producto
+      </button>
     </div>
+  )
+}
+
+/**
+ * Tarjeta de producto para móvil. Tocar abre el detalle (hoja inferior);
+ * el lápiz abre la edición. La foto se sube desde el detalle/edición.
+ */
+function ProductCard({
+  p,
+  onOpen,
+  onEdit,
+}: {
+  p: ProductoEnriquecido
+  onOpen: () => void
+  onEdit: () => void
+}) {
+  const nombre = p.nombre_display ?? p.nombre
+  const agotado = p.stock_actual <= 0
+  const bajo = !agotado && p.stock_actual <= p.stock_minimo
+  const stockChip = agotado
+    ? "bg-red-100 text-red-700"
+    : bajo
+      ? "bg-amber-100 text-amber-700"
+      : "bg-emerald-100 text-emerald-700"
+  const stockLabel = agotado ? "Agotado" : bajo ? "Stock bajo" : "En stock"
+  const iniciales = nombre
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+  return (
+    <ListCard
+      onOpen={onOpen}
+      ariaLabel={`${nombre}, ${p.stock_actual} piezas, ${stockLabel}`}
+      leading={
+        p.imagen_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.imagen_url}
+            alt=""
+            loading="lazy"
+            className="size-14 shrink-0 rounded-xl border border-gray-100 object-cover"
+          />
+        ) : (
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 text-sm font-bold text-gray-400">
+            {iniciales}
+          </div>
+        )
+      }
+      title={nombre}
+      amount={p.precio_publico != null ? formatMXN2(p.precio_publico) : "—"}
+      meta={
+        <>
+          <span
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${categoriaClass(p.categoria)}`}
+          >
+            {p.categoria.length > 12 ? p.categoria.slice(0, 11) + "…" : p.categoria}
+          </span>
+          {p.peso && <span className="shrink-0">{p.peso}</span>}
+          <code className="truncate text-[10px] text-gray-400">{p.sku}</code>
+        </>
+      }
+      footer={
+        <>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${stockChip}`}
+          >
+            {p.stock_actual} pzas{agotado || bajo ? " · " + (agotado ? "Agotado" : "Bajo") : ""}
+          </span>
+          {p.margen_pct != null && (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums ${
+                p.margen_pct >= 60
+                  ? "bg-emerald-50 text-emerald-700"
+                  : p.margen_pct >= 35
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-rose-50 text-rose-700"
+              }`}
+            >
+              {p.margen_pct.toFixed(0)}%
+            </span>
+          )}
+        </>
+      }
+      actions={
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label="Editar producto"
+          className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+        >
+          <Pencil className="size-4" />
+        </button>
+      }
+    />
   )
 }
 

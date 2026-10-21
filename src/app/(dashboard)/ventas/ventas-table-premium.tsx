@@ -60,6 +60,7 @@ import {
 } from "./actions"
 import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
 import { formatMXN2 } from "@/lib/utils"
+import { ListCard, ListCardGroup } from "@/components/list-card"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
@@ -518,7 +519,7 @@ function VentaActionsCell({
           {menuOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
+              className={`absolute right-0 z-50 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)] ${compact ? "bottom-full mb-1" : "top-full mt-1"}`}
               onClick={(e) => e.stopPropagation()}
             >
               {venta.estatus !== "cancelada" && (
@@ -1273,23 +1274,21 @@ export function VentasTablePremium({
       </header>
 
       {/* Tarjetas (móvil) — misma data/filtros/orden/paginación que la tabla */}
-      <div className="space-y-2.5 bg-[#F9FAFB] p-3 md:hidden">
-        {table.getRowModel().rows.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-500">
-            Sin resultados. Prueba quitando filtros.
-          </p>
-        ) : (
-          table
-            .getRowModel()
-            .rows.map((row) => (
-              <VentaCard
-                key={row.id}
-                venta={row.original}
-                onOpen={() => onRowClick?.(row.original)}
-              />
-            ))
-        )}
-      </div>
+      <ListCardGroup
+        empty={
+          table.getRowModel().rows.length === 0
+            ? "Sin resultados. Prueba quitando filtros."
+            : undefined
+        }
+      >
+        {table.getRowModel().rows.map((row) => (
+          <VentaCard
+            key={row.id}
+            venta={row.original}
+            onOpen={() => onRowClick?.(row.original)}
+          />
+        ))}
+      </ListCardGroup>
 
       {/* Table (escritorio / tablet) */}
       <div className="relative hidden max-w-full overflow-auto md:block">
@@ -1430,54 +1429,35 @@ function VentaCard({
   const saldo = Number(venta.saldo_pendiente ?? 0)
   const cancelada = venta.estatus === "cancelada"
   return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          onOpen()
-        }
-      }}
-      aria-label={`Venta ${venta.numero} de ${cliente}, ${formatMXN2(venta.total)}`}
-      className="group cursor-pointer rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition active:scale-[0.99] active:bg-[#F9FAFB]"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold leading-tight text-gray-900">
-            {cliente}
-          </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-            <span className="whitespace-nowrap tabular-nums">
-              {fechaFmt.format(new Date(venta.fecha))}
-            </span>
-            <span aria-hidden>·</span>
-            <span className="truncate font-mono text-[11px] text-[#0F766E]">
-              {venta.numero}
-            </span>
-          </p>
-        </div>
-        <p
-          className={`shrink-0 text-base font-bold tabular-nums tracking-tight ${cancelada ? "text-gray-400 line-through" : "text-gray-900"}`}
-        >
-          {formatMXN2(venta.total)}
-        </p>
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <ListCard
+      onOpen={onOpen}
+      ariaLabel={`Venta ${venta.numero} de ${cliente}, ${formatMXN2(venta.total)}`}
+      title={cliente}
+      amount={formatMXN2(venta.total)}
+      amountClassName={cancelada ? "text-gray-400 line-through" : "text-gray-900"}
+      meta={
+        <>
+          <span className="whitespace-nowrap tabular-nums">
+            {fechaFmt.format(new Date(venta.fecha))}
+          </span>
+          <span aria-hidden>·</span>
+          <span className="truncate font-mono text-[11px] text-[#0F766E]">
+            {venta.numero}
+          </span>
+        </>
+      }
+      footer={
+        <>
           <StatusCell ventaId={venta.id} estatus={venta.estatus} />
           {saldo > 0 && !cancelada && venta.estatus !== "pagada_total" && (
             <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2 py-1 text-[11px] font-semibold tabular-nums text-[#B45309]">
               Debe {formatMXN2(saldo)}
             </span>
           )}
-        </div>
-        <div onClick={(e) => e.stopPropagation()}>
-          <VentaActionsCell venta={venta} compact />
-        </div>
-      </div>
-    </article>
+        </>
+      }
+      actions={<VentaActionsCell venta={venta} compact />}
+    />
   )
 }
 

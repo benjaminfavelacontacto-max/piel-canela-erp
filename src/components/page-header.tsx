@@ -193,9 +193,10 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
 
       {/* Middle row — big number + sparkline al lado */}
       <div className="flex items-end justify-between gap-3">
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex min-w-0 items-baseline gap-1.5">
           <p
-            className={`${featured ? "text-[26px] sm:text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+            title={kpi.value}
+            className={`${featured ? "text-[clamp(19px,5.4vw,26px)] sm:text-[34px]" : "text-[clamp(19px,5.4vw,26px)] sm:text-[26px]"} break-words font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
             style={{
               fontFeatureSettings: '"tnum" 1, "ss01" 1',
               color: accent?.valueColor,
