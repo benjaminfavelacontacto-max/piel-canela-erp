@@ -248,7 +248,7 @@ export function InventoryStats({
                       {pill.label.length > 8
                         ? pill.label.slice(0, 8) + "."
                         : pill.label}
-                      <span style={{ opacity: 0.6 }}>{pill.count}</span>
+                      <span style={{ opacity: 0.85 }}>{pill.count}</span>
                     </span>
                   )
                 })}

@@ -35,7 +35,7 @@ export default function DashboardLayout({
   }, [mobileOpen])
 
   return (
-    <div className="glass-app-bg flex h-dvh overflow-hidden">
+    <div className="glass-app-bg flex h-dvh overflow-hidden print:block print:h-auto print:overflow-visible">
       {/* ─── Overlay backdrop móvil ─── */}
       {mobileOpen && (
         <div
@@ -47,7 +47,7 @@ export default function DashboardLayout({
 
       {/* ─── Sidebar (drawer en móvil, estático en desktop) ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] shrink-0 flex-col transition-transform duration-300 md:relative md:z-auto md:w-[224px] md:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-50 flex w-[260px] shrink-0 flex-col transition-transform duration-300 md:relative md:z-auto md:w-[224px] md:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
         style={{
@@ -113,7 +113,7 @@ export default function DashboardLayout({
           >
             <Search className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
             <span className="flex-1 text-left">Buscar…</span>
-            <kbd className="hidden rounded-md border border-gray-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-400 md:inline">
+            <kbd className="hidden rounded-md border border-gray-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-500 md:inline">
               ⌘K
             </kbd>
           </button>
@@ -152,7 +152,9 @@ export default function DashboardLayout({
       </aside>
 
       <main
-        className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+        // tabIndex=0: la región con scroll debe poder enfocarse con teclado (WCAG 2.1.1)
+        tabIndex={0}
+        className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0F766E]/40 print:overflow-visible"
         style={{ background: "transparent" }}
       >
         {/* Móvil: respeta notch arriba y deja espacio para la barra inferior */}

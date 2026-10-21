@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
 import { formatMXN2 } from "@/lib/utils"
+import { RegistrarPagoButton } from "./registrar-pago-button"
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -192,7 +193,18 @@ export default async function VentaDetailPage({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {estatus !== "cancelada" && Number(venta.saldo_pendiente ?? 0) > 0 && (
+            <RegistrarPagoButton
+              venta={{
+                id,
+                numero: venta.numero,
+                cliente: cliente?.nombre_negocio ?? cliente?.nombre ?? "Sin cliente",
+                total: Number(venta.total ?? 0),
+                saldo: Number(venta.saldo_pendiente ?? 0),
+              }}
+            />
+          )}
           <Link
             href={`/ventas/${id}/editar`}
             className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"

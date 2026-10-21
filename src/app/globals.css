@@ -607,3 +607,61 @@ label {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ─── Movimiento con criterio ───
+ * Solo entradas cortas (≤ 280 ms) que ayudan a leer "qué apareció": fundido de
+ * pantalla y subida escalonada de las primeras tarjetas. Nada continuo ni en bucle.
+ * Con `prefers-reduced-motion` la regla global de arriba las reduce a 0.01 ms. */
+@keyframes pc-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.pc-page-enter {
+  animation: pc-fade 180ms ease-out both;
+}
+/* `backwards` (no `both`): al terminar se quita el transform y no deja contexto de
+   posicionamiento para elementos fixed dentro de la tarjeta (menús ⋯). */
+.pc-stagger > * {
+  animation: pc-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.pc-stagger > :nth-child(2) { animation-delay: 40ms; }
+.pc-stagger > :nth-child(3) { animation-delay: 80ms; }
+.pc-stagger > :nth-child(4) { animation-delay: 120ms; }
+.pc-stagger > :nth-child(5) { animation-delay: 160ms; }
+.pc-stagger > :nth-child(6) { animation-delay: 200ms; }
+.pc-stagger > :nth-child(n + 7) { animation-delay: 240ms; }
+
+/* Respuesta táctil al presionar botones del sistema */
+.pc-btn-primary:active,
+.pc-btn-secondary:active,
+.pc-btn-glass:active {
+  transform: scale(0.98);
+  transition-duration: 80ms;
+}
+
+/* ─── Impresión (reporte mensual y cualquier pantalla → PDF) ─── */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .toaster,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+}

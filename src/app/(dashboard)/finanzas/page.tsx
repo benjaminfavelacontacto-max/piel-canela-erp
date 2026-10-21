@@ -1,4 +1,5 @@
-import { TrendingUp, Wallet, ChartLine, ScrollText } from "lucide-react"
+import Link from "next/link"
+import { TrendingUp, Wallet, ChartLine, ScrollText, FileBarChart } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { PageHeader } from "@/components/page-header"
@@ -265,11 +266,17 @@ export default async function FinanzasPage() {
       : 0
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="Finanzas"
         subtitle="Control de inversiones y capital · ROI por socio"
         icon={<TrendingUp className="size-5" />}
+        actions={
+          <Link href="/finanzas/reporte" className="pc-btn-secondary">
+            <FileBarChart className="size-4" aria-hidden />
+            Reporte mensual
+          </Link>
+        }
         kpis={(() => {
           const len = monthly12.length
           const cur = monthly12[len - 1]

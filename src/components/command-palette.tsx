@@ -32,6 +32,7 @@ const ACCIONES: Item[] = [
   { key: "a-cot", titulo: "Nueva cotización", href: "/cotizaciones/nueva", icon: Plus, grupo: "Acciones rápidas" },
   { key: "a-cli", titulo: "Nuevo cliente", href: "/clientes/nuevo", icon: Plus, grupo: "Acciones rápidas" },
   { key: "a-ped", titulo: "Nuevo pedido de compra", href: "/pedidos/nuevo", icon: Plus, grupo: "Acciones rápidas" },
+  { key: "a-rep", titulo: "Reporte mensual (imprimir / PDF)", href: "/finanzas/reporte", icon: FileText, grupo: "Acciones rápidas" },
 ]
 const SECCIONES: Item[] = [
   { key: "s-dash", titulo: "Dashboard", href: "/", icon: LayoutDashboard, grupo: "Ir a" },
@@ -217,7 +218,7 @@ export function CommandPalette() {
             }}
             onKeyDown={onInputKey}
             placeholder="Buscar cliente, producto, folio…"
-            className="h-14 min-w-0 flex-1 bg-transparent text-base text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-14 min-w-0 flex-1 bg-transparent text-base text-gray-900 placeholder:text-gray-500 focus:outline-none"
           />
           {buscando && <Loader2 className="size-4 animate-spin text-gray-400" aria-label="Buscando" />}
           <button
@@ -242,7 +243,7 @@ export function CommandPalette() {
             return (
               <li key={it.key} role="presentation">
                 {mostrarGrupo && (
-                  <p className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  <p className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     {it.grupo}
                   </p>
                 )}
@@ -276,7 +277,7 @@ export function CommandPalette() {
           })}
         </ul>
 
-        <p className="hidden border-t border-gray-100 px-4 py-2 text-[11px] text-gray-400 md:block">
+        <p className="hidden border-t border-gray-100 px-4 py-2 text-[11px] text-gray-500 md:block">
           ↑↓ para moverte · Enter para abrir · Esc para cerrar · <kbd className="font-sans">/</kbd> o <kbd className="font-sans">⌘K</kbd> para buscar desde cualquier pantalla
         </p>
       </div>

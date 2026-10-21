@@ -19,6 +19,15 @@ import { formatMXN, formatMXNshort } from "@/lib/utils"
 import { PageHeader } from "@/components/page-header"
 import { MonthlyChart } from "./ventas/estadisticas/monthly-chart"
 import { PortalBadge, type PortalCotizacion } from "./portal-badge"
+import { HoyPanel } from "./hoy-panel"
+import {
+  calcularCobrar,
+  calcularContactar,
+  calcularSeguimiento,
+  type ClienteMini,
+  type CotizacionEnviada,
+  type VentaConSaldo,
+} from "@/lib/hoy"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
@@ -128,6 +137,9 @@ export default async function DashboardPage() {
     todasCotsRecRes,
     todasVentasRecRes,
     cotizacionesPortalRes,
+    saldoRes,
+    cotsEnviadasRes,
+    clientesInfoRes,
   ] = await Promise.all([
     supabase
       .from("ventas")
@@ -207,6 +219,19 @@ export default async function DashboardPage() {
       .ilike("numero", "%-P-Portal")
       .order("created_at", { ascending: false })
       .limit(20),
+    // Panel "Hoy": ventas con saldo, cotizaciones enviadas y datos de contacto
+    admin
+      .from("ventas")
+      .select("id, numero, fecha, saldo_pendiente, estatus, cliente_id, clientes(nombre, nombre_negocio, telefono)")
+      .gt("saldo_pendiente", 0)
+      .neq("estatus", "cancelada"),
+    admin
+      .from("cotizaciones")
+      .select("id, numero, fecha, valida_hasta, total, cliente_id, clientes(nombre, nombre_negocio, telefono)")
+      .eq("estatus", "enviada")
+      .order("fecha", { ascending: true })
+      .limit(60),
+    admin.from("clientes").select("id, nombre, nombre_negocio, telefono"),
   ])
 
   // Excluir ventas/cotizaciones de clientes internos (Piel Canela) de KPIs.
@@ -294,6 +319,33 @@ export default async function DashboardPage() {
   )
     .filter((v) => !isInternalCli(v.cliente_id))
     .slice(0, 8)
+
+  // ─── Panel "Hoy" ──────────────────────────────────────────────────
+  const hoyCobrar = calcularCobrar(
+    (saldoRes.data ?? []) as unknown as VentaConSaldo[],
+    internalIds,
+    today,
+  )
+  const hoySeguimiento = calcularSeguimiento(
+    (cotsEnviadasRes.data ?? []) as unknown as CotizacionEnviada[],
+    internalIds,
+    today,
+  )
+  const clientesInfo = new Map<string, ClienteMini>(
+    ((clientesInfoRes.data ?? []) as unknown as (ClienteMini & { id: string })[]).map(
+      (c) => [c.id, c],
+    ),
+  )
+  const hoyContactar = calcularContactar(
+    ventasAllRaw.map((v) => ({
+      fecha: v.fecha,
+      estatus: v.estatus,
+      cliente_id: v.cliente_id,
+    })),
+    clientesInfo,
+    internalIds,
+    today,
+  )
 
   // ─── KPI calcs ────────────────────────────────────────────────────
   const totalVentasMes = ventasMes.reduce((s, v) => s + Number(v.total ?? 0), 0)
@@ -533,6 +585,13 @@ export default async function DashboardPage() {
             </Link>
           </>
         }
+      />
+
+      {/* ─── Hoy: lo que conviene atender primero ─── */}
+      <HoyPanel
+        cobrar={hoyCobrar}
+        seguimiento={hoySeguimiento}
+        contactar={hoyContactar}
       />
 
       {/* ─── KPIs secundarios — strips horizontales compactos ─── */}

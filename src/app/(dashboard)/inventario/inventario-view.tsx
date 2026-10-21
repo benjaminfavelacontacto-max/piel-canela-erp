@@ -657,6 +657,7 @@ export function InventarioView({
             <option value="margen_pct:desc">Mayor margen</option>
           </select>
           <select
+            aria-label="Filtrar por estatus de stock"
             value={estatusF}
             onChange={(e) => setEstatusF(e.target.value)}
             className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
@@ -668,6 +669,7 @@ export function InventarioView({
             ))}
           </select>
           <select
+            aria-label="Filtrar por categoría"
             value={categoriaF}
             onChange={(e) => setCategoriaF(e.target.value)}
             className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
@@ -680,6 +682,7 @@ export function InventarioView({
             ))}
           </select>
           <select
+            aria-label="Filtrar por proveedor"
             value={proveedorF}
             onChange={(e) => setProveedorF(e.target.value)}
             className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"

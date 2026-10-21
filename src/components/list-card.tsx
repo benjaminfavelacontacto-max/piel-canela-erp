@@ -34,26 +34,25 @@ export function ListCard({
 }) {
   return (
     <article
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget) return
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          onOpen()
-        }
-      }}
-      aria-label={ariaLabel}
-      className="flex cursor-pointer gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors active:bg-[#F9FAFB]"
+      className="relative flex gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus-within:ring-2 focus-within:ring-[#0F766E]/30 active:bg-[#F9FAFB]"
     >
       {leading}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="line-clamp-2 break-words text-[15px] font-semibold leading-tight text-gray-900">
-              {title}
-            </p>
+            {/* Botón "estirado": su ::after cubre toda la tarjeta, así la tarjeta entera
+                abre el detalle sin anidar controles dentro de un role=button (a11y).
+                Los controles internos (selects, menús) van `relative` y quedan encima. */}
+            <button
+              type="button"
+              onClick={onOpen}
+              aria-label={ariaLabel}
+              className="min-w-0 cursor-pointer text-left focus-visible:outline-none after:absolute after:inset-0 after:rounded-2xl after:content-['']"
+            >
+              <span className="line-clamp-2 break-words text-[15px] font-semibold leading-tight text-gray-900">
+                {title}
+              </span>
+            </button>
             {badge}
           </div>
           {amount != null && (
@@ -72,11 +71,7 @@ export function ListCard({
         {(footer || actions) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {footer}
-            {actions && (
-              <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
-                {actions}
-              </div>
-            )}
+            {actions && <div className="relative ml-auto">{actions}</div>}
           </div>
         )}
       </div>
@@ -94,7 +89,7 @@ export function ListCardGroup({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-2.5 bg-[#F9FAFB] p-3 md:hidden">
+    <div className="pc-stagger space-y-2.5 bg-[#F9FAFB] p-3 md:hidden">
       {children}
       {empty && (
         <p className="py-10 text-center text-sm text-gray-500">{empty}</p>

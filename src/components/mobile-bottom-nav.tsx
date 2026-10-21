@@ -29,7 +29,7 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t md:hidden print:hidden"
       style={{
         // Fondo casi sólido (sin backdrop-filter): el blur sobre una barra fija
         // vuelve a pintar en cada frame del scroll y se nota en Android de gama media.

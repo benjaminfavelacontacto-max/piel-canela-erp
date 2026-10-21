@@ -104,7 +104,7 @@ export function PageHeader({
 
       {/* KPIs (cards blancas, denso premium) */}
       {kpis && kpis.length > 0 && (
-        <div className={`mt-4 grid gap-3 ${kpisGrid}`}>
+        <div className={`pc-stagger mt-4 grid gap-3 ${kpisGrid}`}>
           {kpis.map((kpi, i) => (
             <KpiCard key={`${kpi.label}-${i}`} kpi={kpi} />
           ))}
