@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
+import { fetchCotizacionItems } from "@/lib/cotizacion-items-query"
+import type { TipoDescuento } from "@/lib/descuentos"
 import type {
   Cliente,
   CotizacionItem,
   CotizacionData,
   Estatus,
 } from "@/lib/cotizacion-types"
-import { CotizacionDetail } from "./cotizacion-detail"
+import { CotizacionDetail, type Faltante } from "./cotizacion-detail"
 
 export default async function CotizacionDetailPage({
   params,
@@ -21,7 +23,7 @@ export default async function CotizacionDetailPage({
     .from("cotizaciones")
     .select(
       `id, numero, fecha, valida_hasta, moneda, subtotal, iva, descuento, total,
-       costo_productos, estatus, notas,
+       costo_productos, costo_envio, utilidad_neta, estatus, notas,
        clientes(id, nombre, nombre_negocio, telefono, email, direccion, colonia, codigo_postal, ciudad, estado)`,
     )
     .eq("id", id)
@@ -38,15 +40,15 @@ export default async function CotizacionDetailPage({
   }
   if (!cot) notFound()
 
-  const { data: itemRows } = await supabase
-    .from("cotizacion_items")
-    .select(
-      `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-       productos(id, sku, nombre, nombre_display, imagen_url, peso,
-         categorias(nombre))`,
-    )
-    .eq("cotizacion_id", id)
-    .order("sort_order", { ascending: true })
+  // Las columnas de regalo y de descuento por producto llegan con
+  // scripts/add-regalos-cotizaciones.sql y add-descuento-por-producto.sql. Si
+  // alguna falta, el helper degrada el select en vez de romper la página.
+  const { rows: itemRows } = await fetchCotizacionItems(
+    supabase,
+    id,
+    `productos(id, sku, nombre, nombre_display, imagen_url, peso,
+       categorias(nombre))`,
+  )
 
   const imageMap = await buildImageMap()
 
@@ -55,6 +57,10 @@ export default async function CotizacionDetailPage({
     precio_unitario: number
     costo_unitario: number
     subtotal: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
+    descuento_tipo?: TipoDescuento | null
+    descuento_valor?: number | null
     productos: {
       id: string
       sku: string | null
@@ -79,8 +85,50 @@ export default async function CotizacionDetailPage({
       precio_unitario: r.precio_unitario,
       costo_unitario: r.costo_unitario,
       subtotal: r.subtotal,
+      es_regalo: r.es_regalo === true,
+      precio_lista: r.precio_lista ?? null,
+      descuento_tipo: r.descuento_tipo ?? null,
+      descuento_valor: Number(r.descuento_valor ?? 0),
     }
   })
+
+  // Faltantes de stock. `crear_venta_desde_cotizacion` descuenta inventario y
+  // aborta la transacción entera si alguna partida no alcanza, así que se
+  // comprueba ANTES: si no, el usuario descubre el problema hasta que falla la
+  // venta, sin saber qué producto lo causó.
+  const productoIds = [...new Set(items.map((i) => i.producto_id).filter(Boolean))]
+  const stockPorProducto = new Map<string, number>()
+  if (productoIds.length > 0) {
+    const { data: invRows } = await supabase
+      .from("inventario")
+      .select("producto_id, stock_actual")
+      .in("producto_id", productoIds)
+    for (const row of invRows ?? []) {
+      stockPorProducto.set(
+        row.producto_id as string,
+        Number(row.stock_actual ?? 0),
+      )
+    }
+  }
+  // Sin fila de inventario = sin existencias registradas → cuenta como 0.
+  // Se consolidan las partidas del mismo producto (con regalos, un SKU puede
+  // ir en 2 líneas: la vendida y la regalada) — igual que `faltantesDeStock`
+  // en el servidor. Sin sumarlas, el aviso diría "alcanza" y la venta fallaría.
+  const pedidoPorProducto = new Map<string, Faltante>()
+  for (const i of items) {
+    if (!i.producto_id) continue
+    const cur = pedidoPorProducto.get(i.producto_id) ?? {
+      nombre: i.nombre,
+      sku: i.sku,
+      cantidad: 0,
+      stock: stockPorProducto.get(i.producto_id) ?? 0,
+    }
+    cur.cantidad += Number(i.cantidad ?? 0)
+    pedidoPorProducto.set(i.producto_id, cur)
+  }
+  const faltantes: Faltante[] = [...pedidoPorProducto.values()].filter(
+    (f) => f.stock < f.cantidad,
+  )
 
   // ¿Esta cotización ya generó una venta? Señal fuerte de "vendida" — más
   // confiable que el estatus, que puede quedar en "borrador" aunque ya se vendió.
@@ -117,7 +165,14 @@ export default async function CotizacionDetailPage({
       numero={cot.numero}
       estatus={cot.estatus as Estatus}
       ventaAsociada={ventaAsociada}
+      faltantes={faltantes}
       preview={preview}
+      finanzas={{
+        costoProductos: Number(cot.costo_productos ?? 0),
+        costoEnvio: Number(cot.costo_envio ?? 0),
+        utilidadNetaBD:
+          cot.utilidad_neta == null ? null : Number(cot.utilidad_neta),
+      }}
     />
   )
 }

@@ -18,6 +18,7 @@ import { ProductCreateModal, type Opcion } from "./product-create-modal"
 import { PageHeader } from "@/components/page-header"
 import { ExportInventarioButton } from "./export-inventario-button"
 import { InventoryStats } from "./inventory-stats"
+import { SugerenciaPedido } from "./sugerencia-pedido"
 import { actualizarTipoCambio, cargarVentasProducto } from "./actions"
 import { ImageUpload } from "./image-upload"
 import { formatMXN, formatMXN2 } from "@/lib/utils"
@@ -86,7 +87,7 @@ function categoriaClass(c: string): string {
   return categoriaBadgeColor[c.toUpperCase()] ?? "bg-gray-100 text-gray-600"
 }
 
-const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
+export const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
   ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
   POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
   CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
@@ -157,6 +158,7 @@ export function InventarioView({
   categoriaOptions,
   proveedorOptions,
   error,
+  salesTop,
   initialSku = null,
 }: {
   productos: ProductoEnriquecido[]
@@ -165,6 +167,8 @@ export function InventarioView({
   categoriaOptions: Opcion[]
   proveedorOptions: Opcion[]
   error: string | null
+  /** Serie mensual SOLO de los 20 más vendidos (alimenta la sugerencia de pedido). El historial completo por SKU se pide al abrir el detalle. */
+  salesTop: Record<string, ProductoSales>
   initialSku?: string | null
 }) {
   // Deep-link: ?producto=<sku> abre el drawer de ese producto al entrar
@@ -507,6 +511,8 @@ export function InventarioView({
           {error}
         </div>
       )}
+
+      <SugerenciaPedido productos={productos} sales={salesTop} />
 
       {/* Dashboard por tipo: stock por categoría */}
       <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-sm max-md:order-3 md:mt-2 md:p-5">

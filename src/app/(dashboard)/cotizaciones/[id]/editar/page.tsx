@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import type { Cliente, CotizacionItem, Producto } from "@/lib/cotizacion-types"
+import { fetchCotizacionItems } from "@/lib/cotizacion-items-query"
+import type { TipoDescuento } from "@/lib/descuentos"
 import { CotizacionForm } from "../../nueva/cotizacion-form"
 import type { CotizacionFormInitial } from "../../nueva/cotizacion-form"
 
@@ -13,13 +15,23 @@ export default async function EditarCotizacionPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: cot, error: cotErr } = await supabase
+  let { data: cot, error: cotErr } = await supabase
     .from("cotizaciones")
     .select(
-      "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, costo_envio, notas",
+      "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, descuento_tipo, descuento_valor, costo_envio, notas",
     )
     .eq("id", id)
     .maybeSingle()
+  // BD sin la migración de descuento_tipo: reintenta sin esas columnas.
+  if (cotErr && /descuento_(tipo|valor)/.test(cotErr.message ?? "")) {
+    ;({ data: cot, error: cotErr } = await supabase
+      .from("cotizaciones")
+      .select(
+        "id, numero, cliente_id, fecha, valida_hasta, iva, descuento, costo_envio, notas",
+      )
+      .eq("id", id)
+      .maybeSingle())
+  }
 
   if (cotErr) {
     return (
@@ -44,15 +56,16 @@ export default async function EditarCotizacionPage({
       .select("id")
       .eq("nombre", "Pública MXN")
       .maybeSingle(),
-    supabase
-      .from("cotizacion_items")
-      .select(
-        `cantidad, precio_unitario, costo_unitario, subtotal, sort_order,
-         productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
-      )
-      .eq("cotizacion_id", id)
-      .order("sort_order", { ascending: true }),
+    // Degrada solo si falta alguna migración de partidas (regalos / descuento
+    // por producto) — ver src/lib/cotizacion-items-query.ts.
+    fetchCotizacionItems(
+      supabase,
+      id,
+      `productos(id, sku, nombre, nombre_display, imagen_url, peso)`,
+    ),
   ])
+
+  const itemsData = itemsRes.rows
 
   const clientes = (clientesRes.data ?? []) as Cliente[]
   const listaId = listaRes.data?.id as string | undefined
@@ -113,6 +126,10 @@ export default async function EditarCotizacionPage({
     precio_unitario: number
     costo_unitario: number
     subtotal: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
+    descuento_tipo?: TipoDescuento | null
+    descuento_valor?: number | null
     productos: {
       id: string
       sku: string | null
@@ -122,7 +139,7 @@ export default async function EditarCotizacionPage({
       peso: string | null
     } | null
   }
-  const items: CotizacionItem[] = ((itemsRes.data ?? []) as unknown as ItemRow[]).map(
+  const items: CotizacionItem[] = ((itemsData ?? []) as unknown as ItemRow[]).map(
     (r) => {
       const display =
         r.productos?.nombre_display ?? r.productos?.nombre ?? "—"
@@ -140,6 +157,10 @@ export default async function EditarCotizacionPage({
         precio_unitario: Number(r.precio_unitario),
         costo_unitario: Number(r.costo_unitario ?? 0),
         subtotal: Number(r.subtotal),
+        es_regalo: r.es_regalo === true,
+        precio_lista: r.precio_lista != null ? Number(r.precio_lista) : null,
+        descuento_tipo: r.descuento_tipo ?? null,
+        descuento_valor: Number(r.descuento_valor ?? 0),
       }
     },
   )
@@ -150,8 +171,17 @@ export default async function EditarCotizacionPage({
     fecha: cot.fecha,
     valida_hasta: cot.valida_hasta,
     ivaActivo: Number(cot.iva ?? 0) > 0,
-    descuentoTipo: "monto",
-    descuentoValor: Number(cot.descuento ?? 0),
+    // Cotizaciones previas a la migración no traen tipo/valor: se tratan
+    // como monto fijo igual al descuento guardado (comportamiento anterior).
+    descuentoTipo:
+      ((cot as { descuento_tipo?: string }).descuento_tipo as
+        | "monto"
+        | "pct") ?? "monto",
+    descuentoValor: Number(
+      (cot as { descuento_valor?: number }).descuento_valor ??
+        cot.descuento ??
+        0,
+    ),
     costoEnvio: Number(cot.costo_envio ?? 0),
     notas: cot.notas,
     items,

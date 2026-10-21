@@ -55,6 +55,8 @@ const CotizacionesCharts = dynamic(
   { ssr: false, loading: () => <ChartSkeleton height={300} /> },
 )
 import { formatMXN } from "@/lib/utils"
+import { parseFecha } from "@/lib/fecha"
+
 import {
   calcularProbabilidad,
   classifyEstadoComercial,
@@ -892,7 +894,7 @@ export function CotizacionesList({
         header: (ctx) => <HeaderCell label="Fecha" ctx={ctx} />,
         cell: ({ getValue }) => (
           <span className="text-xs font-medium text-gray-700 tabular-nums">
-            {fechaFmt.format(new Date(getValue() as string))}
+            {fechaFmt.format(parseFecha(getValue() as string))}
           </span>
         ),
         size: 120,
@@ -1173,7 +1175,7 @@ export function CotizacionesList({
         ),
         cell: ({ row }) => (
           <span className="text-[10.5px] text-gray-500 tabular-nums">
-            {fechaFmt.format(new Date(row.original.ultimaActividadISO))}
+            {fechaFmt.format(parseFecha(row.original.ultimaActividadISO))}
           </span>
         ),
         size: 130,
@@ -1300,13 +1302,26 @@ export function CotizacionesList({
           },
         ]}
         actions={
-          <Link
-            href="/cotizaciones/nueva"
-            className="hidden items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#115E59] md:inline-flex"
-          >
-            <Plus className="size-4" />
-            Nueva cotización
-          </Link>
+          <>
+            {/* En móvil manda el flujo rápido (una mano, con el cliente
+                enfrente); el formulario completo queda un toque más lejos. */}
+            <Link
+              href="/cotizaciones/rapida"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition hover:bg-[#115E59] active:scale-[0.98]"
+            >
+              <Zap className="size-4" />
+              <span className="sm:hidden">Cotización rápida</span>
+              <span className="hidden sm:inline">Rápida</span>
+            </Link>
+            <Link
+              href="/cotizaciones/nueva"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-black/10 bg-white px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+            >
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Nueva cotización</span>
+              <span className="sm:hidden">Completa</span>
+            </Link>
+          </>
         }
       />
 
@@ -1720,14 +1735,14 @@ export function CotizacionesList({
         </footer>
       </section>
 
-      {/* FAB móvil: nueva cotización siempre al alcance del pulgar */}
+      {/* FAB móvil: el flujo rápido (una mano) siempre al alcance del pulgar */}
       <Link
-        href="/cotizaciones/nueva"
-        aria-label="Nueva cotización"
+        href="/cotizaciones/rapida"
+        aria-label="Cotización rápida"
         className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
       >
-        <Plus className="size-5" strokeWidth={2.25} />
-        Nueva cotización
+        <Zap className="size-5" strokeWidth={2.25} />
+        Cotización rápida
       </Link>
     </div>
   )

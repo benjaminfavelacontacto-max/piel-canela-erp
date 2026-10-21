@@ -12,13 +12,9 @@ export const metadata: Metadata = {
   title: "Piel Canela ERP",
   description: "Sistema de gestión empresarial Piel Canela",
   applicationName: "Piel Canela ERP",
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
-  },
+  // Los íconos (pestaña / iPhone) salen de src/app/icon.png y apple-icon.png (convención de archivos)
+  // Añadida a la pantalla de inicio del iPhone abre a pantalla completa,
+  // sin barra de Safari, con el nombre corto.
   appleWebApp: {
     capable: true,
     title: "Piel Canela",
@@ -31,9 +27,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // cover → el contenido llega al notch; usamos env(safe-area-inset-*) para respetarlo
+  // viewportFit=cover deja que el contenido use la pantalla completa del
+  // iPhone; las barras fijas respetan el notch/home indicator con
+  // env(safe-area-inset-*) (ver .pc-safe-bottom en globals.css).
   viewportFit: "cover",
-  themeColor: "#0F766E",
+  themeColor: "#F5F7F6",
 }
 
 export default function RootLayout({

@@ -16,6 +16,8 @@ import {
 } from "recharts"
 import { formatMXN as fmtMXN } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 interface Orden {
   id: string
   numero: number | string | null
@@ -647,7 +649,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
             {[...seleccionado.ordenes]
               .sort(
                 (a, b) =>
-                  new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+                  parseFecha(b.fecha).getTime() - parseFecha(a.fecha).getTime(),
               )
               .map((orden) => {
                 const sc = ESTATUS_CONFIG[orden.estatus ?? ""] ?? {
@@ -703,7 +705,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
                     {/* Fecha */}
                     <p className="text-center text-[11px] tabular-nums text-gray-400">
-                      {new Date(orden.fecha).toLocaleDateString("es-MX", {
+                      {parseFecha(orden.fecha).toLocaleDateString("es-MX", {
                         day: "numeric",
                         month: "short",
                         year: "2-digit",

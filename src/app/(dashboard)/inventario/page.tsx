@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { buildProductoImageUrl } from "@/lib/storage-images"
 import { InventarioView } from "./inventario-view"
-import type { ProductoEnriquecido } from "./inventario-view"
+import type { ProductoEnriquecido, ProductoSales } from "./inventario-view"
 
 export default async function InventarioPage({
   searchParams,
@@ -180,6 +180,45 @@ export default async function InventarioPage({
       }
     })
 
+  // Serie mensual de ventas SOLO para los 20 más vendidos: la usa la "sugerencia de pedido"
+  // (ritmo mensual). Es una consulta chica; el historial completo por SKU va aparte (drawer).
+  const top20 = [...productos]
+    .filter((p) => p.unidades_vendidas > 0)
+    .sort((a, b) => b.unidades_vendidas - a.unidades_vendidas)
+    .slice(0, 20)
+  const idPorSku = new Map(prodRows.map((p) => [p.sku ?? "", p.id]))
+  const skuPorId = new Map(top20.map((p) => [idPorSku.get(p.sku) ?? "", p.sku]))
+  const salesTop: Record<string, ProductoSales> = {}
+  if (top20.length > 0) {
+    const { data: itemsTop } = await admin
+      .from("venta_items")
+      .select("producto_id, cantidad, precio_unitario, ventas(fecha)")
+      .in("producto_id", [...skuPorId.keys()].filter(Boolean))
+    const porSku = new Map<string, Map<string, { cantidad: number; revenue: number }>>()
+    for (const it of (itemsTop ?? []) as unknown as {
+      producto_id: string
+      cantidad: number
+      precio_unitario: number
+      ventas: { fecha: string } | null
+    }[]) {
+      const sku = skuPorId.get(it.producto_id)
+      if (!sku || !it.ventas?.fecha) continue
+      const mes = it.ventas.fecha.slice(0, 7)
+      const meses = porSku.get(sku) ?? new Map()
+      const cur = meses.get(mes) ?? { cantidad: 0, revenue: 0 }
+      cur.cantidad += Number(it.cantidad ?? 0)
+      cur.revenue += Number(it.cantidad ?? 0) * Number(it.precio_unitario ?? 0)
+      meses.set(mes, cur)
+      porSku.set(sku, meses)
+    }
+    for (const [sku, meses] of porSku) {
+      salesTop[sku] = {
+        ventas: [],
+        monthly: [...meses].map(([mes, v]) => ({ mes, ...v })).sort((a, b) => a.mes.localeCompare(b.mes)),
+      }
+    }
+  }
+
   const categorias = (categoriasRes.data ?? []).map((c) => c.nombre as string)
   const proveedores = ((proveedoresRes.data ?? []) as { nombre: string }[])
     .map((p) => p.nombre)
@@ -206,6 +245,7 @@ export default async function InventarioPage({
       categoriaOptions={categoriaOptions}
       proveedorOptions={proveedorOptions}
       error={error}
+      salesTop={salesTop}
       initialSku={initialSku ?? null}
     />
   )

@@ -255,12 +255,12 @@ export function CommandPalette() {
                   onMouseMove={() => setActivo(i)}
                   onClick={() => ir(it)}
                   className={`flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left ${
-                    i === activo ? "bg-[#F3F0FF]" : ""
+                    i === activo ? "bg-[#0F766E]/[0.07]" : ""
                   }`}
                 >
                   <span
                     className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                      i === activo ? "bg-[#8B5CF6] text-white" : "bg-gray-100 text-gray-500"
+                      i === activo ? "bg-[#0F766E] text-white" : "bg-gray-100 text-gray-500"
                     }`}
                   >
                     <Icono className="size-4" aria-hidden />

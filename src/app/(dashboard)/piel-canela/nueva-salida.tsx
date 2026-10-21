@@ -15,6 +15,8 @@ import {
 } from "lucide-react"
 import { crearSalidaInterna } from "./actions"
 
+import { parseFecha } from "@/lib/fecha"
+
 type ProductoBase = { id: string; sku: string; nombre: string; precio: number }
 type Fila = { producto_id: string; sku: string; nombre: string; cantidad: number; precio: number }
 
@@ -34,7 +36,12 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
   const [busqueda, setBusqueda] = useState("")
   const [filas, setFilas] = useState<Fila[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [exito, setExito] = useState<{ numero: string; fecha: string; ventaId: string } | null>(null)
+  const [exito, setExito] = useState<{
+    numero: string
+    fecha: string
+    ventaId: string
+    negativos: { nombre: string; stock: number }[]
+  } | null>(null)
   const [pending, startTransition] = useTransition()
 
   const filtrados = useMemo(() => {
@@ -70,7 +77,12 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
         setError(res.error)
         return
       }
-      setExito({ numero: res.numero, fecha: res.fecha, ventaId: res.ventaId })
+      setExito({
+        numero: res.numero,
+        fecha: res.fecha,
+        ventaId: res.ventaId,
+        negativos: res.negativos ?? [],
+      })
       setFilas([])
       setAbierto(false)
       router.refresh()
@@ -79,13 +91,14 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
 
   // Confirmación de la última salida registrada (con folio/fecha automáticos)
   const banner = exito && (
+    <div className="space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
       <p className="flex items-center gap-2 text-[12.5px] text-emerald-800">
         <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
         Salida registrada —{" "}
         <span className="font-mono font-semibold">{exito.numero || "cotización interna"}</span>
         <span className="text-emerald-600">
-          · {new Date(exito.fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+          · {parseFecha(exito.fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
         </span>
       </p>
       <div className="flex items-center gap-3">
@@ -99,6 +112,15 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
           <X className="size-4" />
         </button>
       </div>
+    </div>
+    {exito.negativos.length > 0 && (
+      <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-[12.5px] text-amber-900">
+        <b>Ojo:</b> el sistema tenía menos de lo que se llevó. Quedó en negativo:{" "}
+        {exito.negativos.map((n) => `${n.nombre} (${n.stock})`).join(" · ")}. Ajusta el
+        stock en Inventario con el conteo físico real — el negativo es la señal de que
+        el conteo estaba mal, no lo borres a mano sin contar.
+      </div>
+    )}
     </div>
   )
 

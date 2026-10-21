@@ -1,3 +1,5 @@
+import type { TipoDescuento } from "./descuentos"
+
 export type Estatus = "borrador" | "enviada" | "aceptada" | "rechazada" | "vencida"
 
 export type Cliente = {
@@ -37,6 +39,21 @@ export type CotizacionItem = {
   precio_unitario: number
   costo_unitario: number
   subtotal: number
+  /**
+   * Partida de cortesía: `precio_unitario` y `subtotal` van en 0 (el cliente no
+   * la paga) pero `costo_unitario` es real — esa es la pérdida. Ver
+   * `@/lib/regalos`.
+   */
+  es_regalo?: boolean
+  /**
+   * Precio de catálogo congelado (el de ANTES del descuento). En un regalo es
+   * el valor obsequiado; en una partida con descuento es el precio tachado.
+   */
+  precio_lista?: number | null
+  /** Descuento de ESTA partida: cómo se capturó (% o $ por pieza). */
+  descuento_tipo?: TipoDescuento | null
+  /** Valor tecleado del descuento (15 = 15%, 25 = $25 por pieza). */
+  descuento_valor?: number | null
 }
 
 export type CotizacionData = {

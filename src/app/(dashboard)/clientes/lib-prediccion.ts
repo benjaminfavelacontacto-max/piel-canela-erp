@@ -14,6 +14,8 @@
 
 import type { EnrichedCliente, VentaSummaryRow } from "./clientes-dashboard"
 
+import { parseFecha } from "@/lib/fecha"
+
 export type ConfidenceLevel = "alta" | "media" | "baja" | "insuficiente"
 export type Metodo = "empirical" | "bell" | "global" | "insufficient"
 
@@ -95,7 +97,7 @@ export function predecirCompra(
     .filter(
       (v) => v.cliente_id === cliente.id && v.estatus !== "cancelada",
     )
-    .map((v) => new Date(v.fecha))
+    .map((v) => parseFecha(v.fecha))
     .sort((a, b) => a.getTime() - b.getTime())
 
   const N = fechas.length

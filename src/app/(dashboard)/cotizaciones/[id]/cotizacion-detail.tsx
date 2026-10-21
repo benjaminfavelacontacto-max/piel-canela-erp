@@ -13,6 +13,9 @@ import {
   RotateCcw,
   MessageCircle,
   Trash2,
+  AlertTriangle,
+  Gift,
+  BadgePercent,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
@@ -20,7 +23,10 @@ import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
 import { cotizacionPdfFile, downloadCotizacionPdf } from "@/lib/pdf"
 import { whatsappUrl } from "@/lib/whatsapp"
+import { resumenRegalos } from "@/lib/regalos"
+import { resumenDescuentos } from "@/lib/descuentos"
 import { formatMXN2 } from "@/lib/utils"
+import { CotizacionKpis } from "./cotizacion-kpis"
 import {
   marcarVendida,
   duplicarCotizacion,
@@ -44,18 +50,35 @@ const estatusLabel: Record<Estatus, string> = {
   vencida: "Vencida",
 }
 
+/** Partida cuya existencia no alcanza para lo cotizado. */
+export type Faltante = {
+  nombre: string
+  sku: string | null
+  cantidad: number
+  stock: number
+}
+
 export function CotizacionDetail({
   cotizacionId,
   numero,
   estatus,
   ventaAsociada,
+  faltantes,
   preview,
+  finanzas,
 }: {
   cotizacionId: string
   numero: string
   estatus: Estatus
   ventaAsociada: { id: string; numero: string } | null
+  faltantes: Faltante[]
   preview: CotizacionData
+  /** Columnas financieras de la cotización que el preview no trae. */
+  finanzas: {
+    costoProductos: number
+    costoEnvio: number
+    utilidadNetaBD: number | null
+  }
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -65,9 +88,22 @@ export function CotizacionDetail({
   const [confirmarRevertir, setConfirmarRevertir] = useState(false)
   const [reverting, setReverting] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
-  // "Vendida" = ya existe una venta generada desde esta cotización (señal fuerte),
-  // o el estatus es "aceptada". Evita que el botón verde invite a re-vender.
-  const yaVendida = ventaAsociada != null || currentEstatus === "aceptada"
+  // "Vendida" = existe una venta generada desde esta cotización. El estatus
+  // "aceptada" NO basta: se puede poner a mano desde el desplegable de la lista
+  // (`cambiarEstatusCotizacion`), que sólo escribe el estatus y no crea venta.
+  // Tomarlo como "vendida" dejaba la cotización en un callejón sin salida — el
+  // único botón que genera la venta quedaba deshabilitado para siempre.
+  // Venta recién creada en esta sesión (antes de que el refresh traiga
+  // `ventaAsociada` del servidor).
+  const [ventaCreada, setVentaCreada] = useState<string | null>(null)
+  const yaVendida = ventaAsociada != null || ventaCreada != null
+  // Sólo bloquea mientras la venta no exista: si ya se vendió, el inventario ya
+  // se descontó y los faltantes de ahora son consecuencia, no impedimento.
+  const bloqueadoPorStock = !yaVendida && faltantes.length > 0
+  // Cortesías incluidas: cuánto costaron (pérdida) y cuánto valían.
+  const regalos = resumenRegalos(preview.items)
+  // Descuentos por producto: a qué partida se le rebajó y cuánto.
+  const descuentos = resumenDescuentos(preview.items)
 
   async function handleEliminar() {
     setDeleting(true)
@@ -99,8 +135,23 @@ export function CotizacionDetail({
   }
 
   function handleMarkSold() {
-    if (currentEstatus === "aceptada") {
-      toast.info("Esta cotización ya está marcada como vendida.")
+    if (ventaAsociada || ventaCreada) {
+      toast.info(
+        `Esta cotización ya generó la venta ${ventaAsociada?.numero ?? ""}`.trim(),
+      )
+      return
+    }
+    if (bloqueadoPorStock) {
+      toast.error(
+        `Sin existencias para ${faltantes.length} ${
+          faltantes.length === 1 ? "producto" : "productos"
+        }.`,
+        {
+          description: faltantes
+            .map((f) => `${f.nombre}: pide ${f.cantidad}, hay ${f.stock}`)
+            .join(" · "),
+        },
+      )
       return
     }
     const itemSummary = preview.items
@@ -120,9 +171,14 @@ export function CotizacionDetail({
         return
       }
       setCurrentEstatus("aceptada")
+      // Cierra el botón de inmediato: `ventaAsociada` llega del servidor y no
+      // se actualiza hasta el refresh, así que sin esto un segundo clic crearía
+      // una venta duplicada.
+      setVentaCreada(result.ventaId ?? "creada")
       toast.success("Vendida. Inventario descontado.", {
         description: itemSummary,
       })
+      router.refresh()
     })
   }
 
@@ -254,14 +310,21 @@ export function CotizacionDetail({
               <button
                 type="button"
                 onClick={handleMarkSold}
-                disabled={pending || currentEstatus === "aceptada"}
+                disabled={pending || ventaCreada != null || bloqueadoPorStock}
+                title={
+                  bloqueadoPorStock
+                    ? `Sin existencias para: ${faltantes
+                        .map((f) => `${f.nombre} (pide ${f.cantidad}, hay ${f.stock})`)
+                        .join(", ")}`
+                    : undefined
+                }
                 className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
               >
                 <CheckCircle2 className="size-4" />
-                {currentEstatus === "aceptada"
-                  ? "Vendida"
-                  : pending
-                    ? "Procesando…"
+                {pending
+                  ? "Procesando…"
+                  : bloqueadoPorStock
+                    ? "Falta inventario"
                     : "Marcar como Vendida"}
               </button>
             </>
@@ -313,6 +376,44 @@ export function CotizacionDetail({
         </div>
       </div>
 
+      {bloqueadoPorStock && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-900">
+                No se puede vender: falta inventario en{" "}
+                {faltantes.length}{" "}
+                {faltantes.length === 1 ? "producto" : "productos"}
+              </p>
+              <p className="mt-0.5 text-xs text-amber-800">
+                La venta descuenta existencias y se cancela entera si alguna
+                partida no alcanza. Da entrada al inventario o ajusta las
+                cantidades de la cotización.
+              </p>
+              <ul className="mt-2 space-y-1">
+                {faltantes.map((f) => (
+                  <li
+                    key={`${f.sku ?? f.nombre}`}
+                    className="flex flex-wrap items-baseline gap-x-2 text-xs text-amber-900"
+                  >
+                    <span className="font-medium">{f.nombre}</span>
+                    {f.sku && (
+                      <span className="font-mono text-[11px] text-amber-700">
+                        {f.sku}
+                      </span>
+                    )}
+                    <span>
+                      pide <b>{f.cantidad}</b> · hay <b>{f.stock}</b>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmarEliminar && (
         <DeleteCotModal
           numero={numero}
@@ -330,6 +431,110 @@ export function CotizacionDetail({
           onCancel={() => setConfirmarRevertir(false)}
           onConfirm={handleRevertir}
         />
+      )}
+
+      {/* KPIs financieros con (?) explicativo por tarjeta */}
+      <CotizacionKpis
+        subtotal={preview.subtotal}
+        iva={preview.iva}
+        descuento={preview.descuento}
+        total={preview.total}
+        costoProductos={finanzas.costoProductos}
+        costoEnvio={finanzas.costoEnvio}
+        utilidadNetaBD={finanzas.utilidadNetaBD}
+        items={preview.items}
+      />
+
+      {descuentos.lineas > 0 && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="flex items-start gap-2">
+            <BadgePercent className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-emerald-900">
+                {descuentos.lineas}{" "}
+                {descuentos.lineas === 1
+                  ? "producto con descuento"
+                  : "productos con descuento"}{" "}
+                · {formatMXN2(descuentos.monto)} menos para el cliente
+              </p>
+              <ul className="mt-2 space-y-1">
+                {descuentos.detalle.map((d) => (
+                  <li
+                    key={`${d.sku ?? d.nombre}-${d.precioFinal}`}
+                    className="flex flex-wrap items-baseline gap-x-2 text-xs text-emerald-900"
+                  >
+                    <span className="font-medium">{d.nombre}</span>
+                    {d.sku && (
+                      <span className="font-mono text-[11px] text-emerald-700">
+                        {d.sku}
+                      </span>
+                    )}
+                    <span className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                      −{d.etiqueta}
+                    </span>
+                    <span className="tabular-nums text-emerald-800">
+                      <span className="text-emerald-600/70 line-through">
+                        {formatMXN2(d.precioLista)}
+                      </span>{" "}
+                      → <b>{formatMXN2(d.precioFinal)}</b> c/u ·{" "}
+                      {d.cantidad} pzs · ahorro{" "}
+                      <b>{formatMXN2(d.monto)}</b>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {preview.descuento > 0 && (
+                <p className="mt-2 border-t border-emerald-200/70 pt-2 text-xs text-emerald-900">
+                  Además, descuento general de{" "}
+                  <b className="tabular-nums">
+                    {formatMXN2(preview.descuento)}
+                  </b>{" "}
+                  sobre el subtotal ⇒ ahorro total{" "}
+                  <b className="tabular-nums">
+                    {formatMXN2(descuentos.monto + preview.descuento)}
+                  </b>
+                  .
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {regalos.lineas > 0 && (
+        <div className="mb-6 rounded-xl border border-fuchsia-200 bg-fuchsia-50/60 p-4">
+          <div className="flex items-start gap-2">
+            <Gift className="mt-0.5 size-4 shrink-0 text-fuchsia-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-fuchsia-900">
+                Esta cotización incluye {regalos.piezas}{" "}
+                {regalos.piezas === 1 ? "pieza de regalo" : "piezas de regalo"}
+                {" "}en {regalos.lineas}{" "}
+                {regalos.lineas === 1 ? "partida" : "partidas"}
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <GiftStat
+                  label="Costo (pérdida real)"
+                  value={formatMXN2(regalos.costo)}
+                  tone="text-rose-700"
+                  hint="Ya restado de la utilidad neta"
+                />
+                <GiftStat
+                  label="Valor obsequiado"
+                  value={formatMXN2(regalos.valor)}
+                  tone="text-fuchsia-700"
+                  hint="Precio de lista de lo regalado"
+                />
+                <GiftStat
+                  label="Margen cedido"
+                  value={formatMXN2(regalos.margenCedido)}
+                  tone="text-gray-700"
+                  hint="Utilidad que se dejó de ganar"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <section className="mb-6 space-y-2">
@@ -357,6 +562,30 @@ export function CotizacionDetail({
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
       </div>
+    </div>
+  )
+}
+
+function GiftStat({
+  label,
+  value,
+  tone,
+  hint,
+}: {
+  label: string
+  value: string
+  tone: string
+  hint: string
+}) {
+  return (
+    <div className="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-fuchsia-200/70">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </div>
+      <div className={`mt-0.5 text-base font-bold tabular-nums ${tone}`}>
+        {value}
+      </div>
+      <div className="text-[10px] text-gray-500">{hint}</div>
     </div>
   )
 }

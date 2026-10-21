@@ -28,7 +28,7 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      aria-label="Navegación principal"
+      aria-label="Navegación inferior"
       className="fixed inset-x-0 bottom-0 z-30 border-t md:hidden print:hidden"
       style={{
         // Fondo casi sólido (sin backdrop-filter): el blur sobre una barra fija
@@ -49,13 +49,13 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className="relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-black/[0.03]"
-                style={{ color: active ? "#7C3AED" : "#64748B" }}
+                style={{ color: active ? "#0F766E" : "#64748B" }}
               >
                 {active && (
                   <span
                     aria-hidden
                     className="absolute inset-x-5 top-0 h-0.5 rounded-b-full"
-                    style={{ background: "#8B5CF6" }}
+                    style={{ background: "#0F766E" }}
                   />
                 )}
                 <Icon
@@ -74,13 +74,13 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
             onClick={onMore}
             aria-label="Más secciones"
             className="relative flex h-full w-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-black/[0.03]"
-            style={{ color: !inTabs ? "#7C3AED" : "#64748B" }}
+            style={{ color: !inTabs ? "#0F766E" : "#64748B" }}
           >
             {!inTabs && (
               <span
                 aria-hidden
                 className="absolute inset-x-5 top-0 h-0.5 rounded-b-full"
-                style={{ background: "#8B5CF6" }}
+                style={{ background: "#0F766E" }}
               />
             )}
             <MoreHorizontal

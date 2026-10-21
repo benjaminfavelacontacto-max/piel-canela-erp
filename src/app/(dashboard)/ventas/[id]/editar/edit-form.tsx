@@ -28,6 +28,7 @@ function estatusFor(total: number, pagado: number): Estatus {
 
 export function EditVentaForm({
   id,
+  fechaInicial,
   subtotal,
   descuento,
   ivaInicial,
@@ -35,6 +36,7 @@ export function EditVentaForm({
   notasIniciales,
 }: {
   id: string
+  fechaInicial: string
   subtotal: number
   descuento: number
   ivaInicial: number
@@ -49,6 +51,7 @@ export function EditVentaForm({
     cantidadPagadaInicial,
   )
   const [notas, setNotas] = useState<string>(notasIniciales)
+  const [fecha, setFecha] = useState<string>(fechaInicial)
 
   const computed = useMemo(() => {
     // IVA sobre la base gravable (subtotal − descuento), estándar fiscal MX.
@@ -64,6 +67,7 @@ export function EditVentaForm({
       try {
         const result = await updateVenta({
           id,
+          fecha: fecha || undefined,
           notas,
           ivaActivo,
           cantidad_pagada: cantidadPagada,
@@ -90,6 +94,18 @@ export function EditVentaForm({
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Pago
           </h2>
+
+          <label className="block">
+            <span className="text-xs uppercase tracking-wide text-gray-500">
+              Fecha de la venta
+            </span>
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+            />
+          </label>
 
           <label className="block">
             <span className="text-xs uppercase tracking-wide text-gray-500">

@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
+import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
+import { errorSinColumnasRegalo, sinCamposRegalo } from "@/lib/regalos"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
 
@@ -29,6 +31,28 @@ export type SaveVentaItem = {
   cantidad: number
   precio_unitario: number
   costo_unitario: number
+  /** Cortesía: se vende en $0 pero su costo sigue restando de la ganancia. */
+  es_regalo?: boolean
+  /** Precio de catálogo congelado (referencia del valor obsequiado). */
+  precio_lista?: number | null
+}
+
+/**
+ * Inserta partidas de venta tolerando que la BD aún no tenga las columnas de
+ * regalo (scripts/add-regalos-cotizaciones.sql pendiente): en ese caso
+ * reintenta sin ellas — la venta se guarda, solo se pierde la marca de
+ * cortesía. `subtotal` y `costo_total` son GENERATED: nunca se insertan.
+ */
+async function insertarVentaItems(
+  supabase: ReturnType<typeof createAdminClient>,
+  rows: Record<string, unknown>[],
+) {
+  const { error } = await supabase.from("venta_items").insert(rows)
+  if (!errorSinColumnasRegalo(error)) return { error }
+  console.warn(
+    "[saveVenta] BD sin migración de regalos; guardando partidas sin es_regalo/precio_lista",
+  )
+  return await supabase.from("venta_items").insert(rows.map(sinCamposRegalo))
 }
 
 export type SaveVentaInput = {
@@ -72,6 +96,28 @@ export async function saveVenta(input: SaveVentaInput) {
   // Admin client: bypassa RLS para que los INSERTs no bloqueen.
   const supabase = createAdminClient()
 
+  // Validar existencias ANTES de escribir nada. La RPC de descuento no valida
+  // (deja stock negativo) y corre al FINAL del flujo: si fallara ahí, el
+  // rollback manual es el que ya nos dejó ventas a medias. Validar aquí evita
+  // crear la venta siquiera. Ver auditoría de inventario 2026-07-25.
+  let itemsParaStock: { producto_id: string | null; cantidad: number }[] = []
+  if (input.cotizacion_id) {
+    const { data: cotItems } = await supabase
+      .from("cotizacion_items")
+      .select("producto_id, cantidad")
+      .eq("cotizacion_id", input.cotizacion_id)
+    itemsParaStock = (cotItems ?? []) as { producto_id: string | null; cantidad: number }[]
+  } else if (input.items && input.items.length > 0) {
+    itemsParaStock = input.items
+  }
+  const faltantesVenta = await faltantesDeStock(supabase, itemsParaStock)
+  if (faltantesVenta.length > 0) {
+    return {
+      ok: false as const,
+      error: `Sin existencias suficientes — ${describirFaltantes(faltantesVenta)}`,
+    }
+  }
+
   // total, ganancia y saldo_pendiente son columnas GENERATED — Postgres las calcula.
   const estatus = estatusFor(input.total, input.cantidad_pagada)
 
@@ -104,11 +150,27 @@ export async function saveVenta(input: SaveVentaInput) {
   let hasItems = false
 
   if (input.cotizacion_id) {
-    const { data: cotItems, error: cotErr } = await supabase
+    // Las cortesías de la cotización viajan a la venta tal cual: si no, el
+    // regalo se convertiría en una venta normal de $0 y se perdería el rastro
+    // de la pérdida.
+    let { data: cotItems, error: cotErr } = await supabase
       .from("cotizacion_items")
-      .select("producto_id, cantidad, precio_unitario, costo_unitario, subtotal, sort_order")
+      .select(
+        "producto_id, cantidad, precio_unitario, costo_unitario, subtotal, sort_order, es_regalo, precio_lista",
+      )
       .eq("cotizacion_id", input.cotizacion_id)
       .order("sort_order", { ascending: true })
+    if (errorSinColumnasRegalo(cotErr)) {
+      const retry = await supabase
+        .from("cotizacion_items")
+        .select(
+          "producto_id, cantidad, precio_unitario, costo_unitario, subtotal, sort_order",
+        )
+        .eq("cotizacion_id", input.cotizacion_id)
+        .order("sort_order", { ascending: true })
+      cotItems = retry.data as typeof cotItems
+      cotErr = retry.error
+    }
 
     if (cotErr) {
       await rollbackVenta(supabase, venta.id)
@@ -117,16 +179,22 @@ export async function saveVenta(input: SaveVentaInput) {
 
     if (cotItems && cotItems.length > 0) {
       // venta_items.subtotal y .costo_total son GENERATED — NO se insertan.
-      const ventaItems = cotItems.map((it) => ({
+      type CotItem = (typeof cotItems)[number] & {
+        es_regalo?: boolean | null
+        precio_lista?: number | null
+      }
+      const ventaItems = (cotItems as CotItem[]).map((it) => ({
         venta_id: venta.id,
         producto_id: it.producto_id,
         cantidad: it.cantidad,
         precio_unitario: it.precio_unitario,
         costo_unitario: it.costo_unitario,
         sort_order: it.sort_order,
+        es_regalo: it.es_regalo === true,
+        precio_lista: it.precio_lista ?? null,
       }))
 
-      const { error: itemsErr } = await supabase.from("venta_items").insert(ventaItems)
+      const { error: itemsErr } = await insertarVentaItems(supabase, ventaItems)
       if (itemsErr) {
         await rollbackVenta(supabase, venta.id)
         return {
@@ -143,11 +211,15 @@ export async function saveVenta(input: SaveVentaInput) {
       venta_id: venta.id,
       producto_id: it.producto_id,
       cantidad: it.cantidad,
-      precio_unitario: it.precio_unitario,
+      // Un regalo se persiste en $0 (subtotal GENERATED = 0) y su costo sí
+      // cuenta: así la ganancia absorbe la pérdida sola.
+      precio_unitario: it.es_regalo ? 0 : it.precio_unitario,
       costo_unitario: it.costo_unitario,
       sort_order: i,
+      es_regalo: it.es_regalo ?? false,
+      precio_lista: it.precio_lista ?? null,
     }))
-    const { error: itemsErr } = await supabase.from("venta_items").insert(ventaItems)
+    const { error: itemsErr } = await insertarVentaItems(supabase, ventaItems)
     if (itemsErr) {
       await rollbackVenta(supabase, venta.id)
       return {
@@ -429,6 +501,8 @@ export type UpdateVentaInput = {
   notas: string
   ivaActivo: boolean
   cantidad_pagada: number
+  // Fecha de la venta (YYYY-MM-DD). Solo se actualiza si viene definida.
+  fecha?: string
   // Campos financieros opcionales — solo se actualizan si vienen definidos
   descuento?: number
   costo_envio?: number
@@ -493,6 +567,12 @@ export async function updateVenta(input: UpdateVentaInput) {
     cantidad_pagada: input.cantidad_pagada,
     estatus,
     notas: newNotas,
+  }
+  if (input.fecha) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.fecha)) {
+      return { ok: false as const, error: "Fecha inválida" }
+    }
+    updatePayload.fecha = input.fecha
   }
   if (input.descuento != null) updatePayload.descuento = input.descuento
   if (input.costo_envio != null) updatePayload.costo_envio = input.costo_envio

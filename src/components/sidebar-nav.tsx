@@ -24,11 +24,19 @@ const items = [
   { href: "/piel-canela", label: "Piel Canela", icon: Home },
 ]
 
+/**
+ * Sidebar minimal estilo Linear.
+ *
+ * Activo = barra vertical del acento + fondo apenas perceptible + semibold +
+ * icono un punto más grande. Nada de sombras ni glow. Hover: fondo suave y
+ * desplazamiento de 1px en 150ms. Todo con clases (sin handlers JS) para que
+ * los estados focus/hover queden consistentes y accesibles.
+ */
 export function SidebarNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-col gap-0.5 px-3 py-3">
+    <nav aria-label="Navegación principal" className="flex flex-col gap-1 px-3 py-2">
       {items.map(({ href, label, icon: Icon }) => {
         const active =
           href === "/" ? pathname === "/" : pathname.startsWith(href)
@@ -36,45 +44,26 @@ export function SidebarNav() {
           <Link
             key={href}
             href={href}
-            className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200"
-            style={{
-              background: active ? "rgba(255,255,255,0.85)" : "transparent",
-              color: active ? "#1E1A33" : "rgba(0,0,0,0.55)",
-              fontWeight: active ? 600 : 400,
-              letterSpacing: active ? "-0.01em" : "0",
-              boxShadow: active
-                ? "0 2px 8px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.9) inset"
-                : "none",
-            }}
-            onMouseEnter={(e) => {
-              if (!active) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.45)"
-                e.currentTarget.style.color = "#0F172A"
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!active) {
-                e.currentTarget.style.background = "transparent"
-                e.currentTarget.style.color = "rgba(0,0,0,0.55)"
-              }
-            }}
+            aria-current={active ? "page" : undefined}
+            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30 ${
+              active
+                ? "bg-black/[0.04] font-semibold text-gray-900"
+                : "font-normal text-gray-500 hover:translate-x-px hover:bg-black/[0.03] hover:text-gray-900"
+            }`}
           >
             {active && (
               <span
                 aria-hidden
-                className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
-                style={{ background: "#8B5CF6" }}
+                className="absolute -left-3 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-[#0F766E]"
               />
             )}
             <Icon
-              className="size-4 shrink-0 transition-all"
+              className={`shrink-0 transition-all duration-150 ${
+                active
+                  ? "size-[18px] text-[#0F766E]"
+                  : "size-4 text-gray-400 group-hover:text-gray-600"
+              }`}
               strokeWidth={active ? 2 : 1.75}
-              style={{
-                color: active ? "#8B5CF6" : "rgba(0,0,0,0.4)",
-                filter: active
-                  ? "drop-shadow(0 0 6px rgba(139,92,246,0.4))"
-                  : "none",
-              }}
             />
             <span>{label}</span>
           </Link>

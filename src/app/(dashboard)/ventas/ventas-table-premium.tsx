@@ -60,6 +60,8 @@ import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
 import { formatMXN2 } from "@/lib/utils"
 import { ListCard, ListCardGroup } from "@/components/list-card"
 
+import { parseFecha } from "@/lib/fecha"
+
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
 const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
@@ -899,12 +901,12 @@ export function VentasTablePremium({
         accessorKey: "fecha",
         header: (ctx) => <HeaderCell label="Fecha" ctx={ctx} />,
         cell: ({ getValue }) => (
-          <span className="text-xs font-medium text-gray-700 tabular-nums">
-            {fechaFmt.format(new Date(getValue() as string))}
+          <span className="whitespace-nowrap text-xs font-medium text-gray-700 tabular-nums">
+            {fechaFmt.format(parseFecha(getValue() as string))}
           </span>
         ),
-        size: 120,
-        minSize: 100,
+        size: 130,
+        minSize: 120,
       },
       {
         accessorKey: "numero",
@@ -916,7 +918,7 @@ export function VentasTablePremium({
                 ? `/cotizaciones/${row.original.cotizacion_id}`
                 : `/ventas/${row.original.id}`
             }
-            className="font-mono text-xs text-[#0F766E] transition hover:underline"
+            className="whitespace-nowrap font-mono text-xs text-[#0F766E] transition hover:underline"
             onClick={(e) => e.stopPropagation()}
             title={
               row.original.cotizacion_id
@@ -927,8 +929,8 @@ export function VentasTablePremium({
             {getValue() as string}
           </Link>
         ),
-        size: 200,
-        minSize: 140,
+        size: 280,
+        minSize: 220,
       },
       {
         id: "cliente",
@@ -939,7 +941,8 @@ export function VentasTablePremium({
             {getValue() as string}
           </span>
         ),
-        size: 200,
+        size: 240,
+        minSize: 160,
       },
       {
         accessorKey: "vendedor",
@@ -986,7 +989,7 @@ export function VentasTablePremium({
           }
           return <span className="text-xs text-gray-300">—</span>
         },
-        size: 110,
+        size: 150,
       },
       {
         accessorKey: "descuento",
@@ -1115,7 +1118,7 @@ export function VentasTablePremium({
             estatus={getValue() as Estatus}
           />
         ),
-        size: 110,
+        size: 140,
       },
       {
         accessorKey: "sandra_monto",
@@ -1402,7 +1405,7 @@ export function VentasTablePremium({
       {/* Table (escritorio / tablet) */}
       <div className="relative hidden max-w-full overflow-auto md:block">
         <table
-          className="w-full text-sm"
+          className="w-full table-fixed text-sm"
           style={{ width: table.getTotalSize(), minWidth: "100%" }}
         >
           <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">

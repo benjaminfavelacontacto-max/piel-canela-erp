@@ -1,12 +1,16 @@
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ShoppingBag, TrendingUp, Wallet, CircleDollarSign, Pencil } from "lucide-react"
+import { ArrowLeft, Pencil, Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
 import { formatMXN2 } from "@/lib/utils"
 import { RegistrarPagoButton } from "./registrar-pago-button"
+import { resumenRegalos, precioReferencia } from "@/lib/regalos"
+import { VentaKpis } from "./venta-kpis"
+
+import { parseFecha } from "@/lib/fecha"
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -42,8 +46,8 @@ export default async function VentaDetailPage({
     .from("ventas")
     .select(
       `id, numero, fecha, subtotal, iva, descuento, total, costo_productos, costo_envio,
-       ganancia, cantidad_pagada, saldo_pendiente, estatus, notas, inventario_descontado,
-       cotizacion_id,
+       ganancia, utilidad_neta, cantidad_pagada, saldo_pendiente, estatus, notas,
+       inventario_descontado, cotizacion_id,
        clientes(id, nombre, nombre_negocio, telefono, email, direccion, ciudad)`,
     )
     .eq("id", id)
@@ -60,11 +64,12 @@ export default async function VentaDetailPage({
   }
   if (!venta) notFound()
 
-  const [{ data: itemRows }, { data: socioRows }, imageMap] = await Promise.all([
+  const [itemsRes, { data: socioRows }, imageMap] = await Promise.all([
     supabase
       .from("venta_items")
       .select(
         `cantidad, precio_unitario, costo_unitario, subtotal, costo_total, sort_order,
+         es_regalo, precio_lista,
          productos(id, sku, nombre, nombre_display, imagen_url, categorias(nombre))`,
       )
       .eq("venta_id", id)
@@ -79,12 +84,32 @@ export default async function VentaDetailPage({
     buildImageMap(),
   ])
 
+  // es_regalo / precio_lista llegan con scripts/add-regalos-cotizaciones.sql;
+  // sin la migración la venta se muestra igual, solo sin marcas de cortesía.
+  let itemRows = itemsRes.data
+  if (
+    itemsRes.error &&
+    /es_regalo|precio_lista/.test(itemsRes.error.message ?? "")
+  ) {
+    const retry = await supabase
+      .from("venta_items")
+      .select(
+        `cantidad, precio_unitario, costo_unitario, subtotal, costo_total, sort_order,
+         productos(id, sku, nombre, nombre_display, imagen_url, categorias(nombre))`,
+      )
+      .eq("venta_id", id)
+      .order("sort_order", { ascending: true })
+    itemRows = retry.data as typeof itemRows
+  }
+
   type ItemRow = {
     cantidad: number
     precio_unitario: number
     costo_unitario: number
     subtotal: number
     costo_total: number
+    es_regalo?: boolean | null
+    precio_lista?: number | null
     productos: {
       id: string
       sku: string | null
@@ -136,6 +161,22 @@ export default async function VentaDetailPage({
     .sort((a, b) => b.subtotal - a.subtotal)
   const totalUds = desgloseArray.reduce((s, d) => s + d.unidades, 0)
 
+  // Cortesías entregadas en esta venta. Su costo ya está dentro de
+  // `costo_productos`, así que `ganancia` (GENERATED) ya lo tiene restado:
+  // aquí solo se hace visible cuánto fue.
+  const regalos = resumenRegalos(items)
+
+  // Suma de las partidas, para que el (?) de los KPIs pueda contrastar el
+  // costo guardado en la venta contra lo que realmente suman los productos.
+  const costoPartidas = items.reduce(
+    (s, it) => s + Number(it.costo_unitario ?? 0) * Number(it.cantidad ?? 0),
+    0,
+  )
+  const subtotalPartidas = items.reduce(
+    (s, it) => s + Number(it.subtotal ?? 0),
+    0,
+  )
+
   const COLORES_CAT: Record<string, { bg: string; text: string }> = {
     CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
     ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
@@ -178,7 +219,7 @@ export default async function VentaDetailPage({
               {venta.numero}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              {fechaFmt.format(new Date(venta.fecha))}
+              {fechaFmt.format(parseFecha(venta.fecha))}
               {venta.cotizacion_id && (
                 <>
                   {" · "}
@@ -220,32 +261,24 @@ export default async function VentaDetailPage({
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Total"
-          value={formatMXN2(Number(venta.total ?? 0))}
-          icon={ShoppingBag}
-          tone="text-gray-900"
-        />
-        <StatCard
-          label="Ganancia"
-          value={formatMXN2(Number(venta.ganancia ?? 0))}
-          icon={TrendingUp}
-          tone="text-emerald-700"
-        />
-        <StatCard
-          label="Pagado"
-          value={formatMXN2(Number(venta.cantidad_pagada ?? 0))}
-          icon={CircleDollarSign}
-          tone="text-blue-700"
-        />
-        <StatCard
-          label="Saldo"
-          value={formatMXN2(Number(venta.saldo_pendiente ?? 0))}
-          icon={Wallet}
-          tone={Number(venta.saldo_pendiente ?? 0) > 0 ? "text-amber-700" : "text-gray-900"}
-        />
-      </div>
+      <VentaKpis
+        subtotal={Number(venta.subtotal ?? 0)}
+        iva={Number(venta.iva ?? 0)}
+        descuento={Number(venta.descuento ?? 0)}
+        total={Number(venta.total ?? 0)}
+        costoProductos={Number(venta.costo_productos ?? 0)}
+        costoEnvio={Number(venta.costo_envio ?? 0)}
+        gananciaBD={venta.ganancia == null ? null : Number(venta.ganancia)}
+        utilidadNetaBD={
+          venta.utilidad_neta == null ? null : Number(venta.utilidad_neta)
+        }
+        pagado={Number(venta.cantidad_pagada ?? 0)}
+        saldoBD={Number(venta.saldo_pendiente ?? 0)}
+        costoPartidas={costoPartidas}
+        subtotalPartidas={subtotalPartidas}
+        itemsCount={items.length}
+        regalos={regalos}
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-xl border border-gray-200 bg-white">
@@ -284,8 +317,12 @@ export default async function VentaDetailPage({
                 {items.map((it, i) => {
                   const display = it.productos?.nombre_display ?? it.productos?.nombre ?? "—"
                   const img = findImageFor(display, it.productos?.imagen_url ?? null, imageMap)
+                  const regalo = it.es_regalo === true
                   return (
-                    <tr key={`${it.productos?.id ?? "row"}-${i}`}>
+                    <tr
+                      key={`${it.productos?.id ?? "row"}-${i}`}
+                      className={regalo ? "bg-fuchsia-50/50" : undefined}
+                    >
                       <td className="px-3 py-2">
                         {img ? (
                           <Image
@@ -301,7 +338,15 @@ export default async function VentaDetailPage({
                         )}
                       </td>
                       <td className="px-3 py-2 text-gray-900">
-                        <div className="font-medium">{display}</div>
+                        <div className="flex items-center gap-1.5 font-medium">
+                          {display}
+                          {regalo && (
+                            <span className="inline-flex items-center gap-0.5 rounded bg-fuchsia-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-700">
+                              <Gift className="size-2.5" />
+                              Regalo
+                            </span>
+                          )}
+                        </div>
                         {it.productos?.sku && (
                           <div className="font-mono text-xs text-gray-500">
                             {it.productos.sku}
@@ -309,14 +354,26 @@ export default async function VentaDetailPage({
                         )}
                       </td>
                       <td className="px-3 py-2 text-center tabular-nums">{it.cantidad}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {formatMXN2(Number(it.precio_unitario))}
+                      <td
+                        className={`px-3 py-2 text-right tabular-nums ${
+                          regalo ? "text-gray-400 line-through" : ""
+                        }`}
+                      >
+                        {formatMXN2(
+                          regalo
+                            ? precioReferencia(it)
+                            : Number(it.precio_unitario),
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-500">
                         {formatMXN2(Number(it.costo_unitario))}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                        {formatMXN2(Number(it.subtotal))}
+                      <td
+                        className={`px-3 py-2 text-right font-semibold tabular-nums ${
+                          regalo ? "text-fuchsia-600" : ""
+                        }`}
+                      >
+                        {regalo ? "GRATIS" : formatMXN2(Number(it.subtotal))}
                       </td>
                     </tr>
                   )
@@ -338,6 +395,20 @@ export default async function VentaDetailPage({
                     </td>
                     <td className="px-3 py-1 text-right tabular-nums text-emerald-700">
                       -{formatMXN2(Number(venta.descuento))}
+                    </td>
+                  </tr>
+                )}
+                {regalos.lineas > 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-1 text-right text-xs uppercase tracking-wide text-fuchsia-700"
+                    >
+                      Regalos · {regalos.piezas} pzs (valor{" "}
+                      {formatMXN2(regalos.valor)}) — costo que se pierde
+                    </td>
+                    <td className="px-3 py-1 text-right tabular-nums text-fuchsia-700">
+                      −{formatMXN2(regalos.costo)}
                     </td>
                   </tr>
                 )}
@@ -551,32 +622,6 @@ export default async function VentaDetailPage({
             </p>
           </div>
         </aside>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string
-  value: string
-  icon: React.ComponentType<{ className?: string }>
-  tone: string
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          {label}
-        </span>
-        <Icon className={`size-4 ${tone}`} />
-      </div>
-      <div className={`mt-2 text-xl font-semibold tabular-nums ${tone}`}>
-        {value}
       </div>
     </div>
   )

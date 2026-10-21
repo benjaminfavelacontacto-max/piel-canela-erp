@@ -18,6 +18,8 @@ import { ClientesTable } from "./clientes-table"
 import { AnimatedNumber } from "./animated-number"
 import { formatMXN } from "@/lib/utils"
 
+import { parseFecha } from "@/lib/fecha"
+
 const monthLong = new Intl.DateTimeFormat("es-MX", {
   month: "long",
   year: "numeric",
@@ -352,7 +354,7 @@ export default async function EstadisticasPage({
                 </h3>
                 <span className="ml-auto text-xs text-gray-400">
                   {stats.mejorMes
-                    ? `Mejor mes ${monthLong.format(new Date(stats.mejorMes.mes + "-01"))}`
+                    ? `Mejor mes ${monthLong.format(parseFecha(stats.mejorMes.mes))}`
                     : ""}
                 </span>
               </header>

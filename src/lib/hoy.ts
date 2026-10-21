@@ -37,7 +37,7 @@ export type ItemCobrar = {
   dias: number
 }
 
-/** Ventas con saldo por cobrar (sin canceladas ni internas), las más viejas primero. */
+/** Ventas abiertas (pendiente / parcial) con saldo por cobrar, sin internas; las más viejas primero. */
 export function calcularCobrar(
   ventas: VentaConSaldo[],
   internos: Set<string>,
@@ -45,7 +45,9 @@ export function calcularCobrar(
 ): { total: number; cantidad: number; items: ItemCobrar[] } {
   const validas = ventas.filter(
     (v) =>
-      v.estatus !== "cancelada" &&
+      // Solo ventas abiertas: una venta marcada "Pagada" se considera saldada aunque su
+      // cantidad_pagada quede corta (decisión del dueño: 2 ventas históricas se dejan así).
+      (v.estatus === "pendiente" || v.estatus === "pagada_parcial") &&
       Number(v.saldo_pendiente) > 0.009 &&
       !(v.cliente_id && internos.has(v.cliente_id)),
   )

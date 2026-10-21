@@ -126,12 +126,12 @@
  * ───────────────────────────────────────────────────────── */
 :root {
   /* ─── Surfaces (3 niveles de profundidad) ─── */
-  --pc-bg-app: #F6F7F9;             /* Nivel 1 — fondo de la app */
-  --pc-bg-sidebar: #FBFCFD;
+  --pc-bg-app: #F5F7F6;             /* Nivel 1 — fondo de la app */
+  --pc-bg-sidebar: #FCFCFC;
   --pc-bg-card: #FFFFFF;            /* Nivel 2 — cards estándar */
   --pc-bg-elevated: #FFFFFF;        /* Nivel 3 — superficies elevadas */
   --pc-bg-hover: #F3F5F7;
-  --pc-bg-subtle: #F9FAFB;
+  --pc-bg-subtle: #FAFAFA;
   --pc-bg-glass: rgba(255, 255, 255, 0.7);
 
   /* ─── Borders (semitransparentes para menos ruido) ─── */
@@ -223,14 +223,20 @@
   /* ─── Card nivel 2 (estándar) ─── */
   .pc-card {
     background-color: var(--pc-bg-card);
-    border: 1px solid var(--pc-border);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 20px;
     padding: 24px;
-    box-shadow: var(--pc-shadow-card);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     transition: var(--pc-transition);
   }
+  @media (min-width: 768px) {
+    .pc-card {
+      padding: 28px;
+    }
+  }
   .pc-card:hover {
-    box-shadow: var(--pc-shadow-card-hover);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 118, 110, 0.18);
     transform: translateY(-1px);
   }
 
@@ -291,6 +297,122 @@
   .pc-btn-secondary:hover {
     background-color: var(--pc-bg-hover);
     transform: translateY(-1px);
+  }
+
+
+  /* ─── Acción rápida (fila bajo el hero) ─── */
+  .pc-quick-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background-color: var(--pc-bg-card);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--pc-text-secondary);
+    transition: all 150ms var(--pc-ease);
+    white-space: nowrap;
+  }
+  .pc-quick-action:hover {
+    color: var(--pc-text);
+    border-color: rgba(15, 118, 110, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  }
+  .pc-quick-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--pc-accent-glow);
+  }
+  .pc-quick-action svg {
+    color: var(--pc-accent);
+  }
+
+  /* ─── Entrada escalonada de secciones (13) ─── */
+  @keyframes pc-enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .pc-enter {
+    animation: pc-enter 0.5s var(--pc-ease) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pc-enter {
+      animation: none;
+    }
+    .pc-card:hover,
+    .pc-kpi-card:hover,
+    .pc-quick-action:hover,
+    .pc-btn-primary:hover,
+    .pc-btn-secondary:hover {
+      transform: none;
+    }
+  }
+
+  /* ─── iPhone / táctil ─────────────────────────────────────────
+     1) iOS hace ZOOM automático al enfocar un input con font-size < 16px.
+        En pantallas chicas forzamos 16px para que no salte el layout.
+     2) Sin highlight gris al tocar y sin delay de 300ms.
+     3) Barra de acción fija que respeta el home indicator. */
+  @media (max-width: 640px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+  .pc-tap {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  /* Fila táctil: mínimo 44px de alto (Apple HIG) */
+  .pc-touch-row {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pc-safe-bottom {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Stepper de cantidad (− valor +) */
+  .pc-stepper-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-color: var(--pc-bg-hover);
+    color: var(--pc-text);
+    font-weight: 600;
+    transition: all 120ms var(--pc-ease);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .pc-stepper-btn:active {
+    transform: scale(0.92);
+    background-color: #E5E9EC;
+  }
+  .pc-stepper-btn:disabled {
+    opacity: 0.4;
+  }
+
+  /* ─── Indicador "en vivo" (22) ─── */
+  @keyframes pc-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .pc-live-dot {
+    animation: pc-pulse 2s var(--pc-ease) infinite;
   }
 
   /* Foco visible por teclado (no aparece con mouse) — accesibilidad */
@@ -431,24 +553,26 @@
     gap: 2px;
   }
 
-  /* ─── KPI card (refinado — más denso, ~108-120px alto) ─── */
+  /* ─── KPI card (glass estilo Apple — translúcida con blur) ───
+     overflow:hidden además clipea cualquier contenido (p.ej. sparklines)
+     que intente salirse del borde. */
   .pc-kpi-card {
-    background-color: white;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    border-radius: 14px;
-    padding: 14px 16px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    background-color: var(--pc-bg-card);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     transition: var(--pc-transition);
     display: flex;
     flex-direction: column;
     gap: 6px;
     min-height: 108px;
+    overflow: hidden;
   }
   .pc-kpi-card:hover {
     transform: translateY(-1px);
-    box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 6px 16px rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 118, 110, 0.22);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
   }
 }
 
