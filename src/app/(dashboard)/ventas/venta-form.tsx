@@ -390,7 +390,7 @@ export function VentaForm({
                       <label className="flex items-center gap-1 text-xs text-gray-500">
                         <span className="hidden sm:inline">Cant.</span>
                         <input
-                          type="number"
+                          type="number" inputMode="numeric"
                           min={1}
                           step={1}
                           value={l.cantidad}
@@ -406,7 +406,7 @@ export function VentaForm({
                       <label className="flex items-center gap-1 text-xs text-gray-500">
                         <span className="hidden sm:inline">P.U.</span>
                         <input
-                          type="number"
+                          type="number" inputMode="decimal"
                           min={0}
                           step="0.01"
                           value={l.precio}
@@ -750,7 +750,7 @@ function NumberInput({
 }) {
   return (
     <input
-      type="number"
+      type="number" inputMode="decimal"
       min={0}
       step="0.01"
       max={max}

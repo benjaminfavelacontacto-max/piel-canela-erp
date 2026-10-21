@@ -33,7 +33,7 @@ export default function DashboardLayout({
   }, [mobileOpen])
 
   return (
-    <div className="glass-app-bg flex h-screen overflow-hidden">
+    <div className="glass-app-bg flex h-dvh overflow-hidden">
       {/* ─── Hamburger móvil — visible solo en < md ─── */}
       <button
         type="button"

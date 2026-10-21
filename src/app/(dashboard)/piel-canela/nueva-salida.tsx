@@ -218,7 +218,7 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
                   </td>
                   <td className="px-2 py-2 text-center">
                     <input
-                      type="number"
+                      type="number" inputMode="decimal"
                       min={1}
                       value={f.cantidad}
                       onChange={(e) => setCantidad(i, Number(e.target.value))}

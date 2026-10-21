@@ -309,7 +309,7 @@ function EditableMonto({
   if (editing) {
     return (
       <input
-        type="number"
+        type="number" inputMode="decimal"
         step="0.01"
         min="0"
         autoFocus
@@ -411,7 +411,14 @@ function HeaderCell({
  * - 3 íconos: ↗ Ver · ✎ Editar · ⋯ Menu
  * - Menu: Cancelar venta · Eliminar
  */
-function VentaActionsCell({ venta }: { venta: EnrichedVenta }) {
+function VentaActionsCell({
+  venta,
+  compact = false,
+}: {
+  venta: EnrichedVenta
+  /** Tarjeta móvil: solo Editar + menú ⋯ (el detalle se abre tocando la tarjeta) */
+  compact?: boolean
+}) {
   const router = useRouter()
   const [pending, setPending] = useState<string | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
@@ -459,33 +466,35 @@ function VentaActionsCell({ venta }: { venta: EnrichedVenta }) {
   return (
     <>
       <div
-        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100"
+        className="flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-180 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100"
         data-state={menuOpen ? "open" : "closed"}
       >
-        {venta.cotizacion_id && (
+        {!compact && venta.cotizacion_id && (
           <Link
             href={`/cotizaciones/${venta.cotizacion_id}`}
             onClick={(e) => e.stopPropagation()}
-            className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+            className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
             title="Ver cotización origen"
             aria-label="Ver cotización origen"
           >
             <FileText className="size-4" strokeWidth={1.8} />
           </Link>
         )}
+        {!compact && (
         <Link
           href={`/ventas/${venta.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
           title="Ver detalle"
           aria-label="Ver detalle"
         >
           <ExternalLink className="size-4" strokeWidth={1.8} />
         </Link>
+        )}
         <Link
           href={`/ventas/${venta.id}/editar`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
           title="Editar"
           aria-label="Editar"
         >
@@ -498,7 +507,7 @@ function VentaActionsCell({ venta }: { venta: EnrichedVenta }) {
               e.stopPropagation()
               setMenuOpen((o) => !o)
             }}
-            className={`rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
+            className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
             title="Más acciones"
             aria-label="Más acciones"
             aria-expanded={menuOpen}
@@ -587,7 +596,7 @@ function VentaMenuItem({
       role="menuitem"
       onClick={onClick}
       disabled={loading}
-      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
+      className={`flex w-full items-center gap-2 px-3 py-2 pointer-coarse:py-3 text-left text-[13px] font-medium transition-colors ${toneClass} disabled:opacity-50`}
     >
       <span className="text-gray-400">{icon}</span>
       <span className="flex-1">{children}</span>
@@ -1177,7 +1186,7 @@ export function VentasTablePremium({
   return (
     <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF1F4] bg-white px-5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF1F4] bg-white px-4 py-3 md:px-5">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-[#0F766E]" />
           <h2 className="text-sm font-semibold text-gray-900">
@@ -1187,18 +1196,34 @@ export function VentasTablePremium({
             {filteredCount}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex w-full items-center gap-2 md:w-auto">
+          <div className="relative min-w-0 flex-1 md:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
             <input
-              type="text"
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Buscar cliente, número, nota, método…"
-              className="h-8 w-72 rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 placeholder:text-gray-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              type="search"
+              enterKeyHint="search"
+              className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 md:h-8 md:w-72 placeholder:text-gray-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </div>
-          <div className="relative">
+          <select
+            aria-label="Ordenar ventas"
+            value={`${sorting[0]?.id ?? "fecha"}:${sorting[0]?.desc ? "desc" : "asc"}`}
+            onChange={(e) => {
+              const [id, dir] = e.target.value.split(":")
+              setSorting([{ id, desc: dir === "desc" }])
+            }}
+            className="h-11 shrink-0 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none md:hidden"
+          >
+            <option value="fecha:desc">Más recientes</option>
+            <option value="fecha:asc">Más antiguas</option>
+            <option value="total:desc">Mayor monto</option>
+            <option value="total:asc">Menor monto</option>
+            <option value="cliente:asc">Cliente A–Z</option>
+          </select>
+          <div className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setShowColumnMenu((s) => !s)}
@@ -1247,8 +1272,27 @@ export function VentasTablePremium({
         </div>
       </header>
 
-      {/* Table */}
-      <div className="relative max-w-full overflow-auto">
+      {/* Tarjetas (móvil) — misma data/filtros/orden/paginación que la tabla */}
+      <div className="space-y-2.5 bg-[#F9FAFB] p-3 md:hidden">
+        {table.getRowModel().rows.length === 0 ? (
+          <p className="py-10 text-center text-sm text-gray-500">
+            Sin resultados. Prueba quitando filtros.
+          </p>
+        ) : (
+          table
+            .getRowModel()
+            .rows.map((row) => (
+              <VentaCard
+                key={row.id}
+                venta={row.original}
+                onOpen={() => onRowClick?.(row.original)}
+              />
+            ))
+        )}
+      </div>
+
+      {/* Table (escritorio / tablet) */}
+      <div className="relative hidden max-w-full overflow-auto md:block">
         <table
           className="w-full text-sm"
           style={{ width: table.getTotalSize(), minWidth: "100%" }}
@@ -1321,7 +1365,7 @@ export function VentasTablePremium({
       </div>
 
       {/* Pagination */}
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-5 py-3 text-xs">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 text-xs md:px-5">
         <div className="flex items-center gap-2 text-gray-600">
           <span>
             {pageIdx * pageSize + 1}–
@@ -1331,7 +1375,7 @@ export function VentasTablePremium({
           <select
             value={pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none"
+            className="hidden h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none sm:block"
           >
             {[10, 25, 50, 100].map((n) => (
               <option key={n} value={n}>
@@ -1345,7 +1389,7 @@ export function VentasTablePremium({
             type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
           >
             <ChevronLeft className="size-3" />
             Anterior
@@ -1359,7 +1403,7 @@ export function VentasTablePremium({
             type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
           >
             Siguiente
             <ChevronRight className="size-3" />
@@ -1367,6 +1411,73 @@ export function VentasTablePremium({
         </div>
       </footer>
     </section>
+  )
+}
+
+/**
+ * Tarjeta de venta para móvil. Tocar la tarjeta abre el drawer (bottom sheet);
+ * el estatus se cambia con el selector nativo y las acciones quedan visibles.
+ */
+function VentaCard({
+  venta,
+  onOpen,
+}: {
+  venta: EnrichedVenta
+  onOpen: () => void
+}) {
+  const cliente =
+    venta.clientes?.nombre_negocio ?? venta.clientes?.nombre ?? "Sin cliente"
+  const saldo = Number(venta.saldo_pendiente ?? 0)
+  const cancelada = venta.estatus === "cancelada"
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
+      aria-label={`Venta ${venta.numero} de ${cliente}, ${formatMXN2(venta.total)}`}
+      className="group cursor-pointer rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition active:scale-[0.99] active:bg-[#F9FAFB]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold leading-tight text-gray-900">
+            {cliente}
+          </p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="whitespace-nowrap tabular-nums">
+              {fechaFmt.format(new Date(venta.fecha))}
+            </span>
+            <span aria-hidden>·</span>
+            <span className="truncate font-mono text-[11px] text-[#0F766E]">
+              {venta.numero}
+            </span>
+          </p>
+        </div>
+        <p
+          className={`shrink-0 text-base font-bold tabular-nums tracking-tight ${cancelada ? "text-gray-400 line-through" : "text-gray-900"}`}
+        >
+          {formatMXN2(venta.total)}
+        </p>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <StatusCell ventaId={venta.id} estatus={venta.estatus} />
+          {saldo > 0 && !cancelada && venta.estatus !== "pagada_total" && (
+            <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2 py-1 text-[11px] font-semibold tabular-nums text-[#B45309]">
+              Debe {formatMXN2(saldo)}
+            </span>
+          )}
+        </div>
+        <div onClick={(e) => e.stopPropagation()}>
+          <VentaActionsCell venta={venta} compact />
+        </div>
+      </div>
+    </article>
   )
 }
 

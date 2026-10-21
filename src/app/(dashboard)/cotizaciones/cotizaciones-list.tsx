@@ -1493,14 +1493,14 @@ export function CotizacionesList({
                 </label>
                 <div className="flex gap-1">
                   <input
-                    type="number"
+                    type="number" inputMode="decimal"
                     placeholder="min"
                     value={montoMin}
                     onChange={(e) => setMontoMin(e.target.value)}
                     className="h-8 w-1/2 rounded-lg border border-gray-200 bg-white px-2 text-xs tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
                   />
                   <input
-                    type="number"
+                    type="number" inputMode="decimal"
                     placeholder="max"
                     value={montoMax}
                     onChange={(e) => setMontoMax(e.target.value)}

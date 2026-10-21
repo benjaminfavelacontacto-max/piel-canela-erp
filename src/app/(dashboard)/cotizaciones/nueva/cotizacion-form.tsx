@@ -465,7 +465,7 @@ export function CotizacionForm({
 
           <div className="mt-3 flex items-center gap-2">
             <input
-              type="number"
+              type="number" inputMode="numeric"
               min={1}
               step={1}
               value={cantidad}
@@ -498,7 +498,7 @@ export function CotizacionForm({
                     {it.nombre}
                   </span>
                   <input
-                    type="number"
+                    type="number" inputMode="decimal"
                     min={1}
                     value={qtyDrafts[it.producto_id] ?? String(it.cantidad)}
                     onChange={(e) => {
@@ -673,7 +673,7 @@ export function CotizacionForm({
             </div>
             <div className="relative">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 min="0"
                 step={descuentoTipo === "pct" ? "0.1" : "0.01"}
                 value={descuentoValor || ""}
@@ -712,7 +712,7 @@ export function CotizacionForm({
                 $
               </span>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 min="0"
                 step="0.01"
                 value={costoEnvio || ""}

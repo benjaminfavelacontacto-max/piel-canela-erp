@@ -140,7 +140,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <input
-                                  type="number"
+                                  type="number" inputMode="decimal"
                                   min={0}
                                   value={cant}
                                   onChange={(e) =>

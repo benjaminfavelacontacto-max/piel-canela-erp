@@ -123,7 +123,7 @@ export function Pagos({
             </Field>
             <Field label="USDT enviado">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="3731.94"

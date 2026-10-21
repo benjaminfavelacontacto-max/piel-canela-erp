@@ -134,7 +134,7 @@ export function Conversiones({
             </Field>
             <Field label="MXN gastado">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="21871.00"
@@ -145,7 +145,7 @@ export function Conversiones({
             </Field>
             <Field label="USDT recibido">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="1236.38"
@@ -156,7 +156,7 @@ export function Conversiones({
             </Field>
             <Field label="TC (1 USDT)">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.0001"
                 min={0}
                 placeholder="17.60"
@@ -167,7 +167,7 @@ export function Conversiones({
             </Field>
             <Field label="Comisión MXN">
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="109.35"

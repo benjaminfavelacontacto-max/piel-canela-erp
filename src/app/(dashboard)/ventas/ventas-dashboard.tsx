@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { BarChart3, Sparkles } from "lucide-react"
+import { BarChart3, ChevronDown, Plus, Sparkles } from "lucide-react"
 import { VentasTablePremium, type EnrichedVenta } from "./ventas-table-premium"
 import { VentasPorTipo, type TipoData } from "./ventas-por-tipo"
 import { VentaDrawer } from "./venta-drawer"
@@ -142,6 +142,8 @@ export function VentasDashboard({
   const [productoFilter, setProductoFilter] = useState<string>("todos")
   const [ivaFilter, setIvaFilter] = useState<"todos" | "con" | "sin">("todos")
   const [drawerVenta, setDrawerVenta] = useState<EnrichedVenta | null>(null)
+  // Filtros plegables solo en móvil (en md+ siempre visibles)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const stockBySku = useMemo(() => {
     const m = new Map<string, VistaStockRow>()
     for (const s of stock) if (s.sku) m.set(s.sku, s)
@@ -414,7 +416,7 @@ export function VentasDashboard({
   ].filter(Boolean).length
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col gap-4 p-4 pb-28 md:gap-6 md:p-6 md:pb-6">
       <PageHeader
         title="Ventas"
         subtitle={`${ventas.length} ventas · ${clienteOptions.length} clientes`}
@@ -475,7 +477,7 @@ export function VentasDashboard({
             </Link>
             <Link
               href="/ventas/nueva"
-              className="inline-flex h-[42px] items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
+              className="hidden h-[42px] items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59] md:inline-flex"
             >
               + Nueva Venta
             </Link>
@@ -490,7 +492,7 @@ export function VentasDashboard({
       )}
 
       {/* ─── Chart principal + Socios panel (dominante) ─── */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 max-md:order-3 lg:grid-cols-3">
         <div className="pc-card lg:col-span-2">
           <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div>
@@ -745,7 +747,7 @@ export function VentasDashboard({
       </section>
 
       {/* ─── KPIs secundarios — strips compactos neutros ─── */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <section className="grid grid-cols-2 gap-3 max-md:order-3 lg:grid-cols-3 xl:grid-cols-6">
         <InsightCard
           label="ROI Sandra"
           big={`${kpis.sandraROI.toFixed(0)}%`}
@@ -784,9 +786,15 @@ export function VentasDashboard({
       </section>
 
       {/* ─── Filtros globales ─── */}
-      <section className="pc-card-flush">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <div className="flex items-center gap-2">
+      <section className="pc-card-flush max-md:order-1">
+        <div className={`flex items-center justify-between px-4 py-1 md:border-b md:border-gray-100 md:px-5 md:py-3 ${filtersOpen ? "border-b border-gray-100" : ""}`}>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            aria-controls="ventas-filtros"
+            className="flex min-h-11 items-center gap-2 text-left md:pointer-events-none md:min-h-0"
+          >
             <span className="inline-flex size-6 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
               <Sparkles className="size-3.5" />
             </span>
@@ -796,9 +804,13 @@ export function VentasDashboard({
                 {activeFilters} activos
               </span>
             )}
-          </div>
+            <ChevronDown
+              className={`size-4 text-gray-400 transition-transform md:hidden ${filtersOpen ? "rotate-180" : ""}`}
+              aria-hidden
+            />
+          </button>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] tabular-nums text-gray-500">
+            <span className="hidden text-[11px] tabular-nums text-gray-500 sm:inline">
               Mostrando <strong className="text-gray-900">{filtered.length}</strong> de {ventas.length}
             </span>
             {activeFilters > 0 && (
@@ -809,20 +821,23 @@ export function VentasDashboard({
                   setEstatusFilter("todos"); setSocioFilter("todos")
                   setProductoFilter("todos"); setIvaFilter("todos")
                 }}
-                className="text-[11px] font-medium text-[#0F766E] hover:text-[#115E59]"
+                className="inline-flex min-h-11 items-center px-1 text-xs font-medium text-[#0F766E] hover:text-[#115E59] md:min-h-0 md:text-[11px]"
               >
                 Limpiar
               </button>
             )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-3 lg:grid-cols-7">
+        <div
+          id="ventas-filtros"
+          className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-3 md:grid md:px-5 lg:grid-cols-7`}
+        >
           <FilterField label="Desde">
             <input
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </FilterField>
           <FilterField label="Hasta">
@@ -830,14 +845,14 @@ export function VentasDashboard({
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </FilterField>
           <FilterField label="Cliente">
             <select
               value={clienteFilter}
               onChange={(e) => setClienteFilter(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               {clienteOptions.map(([id, nombre]) => (
@@ -851,7 +866,7 @@ export function VentasDashboard({
             <select
               value={productoFilter}
               onChange={(e) => setProductoFilter(e.target.value)}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               {productoOptions.map(([id, nombre]) => (
@@ -867,7 +882,7 @@ export function VentasDashboard({
               onChange={(e) =>
                 setSocioFilter(e.target.value as "todos" | "sandra" | "benjamin" | "ambos")
               }
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               <option value="sandra">Sandra</option>
@@ -881,7 +896,7 @@ export function VentasDashboard({
               onChange={(e) =>
                 setEstatusFilter(e.target.value as "todos" | Estatus)
               }
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               <option value="pagada_total">Pagada</option>
@@ -894,7 +909,7 @@ export function VentasDashboard({
             <select
               value={ivaFilter}
               onChange={(e) => setIvaFilter(e.target.value as "todos" | "con" | "sin")}
-              className="h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todas</option>
               <option value="con">Con IVA</option>
@@ -906,15 +921,29 @@ export function VentasDashboard({
 
       {/* ─── Ventas por Tipo de Producto ─── */}
       {tiposData && tiposData.length > 0 && (
-        <VentasPorTipo data={tiposData} />
+        <div className="max-md:order-3">
+          <VentasPorTipo data={tiposData} />
+        </div>
       )}
 
       {/* ─── Tabla premium ─── */}
-      <VentasTablePremium
-        ventas={filtered}
-        venta_socios={venta_socios}
-        onRowClick={setDrawerVenta}
-      />
+      <div className="max-md:order-2">
+        <VentasTablePremium
+          ventas={filtered}
+          venta_socios={venta_socios}
+          onRowClick={setDrawerVenta}
+        />
+      </div>
+
+      {/* ─── FAB móvil: nueva venta siempre al alcance del pulgar ─── */}
+      <Link
+        href="/ventas/nueva"
+        aria-label="Nueva venta"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
+      >
+        <Plus className="size-5" strokeWidth={2.25} />
+        Nueva venta
+      </Link>
 
       {/* ─── Drawer detalle ─── */}
       <VentaDrawer

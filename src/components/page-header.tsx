@@ -63,7 +63,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const hasFeatured = kpis?.some((k) => k.featured) ?? false
   const kpisGrid = hasFeatured
-    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-5"
+    ? "grid-cols-2 lg:grid-cols-5"
     : kpis && kpis.length > 0
       ? COLS_CLASS[kpis.length] ?? "grid-cols-2 md:grid-cols-4"
       : ""
@@ -195,7 +195,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-baseline gap-1.5">
           <p
-            className={`${featured ? "text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+            className={`${featured ? "text-[26px] sm:text-[34px]" : "text-[26px]"} font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
             style={{
               fontFeatureSettings: '"tnum" 1, "ss01" 1',
               color: accent?.valueColor,
@@ -207,7 +207,10 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
           {kpi.currency && <CurrencyChip code={kpi.currency} />}
         </div>
         {kpi.sparkline && kpi.sparkline.length > 1 && (
-          <Sparkline points={kpi.sparkline} />
+          // En móvil la card es angosta (2 columnas): el número manda, sin sparkline
+          <div className="hidden sm:block">
+            <Sparkline points={kpi.sparkline} />
+          </div>
         )}
       </div>
 

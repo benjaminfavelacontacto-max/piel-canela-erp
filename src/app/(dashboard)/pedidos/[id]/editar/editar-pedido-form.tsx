@@ -219,10 +219,10 @@ export function EditarPedidoForm({
                 </select>
               </Field>
               <Field label="Tipo de cambio (MXN/USD)">
-                <input type="number" step="0.01" className="pc-input" value={tc} onChange={(e) => setTc(Number(e.target.value))} />
+                <input type="number" inputMode="decimal" step="0.01" className="pc-input" value={tc} onChange={(e) => setTc(Number(e.target.value))} />
               </Field>
               <Field label="Envío total (USD)">
-                <input type="number" step="0.01" className="pc-input" value={envioTotal || ""} onChange={(e) => setEnvioTotal(Number(e.target.value))} />
+                <input type="number" inputMode="decimal" step="0.01" className="pc-input" value={envioTotal || ""} onChange={(e) => setEnvioTotal(Number(e.target.value))} />
               </Field>
             </div>
             <Field label="Notas" className="mt-3">
@@ -309,7 +309,7 @@ export function EditarPedidoForm({
                         </td>
                         <td className="px-2 py-2 text-center">
                           <input
-                            type="number"
+                            type="number" inputMode="decimal"
                             min={1}
                             value={it.cantidad}
                             onChange={(e) => setItem(i, "cantidad", Number(e.target.value))}
@@ -318,7 +318,7 @@ export function EditarPedidoForm({
                         </td>
                         <td className="px-2 py-2 text-right">
                           <input
-                            type="number"
+                            type="number" inputMode="decimal"
                             step="0.01"
                             min={0}
                             value={it.precio_usd}
@@ -373,7 +373,7 @@ export function EditarPedidoForm({
             ].map((s) => (
               <Field key={s.label} label={`${s.label} (USD)`} className="mb-2">
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   step="0.01"
                   value={divisionIgual ? s.value.toFixed(2) : s.input}
                   disabled={divisionIgual}

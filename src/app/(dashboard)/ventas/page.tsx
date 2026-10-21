@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
+import { buildProductoImageUrl } from "@/lib/storage-images"
 import { VentasDashboard } from "./ventas-dashboard"
 import type {
   SocioInfo,
@@ -72,9 +73,22 @@ export default async function VentasPage() {
     (ventaSociosRes.data ?? []) as VentaSocioRow[]
   ).filter((vs) => !internalVentaIds.has(vs.venta_id))
   const socios = (sociosRes.data ?? []) as SocioInfo[]
+  // La BD guarda solo el filename de la imagen; el drawer (client) necesita la URL pública completa.
   const venta_items = (
     (ventaItemsRes.data ?? []) as unknown as VentaItemRow[]
-  ).filter((it) => !internalVentaIds.has(it.venta_id))
+  )
+    .filter((it) => !internalVentaIds.has(it.venta_id))
+    .map((it) =>
+      it.productos?.imagen_url
+        ? {
+            ...it,
+            productos: {
+              ...it.productos,
+              imagen_url: buildProductoImageUrl(it.productos.imagen_url),
+            },
+          }
+        : it,
+    )
 
   // ── Datos para "Ventas por Tipo de Producto" ──
   const ventasPorTipoRes = await admin

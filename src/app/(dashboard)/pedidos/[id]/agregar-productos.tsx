@@ -227,7 +227,7 @@ export function AgregarProductosPedido({
                   </td>
                   <td className="px-2 py-2 text-center">
                     <input
-                      type="number"
+                      type="number" inputMode="decimal"
                       min={1}
                       value={f.cantidad}
                       onChange={(e) => setFila(i, "cantidad", Number(e.target.value))}
@@ -236,7 +236,7 @@ export function AgregarProductosPedido({
                   </td>
                   <td className="px-2 py-2 text-right">
                     <input
-                      type="number"
+                      type="number" inputMode="decimal"
                       step="0.01"
                       min={0}
                       value={f.precio_usd}

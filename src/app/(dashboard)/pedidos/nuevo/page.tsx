@@ -338,7 +338,7 @@ export default function NuevoPedidoPage() {
               </Field>
               <Field label="Tipo de cambio (MXN/USD)">
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   step="0.01"
                   className="pc-input"
                   value={tc}
@@ -347,7 +347,7 @@ export default function NuevoPedidoPage() {
               </Field>
               <Field label="Envío total (USD)">
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   step="0.01"
                   className="pc-input"
                   placeholder="0.00"
@@ -478,7 +478,7 @@ export default function NuevoPedidoPage() {
                         </td>
                         <td className="px-1 py-2.5">
                           <input
-                            type="number"
+                            type="number" inputMode="decimal"
                             min={1}
                             value={item.cantidad}
                             onChange={(e) =>
@@ -495,7 +495,7 @@ export default function NuevoPedidoPage() {
                         </td>
                         <td className="px-1 py-2.5">
                           <input
-                            type="number"
+                            type="number" inputMode="decimal"
                             step="0.01"
                             min={0}
                             value={item.precio_usd}
@@ -597,7 +597,7 @@ export default function NuevoPedidoPage() {
             ].map((s) => (
               <Field key={s.label} label={`${s.label} (USD)`} className="mb-2">
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   step="0.01"
                   value={s.value.toFixed(2)}
                   disabled={divisionIgual}

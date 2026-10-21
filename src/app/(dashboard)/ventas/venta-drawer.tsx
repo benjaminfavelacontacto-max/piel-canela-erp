@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   Calendar,
@@ -125,6 +125,11 @@ export function VentaDrawer({
     }
   }, [open])
 
+  // Bottom sheet (móvil): arrastrar el asa hacia abajo para cerrar
+  const [dragY, setDragY] = useState(0)
+  const dragStart = useRef<number | null>(null)
+  const [dragging, setDragging] = useState(false)
+
   // Esc to close
   useEffect(() => {
     if (!open) return
@@ -181,17 +186,46 @@ export function VentaDrawer({
       />
       {/* Panel */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-[560px] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-2xl ease-out md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-[560px] md:rounded-none ${dragging ? "" : "transition-transform duration-300"} ${open ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full md:translate-y-0"}`}
+        style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={`Detalle de venta ${venta.numero}`}
       >
+        {/* Asa de arrastre — solo móvil */}
+        <div
+          className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-t-3xl bg-pink-50 md:hidden"
+          onPointerDown={(e) => {
+            dragStart.current = e.clientY
+            setDragging(true)
+            e.currentTarget.setPointerCapture(e.pointerId)
+          }}
+          onPointerMove={(e) => {
+            if (dragStart.current === null) return
+            setDragY(Math.max(0, e.clientY - dragStart.current))
+          }}
+          onPointerUp={() => {
+            const closeIt = dragY > 90
+            dragStart.current = null
+            setDragging(false)
+            setDragY(0)
+            if (closeIt) onClose()
+          }}
+          onPointerCancel={() => {
+            dragStart.current = null
+            setDragging(false)
+            setDragY(0)
+          }}
+          aria-hidden
+        >
+          <span className="h-1.5 w-10 rounded-full bg-gray-300" />
+        </div>
         {/* Hero / Header */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-6 pb-5 pt-6">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 transition hover:bg-white hover:text-gray-700"
+            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 md:right-4 md:top-4 md:size-8"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -239,14 +273,14 @@ export function VentaDrawer({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link
               href={`/ventas/${venta.id}/editar`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
             >
               <Pencil className="size-3" />
               Editar
             </Link>
             <Link
               href={`/ventas/${venta.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
             >
               <ExternalLink className="size-3" />
               Detalle completo
@@ -594,8 +628,8 @@ export function VentaDrawer({
             </div>
           </Section>
 
-          {/* Footer space */}
-          <div className="h-6" />
+          {/* Footer space (respeta la barra de gestos del iPhone) */}
+          <div className="min-h-6 pc-pb-safe" />
         </div>
       </aside>
     </>

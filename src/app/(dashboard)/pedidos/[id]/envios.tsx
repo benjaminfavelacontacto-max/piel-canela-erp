@@ -134,7 +134,7 @@ export function DesgloseEnvio({
                 Monto USD
               </span>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="1488.50"
@@ -148,7 +148,7 @@ export function DesgloseEnvio({
                 Monto MXN
               </span>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 step="0.01"
                 min={0}
                 placeholder="6170.25"
