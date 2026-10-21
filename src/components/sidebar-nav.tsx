@@ -11,10 +11,12 @@ import {
   TrendingUp,
   ShoppingCart,
   Home,
+  Gauge,
 } from "lucide-react"
 
 const items = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/panorama", label: "Panorama", icon: Gauge },
   { href: "/inventario", label: "Inventario", icon: Package },
   { href: "/cotizaciones", label: "Cotizaciones", icon: FileText },
   { href: "/ventas", label: "Ventas", icon: ShoppingBag },

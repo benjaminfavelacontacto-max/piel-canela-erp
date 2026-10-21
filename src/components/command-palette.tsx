@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import {
   FileText,
   Home,
+  Gauge,
   LayoutDashboard,
   Loader2,
   Package,
@@ -36,6 +37,7 @@ const ACCIONES: Item[] = [
 ]
 const SECCIONES: Item[] = [
   { key: "s-dash", titulo: "Dashboard", href: "/", icon: LayoutDashboard, grupo: "Ir a" },
+  { key: "s-pan", titulo: "Panorama del negocio", href: "/panorama", icon: Gauge, grupo: "Ir a" },
   { key: "s-ven", titulo: "Ventas", href: "/ventas", icon: ShoppingBag, grupo: "Ir a" },
   { key: "s-cot", titulo: "Cotizaciones", href: "/cotizaciones", icon: FileText, grupo: "Ir a" },
   { key: "s-inv", titulo: "Inventario", href: "/inventario", icon: Package, grupo: "Ir a" },

@@ -128,8 +128,10 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   onClick={() => setAbierto(null)}
                 />
                 {/* bg casi opaco: con /85 el texto de la tarjeta de abajo se
-                    transparentaba y la cuenta se volvía ilegible. */}
-                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 rounded-2xl border border-white/70 bg-white/95 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
+                    transparentaba y la cuenta se volvía ilegible.
+                    En móvil las tarjetas van de 2 en 2 (~160px): la ayuda sale
+                    como hoja inferior a lo ancho, sobre la barra de navegación. */}
+                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 max-sm:fixed max-sm:inset-x-3 max-sm:top-auto max-sm:bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] max-sm:max-h-[60dvh] max-sm:overflow-y-auto rounded-2xl border border-white/70 bg-white/95 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
                   <div className="flex items-center gap-2">
                     <span
                       className={`flex size-6 items-center justify-center rounded-lg ${t.chip}`}
