@@ -27,8 +27,10 @@ import {
   Users,
   Wallet,
   X,
+  MessageCircle,
 } from "lucide-react"
 import { SheetHandle, sheetClass, useSheetDrag } from "@/components/sheet-handle"
+import { normalizarTelefonoMx, whatsappUrl } from "@/lib/whatsapp"
 import type {
   CotizacionSummaryRow,
   EnrichedCliente,
@@ -323,6 +325,20 @@ export function ClienteDrawer({
               >
                 <Phone className="size-3" />
                 Llamar
+              </a>
+            )}
+            {normalizarTelefonoMx(cliente.telefono) && (
+              <a
+                href={whatsappUrl(
+                  cliente.telefono,
+                  `Hola ${cliente.nombre_negocio ?? cliente.nombre}, `,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-100 md:min-h-0 md:px-2.5"
+              >
+                <MessageCircle className="size-3" />
+                WhatsApp
               </a>
             )}
             {cliente.email && (

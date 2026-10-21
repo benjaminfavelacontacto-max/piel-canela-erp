@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Columns3,
+  Copy,
   ExternalLink,
   Loader2,
   MoreHorizontal,
@@ -41,11 +42,12 @@ import {
   XCircle,
   Zap,
 } from "lucide-react"
-import { cambiarEstatusCotizacion, eliminarCotizacion } from "./actions"
+import { cambiarEstatusCotizacion, duplicarCotizacion, eliminarCotizacion } from "./actions"
 import dynamic from "next/dynamic"
 import { PageHeader } from "@/components/page-header"
 import { ChartSkeleton, LazyOnView } from "@/components/lazy-on-view"
 import { ListCard, ListCardGroup } from "@/components/list-card"
+import { posicionMenuFlotante } from "@/lib/floating-menu"
 
 // Recharts se descarga solo cuando las gráficas se acercan al viewport
 const CotizacionesCharts = dynamic(
@@ -270,7 +272,22 @@ function StatusCell({
         toast.error(result.error || "No se pudo cambiar")
         return
       }
-      toast.success("Estatus actualizado")
+      toast.success("Estatus actualizado", {
+        duration: 8000,
+        action: {
+          label: "Deshacer",
+          onClick: async () => {
+            const u = await cambiarEstatusCotizacion(cotId, previo)
+            if (u.ok) {
+              setVal(previo)
+              toast.success("Cambio deshecho")
+              router.refresh()
+            } else {
+              toast.error(u.error || "No se pudo deshacer")
+            }
+          },
+        },
+      })
       router.refresh()
     })
   }
@@ -339,7 +356,23 @@ function ActionsCell({
   const [pending, setPending] = useState<string | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState<React.CSSProperties>({})
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+
+  // El menú es `fixed`: se cierra cuando el usuario desplaza la página (rueda / dedo) para no quedar
+  // flotando lejos de su botón. Ojo: NO escuchamos "scroll" (lo disparan scrolls programáticos) ni
+  // "resize" (el teclado móvil lo dispara al cerrarse justo cuando se toca el menú).
+  useEffect(() => {
+    if (!menuOpen) return
+    const cerrar = () => setMenuOpen(false)
+    window.addEventListener("wheel", cerrar, { passive: true })
+    window.addEventListener("touchmove", cerrar, { passive: true })
+    return () => {
+      window.removeEventListener("wheel", cerrar)
+      window.removeEventListener("touchmove", cerrar)
+    }
+  }, [menuOpen])
 
   // Cerrar menú al click fuera
   useEffect(() => {
@@ -361,10 +394,41 @@ function ActionsCell({
       toast.error(result.error || "No se pudo cambiar")
       return
     }
+    const previoEstatus = cot.estatus
     toast.success(
       nuevo === "enviada" ? "Marcada como enviada" : "Marcada como vendida",
+      {
+        duration: 8000,
+        action: {
+          label: "Deshacer",
+          onClick: async () => {
+            const u = await cambiarEstatusCotizacion(cot.id, previoEstatus)
+            if (u.ok) {
+              toast.success("Cambio deshecho")
+              router.refresh()
+            } else {
+              toast.error(u.error || "No se pudo deshacer")
+            }
+          },
+        },
+      },
     )
     router.refresh()
+  }
+
+  async function duplicar() {
+    setPending("duplicar")
+    try {
+      // En éxito la acción redirige al editor de la copia
+      await duplicarCotizacion(cot.id)
+    } catch (e) {
+      // NEXT_REDIRECT lo maneja Next; solo mostramos errores reales
+      if (!(e instanceof Error && e.message.includes("NEXT_REDIRECT"))) {
+        toast.error("No se pudo duplicar la cotización")
+      }
+    } finally {
+      setPending(null)
+    }
   }
 
   async function handleEliminar() {
@@ -412,8 +476,12 @@ function ActionsCell({
         <div className="relative" ref={menuRef}>
           <button
             type="button"
+            ref={menuBtnRef}
             onClick={(e) => {
               e.stopPropagation()
+              if (!menuOpen && menuBtnRef.current) {
+                setMenuPos(posicionMenuFlotante(menuBtnRef.current, 200))
+              }
               setMenuOpen((o) => !o)
             }}
             className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
@@ -427,7 +495,8 @@ function ActionsCell({
           {menuOpen && (
             <div
               role="menu"
-              className={`absolute right-0 z-50 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)] ${compact ? "bottom-full mb-1" : "top-full mt-1"}`}
+              style={menuPos}
+              className="fixed z-50 min-w-[200px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
               onClick={(e) => e.stopPropagation()}
             >
               {canSend && (
@@ -454,9 +523,17 @@ function ActionsCell({
                   Marcar vendida
                 </ActionMenuItem>
               )}
-              {(canSend || canSell) && (
-                <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
-              )}
+              <ActionMenuItem
+                icon={<Copy className="size-3.5" strokeWidth={1.8} />}
+                loading={pending === "duplicar"}
+                onClick={() => {
+                  setMenuOpen(false)
+                  void duplicar()
+                }}
+              >
+                Duplicar
+              </ActionMenuItem>
+              <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
               <ActionMenuItem
                 icon={<Trash2 className="size-3.5" strokeWidth={1.8} />}
                 tone="danger"

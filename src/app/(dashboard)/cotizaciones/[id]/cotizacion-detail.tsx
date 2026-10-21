@@ -11,13 +11,16 @@ import {
   Copy,
   ShoppingBag,
   RotateCcw,
+  MessageCircle,
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { CotizacionData, Estatus } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
 import { SpreadsheetItems } from "@/components/cotizaciones/spreadsheet-items"
-import { downloadCotizacionPdf } from "@/lib/pdf"
+import { cotizacionPdfFile, downloadCotizacionPdf } from "@/lib/pdf"
+import { whatsappUrl } from "@/lib/whatsapp"
+import { formatMXN2 } from "@/lib/utils"
 import {
   marcarVendida,
   duplicarCotizacion,
@@ -123,6 +126,59 @@ export function CotizacionDetail({
     })
   }
 
+  const [compartiendo, setCompartiendo] = useState(false)
+
+  /**
+   * WhatsApp: en celular abre la hoja de compartir con el PDF adjunto (eliges el chat);
+   * en escritorio descarga el PDF y abre el chat del cliente con el mensaje listo.
+   */
+  async function handleWhatsApp() {
+    if (!previewRef.current) return
+    const nombre = preview.cliente?.nombre_negocio ?? preview.cliente?.nombre ?? ""
+    const vigencia = preview.valida_hasta
+      ? ` Vigente hasta el ${new Date(preview.valida_hasta + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long" })}.`
+      : ""
+    const texto = `Hola${nombre ? " " + nombre : ""}, te comparto la cotización ${numero} por ${formatMXN2(preview.total)}.${vigencia} Quedo al pendiente. ¡Gracias! — Piel Canela`
+    setCompartiendo(true)
+    // Si el navegador no puede compartir archivos (escritorio), abrimos la pestaña de WhatsApp YA
+    // —dentro del gesto del usuario— para que el bloqueador de ventanas no la frene tras generar el PDF.
+    const puedeCompartirArchivos =
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({
+        files: [new File(["x"], "x.pdf", { type: "application/pdf" })],
+      })
+    const ventana = puedeCompartirArchivos ? null : window.open("", "_blank")
+    try {
+      const file = await cotizacionPdfFile(previewRef.current, numero)
+      if (puedeCompartirArchivos && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text: texto, title: numero })
+          return
+        } catch (e) {
+          if ((e as Error).name === "AbortError") return // el usuario cerró la hoja
+          // otro error → cae al método de escritorio
+        }
+      }
+      const url = URL.createObjectURL(file)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = file.name
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      const wa = whatsappUrl(preview.cliente?.telefono, texto)
+      if (ventana) ventana.location.href = wa
+      else window.open(wa, "_blank", "noopener")
+      toast.success("PDF descargado", {
+        description: "Adjúntalo en el chat de WhatsApp que se abrió.",
+      })
+    } catch (e) {
+      ventana?.close()
+      toast.error(`No se pudo preparar el PDF: ${(e as Error).message}`)
+    } finally {
+      setCompartiendo(false)
+    }
+  }
+
   async function handlePdf() {
     if (!previewRef.current) return
     try {
@@ -226,6 +282,15 @@ export function CotizacionDetail({
               Duplicar
             </button>
           </form>
+          <button
+            type="button"
+            onClick={handleWhatsApp}
+            disabled={compartiendo}
+            className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+          >
+            <MessageCircle className="size-4" />
+            {compartiendo ? "Preparando…" : "WhatsApp"}
+          </button>
           <button
             type="button"
             onClick={handlePdf}

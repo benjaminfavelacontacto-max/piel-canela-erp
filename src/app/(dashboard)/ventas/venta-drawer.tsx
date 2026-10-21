@@ -1,10 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   Calendar,
+  Copy,
   CircleDollarSign,
   Clock,
   ExternalLink,
@@ -27,6 +29,8 @@ import type {
 } from "./ventas-dashboard"
 import type { EnrichedVenta } from "./ventas-table-premium"
 import { formatMXN2 } from "@/lib/utils"
+import { PagoRapidoDialog } from "./pago-rapido-dialog"
+import { repetirPedidoComoCotizacion } from "../cotizaciones/actions"
 import { SheetHandle, sheetClass, useSheetDrag } from "@/components/sheet-handle"
 
 const SANDRA_ID = "4f21084b-dfe9-45f3-be80-935dc1a5e7a5"
@@ -129,6 +133,8 @@ export function VentaDrawer({
 
   // Bottom sheet (móvil): arrastrar el asa hacia abajo para cerrar
   const sheet = useSheetDrag(onClose)
+  const [pagoOpen, setPagoOpen] = useState(false)
+  const [repitiendo, setRepitiendo] = useState(false)
 
   // Esc to close
   useEffect(() => {
@@ -258,6 +264,30 @@ export function VentaDrawer({
               <ExternalLink className="size-3" />
               Detalle completo
             </Link>
+            {venta.estatus !== "cancelada" && saldo > 0 && (
+              <button
+                type="button"
+                onClick={() => setPagoOpen(true)}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#0F766E] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#115E59] md:min-h-0 md:px-2.5"
+              >
+                <Wallet className="size-3" />
+                Registrar pago
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={repitiendo}
+              onClick={async () => {
+                setRepitiendo(true)
+                const r = await repetirPedidoComoCotizacion(venta.id)
+                setRepitiendo(false)
+                if (r && !r.ok) toast.error(r.error)
+              }}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 md:min-h-0 md:px-2.5"
+            >
+              <Copy className="size-3" />
+              {repitiendo ? "Creando…" : "Repetir pedido"}
+            </button>
             {venta.cotizacion_id && (
               <Link
                 href={`/cotizaciones/${venta.cotizacion_id}`}
@@ -608,6 +638,20 @@ export function VentaDrawer({
           <div className="min-h-6 pc-pb-safe" />
         </div>
       </aside>
+
+      {pagoOpen && (
+        <PagoRapidoDialog
+          venta={{
+            id: venta.id,
+            numero: venta.numero,
+            cliente,
+            total,
+            saldo,
+          }}
+          onClose={() => setPagoOpen(false)}
+          onDone={onClose}
+        />
+      )}
     </>
   )
 }

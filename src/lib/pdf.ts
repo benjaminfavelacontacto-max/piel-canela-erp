@@ -34,13 +34,7 @@ const PDF_RESET_CSS = `
 html, body { background: #ffffff !important; color: #111827 !important; }
 `
 
-export async function downloadCotizacionPdf(
-  element: HTMLElement,
-  numeroOrden: string,
-) {
-  const mod = await import("html2pdf.js")
-  const html2pdf = mod.default ?? mod
-
+function pdfOptions(numeroOrden: string) {
   // El archivo se llama EXACTAMENTE como la cotización (su número), para no
   // tener que renombrarlo. El número ya es filename-safe (PC-DDMMYY-NNN-TIPO-
   // NombreCorto); safeFilenamePart solo actúa como red de seguridad.
@@ -71,6 +65,27 @@ export async function downloadCotizacionPdf(
     pagebreak: { mode: ["css", "legacy"] },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
+  return { opts, filename }
+}
 
+export async function downloadCotizacionPdf(
+  element: HTMLElement,
+  numeroOrden: string,
+) {
+  const mod = await import("html2pdf.js")
+  const html2pdf = mod.default ?? mod
+  const { opts } = pdfOptions(numeroOrden)
   await html2pdf().from(element).set(opts).save()
+}
+
+/** Genera el PDF como archivo (sin descargarlo) — para compartir por WhatsApp. */
+export async function cotizacionPdfFile(
+  element: HTMLElement,
+  numeroOrden: string,
+): Promise<File> {
+  const mod = await import("html2pdf.js")
+  const html2pdf = mod.default ?? mod
+  const { opts, filename } = pdfOptions(numeroOrden)
+  const blob: Blob = await html2pdf().from(element).set(opts).outputPdf("blob")
+  return new File([blob], filename, { type: "application/pdf" })
 }

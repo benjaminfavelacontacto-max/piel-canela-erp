@@ -254,8 +254,11 @@ export async function duplicarCotizacion(id: string) {
     throw new Error(fetchErr?.message ?? "Cotización no encontrada")
   }
 
-  const newNumero = `${orig.numero}-COPIA-${Date.now().toString().slice(-6)}`
   const today = new Date().toISOString().slice(0, 10)
+  // Folio oficial (PC-DDMMYY-NNN-C-Nombre); si no hay cliente, queda el folio original con sufijo
+  const newNumero = orig.cliente_id
+    ? await generarNumeroCotizacion(supabase, orig.cliente_id, today)
+    : `${orig.numero}-COPIA-${Date.now().toString().slice(-6)}`
   const validaHasta = (() => {
     const d = new Date()
     d.setDate(d.getDate() + 30)
@@ -535,4 +538,73 @@ export async function revertirCotizacion(cotizacionId: string) {
     ok: true as const,
     ventaNumero: (venta?.numero as string | undefined) ?? null,
   }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// repetirPedidoComoCotizacion — "Repetir pedido": nueva cotización (borrador)
+// con los mismos productos de una venta. NO toca inventario ni finanzas:
+// el usuario ajusta cantidades/precios y la convierte en venta cuando quiera.
+// ───────────────────────────────────────────────────────────────────
+
+export async function repetirPedidoComoCotizacion(ventaId: string) {
+  const supabase = createAdminClient()
+  const { data: v, error: vErr } = await supabase
+    .from("ventas")
+    .select("cliente_id, iva")
+    .eq("id", ventaId)
+    .single()
+  if (vErr || !v) {
+    return { ok: false as const, error: vErr?.message ?? "Venta no encontrada" }
+  }
+  const { data: items, error: iErr } = await supabase
+    .from("venta_items")
+    .select("producto_id, cantidad, precio_unitario, costo_unitario")
+    .eq("venta_id", ventaId)
+    .order("sort_order", { ascending: true })
+  if (iErr) return { ok: false as const, error: iErr.message }
+  if (!items || items.length === 0) {
+    return {
+      ok: false as const,
+      error: "Esta venta no tiene productos registrados (venta antigua).",
+    }
+  }
+
+  const redondear = (n: number) => Math.round(n * 100) / 100
+  const rows = items.map((it) => {
+    const cantidad = Number(it.cantidad ?? 0)
+    const precio = Number(it.precio_unitario ?? 0)
+    return {
+      producto_id: it.producto_id as string,
+      cantidad,
+      precio_unitario: precio,
+      costo_unitario: Number(it.costo_unitario ?? 0),
+      subtotal: redondear(cantidad * precio),
+    }
+  })
+  const subtotal = redondear(rows.reduce((a, r) => a + r.subtotal, 0))
+  const costoProductos = redondear(
+    rows.reduce((a, r) => a + r.cantidad * r.costo_unitario, 0),
+  )
+  const hoy = new Date().toISOString().slice(0, 10)
+  const vence = new Date()
+  vence.setDate(vence.getDate() + 30)
+
+  const result = await saveCotizacion({
+    numero: "",
+    cliente_id: v.cliente_id as string | null,
+    fecha: hoy,
+    valida_hasta: vence.toISOString().slice(0, 10),
+    moneda: "MXN",
+    subtotal,
+    // IVA referencial: solo si la venta original lo llevaba
+    iva: Number(v.iva ?? 0) > 0 ? redondear(subtotal * 0.16) : 0,
+    descuento: 0,
+    total: 0, // columna GENERATED: saveCotizacion no la inserta
+    costo_productos: costoProductos,
+    costo_envio: 0,
+    notas: null,
+    items: rows,
+  })
+  if (!result.ok) return result
+  redirect(`/cotizaciones/${result.id}/editar`)
 }

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
-import { X } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { NotificationBell } from "@/components/notifications"
 import { LogoutButton } from "@/components/logout-button"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import { CommandPalette, OPEN_PALETTE_EVENT } from "@/components/command-palette"
 
 export default function DashboardLayout({
   children,
@@ -100,6 +101,23 @@ export default function DashboardLayout({
             <X className="size-4" strokeWidth={2} />
           </button>
         </div>
+        {/* Búsqueda global (⌘K) */}
+        <div className="px-3">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileOpen(false)
+              window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))
+            }}
+            className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-[rgba(15,23,42,0.08)] bg-white/70 px-3 text-sm text-gray-500 transition hover:bg-white md:h-9"
+          >
+            <Search className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+            <span className="flex-1 text-left">Buscar…</span>
+            <kbd className="hidden rounded-md border border-gray-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-400 md:inline">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
         </div>
@@ -144,6 +162,7 @@ export default function DashboardLayout({
       </main>
 
       <MobileBottomNav onMore={() => setMobileOpen(true)} />
+      <CommandPalette />
     </div>
   )
 }

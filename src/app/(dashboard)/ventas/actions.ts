@@ -592,7 +592,7 @@ export async function cambiarEstatusVenta(id: string, estatus: string) {
   // "Pagada" queda con cantidad_pagada = 0 y saldo_pendiente (GENERATED) fantasma.
   const { data: actual, error: fetchErr } = await supabase
     .from("ventas")
-    .select("total, cantidad_pagada")
+    .select("total, cantidad_pagada, estatus")
     .eq("id", id)
     .single()
   if (fetchErr || !actual) {
@@ -600,6 +600,8 @@ export async function cambiarEstatusVenta(id: string, estatus: string) {
   }
   const total = Number(actual.total ?? 0)
   const pagado = Number(actual.cantidad_pagada ?? 0)
+  // Estado previo completo → permite "Deshacer" exacto desde la UI (restaurarEstadoVenta)
+  const previo = { estatus: String(actual.estatus), cantidad_pagada: pagado }
 
   const payload: { estatus: string; cantidad_pagada?: number } = { estatus }
   if (estatus === "pagada_total") {
@@ -618,6 +620,80 @@ export async function cambiarEstatusVenta(id: string, estatus: string) {
   revalidatePath("/ventas")
   revalidatePath(`/ventas/${id}`)
   revalidatePath("/")
+  return { ok: true as const, previo }
+}
+
+// ───────────────────────────────────────────────────────────────────
+// registrarPago — abono rápido desde la lista / drawer
+// restaurarEstadoVenta — "Deshacer" exacto de un cambio de estatus o de pago
+// ───────────────────────────────────────────────────────────────────
+
+const redondear2 = (n: number) => Math.round(n * 100) / 100
+
+export async function registrarPago(id: string, monto: number) {
+  if (!Number.isFinite(monto) || monto <= 0) {
+    return { ok: false as const, error: "Captura un monto mayor a 0" }
+  }
+  const supabase = createAdminClient()
+  const { data: v, error: fetchErr } = await supabase
+    .from("ventas")
+    .select("total, cantidad_pagada, estatus")
+    .eq("id", id)
+    .single()
+  if (fetchErr || !v) {
+    return { ok: false as const, error: fetchErr?.message ?? "Venta no encontrada" }
+  }
+  if (v.estatus === "cancelada") {
+    return { ok: false as const, error: "La venta está cancelada" }
+  }
+  const total = Number(v.total ?? 0)
+  const pagado = Number(v.cantidad_pagada ?? 0)
+  if (pagado >= total) {
+    return { ok: false as const, error: "La venta ya está liquidada" }
+  }
+  // No se cobra más que el saldo
+  const nuevo = redondear2(Math.min(total, pagado + monto))
+  const estatus = estatusFor(total, nuevo)
+
+  const { error } = await supabase
+    .from("ventas")
+    .update({ cantidad_pagada: nuevo, estatus })
+    .eq("id", id)
+  if (error) return { ok: false as const, error: error.message }
+
+  revalidatePath("/ventas")
+  revalidatePath(`/ventas/${id}`)
+  revalidatePath("/")
+  revalidatePath("/finanzas")
+  return {
+    ok: true as const,
+    aplicado: redondear2(nuevo - pagado),
+    saldo: redondear2(total - nuevo),
+    previo: { estatus: String(v.estatus), cantidad_pagada: pagado },
+  }
+}
+
+export async function restaurarEstadoVenta(
+  id: string,
+  estatus: string,
+  cantidad_pagada: number,
+) {
+  if (!ESTATUS_VENTA_VALIDOS.includes(estatus as (typeof ESTATUS_VENTA_VALIDOS)[number])) {
+    return { ok: false as const, error: `Estatus inválido: ${estatus}` }
+  }
+  if (!Number.isFinite(cantidad_pagada) || cantidad_pagada < 0) {
+    return { ok: false as const, error: "Monto inválido" }
+  }
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from("ventas")
+    .update({ estatus, cantidad_pagada })
+    .eq("id", id)
+  if (error) return { ok: false as const, error: error.message }
+  revalidatePath("/ventas")
+  revalidatePath(`/ventas/${id}`)
+  revalidatePath("/")
+  revalidatePath("/finanzas")
   return { ok: true as const }
 }
 

@@ -45,7 +45,7 @@ export function ListCard({
         }
       }}
       aria-label={ariaLabel}
-      className="flex cursor-pointer gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition active:scale-[0.99] active:bg-[#F9FAFB]"
+      className="flex cursor-pointer gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors active:bg-[#F9FAFB]"
     >
       {leading}
       <div className="min-w-0 flex-1">

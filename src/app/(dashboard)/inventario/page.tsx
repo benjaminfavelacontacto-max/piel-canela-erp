@@ -198,6 +198,8 @@ export default async function InventarioPage({
 
   return (
     <InventarioView
+      // key: al llegar desde la búsqueda global con ?producto=SKU (ya estando en /inventario) se reabre el drawer
+      key={initialSku ?? "lista"}
       productos={productos}
       categorias={categorias}
       proveedores={proveedores}

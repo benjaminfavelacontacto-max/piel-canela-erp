@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Columns3,
+  Copy,
   ExternalLink,
   FileText,
   Loader2,
@@ -49,8 +50,12 @@ import { parseNotas } from "./notas-util"
 import {
   cambiarEstatusVenta,
   eliminarVenta,
+  restaurarEstadoVenta,
   updateVentaSocio,
 } from "./actions"
+import { PagoRapidoDialog } from "./pago-rapido-dialog"
+import { posicionMenuFlotante } from "@/lib/floating-menu"
+import { repetirPedidoComoCotizacion } from "../cotizaciones/actions"
 import type { Estatus, VentaRow, VentaSocioRow } from "./ventas-dashboard"
 import { formatMXN2 } from "@/lib/utils"
 import { ListCard, ListCardGroup } from "@/components/list-card"
@@ -153,7 +158,27 @@ function StatusCell({
         toast.error(result.error || "No se pudo cambiar")
         return
       }
-      toast.success("Estatus actualizado")
+      const estadoPrevio = result.previo
+      toast.success("Estatus actualizado", {
+        duration: 8000,
+        action: {
+          label: "Deshacer",
+          onClick: async () => {
+            const u = await restaurarEstadoVenta(
+              ventaId,
+              estadoPrevio.estatus,
+              estadoPrevio.cantidad_pagada,
+            )
+            if (u.ok) {
+              setVal(estadoPrevio.estatus as Estatus)
+              toast.success("Cambio deshecho")
+              router.refresh()
+            } else {
+              toast.error(u.error)
+            }
+          },
+        },
+      })
       router.refresh()
     })
   }
@@ -417,7 +442,24 @@ function VentaActionsCell({
   const [pending, setPending] = useState<string | null>(null)
   const [confirmarEliminar, setConfirmarEliminar] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pagoOpen, setPagoOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState<React.CSSProperties>({})
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+
+  // El menú es `fixed`: se cierra cuando el usuario desplaza la página (rueda / dedo) para no quedar
+  // flotando lejos de su botón. Ojo: NO escuchamos "scroll" (lo disparan scrolls programáticos) ni
+  // "resize" (el teclado móvil lo dispara al cerrarse justo cuando se toca el menú).
+  useEffect(() => {
+    if (!menuOpen) return
+    const cerrar = () => setMenuOpen(false)
+    window.addEventListener("wheel", cerrar, { passive: true })
+    window.addEventListener("touchmove", cerrar, { passive: true })
+    return () => {
+      window.removeEventListener("wheel", cerrar)
+      window.removeEventListener("touchmove", cerrar)
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -438,11 +480,42 @@ function VentaActionsCell({
       toast.error(result.error || "No se pudo cambiar")
       return
     }
+    const estadoPrevio = result.previo
     toast.success(
       nuevo === "cancelada" ? "Venta cancelada" : "Estatus actualizado",
+      {
+        duration: 8000,
+        action: {
+          label: "Deshacer",
+          onClick: async () => {
+            const u = await restaurarEstadoVenta(
+              venta.id,
+              estadoPrevio.estatus,
+              estadoPrevio.cantidad_pagada,
+            )
+            if (u.ok) {
+              toast.success("Cambio deshecho")
+              router.refresh()
+            } else {
+              toast.error(u.error)
+            }
+          },
+        },
+      },
     )
     router.refresh()
   }
+
+  async function repetirPedido() {
+    setPending("repetir")
+    const r = await repetirPedidoComoCotizacion(venta.id)
+    // En éxito la acción redirige al editor; si regresa algo, es un error
+    setPending(null)
+    if (r && !r.ok) toast.error(r.error)
+  }
+
+  const saldoPendiente = Number(venta.saldo_pendiente ?? 0)
+  const puedeCobrar = venta.estatus !== "cancelada" && saldoPendiente > 0
 
   async function handleEliminar() {
     setPending("eliminar")
@@ -497,8 +570,12 @@ function VentaActionsCell({
         <div className="relative" ref={menuRef}>
           <button
             type="button"
+            ref={menuBtnRef}
             onClick={(e) => {
               e.stopPropagation()
+              if (!menuOpen && menuBtnRef.current) {
+                setMenuPos(posicionMenuFlotante(menuBtnRef.current, 230))
+              }
               setMenuOpen((o) => !o)
             }}
             className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
@@ -512,9 +589,32 @@ function VentaActionsCell({
           {menuOpen && (
             <div
               role="menu"
-              className={`absolute right-0 z-50 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)] ${compact ? "bottom-full mb-1" : "top-full mt-1"}`}
+              style={menuPos}
+              className="fixed z-50 min-w-[200px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
               onClick={(e) => e.stopPropagation()}
             >
+              {puedeCobrar && (
+                <VentaMenuItem
+                  icon={<Wallet className="size-3.5" strokeWidth={1.8} />}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setPagoOpen(true)
+                  }}
+                >
+                  Registrar pago
+                </VentaMenuItem>
+              )}
+              <VentaMenuItem
+                icon={<Copy className="size-3.5" strokeWidth={1.8} />}
+                loading={pending === "repetir"}
+                onClick={() => {
+                  setMenuOpen(false)
+                  void repetirPedido()
+                }}
+              >
+                Repetir pedido
+              </VentaMenuItem>
+              <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
               {venta.estatus !== "cancelada" && (
                 <VentaMenuItem
                   icon={<XCircle className="size-3.5" strokeWidth={1.8} />}
@@ -554,6 +654,20 @@ function VentaActionsCell({
           )}
         </div>
       </div>
+
+      {pagoOpen && (
+        <PagoRapidoDialog
+          venta={{
+            id: venta.id,
+            numero: venta.numero,
+            cliente:
+              venta.clientes?.nombre_negocio ?? venta.clientes?.nombre ?? "Sin cliente",
+            total: Number(venta.total ?? 0),
+            saldo: saldoPendiente,
+          }}
+          onClose={() => setPagoOpen(false)}
+        />
+      )}
 
       {confirmarEliminar && (
         <ConfirmDeleteVentaModal

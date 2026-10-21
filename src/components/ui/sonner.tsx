@@ -11,6 +11,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // En móvil (≤600px) los avisos quedan POR ENCIMA de la barra inferior de navegación
+      mobileOffset={{ bottom: "calc(var(--pc-nav-h, 0px) + var(--pc-safe-bottom, 0px) + 12px)" }}
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />
