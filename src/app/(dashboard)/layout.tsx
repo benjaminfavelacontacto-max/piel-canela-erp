@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { NotificationBell } from "@/components/notifications"
 import { LogoutButton } from "@/components/logout-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { CommandPalette, OPEN_PALETTE_EVENT } from "@/components/command-palette"
 
@@ -114,6 +115,9 @@ export default function DashboardLayout({
         </div>
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
+        </div>
+        <div className="mx-3 mb-2.5">
+          <ThemeToggle />
         </div>
         {/* Footer glass: avatar + campana */}
         <div

@@ -39,6 +39,48 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Tokens del tema (claro/oscuro): bg-pc-card, text-pc-ink-3, border-pc-line… */
+  --color-pc-app: var(--pc-bg-app);
+  --color-pc-sidebar: var(--pc-bg-sidebar);
+  --color-pc-card: var(--pc-bg-card);
+  --color-pc-raised: var(--pc-bg-elevated);
+  --color-pc-hover: var(--pc-bg-hover);
+  --color-pc-subtle: var(--pc-bg-subtle);
+  --color-pc-tint: var(--pc-tint);
+  --color-pc-line: var(--pc-hair);
+  --color-pc-line-soft: var(--pc-hair-soft);
+  --color-pc-line-strong: var(--pc-hair-strong);
+  --color-pc-ink: var(--pc-text);
+  --color-pc-ink-2: var(--pc-text-body);
+  --color-pc-ink-3: var(--pc-text-secondary);
+  --color-pc-ink-4: var(--pc-text-muted);
+  --color-pc-teal: var(--pc-accent);
+  --color-pc-teal-hover: var(--pc-accent-hover);
+  --color-pc-teal-ink: var(--pc-accent-ink);
+  --color-pc-teal-soft: var(--pc-accent-soft);
+  --color-pc-green: var(--pc-success);
+  --color-pc-green-ink: var(--pc-success-ink);
+  --color-pc-green-soft: var(--pc-success-soft);
+  --color-pc-green-line: var(--pc-success-line);
+  --color-pc-amber: var(--pc-warning);
+  --color-pc-amber-ink: var(--pc-warning-ink);
+  --color-pc-amber-soft: var(--pc-warning-soft);
+  --color-pc-amber-line: var(--pc-warning-line);
+  --color-pc-red: var(--pc-danger);
+  --color-pc-red-ink: var(--pc-danger-ink);
+  --color-pc-red-soft: var(--pc-danger-soft);
+  --color-pc-red-line: var(--pc-danger-line);
+  --color-pc-blue: var(--pc-info);
+  --color-pc-blue-ink: var(--pc-info-ink);
+  --color-pc-blue-soft: var(--pc-info-soft);
+  --color-pc-blue-line: var(--pc-info-line);
+  --color-pc-violet: var(--pc-violet);
+  --color-pc-violet-ink: var(--pc-violet-ink);
+  --color-pc-indigo-ink: var(--pc-indigo-ink);
+  --color-pc-cyan-ink: var(--pc-cyan-ink);
+  --color-pc-pink-ink: var(--pc-pink-ink);
+  --color-pc-purple-ink: var(--pc-purple-ink);
+  --color-pc-gold-ink: var(--pc-gold-ink);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,40 +123,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -180,9 +188,403 @@
     0 4px 12px rgba(15, 23, 42, 0.08),
     0 24px 48px rgba(15, 23, 42, 0.10);
 
+  /* ─── Tema: tokens agregados para soportar modo oscuro ───
+     Claro = valores históricos de la app (sin cambio visual).
+     Oscuro = ver :root.dark más abajo. */
+  color-scheme: light;
+  --pc-text-body: #475569;           /* slate-600: texto de cuerpo */
+  --pc-hair: #E7EAF0;                /* líneas / anillos */
+  --pc-hair-soft: #EEF1F4;
+  --pc-hair-strong: #CBD5E1;
+  --pc-tint: rgba(0, 0, 0, 0.05);    /* hover/relleno translúcido */
+  --pc-card-border: rgba(0, 0, 0, 0.05);
+  --pc-row-hover: rgba(15, 118, 110, 0.03);
+  --pc-body-glow-a: rgba(15, 118, 110, 0.03);
+  --pc-body-glow-b: rgba(148, 163, 184, 0.04);
+  --pc-app-gradient: linear-gradient(135deg, #f0f4f0 0%, #e8f0ea 40%, #eef0f4 100%);
+  /* "ink" = versión de TEXTO del color (más oscura en claro, más clara en oscuro) */
+  --pc-accent-ink: #0F766E;
+  --pc-success-ink: #047857;
+  --pc-success-line: #A7F3D0;
+  --pc-warning-ink: #B45309;
+  --pc-warning-line: #FDE68A;
+  --pc-danger-ink: #B91C1C;
+  --pc-danger-line: #FECACA;
+  --pc-info-ink: #1D4ED8;
+  --pc-info-line: #BFDBFE;
+  --pc-violet: #8B5CF6;
+  --pc-violet-ink: #7C3AED;
+  --pc-indigo-ink: #4F46E5;
+  --pc-cyan-ink: #0E7490;
+  --pc-pink-ink: #BE185D;
+  --pc-purple-ink: #7E22CE;
+  --pc-gold-ink: #A8895F;
+
+  --pc-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.03);
+  --pc-shadow-soft-hover: 0 4px 14px rgba(15, 23, 42, 0.05);
+
   /* ─── Microinteracciones ─── */
   --pc-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --pc-transition: all 180ms var(--pc-ease);
+}
+
+/* ─────────────────────────────────────────────────────────
+ * TEMA OSCURO
+ * Se activa con la clase `dark` en <html> (ver src/lib/theme.ts: preferencia
+ * Claro / Oscuro / Sistema, guardada en localStorage "pc-theme").
+ *
+ * Estrategia:
+ *  1) Tokens --pc-* / shadcn  → superficies, líneas, texto y estados.
+ *  2) Paleta de Tailwind REASIGNADA (gray/slate/…/rose): las ~3,400 clases
+ *     text-gray-600, bg-emerald-50, border-amber-200… cambian solas.
+ *  3) Colores fijos (#hex) migrados a tokens (bg-pc-card, text-pc-ink-3…).
+ * `:root.dark` (0,2,0) gana a `:root` sin importar el orden.
+ * Contraste verificado WCAG AA (texto ≥ 4.5:1) sobre card #14191C.
+ * ───────────────────────────────────────────────────────── */
+:root.dark {
+  color-scheme: dark;
+
+  /* shadcn */
+  --background: #0C1012;
+  --foreground: #E8EEEC;
+  --card: #14191C;
+  --card-foreground: #E8EEEC;
+  --popover: #1A2024;
+  --popover-foreground: #E8EEEC;
+  --primary: #E8EEEC;
+  --primary-foreground: #0C1012;
+  --secondary: #1F2629;
+  --secondary-foreground: #E8EEEC;
+  --muted: #1F2629;
+  --muted-foreground: #9AA8A5;
+  --accent: #1F2629;
+  --accent-foreground: #E8EEEC;
+  --destructive: #F87171;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #5B6B68;
+  --chart-1: #2DD4BF;
+  --chart-2: #82908D;
+  --chart-3: #5B6B68;
+  --chart-4: #3F4A48;
+  --chart-5: #2A3331;
+  --sidebar: #0A0E10;
+  --sidebar-foreground: #E8EEEC;
+  --sidebar-primary: #0F766E;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1F2629;
+  --sidebar-accent-foreground: #E8EEEC;
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+  --sidebar-ring: #5B6B68;
+
+  /* Superficies */
+  --pc-bg-app: #0C1012;
+  --pc-bg-sidebar: #0A0E10;
+  --pc-bg-card: #14191C;
+  --pc-bg-elevated: #1A2024;
+  --pc-bg-hover: #1F2629;
+  --pc-bg-subtle: #181E21;
+  --pc-bg-glass: rgba(20, 25, 28, 0.72);
+  --pc-tint: rgba(255, 255, 255, 0.07);
+  --pc-card-border: rgba(255, 255, 255, 0.07);
+  --pc-row-hover: rgba(45, 212, 191, 0.06);
+  --pc-body-glow-a: rgba(45, 212, 191, 0.045);
+  --pc-body-glow-b: rgba(148, 163, 184, 0.03);
+  --pc-app-gradient: linear-gradient(135deg, #0B0F11 0%, #0D1417 45%, #0C1012 100%);
+
+  /* Líneas (translúcidas: sirven de borde y de relleno) */
+  --pc-border: rgba(255, 255, 255, 0.08);
+  --pc-border-soft: rgba(255, 255, 255, 0.05);
+  --pc-border-strong: rgba(255, 255, 255, 0.14);
+  --pc-hair: rgba(255, 255, 255, 0.09);
+  --pc-hair-soft: rgba(255, 255, 255, 0.06);
+  --pc-hair-strong: rgba(255, 255, 255, 0.18);
+
+  /* Texto */
+  --pc-text: #E8EEEC;
+  --pc-text-body: #C3CCCA;
+  --pc-text-secondary: #9AA8A5;
+  --pc-text-muted: #82908D;
+
+  /* Acento */
+  --pc-accent: #0F766E;
+  --pc-accent-hover: #0E7A71;
+  --pc-accent-ink: #2DD4BF;
+  --pc-accent-soft: rgba(45, 212, 191, 0.13);
+  --pc-accent-glow: rgba(45, 212, 191, 0.22);
+
+  /* Estados */
+  --pc-success: #10B981;
+  --pc-success-ink: #34D399;
+  --pc-success-soft: rgba(16, 185, 129, 0.15);
+  --pc-success-line: rgba(52, 211, 153, 0.30);
+  --pc-warning: #F59E0B;
+  --pc-warning-ink: #FBBF24;
+  --pc-warning-soft: rgba(245, 158, 11, 0.15);
+  --pc-warning-line: rgba(251, 191, 36, 0.30);
+  --pc-danger: #EF4444;
+  --pc-danger-ink: #F87171;
+  --pc-danger-soft: rgba(239, 68, 68, 0.16);
+  --pc-danger-line: rgba(248, 113, 113, 0.30);
+  --pc-info: #3B82F6;
+  --pc-info-ink: #60A5FA;
+  --pc-info-soft: rgba(59, 130, 246, 0.16);
+  --pc-info-line: rgba(96, 165, 250, 0.30);
+  --pc-violet-ink: #A78BFA;
+  --pc-indigo-ink: #A5B4FC;
+  --pc-cyan-ink: #22D3EE;
+  --pc-pink-ink: #F472B6;
+  --pc-purple-ink: #C084FC;
+  --pc-gold-ink: #D4B48C;
+
+  /* Gráficas */
+  --pc-chart-real: #14B8A6;
+  --pc-chart-projection: rgba(45, 212, 191, 0.35);
+  --pc-chart-comparative: #3A4549;
+  --pc-chart-line: #82908D;
+  --pc-chart-grid: rgba(255, 255, 255, 0.07);
+
+  /* Sombras: en oscuro casi no se ven; el borde hace el trabajo */
+  --pc-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --pc-shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.3);
+  --pc-shadow-elevated: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.45);
+  --pc-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.5);
+  --pc-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --pc-shadow-soft-hover: 0 4px 14px rgba(0, 0, 0, 0.45);
+
+  /* Glass */
+  --glass-bg-card: rgba(20, 25, 28, 0.85);
+  --glass-border-card: rgba(255, 255, 255, 0.08);
+
+  /* ── BEGIN GENERATED (node scripts/gen-dark-palette.mjs) ── */
+  /* Neutros: rampa oscura propia */
+  --color-gray-50: #181E21;
+  --color-gray-100: #1E2529;
+  --color-gray-200: #272F34;
+  --color-gray-300: #353F45;
+  --color-gray-400: #82908D;
+  --color-gray-500: #9AA8A5;
+  --color-gray-600: #B4BFBC;
+  --color-gray-700: #C9D1CF;
+  --color-gray-800: #DCE3E1;
+  --color-gray-900: #E8EEEC;
+  --color-gray-950: #F4F7F6;
+  --color-slate-50: #181E21;
+  --color-slate-100: #1E2529;
+  --color-slate-200: #272F34;
+  --color-slate-300: #353F45;
+  --color-slate-400: #82908D;
+  --color-slate-500: #9AA8A5;
+  --color-slate-600: #B4BFBC;
+  --color-slate-700: #C9D1CF;
+  --color-slate-800: #DCE3E1;
+  --color-slate-900: #E8EEEC;
+  --color-slate-950: #F4F7F6;
+  --color-zinc-50: #181E21;
+  --color-zinc-100: #1E2529;
+  --color-zinc-200: #272F34;
+  --color-zinc-300: #353F45;
+  --color-zinc-400: #82908D;
+  --color-zinc-500: #9AA8A5;
+  --color-zinc-600: #B4BFBC;
+  --color-zinc-700: #C9D1CF;
+  --color-zinc-800: #DCE3E1;
+  --color-zinc-900: #E8EEEC;
+  --color-zinc-950: #F4F7F6;
+  --color-neutral-50: #181E21;
+  --color-neutral-100: #1E2529;
+  --color-neutral-200: #272F34;
+  --color-neutral-300: #353F45;
+  --color-neutral-400: #82908D;
+  --color-neutral-500: #9AA8A5;
+  --color-neutral-600: #B4BFBC;
+  --color-neutral-700: #C9D1CF;
+  --color-neutral-800: #DCE3E1;
+  --color-neutral-900: #E8EEEC;
+  --color-neutral-950: #F4F7F6;
+  --color-stone-50: #181E21;
+  --color-stone-100: #1E2529;
+  --color-stone-200: #272F34;
+  --color-stone-300: #353F45;
+  --color-stone-400: #82908D;
+  --color-stone-500: #9AA8A5;
+  --color-stone-600: #B4BFBC;
+  --color-stone-700: #C9D1CF;
+  --color-stone-800: #DCE3E1;
+  --color-stone-900: #E8EEEC;
+  --color-stone-950: #F4F7F6;
+  /* red */
+  --color-red-50: oklch(63.7% 0.237 25.331 / 10%);
+  --color-red-100: oklch(63.7% 0.237 25.331 / 16%);
+  --color-red-200: oklch(70.4% 0.191 22.216 / 30%);
+  --color-red-300: oklch(70.4% 0.191 22.216 / 42%);
+  --color-red-600: oklch(63.7% 0.237 25.331);
+  --color-red-700: oklch(70.4% 0.191 22.216);
+  --color-red-800: oklch(80.8% 0.114 19.571);
+  --color-red-900: oklch(88.5% 0.062 18.334);
+  --color-red-950: oklch(93.6% 0.032 17.717);
+  /* orange */
+  --color-orange-50: oklch(70.5% 0.213 47.604 / 10%);
+  --color-orange-100: oklch(70.5% 0.213 47.604 / 16%);
+  --color-orange-200: oklch(75% 0.183 55.934 / 30%);
+  --color-orange-300: oklch(75% 0.183 55.934 / 42%);
+  --color-orange-600: oklch(70.5% 0.213 47.604);
+  --color-orange-700: oklch(75% 0.183 55.934);
+  --color-orange-800: oklch(83.7% 0.128 66.29);
+  --color-orange-900: oklch(90.1% 0.076 70.697);
+  --color-orange-950: oklch(95.4% 0.038 75.164);
+  /* amber */
+  --color-amber-50: oklch(76.9% 0.188 70.08 / 10%);
+  --color-amber-100: oklch(76.9% 0.188 70.08 / 16%);
+  --color-amber-200: oklch(82.8% 0.189 84.429 / 30%);
+  --color-amber-300: oklch(82.8% 0.189 84.429 / 42%);
+  --color-amber-600: oklch(76.9% 0.188 70.08);
+  --color-amber-700: oklch(82.8% 0.189 84.429);
+  --color-amber-800: oklch(87.9% 0.169 91.605);
+  --color-amber-900: oklch(92.4% 0.12 95.746);
+  --color-amber-950: oklch(96.2% 0.059 95.617);
+  /* yellow */
+  --color-yellow-50: oklch(79.5% 0.184 86.047 / 10%);
+  --color-yellow-100: oklch(79.5% 0.184 86.047 / 16%);
+  --color-yellow-200: oklch(85.2% 0.199 91.936 / 30%);
+  --color-yellow-300: oklch(85.2% 0.199 91.936 / 42%);
+  --color-yellow-600: oklch(79.5% 0.184 86.047);
+  --color-yellow-700: oklch(85.2% 0.199 91.936);
+  --color-yellow-800: oklch(90.5% 0.182 98.111);
+  --color-yellow-900: oklch(94.5% 0.129 101.54);
+  --color-yellow-950: oklch(97.3% 0.071 103.193);
+  /* lime */
+  --color-lime-50: oklch(76.8% 0.233 130.85 / 10%);
+  --color-lime-100: oklch(76.8% 0.233 130.85 / 16%);
+  --color-lime-200: oklch(84.1% 0.238 128.85 / 30%);
+  --color-lime-300: oklch(84.1% 0.238 128.85 / 42%);
+  --color-lime-600: oklch(76.8% 0.233 130.85);
+  --color-lime-700: oklch(84.1% 0.238 128.85);
+  --color-lime-800: oklch(89.7% 0.196 126.665);
+  --color-lime-900: oklch(93.8% 0.127 124.321);
+  --color-lime-950: oklch(96.7% 0.067 122.328);
+  /* green */
+  --color-green-50: oklch(72.3% 0.219 149.579 / 10%);
+  --color-green-100: oklch(72.3% 0.219 149.579 / 16%);
+  --color-green-200: oklch(79.2% 0.209 151.711 / 30%);
+  --color-green-300: oklch(79.2% 0.209 151.711 / 42%);
+  --color-green-600: oklch(72.3% 0.219 149.579);
+  --color-green-700: oklch(79.2% 0.209 151.711);
+  --color-green-800: oklch(87.1% 0.15 154.449);
+  --color-green-900: oklch(92.5% 0.084 155.995);
+  --color-green-950: oklch(96.2% 0.044 156.743);
+  /* emerald */
+  --color-emerald-50: oklch(69.6% 0.17 162.48 / 10%);
+  --color-emerald-100: oklch(69.6% 0.17 162.48 / 16%);
+  --color-emerald-200: oklch(76.5% 0.177 163.223 / 30%);
+  --color-emerald-300: oklch(76.5% 0.177 163.223 / 42%);
+  --color-emerald-600: oklch(69.6% 0.17 162.48);
+  --color-emerald-700: oklch(76.5% 0.177 163.223);
+  --color-emerald-800: oklch(84.5% 0.143 164.978);
+  --color-emerald-900: oklch(90.5% 0.093 164.15);
+  --color-emerald-950: oklch(95% 0.052 163.051);
+  /* teal */
+  --color-teal-50: oklch(70.4% 0.14 182.503 / 10%);
+  --color-teal-100: oklch(70.4% 0.14 182.503 / 16%);
+  --color-teal-200: oklch(77.7% 0.152 181.912 / 30%);
+  --color-teal-300: oklch(77.7% 0.152 181.912 / 42%);
+  --color-teal-600: oklch(70.4% 0.14 182.503);
+  --color-teal-700: oklch(77.7% 0.152 181.912);
+  --color-teal-800: oklch(85.5% 0.138 181.071);
+  --color-teal-900: oklch(91% 0.096 180.426);
+  --color-teal-950: oklch(95.3% 0.051 180.801);
+  /* cyan */
+  --color-cyan-50: oklch(71.5% 0.143 215.221 / 10%);
+  --color-cyan-100: oklch(71.5% 0.143 215.221 / 16%);
+  --color-cyan-200: oklch(78.9% 0.154 211.53 / 30%);
+  --color-cyan-300: oklch(78.9% 0.154 211.53 / 42%);
+  --color-cyan-600: oklch(71.5% 0.143 215.221);
+  --color-cyan-700: oklch(78.9% 0.154 211.53);
+  --color-cyan-800: oklch(86.5% 0.127 207.078);
+  --color-cyan-900: oklch(91.7% 0.08 205.041);
+  --color-cyan-950: oklch(95.6% 0.045 203.388);
+  /* sky */
+  --color-sky-50: oklch(68.5% 0.169 237.323 / 10%);
+  --color-sky-100: oklch(68.5% 0.169 237.323 / 16%);
+  --color-sky-200: oklch(74.6% 0.16 232.661 / 30%);
+  --color-sky-300: oklch(74.6% 0.16 232.661 / 42%);
+  --color-sky-600: oklch(68.5% 0.169 237.323);
+  --color-sky-700: oklch(74.6% 0.16 232.661);
+  --color-sky-800: oklch(82.8% 0.111 230.318);
+  --color-sky-900: oklch(90.1% 0.058 230.902);
+  --color-sky-950: oklch(95.1% 0.026 236.824);
+  /* blue */
+  --color-blue-50: oklch(62.3% 0.214 259.815 / 10%);
+  --color-blue-100: oklch(62.3% 0.214 259.815 / 16%);
+  --color-blue-200: oklch(70.7% 0.165 254.624 / 30%);
+  --color-blue-300: oklch(70.7% 0.165 254.624 / 42%);
+  --color-blue-600: oklch(62.3% 0.214 259.815);
+  --color-blue-700: oklch(70.7% 0.165 254.624);
+  --color-blue-800: oklch(80.9% 0.105 251.813);
+  --color-blue-900: oklch(88.2% 0.059 254.128);
+  --color-blue-950: oklch(93.2% 0.032 255.585);
+  /* indigo */
+  --color-indigo-50: oklch(58.5% 0.233 277.117 / 10%);
+  --color-indigo-100: oklch(58.5% 0.233 277.117 / 16%);
+  --color-indigo-200: oklch(67.3% 0.182 276.935 / 30%);
+  --color-indigo-300: oklch(67.3% 0.182 276.935 / 42%);
+  --color-indigo-600: oklch(58.5% 0.233 277.117);
+  --color-indigo-700: oklch(67.3% 0.182 276.935);
+  --color-indigo-800: oklch(78.5% 0.115 274.713);
+  --color-indigo-900: oklch(87% 0.065 274.039);
+  --color-indigo-950: oklch(93% 0.034 272.788);
+  /* violet */
+  --color-violet-50: oklch(60.6% 0.25 292.717 / 10%);
+  --color-violet-100: oklch(60.6% 0.25 292.717 / 16%);
+  --color-violet-200: oklch(70.2% 0.183 293.541 / 30%);
+  --color-violet-300: oklch(70.2% 0.183 293.541 / 42%);
+  --color-violet-600: oklch(60.6% 0.25 292.717);
+  --color-violet-700: oklch(70.2% 0.183 293.541);
+  --color-violet-800: oklch(81.1% 0.111 293.571);
+  --color-violet-900: oklch(89.4% 0.057 293.283);
+  --color-violet-950: oklch(94.3% 0.029 294.588);
+  /* purple */
+  --color-purple-50: oklch(62.7% 0.265 303.9 / 10%);
+  --color-purple-100: oklch(62.7% 0.265 303.9 / 16%);
+  --color-purple-200: oklch(71.4% 0.203 305.504 / 30%);
+  --color-purple-300: oklch(71.4% 0.203 305.504 / 42%);
+  --color-purple-600: oklch(62.7% 0.265 303.9);
+  --color-purple-700: oklch(71.4% 0.203 305.504);
+  --color-purple-800: oklch(82.7% 0.119 306.383);
+  --color-purple-900: oklch(90.2% 0.063 306.703);
+  --color-purple-950: oklch(94.6% 0.033 307.174);
+  /* fuchsia */
+  --color-fuchsia-50: oklch(66.7% 0.295 322.15 / 10%);
+  --color-fuchsia-100: oklch(66.7% 0.295 322.15 / 16%);
+  --color-fuchsia-200: oklch(74% 0.238 322.16 / 30%);
+  --color-fuchsia-300: oklch(74% 0.238 322.16 / 42%);
+  --color-fuchsia-600: oklch(66.7% 0.295 322.15);
+  --color-fuchsia-700: oklch(74% 0.238 322.16);
+  --color-fuchsia-800: oklch(83.3% 0.145 321.434);
+  --color-fuchsia-900: oklch(90.3% 0.076 319.62);
+  --color-fuchsia-950: oklch(95.2% 0.037 318.852);
+  /* pink */
+  --color-pink-50: oklch(65.6% 0.241 354.308 / 10%);
+  --color-pink-100: oklch(65.6% 0.241 354.308 / 16%);
+  --color-pink-200: oklch(71.8% 0.202 349.761 / 30%);
+  --color-pink-300: oklch(71.8% 0.202 349.761 / 42%);
+  --color-pink-600: oklch(65.6% 0.241 354.308);
+  --color-pink-700: oklch(71.8% 0.202 349.761);
+  --color-pink-800: oklch(82.3% 0.12 346.018);
+  --color-pink-900: oklch(89.9% 0.061 343.231);
+  --color-pink-950: oklch(94.8% 0.028 342.258);
+  /* rose */
+  --color-rose-50: oklch(64.5% 0.246 16.439 / 10%);
+  --color-rose-100: oklch(64.5% 0.246 16.439 / 16%);
+  --color-rose-200: oklch(71.2% 0.194 13.428 / 30%);
+  --color-rose-300: oklch(71.2% 0.194 13.428 / 42%);
+  --color-rose-600: oklch(64.5% 0.246 16.439);
+  --color-rose-700: oklch(71.2% 0.194 13.428);
+  --color-rose-800: oklch(81% 0.117 11.638);
+  --color-rose-900: oklch(89.2% 0.058 10.001);
+  --color-rose-950: oklch(94.1% 0.03 12.58);
+
+  /* ── END GENERATED ── */
 }
 
 @layer base {
@@ -194,12 +596,12 @@
     background-color: var(--pc-bg-app);
     background-image: radial-gradient(
         circle at top left,
-        rgba(15, 118, 110, 0.03),
+        var(--pc-body-glow-a),
         transparent 30%
       ),
       radial-gradient(
         circle at bottom right,
-        rgba(148, 163, 184, 0.04),
+        var(--pc-body-glow-b),
         transparent 40%
       );
     background-attachment: fixed;
@@ -223,10 +625,10 @@
   /* ─── Card nivel 2 (estándar) ─── */
   .pc-card {
     background-color: var(--pc-bg-card);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--pc-card-border);
     border-radius: 20px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--pc-shadow-soft);
     transition: var(--pc-transition);
   }
   @media (min-width: 768px) {
@@ -235,7 +637,7 @@
     }
   }
   .pc-card:hover {
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    box-shadow: var(--pc-shadow-soft-hover);
     border-color: rgba(15, 118, 110, 0.18);
     transform: translateY(-1px);
   }
@@ -281,7 +683,7 @@
 
   /* ─── Botón secundario ─── */
   .pc-btn-secondary {
-    background-color: white;
+    background-color: var(--pc-bg-card);
     border: 1px solid var(--pc-border);
     color: var(--pc-text);
     border-radius: 14px;
@@ -309,8 +711,8 @@
     padding: 0 14px;
     border-radius: 12px;
     background-color: var(--pc-bg-card);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--pc-card-border);
+    box-shadow: var(--pc-shadow-soft);
     font-size: 13px;
     font-weight: 500;
     color: var(--pc-text-secondary);
@@ -321,14 +723,14 @@
     color: var(--pc-text);
     border-color: rgba(15, 118, 110, 0.25);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    box-shadow: var(--pc-shadow-soft-hover);
   }
   .pc-quick-action:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px var(--pc-accent-glow);
   }
   .pc-quick-action svg {
-    color: var(--pc-accent);
+    color: var(--pc-accent-ink);
   }
 
   /* ─── Entrada escalonada de secciones (13) ─── */
@@ -400,7 +802,7 @@
   }
   .pc-stepper-btn:active {
     transform: scale(0.92);
-    background-color: #E5E9EC;
+    background-color: var(--pc-hair-strong);
   }
   .pc-stepper-btn:disabled {
     opacity: 0.4;
@@ -424,7 +826,7 @@
 
   /* ─── Input premium (sólido) ─── */
   .pc-input {
-    background-color: white;
+    background-color: var(--pc-bg-card);
     border: 1px solid var(--pc-border);
     border-radius: 14px;
     height: 42px;
@@ -458,7 +860,7 @@
     outline: none;
     border-color: var(--pc-accent);
     box-shadow: 0 0 0 4px var(--pc-accent-glow);
-    background-color: white;
+    background-color: var(--pc-bg-card);
   }
 
   /* ─── Label estilo enterprise ─── */
@@ -495,7 +897,7 @@
     height: 72px;
   }
   .pc-table tbody tr:hover {
-    background-color: rgba(15, 118, 110, 0.03);
+    background-color: var(--pc-row-hover);
   }
   .pc-table tbody td {
     padding: 0 18px;
@@ -509,15 +911,15 @@
     border: 1px solid rgba(15, 118, 110, 0.08);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    color: var(--pc-accent);
+    color: var(--pc-accent-ink);
   }
 
   /* ─── Botón secundario glass (premium silencioso) ─── */
   .pc-btn-glass {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: var(--pc-bg-glass);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border: 1px solid var(--pc-border);
     color: var(--pc-text);
     border-radius: 14px;
     height: 42px;
@@ -530,7 +932,7 @@
     gap: 8px;
   }
   .pc-btn-glass:hover {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--pc-bg-card);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
   }
@@ -558,10 +960,10 @@
      que intente salirse del borde. */
   .pc-kpi-card {
     background-color: var(--pc-bg-card);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--pc-card-border);
     border-radius: 16px;
     padding: 16px 18px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--pc-shadow-soft);
     transition: var(--pc-transition);
     display: flex;
     flex-direction: column;
@@ -572,7 +974,7 @@
   .pc-kpi-card:hover {
     transform: translateY(-1px);
     border-color: rgba(15, 118, 110, 0.22);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    box-shadow: var(--pc-shadow-soft-hover);
   }
 }
 
@@ -617,7 +1019,7 @@
 /* Gradiente atmosférico del dashboard — aplicar con className="glass-app-bg"
    en el wrapper del layout (NO en body, para no afectar /order). */
 .glass-app-bg {
-  background: linear-gradient(135deg, #f0f4f0 0%, #e8f0ea 40%, #eef0f4 100%);
+  background: var(--pc-app-gradient);
 }
 
 .glass-card {
@@ -637,6 +1039,21 @@
     0 16px 48px rgba(0, 0, 0, 0.1),
     0 1px 0 rgba(255, 255, 255, 0.9) inset;
   transform: translateY(-1px);
+}
+
+/* Oscuro: cristal sobre fondo oscuro = tarjeta translúcida con borde claro */
+:root.dark .glass-card {
+  background: rgba(20, 25, 28, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+:root.dark .glass-card:hover {
+  background: rgba(26, 32, 36, 0.9);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
 .glass-dark {

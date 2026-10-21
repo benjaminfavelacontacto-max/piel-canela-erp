@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeSync } from "@/components/theme-sync"
+import { themeInitScript } from "@/lib/theme"
 import "./globals.css"
 
 const inter = Inter({
@@ -40,13 +42,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
+    // suppressHydrationWarning: el script de <head> agrega la clase `dark` antes de hidratar.
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${inter.variable} h-full overflow-x-hidden antialiased`}
     >
+      <head>
+        {/* Aplica el tema ANTES de pintar (sin destello blanco en oscuro) */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col overflow-x-hidden">
         {children}
         <Toaster />
+        <ThemeSync />
       </body>
     </html>
   )

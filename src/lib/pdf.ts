@@ -65,6 +65,8 @@ function pdfOptions(numeroOrden: string) {
       width: 816,
       windowWidth: 816,
       onclone: (doc: Document) => {
+        // El PDF es una hoja blanca: sin tema oscuro en el documento clonado.
+        doc.documentElement.classList.remove("dark")
         const style = doc.createElement("style")
         style.textContent = PDF_RESET_CSS
         doc.head.appendChild(style)
