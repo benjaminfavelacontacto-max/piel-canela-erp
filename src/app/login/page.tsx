@@ -75,7 +75,7 @@ export default function LoginPage() {
                 border: "1px solid rgba(255,255,255,0.12)",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.border = "1px solid #8B5CF6"
+                e.currentTarget.style.border = "1px solid var(--pc-violet)"
                 e.currentTarget.style.boxShadow =
                   "0 0 0 3px rgba(139,92,246,0.18)"
               }}
@@ -104,14 +104,14 @@ export default function LoginPage() {
             disabled={pending}
             className="mt-1 w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition-all disabled:opacity-60"
             style={{
-              background: "#8B5CF6",
+              background: "var(--pc-violet)",
               boxShadow: "0 6px 18px rgba(139,92,246,0.35)",
             }}
             onMouseEnter={(e) => {
-              if (!pending) e.currentTarget.style.background = "#7C3AED"
+              if (!pending) e.currentTarget.style.background = "var(--pc-violet)"
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#8B5CF6"
+              e.currentTarget.style.background = "var(--pc-violet)"
             }}
           >
             {pending ? "Entrando…" : "Entrar"}

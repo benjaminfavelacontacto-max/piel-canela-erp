@@ -10,8 +10,8 @@ export default function OrderLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-[#F6F7F9]">
-      <header className="sticky top-0 z-50 border-b border-[rgba(15,23,42,0.06)] bg-white/85 backdrop-blur-md">
+    <div className="min-h-screen bg-pc-subtle">
+      <header className="sticky top-0 z-50 border-b border-pc-line bg-pc-card/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

@@ -14,8 +14,8 @@ const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
 // Paleta enterprise: emerald accent + slate neutral. Diferencia por nombre, no por color saturado.
 const SOCIO_COLOR: Record<string, string> = {
-  Sandra: "#94A3B8",
-  Benjamin: "#0F766E",
+  Sandra: "var(--pc-text-muted)",
+  Benjamin: "var(--pc-accent)",
 }
 
 const fechaFmt = new Intl.DateTimeFormat("es-MX", {
@@ -443,7 +443,7 @@ export default async function FinanzasPage() {
       {/* ─── A. Tarjetas socios ─── */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {kpisPorSocio.map((k) => {
-          const color = SOCIO_COLOR[k.socio.nombre] ?? "#6b7280"
+          const color = SOCIO_COLOR[k.socio.nombre] ?? "var(--pc-text-secondary)"
           const initial = k.socio.nombre[0]?.toUpperCase() ?? "?"
           return (
             <div
@@ -538,7 +538,7 @@ export default async function FinanzasPage() {
                 <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                   <span
                     className="size-2.5 rounded-full"
-                    style={{ background: SOCIO_COLOR[socio.nombre] ?? "#6b7280" }}
+                    style={{ background: SOCIO_COLOR[socio.nombre] ?? "var(--pc-text-secondary)" }}
                   />
                   {socio.nombre}
                 </span>
@@ -657,7 +657,7 @@ export default async function FinanzasPage() {
               <div className="overflow-x-auto border-t border-gray-100">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+                    <tr className="border-b border-pc-line-soft bg-pc-subtle">
                       <Th>Venta</Th>
                       <Th>Fecha</Th>
                       <Th align="right">Piezas</Th>
@@ -668,7 +668,7 @@ export default async function FinanzasPage() {
                   <tbody className="divide-y divide-gray-100">
                     {regalosPorVenta.map((r) => (
                       <tr key={r.ventaId} className="hover:bg-gray-50">
-                        <td className="px-5 py-2 font-mono text-xs text-[#0F766E]">
+                        <td className="px-5 py-2 font-mono text-xs text-pc-teal-ink">
                           {r.numero}
                         </td>
                         <td className="px-5 py-2 text-xs text-gray-600">
@@ -747,7 +747,7 @@ export default async function FinanzasPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+              <tr className="border-b border-pc-line-soft bg-pc-subtle">
                 <Th>Venta</Th>
                 <Th>Fecha</Th>
                 <Th align="right">Total</Th>
@@ -769,7 +769,7 @@ export default async function FinanzasPage() {
               ) : (
                 ventasFilas.map(({ venta, sandra, benjamin }) => (
                   <tr key={venta.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-2 font-mono text-xs text-[#0F766E]">
+                    <td className="px-5 py-2 font-mono text-xs text-pc-teal-ink">
                       {venta.numero}
                     </td>
                     <td className="px-5 py-2 text-gray-600 text-xs">
@@ -778,7 +778,7 @@ export default async function FinanzasPage() {
                     <td className="px-5 py-2 text-right tabular-nums font-semibold">
                       {formatMXN2(Number(venta.total ?? 0))}
                     </td>
-                    <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
+                    <td className="px-5 py-2 text-right tabular-nums text-pc-teal-ink">
                       {sandra > 0 ? formatMXN2(sandra) : "—"}
                     </td>
                     <td className="px-5 py-2 text-right tabular-nums text-teal-700">
@@ -803,7 +803,7 @@ export default async function FinanzasPage() {
                   <td className="px-5 py-2 text-right tabular-nums">
                     {formatMXN2(totalAsignado)}
                   </td>
-                  <td className="px-5 py-2 text-right tabular-nums text-[#0F766E]">
+                  <td className="px-5 py-2 text-right tabular-nums text-pc-teal-ink">
                     {formatMXN2(totalSandra)}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums text-teal-700">

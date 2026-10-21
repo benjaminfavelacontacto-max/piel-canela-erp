@@ -19,23 +19,23 @@ export default function ProductSalesChart({
   return (
         <ResponsiveContainer width="100%" height={140}>
           <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <CartesianGrid stroke="#EEF1F4" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="var(--pc-hair-soft)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: "#9CA3AF", fontSize: 10 }}
+              tick={{ fill: "var(--pc-text-muted)", fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#9CA3AF", fontSize: 10 }}
+              tick={{ fill: "var(--pc-text-muted)", fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               allowDecimals={false}
             />
             <Tooltip
-              cursor={{ fill: "#f3f4f6" }}
+              cursor={{ fill: "var(--pc-bg-hover)" }}
               contentStyle={{
-                border: "1px solid #e5e7eb",
+                border: "1px solid var(--pc-hair)",
                 borderRadius: 8,
                 fontSize: 11,
               }}
@@ -47,7 +47,7 @@ export default function ProductSalesChart({
             />
             <Bar
               dataKey="cantidad"
-              fill="#0F766E"
+              fill="var(--pc-chart-real)"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

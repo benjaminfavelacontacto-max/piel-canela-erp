@@ -90,9 +90,9 @@ export default async function ConfirmarPedidoPage({
   return (
     <div className="mx-auto max-w-3xl p-8 space-y-4">
       {/* Header */}
-      <div className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="mb-1 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-[#DFF7F4] text-[#0F766E]">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-pc-teal-soft text-pc-teal-ink">
             <ShoppingCart className="size-5" />
           </div>
           <div>
@@ -107,7 +107,7 @@ export default async function ConfirmarPedidoPage({
       </div>
 
       {/* Datos del cliente */}
-      <div className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
           <User className="size-4 text-gray-400" />
           Datos del cliente
@@ -133,7 +133,7 @@ export default async function ConfirmarPedidoPage({
             <p className="text-[10px] uppercase tracking-wider text-gray-400">
               Teléfono
             </p>
-            <p className="mt-0.5 font-medium text-[#0F766E]">
+            <p className="mt-0.5 font-medium text-pc-teal-ink">
               {cliente?.telefono || "—"}
             </p>
           </div>
@@ -169,7 +169,7 @@ export default async function ConfirmarPedidoPage({
       </div>
 
       {/* Productos */}
-      <div className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
           <Package className="size-4 text-gray-400" />
           Productos solicitados
@@ -185,9 +185,9 @@ export default async function ConfirmarPedidoPage({
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-3 border-b border-[rgba(15,23,42,0.04)] py-2.5 last:border-0"
+                className="flex items-center gap-3 border-b border-pc-line-soft py-2.5 last:border-0"
               >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#F9FAFB] text-[10px] font-bold text-gray-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-pc-subtle text-[10px] font-bold text-gray-400">
                   {item.productos?.sku?.slice(0, 2) ?? "?"}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -208,7 +208,7 @@ export default async function ConfirmarPedidoPage({
                   </p>
                 </div>
                 <div className="w-24 text-right">
-                  <p className="text-sm font-bold tabular-nums text-[#0F766E]">
+                  <p className="text-sm font-bold tabular-nums text-pc-teal-ink">
                     {formatMXN(linea)}
                   </p>
                 </div>
@@ -217,9 +217,9 @@ export default async function ConfirmarPedidoPage({
           })
         )}
 
-        <div className="mt-4 flex items-center justify-between border-t border-[rgba(15,23,42,0.06)] pt-3">
+        <div className="mt-4 flex items-center justify-between border-t border-pc-line pt-3">
           <p className="font-semibold text-gray-900">Total solicitado</p>
-          <p className="text-xl font-bold tabular-nums text-[#0F766E]">
+          <p className="text-xl font-bold tabular-nums text-pc-teal-ink">
             {formatMXN(Number(cot.subtotal ?? 0))}
           </p>
         </div>
@@ -233,14 +233,14 @@ export default async function ConfirmarPedidoPage({
       <div className="flex gap-3">
         <Link
           href={`/cotizaciones/${id}/editar`}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#0F766E] bg-white py-3 text-sm font-semibold text-[#0F766E] transition-all hover:-translate-y-0.5 hover:bg-[#DFF7F4]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-pc-teal bg-pc-card py-3 text-sm font-semibold text-pc-teal-ink transition-all hover:-translate-y-0.5 hover:bg-pc-teal-soft"
         >
           <Pencil className="size-4" />
           Editar antes de enviar
         </Link>
         <Link
           href={`/cotizaciones/${id}`}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#0F766E] py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-pc-teal py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover"
         >
           Ver cotización completa
           <ArrowRight className="size-4" />
@@ -252,7 +252,7 @@ export default async function ConfirmarPedidoPage({
           href={wpUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-emerald-600"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[oklch(59.6%_0.145_163.225)]"
         >
           <MessageSquare className="size-4" />
           Contactar por WhatsApp ahora

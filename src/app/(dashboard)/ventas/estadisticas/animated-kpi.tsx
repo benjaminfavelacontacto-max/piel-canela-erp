@@ -43,7 +43,7 @@ export function AnimatedKpi({
   }, [value])
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg">
+    <div className="rounded-xl border border-gray-200 bg-pc-card p-5 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
           {label}
@@ -72,7 +72,7 @@ export function StaticKpi({
   tone: string
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg">
+    <div className="rounded-xl border border-gray-200 bg-pc-card p-5 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lg">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
           {label}

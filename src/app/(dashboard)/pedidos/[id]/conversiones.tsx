@@ -97,7 +97,7 @@ export function Conversiones({
   }
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-gray-100 bg-pc-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-gray-900">
@@ -115,7 +115,7 @@ export function Conversiones({
             setAbierto((v) => !v)
             setError(null)
           }}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
         >
           {abierto ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
           {abierto ? "Cancelar" : "Agregar conversión"}
@@ -187,7 +187,7 @@ export function Conversiones({
               type="button"
               onClick={guardar}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[oklch(51.1%_0.262_276.966)] px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[oklch(45.7%_0.24_277.023)] disabled:opacity-50"
             >
               {pending ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -315,10 +315,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const TONES = {
-  amber: { bg: "rgba(217,119,6,0.06)", border: "rgba(217,119,6,0.16)", text: "#B45309" },
-  emerald: { bg: "rgba(5,150,105,0.06)", border: "rgba(5,150,105,0.16)", text: "#047857" },
-  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.16)", text: "#B91C1C" },
-  indigo: { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.20)", text: "#4F46E5" },
+  amber: { bg: "rgba(217,119,6,0.06)", border: "rgba(217,119,6,0.16)", text: "var(--pc-warning-ink)" },
+  emerald: { bg: "rgba(5,150,105,0.06)", border: "rgba(5,150,105,0.16)", text: "var(--pc-success-ink)" },
+  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.16)", text: "var(--pc-danger-ink)" },
+  indigo: { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.20)", text: "var(--pc-indigo-ink)" },
 }
 
 function Summary({
@@ -337,7 +337,7 @@ function Summary({
   const t = TONES[tone]
   return (
     <div
-      className="rounded-xl border bg-white p-3"
+      className="rounded-xl border bg-pc-card p-3"
       style={{ borderColor: t.border, background: strong ? t.bg : undefined }}
     >
       <p

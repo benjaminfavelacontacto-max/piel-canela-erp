@@ -96,9 +96,9 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
           }
         }}
         placeholder="Buscar…"
-        className="h-10 w-full rounded-xl border border-black/5 bg-white pl-9 pr-12 text-sm text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-150 placeholder:text-gray-400 hover:border-black/10 focus:border-[#0F766E]/40 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/15"
+        className="h-10 w-full rounded-xl border border-pc-line-soft bg-pc-card pl-9 pr-12 text-sm text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-150 placeholder:text-gray-400 hover:border-pc-line focus:border-pc-teal/40 focus:outline-none focus:ring-2 focus:ring-pc-teal/15"
       />
-      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-black/5 bg-[#FAFAFA] px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-400 sm:block">
+      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-pc-line-soft bg-pc-subtle px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-400 sm:block">
         ⌘K
       </kbd>
 
@@ -106,7 +106,7 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
         <>
           <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
           {/* Popover glass — único lugar del buscador con blur */}
-          <ul className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-2xl border border-white/70 bg-white/85 py-1.5 shadow-[0_24px_48px_rgba(15,23,42,0.16)] backdrop-blur-2xl backdrop-saturate-150">
+          <ul className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-2xl border border-pc-card/70 bg-pc-card/85 py-1.5 shadow-[0_24px_48px_rgba(15,23,42,0.16)] backdrop-blur-2xl backdrop-saturate-150">
             {results.map((r, i) => {
               const M = TIPO_META[r.tipo]
               const Icon = M.icon
@@ -117,10 +117,10 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
                     onClick={() => go(r)}
                     onMouseEnter={() => setSel(i)}
                     className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors duration-100 ${
-                      i === sel ? "bg-[#0F766E]/[0.07]" : ""
+                      i === sel ? "bg-pc-teal/[0.07]" : ""
                     }`}
                   >
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#F5F7F6] text-gray-500">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-pc-app text-gray-500">
                       <Icon className="size-3.5" />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -133,7 +133,7 @@ export function GlobalSearch({ items }: { items: SearchItem[] }) {
                         </span>
                       )}
                     </span>
-                    <span className="shrink-0 rounded-md bg-[#FAFAFA] px-1.5 py-0.5 text-[10px] font-medium text-gray-400 ring-1 ring-black/5">
+                    <span className="shrink-0 rounded-md bg-pc-subtle px-1.5 py-0.5 text-[10px] font-medium text-gray-400 ring-1 ring-pc-line-soft">
                       {M.badge}
                     </span>
                   </button>

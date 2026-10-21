@@ -75,11 +75,11 @@ export function DashboardHero(p: HeroProps) {
 
   return (
     <section
-      className="pc-enter relative overflow-hidden rounded-3xl border border-black/5 p-6 shadow-[0_2px_8px_rgba(0,0,0,0.03)] md:p-8"
+      className="pc-enter relative overflow-hidden rounded-3xl border border-pc-line-soft p-6 shadow-[0_2px_8px_rgba(0,0,0,0.03)] md:p-8"
       style={{
         // Gradiente muy sutil — solo aquí y en el botón primario (regla 23)
         background:
-          "linear-gradient(135deg, #FFFFFF 0%, #FAFDFB 55%, rgba(15,118,110,0.05) 100%)",
+          "linear-gradient(135deg, var(--pc-bg-card) 0%, var(--pc-bg-subtle) 55%, rgba(15,118,110,0.05) 100%)",
       }}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -91,7 +91,7 @@ export function DashboardHero(p: HeroProps) {
               <span aria-hidden>👋</span>
             </h1>
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-gray-700 ring-1 ring-black/5"
+              className="inline-flex items-center gap-1 rounded-full bg-pc-card/80 px-2.5 py-1 text-[11px] font-semibold text-gray-700 ring-1 ring-pc-line-soft"
               title="Estado general del negocio"
             >
               {p.estado.emoji} {p.estado.nivel}
@@ -168,7 +168,7 @@ export function DashboardHero(p: HeroProps) {
             <GlobalSearch items={p.searchItems} />
             <span
               className="flex size-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white"
-              style={{ background: "linear-gradient(135deg, #0F766E, #115E59)" }}
+              style={{ background: "linear-gradient(135deg, var(--pc-accent), var(--pc-accent-hover))" }}
               title={p.nombre}
               aria-label={`Perfil de ${p.nombre}`}
             >
@@ -192,7 +192,7 @@ export function DashboardHero(p: HeroProps) {
               href="/ventas/nueva"
               className="pc-btn-primary"
               style={{
-                background: "linear-gradient(135deg, #0F766E, #0D6A62)",
+                background: "linear-gradient(135deg, var(--pc-accent), var(--pc-accent-hover))",
               }}
             >
               <Plus className="size-4" />
@@ -238,7 +238,7 @@ function ComparativaBar({
       <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/[0.05]">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${
-            strong ? "bg-[#0F766E]" : "bg-[#0F766E]/30"
+            strong ? "bg-pc-teal" : "bg-pc-teal/30"
           }`}
           style={{ width: `${pct}%` }}
         />

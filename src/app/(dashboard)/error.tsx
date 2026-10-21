@@ -22,7 +22,7 @@ export default function DashboardError({
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-8 text-center shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="w-full max-w-md rounded-2xl border border-pc-line-soft bg-pc-card p-8 text-center shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-rose-50">
           <AlertTriangle className="size-6 text-rose-600" strokeWidth={1.75} />
         </div>
@@ -41,7 +41,7 @@ export default function DashboardError({
         <button
           type="button"
           onClick={reset}
-          className="mt-5 inline-flex h-[42px] items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59]"
+          className="mt-5 inline-flex h-[42px] items-center gap-2 rounded-[14px] bg-pc-teal px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover"
         >
           <RotateCw className="size-4" strokeWidth={1.75} />
           Reintentar

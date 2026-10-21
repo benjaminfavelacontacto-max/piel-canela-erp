@@ -291,7 +291,7 @@ export function CotizacionDetail({
               {currentEstatus === "aceptada" && (
                 <Link
                   href={`/ventas/nueva?cotizacion=${cotizacionId}`}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-pc-teal px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover"
                 >
                   <ShoppingBag className="size-4" />
                   Convertir a Venta
@@ -308,7 +308,7 @@ export function CotizacionDetail({
                         .join(", ")}`
                     : undefined
                 }
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-teal-300"
+                className="inline-flex items-center gap-2 rounded-lg bg-[oklch(60%_0.118_184.704)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[oklch(51.1%_0.096_186.391)] disabled:cursor-not-allowed disabled:bg-teal-300"
               >
                 <CheckCircle2 className="size-4" />
                 {pending
@@ -321,7 +321,7 @@ export function CotizacionDetail({
           )}
           <Link
             href={`/cotizaciones/${cotizacionId}/editar`}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-pc-card px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
             <Pencil className="size-4" />
             Editar
@@ -329,7 +329,7 @@ export function CotizacionDetail({
           <form action={duplicarCotizacion.bind(null, cotizacionId)}>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-pc-card px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
               <Copy className="size-4" />
               Duplicar
@@ -348,7 +348,7 @@ export function CotizacionDetail({
             type="button"
             onClick={handlePdf}
             disabled={generandoPdf}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 md:min-h-0"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-pc-card px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 md:min-h-0"
           >
             <FileDown className="size-4" />
             {generandoPdf ? "Generando…" : "Descargar PDF"}
@@ -357,7 +357,7 @@ export function CotizacionDetail({
             <button
               type="button"
               onClick={() => setConfirmarEliminar(true)}
-              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-pc-card px-4 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
               title="Eliminar cotización"
             >
               <Trash2 className="size-4" />
@@ -460,7 +460,7 @@ export function CotizacionDetail({
                         {d.sku}
                       </span>
                     )}
-                    <span className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                    <span className="rounded bg-pc-card/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
                       −{d.etiqueta}
                     </span>
                     <span className="tabular-nums text-emerald-800">
@@ -550,7 +550,7 @@ export function CotizacionDetail({
         </p>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-auto">
+      <div className="rounded-xl border border-gray-200 bg-pc-card shadow-sm overflow-auto">
         <CotizacionPreview data={preview} innerRef={previewRef} />
       </div>
     </div>
@@ -569,7 +569,7 @@ function GiftStat({
   hint: string
 }) {
   return (
-    <div className="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-fuchsia-200/70">
+    <div className="rounded-lg bg-pc-card/70 px-3 py-2 ring-1 ring-fuchsia-200/70">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
         {label}
       </div>
@@ -599,7 +599,7 @@ function DeleteCotModal({
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        className="relative w-full max-w-sm rounded-2xl border border-pc-line bg-pc-card p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -621,7 +621,7 @@ function DeleteCotModal({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+            className="flex-1 rounded-xl border border-pc-line py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-pc-subtle"
           >
             Cancelar
           </button>
@@ -629,11 +629,11 @@ function DeleteCotModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[oklch(58.6%_0.253_17.585)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? (
               <>
-                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="size-3.5 animate-spin rounded-full border-2 border-pc-card border-t-transparent" />
                 Eliminando…
               </>
             ) : (
@@ -669,7 +669,7 @@ function RevertCotModal({
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        className="relative w-full max-w-sm rounded-2xl border border-pc-line bg-pc-card p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -699,7 +699,7 @@ function RevertCotModal({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+            className="flex-1 rounded-xl border border-pc-line py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-pc-subtle"
           >
             Cancelar
           </button>
@@ -707,11 +707,11 @@ function RevertCotModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[oklch(66.6%_0.179_58.318)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? (
               <>
-                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="size-3.5 animate-spin rounded-full border-2 border-pc-card border-t-transparent" />
                 Revirtiendo…
               </>
             ) : (

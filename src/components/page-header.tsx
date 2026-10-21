@@ -121,33 +121,33 @@ const ACCENT_STYLES: Record<
   emerald: {
     bg: "linear-gradient(135deg, rgba(5,150,105,0.06) 0%, rgba(5,150,105,0.02) 100%)",
     border: "rgba(5,150,105,0.18)",
-    valueColor: "#047857",
+    valueColor: "var(--pc-success-ink)",
     chipBg: "rgba(5,150,105,0.08)",
-    chipColor: "#047857",
+    chipColor: "var(--pc-success-ink)",
     chipBorder: "rgba(5,150,105,0.20)",
   },
   indigo: {
     bg: "linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(99,102,241,0.02) 100%)",
     border: "rgba(99,102,241,0.18)",
-    valueColor: "#4F46E5",
+    valueColor: "var(--pc-indigo-ink)",
     chipBg: "rgba(99,102,241,0.08)",
-    chipColor: "#4F46E5",
+    chipColor: "var(--pc-indigo-ink)",
     chipBorder: "rgba(99,102,241,0.20)",
   },
   amber: {
     bg: "linear-gradient(135deg, rgba(217,119,6,0.06) 0%, rgba(217,119,6,0.02) 100%)",
     border: "rgba(217,119,6,0.18)",
-    valueColor: "#B45309",
+    valueColor: "var(--pc-warning-ink)",
     chipBg: "rgba(217,119,6,0.08)",
-    chipColor: "#B45309",
+    chipColor: "var(--pc-warning-ink)",
     chipBorder: "rgba(217,119,6,0.20)",
   },
   rose: {
     bg: "linear-gradient(135deg, rgba(220,38,38,0.06) 0%, rgba(220,38,38,0.02) 100%)",
     border: "rgba(220,38,38,0.18)",
-    valueColor: "#B91C1C",
+    valueColor: "var(--pc-danger-ink)",
     chipBg: "rgba(220,38,38,0.08)",
-    chipColor: "#B91C1C",
+    chipColor: "var(--pc-danger-ink)",
     chipBorder: "rgba(220,38,38,0.20)",
   },
 }
@@ -174,7 +174,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
     >
       {/* Top row — label + trend pill */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-pc-ink-3">
           {kpi.label}
         </p>
         {kpi.trend && (
@@ -196,7 +196,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
         <div className="flex min-w-0 items-baseline gap-1.5">
           <p
             title={kpi.value}
-            className={`${featured ? "text-[clamp(19px,5.4vw,26px)] sm:text-[34px]" : "text-[clamp(19px,5.4vw,26px)] sm:text-[26px]"} break-words font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-[#0F172A]"}`}
+            className={`${featured ? "text-[clamp(19px,5.4vw,26px)] sm:text-[34px]" : "text-[clamp(19px,5.4vw,26px)] sm:text-[26px]"} break-words font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-pc-ink"}`}
             style={{
               fontFeatureSettings: '"tnum" 1, "ss01" 1',
               color: accent?.valueColor,
@@ -223,7 +223,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
           className="mt-1.5 inline-block self-start rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]"
           style={{
             background: accent?.chipBg ?? "rgba(5,150,105,0.08)",
-            color: accent?.chipColor ?? "#047857",
+            color: accent?.chipColor ?? "var(--pc-success-ink)",
             border: `1px solid ${accent?.chipBorder ?? "rgba(5,150,105,0.20)"}`,
           }}
         >
@@ -242,7 +242,7 @@ function KpiCard({ kpi }: { kpi: PageHeaderKpi }) {
 
       {/* Sub — metadata secundaria, compacta */}
       {kpi.sub && (
-        <p className="mt-auto text-[11px] leading-tight text-[#64748B]">
+        <p className="mt-auto text-[11px] leading-tight text-pc-ink-3">
           {kpi.sub}
         </p>
       )}
@@ -257,44 +257,44 @@ const BREAKDOWN_TONES: Record<
   slate: {
     bg: "rgba(100,116,139,0.06)",
     border: "rgba(100,116,139,0.14)",
-    text: "#475569",
-    dot: "#94A3B8",
+    text: "var(--pc-text-body)",
+    dot: "var(--pc-text-muted)",
   },
   amber: {
     bg: "rgba(217,119,6,0.07)",
     border: "rgba(217,119,6,0.18)",
-    text: "#B45309",
-    dot: "#D97706",
+    text: "var(--pc-warning-ink)",
+    dot: "var(--pc-warning)",
   },
   emerald: {
     bg: "rgba(5,150,105,0.07)",
     border: "rgba(5,150,105,0.18)",
-    text: "#047857",
-    dot: "#059669",
+    text: "var(--pc-success-ink)",
+    dot: "var(--pc-success)",
   },
   teal: {
     bg: "rgba(15,118,110,0.07)",
     border: "rgba(15,118,110,0.18)",
-    text: "#0F766E",
-    dot: "#0F766E",
+    text: "var(--pc-accent-ink)",
+    dot: "var(--pc-chart-real)",
   },
   violet: {
     bg: "rgba(139,92,246,0.07)",
     border: "rgba(139,92,246,0.18)",
-    text: "#7C3AED",
-    dot: "#8B5CF6",
+    text: "var(--pc-violet-ink)",
+    dot: "var(--pc-violet)",
   },
   rose: {
     bg: "rgba(220,38,38,0.07)",
     border: "rgba(220,38,38,0.18)",
-    text: "#B91C1C",
-    dot: "#DC2626",
+    text: "var(--pc-danger-ink)",
+    dot: "var(--pc-danger)",
   },
 }
 
 const CURRENCY_TONE: Record<"USD" | "MXN", { bg: string; text: string }> = {
-  USD: { bg: "rgba(5,150,105,0.08)", text: "#047857" },
-  MXN: { bg: "rgba(197,164,126,0.10)", text: "#A8895F" },
+  USD: { bg: "rgba(5,150,105,0.08)", text: "var(--pc-success-ink)" },
+  MXN: { bg: "rgba(197,164,126,0.10)", text: "var(--pc-gold-ink)" },
 }
 
 function CurrencyChip({ code }: { code: "USD" | "MXN" }) {
@@ -353,7 +353,7 @@ function Sparkline({ points }: { points: number[] }) {
   const last = points[points.length - 1]
   const first = points[0]
   const positive = last >= first
-  const stroke = positive ? "#0F766E" : "#94A3B8"
+  const stroke = positive ? "var(--pc-chart-real)" : "var(--pc-text-muted)"
   return (
     // Fluido: sin width fijo ni shrink-0 — con 5-6 KPIs por fila el SVG de
     // 80px se salía del borde de la tarjeta. preserveAspectRatio="none" deja

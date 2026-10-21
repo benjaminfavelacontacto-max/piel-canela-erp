@@ -68,7 +68,7 @@ export function PeriodoTabs() {
             onClick={() => selectPreset(p.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               active
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-pc-card text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >

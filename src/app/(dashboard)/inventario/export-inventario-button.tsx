@@ -81,7 +81,7 @@ export function ExportInventarioButton({
           ? "No hay productos para exportar"
           : `Exportar ${productos.length} productos a CSV`
       }
-      className="inline-flex items-center gap-1.5 rounded-xl border border-[rgba(15,23,42,0.1)] bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-xl border border-pc-line bg-pc-card px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-pc-subtle disabled:cursor-not-allowed disabled:opacity-50"
     >
       <Download className="size-4" />
       Exportar CSV

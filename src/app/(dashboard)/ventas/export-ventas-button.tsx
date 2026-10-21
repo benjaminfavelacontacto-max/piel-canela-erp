@@ -79,7 +79,7 @@ export function ExportVentasButton({ ventas }: { ventas: VentaRow[] }) {
           ? "No hay ventas para exportar"
           : `Exportar ${ventas.length} ventas a CSV`
       }
-      className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+      className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-pc-subtle disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
     >
       <Download className="size-4" strokeWidth={1.75} />
       Exportar CSV

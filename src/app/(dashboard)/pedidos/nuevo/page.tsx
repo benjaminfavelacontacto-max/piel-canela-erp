@@ -379,7 +379,7 @@ export default function NuevoPedidoPage() {
               />
               {filteredProds.length > 0 && (
                 <div
-                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
+                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-pc-card shadow-lg"
                 >
                   {filteredProds.map((p) => (
                     <button
@@ -530,7 +530,7 @@ export default function NuevoPedidoPage() {
                         <td
                           className="whitespace-nowrap px-2 py-2.5 text-right font-semibold tabular-nums"
                           style={{
-                            color: item.profit_unit >= 0 ? "#047857" : "#B91C1C",
+                            color: item.profit_unit >= 0 ? "var(--pc-success-ink)" : "var(--pc-danger-ink)",
                           }}
                         >
                           {formatMXN(item.profit_total)}
@@ -574,7 +574,7 @@ export default function NuevoPedidoPage() {
               <span
                 className="flex size-4 items-center justify-center rounded text-[10px] font-bold text-white"
                 style={{
-                  background: divisionIgual ? "#0F766E" : "rgba(15,23,42,0.10)",
+                  background: divisionIgual ? "var(--pc-accent)" : "var(--pc-border-strong)",
                 }}
               >
                 {divisionIgual ? "✓" : ""}
@@ -586,13 +586,13 @@ export default function NuevoPedidoPage() {
                 label: "Sandra",
                 value: sandraUSD,
                 set: setSandraUSD,
-                color: "#B91C1C",
+                color: "var(--pc-danger-ink)",
               },
               {
                 label: "Benjamin",
                 value: benjaminUSD,
                 set: setBenjaminUSD,
-                color: "#4F46E5",
+                color: "var(--pc-indigo-ink)",
               },
             ].map((s) => (
               <Field key={s.label} label={`${s.label} (USD)`} className="mb-2">
@@ -706,18 +706,18 @@ function SummaryRow({
   divider?: boolean
 }) {
   const toneColor = {
-    muted: "#64748B",
-    strong: "#0F172A",
+    muted: "var(--pc-text-secondary)",
+    strong: "var(--pc-text)",
     champagne: "#C5A47E",
-    amber: "#B45309",
-    emerald: "#047857",
+    amber: "var(--pc-warning-ink)",
+    emerald: "var(--pc-success-ink)",
   }[tone]
   const big = tone !== "muted" && tone !== "amber"
   return (
     <div
       className="flex items-center justify-between py-2"
       style={{
-        borderTop: divider ? "1px solid rgba(15,23,42,0.06)" : "none",
+        borderTop: divider ? "1px solid var(--pc-border)" : "none",
         paddingTop: divider ? 10 : undefined,
       }}
     >

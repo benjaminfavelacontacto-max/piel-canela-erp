@@ -8,17 +8,17 @@ import { formatMXN } from "@/lib/utils"
 
 // Avatar gradient estable por nombre (mismo criterio que el resto del módulo).
 const AVATAR_GRADIENTS = [
-  "linear-gradient(135deg, #4F46E5, #047857)",
-  "linear-gradient(135deg, #047857, #0E7490)",
-  "linear-gradient(135deg, #B45309, #B91C1C)",
-  "linear-gradient(135deg, #BE185D, #4F46E5)",
-  "linear-gradient(135deg, #0E7490, #047857)",
-  "linear-gradient(135deg, #EA580C, #B45309)",
-  "linear-gradient(135deg, #7E22CE, #BE185D)",
-  "linear-gradient(135deg, #047857, #B45309)",
-  "linear-gradient(135deg, #A8895F, #BE185D)",
-  "linear-gradient(135deg, #0891B2, #4F46E5)",
-  "linear-gradient(135deg, #B91C1C, #EA580C)",
+  "linear-gradient(135deg, var(--pc-indigo-ink), var(--pc-success-ink))",
+  "linear-gradient(135deg, var(--pc-success-ink), var(--pc-cyan-ink))",
+  "linear-gradient(135deg, var(--pc-warning-ink), var(--pc-danger-ink))",
+  "linear-gradient(135deg, var(--pc-pink-ink), var(--pc-indigo-ink))",
+  "linear-gradient(135deg, var(--pc-cyan-ink), var(--pc-success-ink))",
+  "linear-gradient(135deg, var(--pc-orange-ink), var(--pc-warning-ink))",
+  "linear-gradient(135deg, var(--pc-purple-ink), var(--pc-pink-ink))",
+  "linear-gradient(135deg, var(--pc-success-ink), var(--pc-warning-ink))",
+  "linear-gradient(135deg, var(--pc-gold-ink), var(--pc-pink-ink))",
+  "linear-gradient(135deg, #0891B2, var(--pc-indigo-ink))",
+  "linear-gradient(135deg, var(--pc-danger-ink), var(--pc-orange-ink))",
   "linear-gradient(135deg, #15803D, #0891B2)",
 ]
 function getAvatarGradient(nombre: string): string {
@@ -109,7 +109,7 @@ export function PrediccionInsights({
       label: "Revenue proyectado (60d)",
       value: formatMXN(kpis.revenue60),
       sub: "ticket × probabilidad",
-      color: "#047857",
+      color: "var(--pc-success-ink)",
       tint: "rgba(5,150,105,0.07)",
       border: "rgba(5,150,105,0.20)",
       icon: TrendingUp,
@@ -118,7 +118,7 @@ export function PrediccionInsights({
       label: "Alta probabilidad",
       value: String(kpis.altaProb),
       sub: "≥60% de compra a 60d",
-      color: "#4F46E5",
+      color: "var(--pc-indigo-ink)",
       tint: "rgba(99,102,241,0.06)",
       border: "rgba(99,102,241,0.18)",
       icon: CalendarClock,
@@ -127,7 +127,7 @@ export function PrediccionInsights({
       label: "En riesgo de abandono",
       value: String(kpis.enRiesgo),
       sub: kpis.enRiesgo === 0 ? "Todos al día ✓" : "Requieren atención",
-      color: kpis.enRiesgo > 0 ? "#B91C1C" : "#047857",
+      color: kpis.enRiesgo > 0 ? "var(--pc-danger-ink)" : "var(--pc-success-ink)",
       tint: kpis.enRiesgo > 0 ? "rgba(220,38,38,0.06)" : "rgba(5,150,105,0.06)",
       border:
         kpis.enRiesgo > 0 ? "rgba(220,38,38,0.18)" : "rgba(5,150,105,0.18)",
@@ -136,9 +136,9 @@ export function PrediccionInsights({
   ]
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
-      <header className="flex items-center gap-2 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-5 py-3">
-        <Brain className="size-4 text-[#4F46E5]" />
+    <section className="overflow-hidden rounded-2xl border border-pc-line bg-pc-card shadow-sm">
+      <header className="flex items-center gap-2 border-b border-pc-line-soft bg-gradient-to-r from-pc-card to-gray-50/50 px-5 py-3">
+        <Brain className="size-4 text-pc-indigo-ink" />
         <h2 className="text-sm font-semibold text-gray-900">
           Predicción de compras
         </h2>
@@ -179,7 +179,7 @@ export function PrediccionInsights({
           <ListaClientes
             titulo="Próximas compras"
             icon={CalendarClock}
-            accent="#4F46E5"
+            accent="var(--pc-indigo-ink)"
             items={proximas}
             vacio="Sin compras próximas previstas"
             onClienteClick={onClienteClick}
@@ -190,7 +190,7 @@ export function PrediccionInsights({
               const pct = Math.round(c.pred.probabilidadProx60 * 100)
               return (
                 <div className="text-right">
-                  <div className="text-[12px] font-bold tabular-nums text-[#047857]">
+                  <div className="text-[12px] font-bold tabular-nums text-pc-green-ink">
                     {pct}%
                   </div>
                   <div className="text-[10px] text-gray-400">
@@ -203,7 +203,7 @@ export function PrediccionInsights({
           <ListaClientes
             titulo="En riesgo de abandono"
             icon={AlertTriangle}
-            accent="#B91C1C"
+            accent="var(--pc-danger-ink)"
             items={riesgo}
             vacio="Ningún cliente en riesgo ✓"
             onClienteClick={onClienteClick}
@@ -211,7 +211,7 @@ export function PrediccionInsights({
               const dias = c.dias_sin_compra ?? 0
               return (
                 <div className="text-right">
-                  <div className="text-[12px] font-bold tabular-nums text-[#B91C1C]">
+                  <div className="text-[12px] font-bold tabular-nums text-pc-red-ink">
                     {Math.round(c.pred.riesgoAbandono * 100)}%
                   </div>
                   <div className="text-[10px] text-gray-400">
@@ -245,8 +245,8 @@ function ListaClientes({
   onClienteClick?: (cliente: EnrichedCliente) => void
 }) {
   return (
-    <div className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-[#FBFCFD]">
-      <div className="flex items-center gap-1.5 border-b border-[rgba(15,23,42,0.04)] px-3.5 py-2">
+    <div className="rounded-xl border border-pc-line-soft bg-pc-subtle">
+      <div className="flex items-center gap-1.5 border-b border-pc-line-soft px-3.5 py-2">
         <Icon className="size-3.5" style={{ color: accent }} />
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
           {titulo}
@@ -258,7 +258,7 @@ function ListaClientes({
       {items.length === 0 ? (
         <p className="px-4 py-6 text-center text-[12px] text-gray-400">{vacio}</p>
       ) : (
-        <ul className="divide-y divide-[rgba(15,23,42,0.03)]">
+        <ul className="divide-y divide-pc-line-soft">
           {items.map((c) => {
             const display = c.nombre_negocio ?? c.nombre
             return (
@@ -266,7 +266,7 @@ function ListaClientes({
                 <button
                   type="button"
                   onClick={() => onClienteClick?.(c)}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left transition-colors hover:bg-white"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left transition-colors hover:bg-pc-card"
                 >
                   <span
                     className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold text-white"

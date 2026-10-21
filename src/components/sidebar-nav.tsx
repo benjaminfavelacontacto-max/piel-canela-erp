@@ -47,7 +47,7 @@ export function SidebarNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30 ${
+            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/30 ${
               active
                 ? "bg-black/[0.04] font-semibold text-gray-900"
                 : "font-normal text-gray-500 hover:translate-x-px hover:bg-black/[0.03] hover:text-gray-900"
@@ -56,13 +56,13 @@ export function SidebarNav() {
             {active && (
               <span
                 aria-hidden
-                className="absolute -left-3 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-[#0F766E]"
+                className="absolute -left-3 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-pc-teal"
               />
             )}
             <Icon
               className={`shrink-0 transition-all duration-150 ${
                 active
-                  ? "size-[18px] text-[#0F766E]"
+                  ? "size-[18px] text-pc-teal-ink"
                   : "size-4 text-gray-400 group-hover:text-gray-600"
               }`}
               strokeWidth={active ? 2 : 1.75}

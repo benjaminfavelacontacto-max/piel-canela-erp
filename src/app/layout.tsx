@@ -33,7 +33,7 @@ export const viewport: Viewport = {
   // iPhone; las barras fijas respetan el notch/home indicator con
   // env(safe-area-inset-*) (ver .pc-safe-bottom en globals.css).
   viewportFit: "cover",
-  themeColor: "#F5F7F6",
+  themeColor: "var(--pc-bg-app)",
 }
 
 export default function RootLayout({

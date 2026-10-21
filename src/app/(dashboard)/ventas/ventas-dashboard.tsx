@@ -96,10 +96,10 @@ const BENJAMIN_ID = "3165fe33-c760-4373-84d0-e1cd14d863b3"
 
 // Paleta enterprise: accent emerald + neutro. Diferencia por label, no por color saturado.
 const SOCIO_COLORS: Record<string, string> = {
-  Sandra: "#0F766E",
-  Benjamin: "#94A3B8",
+  Sandra: "var(--pc-accent)",
+  Benjamin: "var(--pc-text-muted)",
 }
-const FALLBACK_COLORS = ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280"]
+const FALLBACK_COLORS = ["var(--pc-accent)", "var(--pc-text-muted)", "var(--pc-chart-comparative)", "var(--pc-text-secondary)"]
 
 const monthShort = new Intl.DateTimeFormat("es-MX", { month: "short" })
 
@@ -473,14 +473,14 @@ export function VentasDashboard({
             <ExportVentasButton ventas={ventas} />
             <Link
               href="/ventas/estadisticas"
-              className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-[#F9FAFB]"
+              className="inline-flex h-[42px] items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-700 transition-all hover:-translate-y-0.5 hover:bg-pc-subtle"
             >
               <BarChart3 className="size-4" strokeWidth={1.75} />
               Estadísticas
             </Link>
             <Link
               href="/ventas/nueva"
-              className="hidden h-[42px] items-center gap-2 rounded-[14px] bg-[#0F766E] px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#115E59] md:inline-flex"
+              className="hidden h-[42px] items-center gap-2 rounded-[14px] bg-pc-teal px-[18px] text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover md:inline-flex"
             >
               + Nueva Venta
             </Link>
@@ -522,20 +522,20 @@ export function VentasDashboard({
                     onClick={() => setPeriodo(p)}
                     className="rounded-md px-2.5 py-1 text-[11px] font-semibold transition-all"
                     style={{
-                      background: active ? "white" : "transparent",
-                      color: active ? "#0F766E" : "#64748B",
+                      background: active ? "var(--pc-bg-card)" : "transparent",
+                      color: active ? "var(--pc-accent-ink)" : "var(--pc-text-secondary)",
                       boxShadow: active
                         ? "0 1px 2px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,118,110,0.20)"
                         : "none",
                     }}
                     onMouseEnter={(e) => {
                       if (!active) {
-                        e.currentTarget.style.color = "#0F172A"
+                        e.currentTarget.style.color = "var(--pc-text)"
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!active) {
-                        e.currentTarget.style.color = "#64748B"
+                        e.currentTarget.style.color = "var(--pc-text-secondary)"
                       }
                     }}
                   >
@@ -552,7 +552,7 @@ export function VentasDashboard({
 
         <div className="space-y-4 pc-card">
           <header className="flex items-center justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-pc-ink-4">
               Socios
             </h2>
             <span className="text-xs text-gray-500">
@@ -575,22 +575,22 @@ export function VentasDashboard({
                         className="size-2 rounded-full"
                         style={{ background: color }}
                       />
-                      <span className="text-sm font-semibold text-[#0F172A]">
+                      <span className="text-sm font-semibold text-pc-ink">
                         {socio.nombre}
                       </span>
                     </div>
                     <span
-                      className="text-[11px] tabular-nums text-[#64748B]"
+                      className="text-[11px] tabular-nums text-pc-ink-3"
                       style={{ letterSpacing: "-0.01em" }}
                     >
                       {pct.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between text-[11px] text-[#64748B]">
+                  <div className="flex items-baseline justify-between text-[11px] text-pc-ink-3">
                     <span>
                       Vendido{" "}
                       <span
-                        className="ml-1 font-semibold text-[#0F172A] tabular-nums"
+                        className="ml-1 font-semibold text-pc-ink tabular-nums"
                         style={{ letterSpacing: "-0.02em" }}
                       >
                         {formatMXN(vendido)}
@@ -606,13 +606,13 @@ export function VentasDashboard({
                       </span>
                     </span>
                   </div>
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-[rgba(15,23,42,0.04)]">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--pc-border-soft)]">
                     <div
                       className="h-1 rounded-full transition-all"
                       style={{ width: `${pct}%`, background: color }}
                     />
                   </div>
-                  <p className="text-[10.5px] text-[#94A3B8]">
+                  <p className="text-[10.5px] text-pc-ink-4">
                     Cobrado {formatMXN(cobrado)}
                     {vendido > 0
                       ? ` · ${((cobrado / vendido) * 100).toFixed(0)}%`
@@ -624,7 +624,7 @@ export function VentasDashboard({
           </div>
 
           {totalAsignado > 0 && (
-            <div className="border-t border-[rgba(15,23,42,0.04)] pt-3">
+            <div className="border-t border-pc-line-soft pt-3">
               <div className="relative">
                 <LazyOnView minHeight={140}>
                   <SociosDonut
@@ -638,7 +638,7 @@ export function VentasDashboard({
                 {/* Texto central */}
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <p
-                    className="text-base font-bold leading-none tabular-nums text-[#0F172A]"
+                    className="text-base font-bold leading-none tabular-nums text-pc-ink"
                     style={{ letterSpacing: "-0.03em" }}
                   >
                     {sociosStats.length === 2 &&
@@ -649,7 +649,7 @@ export function VentasDashboard({
                           .map((s) => `${s.socio.porcentaje}`)
                           .join(" / ")}
                   </p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.08em] text-[#64748B]">
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.08em] text-pc-ink-3">
                     Socios
                   </p>
                 </div>
@@ -708,12 +708,12 @@ export function VentasDashboard({
             aria-controls="ventas-filtros"
             className="flex min-h-11 items-center gap-2 text-left md:pointer-events-none md:min-h-0"
           >
-            <span className="inline-flex size-6 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
+            <span className="inline-flex size-6 items-center justify-center rounded-md bg-pc-subtle text-pc-teal-ink">
               <Sparkles className="size-3.5" />
             </span>
             <h2 className="text-sm font-semibold text-gray-900">Filtros</h2>
             {activeFilters > 0 && (
-              <span className="rounded-full bg-[#DFF7F4] px-2 py-0.5 text-[10.5px] font-semibold text-[#0F766E]">
+              <span className="rounded-full bg-pc-teal-soft px-2 py-0.5 text-[10.5px] font-semibold text-pc-teal-ink">
                 {activeFilters} activos
               </span>
             )}
@@ -734,7 +734,7 @@ export function VentasDashboard({
                   setEstatusFilter("todos"); setSocioFilter("todos")
                   setProductoFilter("todos"); setIvaFilter("todos")
                 }}
-                className="inline-flex min-h-11 items-center px-1 text-xs font-medium text-[#0F766E] hover:text-[#115E59] md:min-h-0 md:text-[11px]"
+                className="inline-flex min-h-11 items-center px-1 text-xs font-medium text-pc-teal-ink hover:text-pc-teal-ink md:min-h-0 md:text-[11px]"
               >
                 Limpiar
               </button>
@@ -750,7 +750,7 @@ export function VentasDashboard({
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </FilterField>
           <FilterField label="Hasta">
@@ -758,14 +758,14 @@ export function VentasDashboard({
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </FilterField>
           <FilterField label="Cliente">
             <select
               value={clienteFilter}
               onChange={(e) => setClienteFilter(e.target.value)}
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               {clienteOptions.map(([id, nombre]) => (
@@ -779,7 +779,7 @@ export function VentasDashboard({
             <select
               value={productoFilter}
               onChange={(e) => setProductoFilter(e.target.value)}
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               {productoOptions.map(([id, nombre]) => (
@@ -795,7 +795,7 @@ export function VentasDashboard({
               onChange={(e) =>
                 setSocioFilter(e.target.value as "todos" | "sandra" | "benjamin" | "ambos")
               }
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               <option value="sandra">Sandra</option>
@@ -809,7 +809,7 @@ export function VentasDashboard({
               onChange={(e) =>
                 setEstatusFilter(e.target.value as "todos" | Estatus)
               }
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todos</option>
               <option value="pagada_total">Pagada</option>
@@ -822,7 +822,7 @@ export function VentasDashboard({
             <select
               value={ivaFilter}
               onChange={(e) => setIvaFilter(e.target.value as "todos" | "con" | "sin")}
-              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 md:h-8 w-full rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             >
               <option value="todos">Todas</option>
               <option value="con">Con IVA</option>
@@ -854,7 +854,7 @@ export function VentasDashboard({
       <Link
         href="/ventas/nueva"
         aria-label="Nueva venta"
-        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-pc-teal pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
       >
         <Plus className="size-5" strokeWidth={2.25} />
         Nueva venta
@@ -891,26 +891,26 @@ function InsightCard({
 }) {
   return (
     <article
-      className="flex flex-col rounded-2xl border bg-white px-4 py-3 transition-all duration-180 hover:-translate-y-0.5"
+      className="flex flex-col rounded-2xl border bg-pc-card px-4 py-3 transition-all duration-180 hover:-translate-y-0.5"
       style={{
-        borderColor: "rgba(15,23,42,0.05)",
+        borderColor: "var(--pc-border)",
         boxShadow:
           "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
         minHeight: 92,
       }}
     >
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-pc-ink-3">
         {label}
       </p>
       <div
-        className={`mt-1 text-[20px] font-bold leading-tight tracking-[-0.03em] text-[#0F172A] ${truncateBig ? "truncate" : "tabular-nums"}`}
+        className={`mt-1 text-[20px] font-bold leading-tight tracking-[-0.03em] text-pc-ink ${truncateBig ? "truncate" : "tabular-nums"}`}
         title={truncateBig ? big : undefined}
         style={{ fontFeatureSettings: '"tnum" 1' }}
       >
         {big}
       </div>
       {line1 && (
-        <p className="mt-auto text-[11px] leading-tight tabular-nums text-[#64748B]">
+        <p className="mt-auto text-[11px] leading-tight tabular-nums text-pc-ink-3">
           {line1}
         </p>
       )}

@@ -85,12 +85,12 @@ function pctChange(now: number, prev: number): number {
 
 // Avatares por hash del nombre (estable entre renders y filtros)
 const AVATAR_GRADIENTS = [
-  "linear-gradient(135deg, #0F766E, #14B8A6)",
-  "linear-gradient(135deg, #475569, #94A3B8)",
-  "linear-gradient(135deg, #B45309, #F59E0B)",
-  "linear-gradient(135deg, #1D4ED8, #60A5FA)",
-  "linear-gradient(135deg, #047857, #34D399)",
-  "linear-gradient(135deg, #7C3AED, #A78BFA)",
+  "linear-gradient(135deg, var(--pc-accent), #14B8A6)",
+  "linear-gradient(135deg, var(--pc-text-body), var(--pc-text-muted))",
+  "linear-gradient(135deg, var(--pc-warning-ink), #F59E0B)",
+  "linear-gradient(135deg, var(--pc-info-ink), #60A5FA)",
+  "linear-gradient(135deg, var(--pc-success-ink), #34D399)",
+  "linear-gradient(135deg, var(--pc-violet-ink), #A78BFA)",
 ]
 function avatarGradient(nombre: string) {
   let h = 0
@@ -445,12 +445,12 @@ export default async function DashboardPage() {
   if (pagosPend.length === 0) score += 1
   const estado =
     score >= 5
-      ? { nivel: "Excelente", emoji: "🟢", tone: "#059669" }
+      ? { nivel: "Excelente", emoji: "🟢", tone: "var(--pc-success-ink)" }
       : score >= 3
-        ? { nivel: "Bien", emoji: "🟢", tone: "#059669" }
+        ? { nivel: "Bien", emoji: "🟢", tone: "var(--pc-success-ink)" }
         : score >= 2
-          ? { nivel: "Atención", emoji: "🟡", tone: "#D97706" }
-          : { nivel: "En riesgo", emoji: "🔴", tone: "#DC2626" }
+          ? { nivel: "Atención", emoji: "🟡", tone: "var(--pc-warning-ink)" }
+          : { nivel: "En riesgo", emoji: "🔴", tone: "var(--pc-danger-ink)" }
 
   // ─── Panel IA (reglas, no LLM) ────────────────────────────────────
   const prodRevenue = new Map<string, number>()
@@ -712,7 +712,7 @@ export default async function DashboardPage() {
               </div>
               <Link
                 href="/ventas/estadisticas"
-                className="inline-flex items-center gap-1 text-[12px] font-medium text-[#0F766E] transition-colors hover:text-[#115E59] hover:underline"
+                className="inline-flex items-center gap-1 text-[12px] font-medium text-pc-teal-ink transition-colors hover:text-pc-teal-ink hover:underline"
               >
                 Ver reportes <ArrowRight className="size-3" />
               </Link>
@@ -724,10 +724,10 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-4">
             {/* Estado del negocio (18) — gradiente sutil permitido (23) */}
             <div
-              className="rounded-[20px] border border-black/5 p-6 shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
+              className="rounded-[20px] border border-pc-line-soft p-6 shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
               style={{
                 background:
-                  "linear-gradient(150deg, #FFFFFF 0%, #FAFDFB 60%, rgba(15,118,110,0.06) 100%)",
+                  "linear-gradient(150deg, var(--pc-bg-card) 0%, var(--pc-bg-subtle) 60%, rgba(15,118,110,0.06) 100%)",
               }}
             >
               <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-500">
@@ -771,13 +771,13 @@ export default async function DashboardPage() {
             </div>
 
             {/* Panel IA (11) — reglas del negocio, no LLM */}
-            <div className="relative overflow-hidden rounded-[20px] border border-black/5 bg-[#0E1B18] p-6 text-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <div className="relative overflow-hidden rounded-[20px] border border-pc-line-soft bg-[#0E1B18] p-6 text-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full"
                 style={{ background: "radial-gradient(circle, rgba(20,184,166,0.25), transparent 70%)" }}
               />
-              <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-teal-300">
+              <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5EEAD4]">
                 <BrainCircuit className="size-3.5" />
                 Análisis IA
               </p>
@@ -788,7 +788,7 @@ export default async function DashboardPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 border-t border-white/10 pt-3 text-[12.5px] font-medium leading-snug text-teal-200">
+              <p className="mt-3 border-t border-pc-card/10 pt-3 text-[12.5px] font-medium leading-snug text-[#99F6E4]">
                 {iaRecomendacion}
               </p>
             </div>
@@ -1012,7 +1012,7 @@ export default async function DashboardPage() {
                       {a.tipo === "venta" ? "Venta" : "Cotización"}{" "}
                       <Link
                         href={a.href}
-                        className="font-mono text-[12px] text-[#0F766E] hover:underline"
+                        className="font-mono text-[12px] text-pc-teal-ink hover:underline"
                       >
                         {a.numero}
                       </Link>
@@ -1057,7 +1057,7 @@ export default async function DashboardPage() {
       >
         <Link
           href="/cotizaciones/rapida"
-          className="pc-quick-action !border-[#0F766E]/25 !text-[#0F766E]"
+          className="pc-quick-action !border-pc-teal/25 !text-pc-teal-ink"
         >
           <Zap className="size-4" /> Cotización rápida
         </Link>
@@ -1096,7 +1096,7 @@ export default async function DashboardPage() {
             trend={cambioGanancia}
             sub={`${margenMes.toFixed(1)}% de margen · vs mes anterior`}
             spark={chartData.map((d) => d.ganancia)}
-            icon={<TrendingUp className="size-4 text-[#0F766E]" />}
+            icon={<TrendingUp className="size-4 text-pc-teal-ink" />}
             title="Suma de utilidad_neta de las ventas del mes (sin internas ni canceladas)"
           />
           <GoalCard ventasMes={totalVentasMes} metaSugerida={metaSugerida} />
@@ -1203,7 +1203,7 @@ function Sparkline({ points }: { points: number[] }) {
     })
     .join(" ")
   const positive = points[points.length - 1] >= points[0]
-  const stroke = positive ? "#0F766E" : "#94A3B8"
+  const stroke = positive ? "var(--pc-chart-real)" : "var(--pc-text-muted)"
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
@@ -1279,7 +1279,7 @@ function KpiTile({
       <div className="flex items-end justify-between gap-3">
         <p
           className={`font-bold leading-none tracking-[-0.025em] tabular-nums ${
-            urgent ? "text-[#DC2626]" : "text-gray-900"
+            urgent ? "text-pc-red-ink" : "text-gray-900"
           } ${featured ? "text-[32px]" : small ? "text-xl" : "text-[26px]"}`}
         >
           {value}
@@ -1297,7 +1297,7 @@ function KpiTile({
     return (
       <Link
         href={href}
-        className={`block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30 ${className}`}
+        className={`block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/30 ${className}`}
       >
         {inner}
       </Link>
@@ -1369,10 +1369,10 @@ function RowLink({
   return (
     <Link
       href={href}
-      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/25"
+      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/25"
     >
       <div className="min-w-0 flex-1">
-        <div className="truncate font-mono text-xs text-[#0F766E]">{top}</div>
+        <div className="truncate font-mono text-xs text-pc-teal-ink">{top}</div>
         <div className="truncate text-xs text-gray-500">{bottom}</div>
       </div>
       <div className="text-right">
@@ -1409,7 +1409,7 @@ function PanelCard({
         </div>
         <Link
           href={href}
-          className="inline-flex items-center gap-1 text-xs text-[#0F766E] hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-pc-teal-ink hover:underline"
         >
           {hrefLabel} <ArrowRight className="size-3" />
         </Link>
@@ -1477,7 +1477,7 @@ function SocioCard({
             ROI
           </p>
           <p
-            className={`mt-1 font-bold tabular-nums ${stats.roi >= 0 ? "text-[#0F766E]" : "text-rose-600"}`}
+            className={`mt-1 font-bold tabular-nums ${stats.roi >= 0 ? "text-pc-teal-ink" : "text-rose-600"}`}
           >
             {stats.roi >= 0 ? "+" : ""}
             {stats.roi.toFixed(1)}%
@@ -1493,7 +1493,7 @@ function SocioCard({
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.05]">
           <div
-            className="h-full rounded-full bg-[#0F766E] transition-all duration-700"
+            className="h-full rounded-full bg-pc-teal transition-all duration-700"
             style={{ width: `${Math.min(100, stats.pct)}%` }}
           />
         </div>

@@ -90,7 +90,7 @@ export function DesgloseEnvio({
   }
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-gray-100 bg-pc-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-gray-900">
@@ -107,7 +107,7 @@ export function DesgloseEnvio({
             setAbierto((v) => !v)
             setError(null)
           }}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
         >
           {abierto ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
           {abierto ? "Cancelar" : "Agregar tramo"}
@@ -167,7 +167,7 @@ export function DesgloseEnvio({
               type="button"
               onClick={guardar}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[oklch(66.6%_0.179_58.318)] px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[oklch(55.5%_0.163_48.998)] disabled:opacity-50"
             >
               {pending ? (
                 <Loader2 className="size-3.5 animate-spin" />

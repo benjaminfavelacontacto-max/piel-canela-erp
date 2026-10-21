@@ -81,6 +81,7 @@
   --color-pc-pink-ink: var(--pc-pink-ink);
   --color-pc-purple-ink: var(--pc-purple-ink);
   --color-pc-gold-ink: var(--pc-gold-ink);
+  --color-pc-orange-ink: var(--pc-orange-ink);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -219,6 +220,7 @@
   --pc-pink-ink: #BE185D;
   --pc-purple-ink: #7E22CE;
   --pc-gold-ink: #A8895F;
+  --pc-orange-ink: #EA580C;
 
   --pc-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.03);
   --pc-shadow-soft-hover: 0 4px 14px rgba(15, 23, 42, 0.05);
@@ -336,11 +338,12 @@
   --pc-pink-ink: #F472B6;
   --pc-purple-ink: #C084FC;
   --pc-gold-ink: #D4B48C;
+  --pc-orange-ink: #FB923C;
 
   /* Gráficas */
   --pc-chart-real: #14B8A6;
   --pc-chart-projection: rgba(45, 212, 191, 0.35);
-  --pc-chart-comparative: #3A4549;
+  --pc-chart-comparative: #55656B;
   --pc-chart-line: #82908D;
   --pc-chart-grid: rgba(255, 255, 255, 0.07);
 
@@ -1063,6 +1066,27 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   color: white;
+}
+
+/* ─── Recharts: el tooltip por defecto es blanco con estilos en línea ─── */
+.recharts-default-tooltip {
+  background-color: var(--pc-bg-elevated) !important;
+  color: var(--pc-text) !important;
+  border-color: var(--pc-border) !important;
+}
+.recharts-tooltip-label {
+  color: var(--pc-text) !important;
+}
+:root.dark .recharts-cartesian-axis-tick-value,
+:root.dark .recharts-text {
+  fill: var(--pc-text-muted);
+}
+:root.dark .recharts-cartesian-grid line {
+  stroke: var(--pc-chart-grid);
+}
+/* La leyenda hereda el color de la serie (gris oscuro ilegible): texto neutro, el icono conserva el color */
+:root.dark .recharts-legend-item-text {
+  color: var(--pc-text-secondary) !important;
 }
 
 /* ─────────────────────────────────────────────────────────

@@ -20,10 +20,10 @@ const monthLong = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numer
 
 // Misma paleta que ventas-dashboard.tsx
 const SOCIO_COLORS: Record<string, string> = {
-  Sandra: "#0F766E",
-  Benjamin: "#94A3B8",
+  Sandra: "var(--pc-accent)",
+  Benjamin: "var(--pc-text-muted)",
 }
-const FALLBACK_COLORS = ["#0F766E", "#94A3B8", "#CBD5E1", "#6B7280"]
+const FALLBACK_COLORS = ["var(--pc-accent)", "var(--pc-text-muted)", "var(--pc-chart-comparative)", "var(--pc-text-secondary)"]
 
 export type MonthlyPoint = {
   key: string
@@ -45,8 +45,8 @@ export function VentasMensualChart({ data }: { data: MonthlyPoint[] }) {
     >
       <defs>
         <linearGradient id="ventasBarGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
-          <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+          <stop offset="0%" stopColor="var(--pc-chart-real)" stopOpacity={0.92} />
+          <stop offset="100%" stopColor="var(--pc-chart-real)" stopOpacity={0.35} />
         </linearGradient>
       </defs>
       <CartesianGrid
@@ -56,12 +56,12 @@ export function VentasMensualChart({ data }: { data: MonthlyPoint[] }) {
       />
       <XAxis
         dataKey="label"
-        tick={{ fill: "#94A3B8", fontSize: 11 }}
+        tick={{ fill: "var(--pc-text-muted)", fontSize: 11 }}
         axisLine={false}
         tickLine={false}
       />
       <YAxis
-        tick={{ fill: "#94A3B8", fontSize: 11 }}
+        tick={{ fill: "var(--pc-text-muted)", fontSize: 11 }}
         axisLine={false}
         tickLine={false}
         tickFormatter={(v: number) =>
@@ -72,7 +72,7 @@ export function VentasMensualChart({ data }: { data: MonthlyPoint[] }) {
       <Tooltip
         cursor={{ fill: "rgba(15,118,110,0.04)" }}
         contentStyle={{
-          border: "1px solid rgba(15,23,42,0.06)",
+          border: "1px solid var(--pc-border)",
           borderRadius: 12,
           fontSize: 12,
           boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
@@ -96,7 +96,7 @@ export function VentasMensualChart({ data }: { data: MonthlyPoint[] }) {
         type="monotone"
         dataKey="ganancia"
         name="Ganancia"
-        stroke="#94A3B8"
+        stroke="var(--pc-text-muted)"
         strokeWidth={2.2}
         dot={false}
       />
@@ -121,7 +121,7 @@ export function SociosDonut({
           innerRadius={42}
           outerRadius={58}
           paddingAngle={3}
-          stroke="#ffffff"
+          stroke="var(--pc-bg-card)"
           strokeWidth={2}
         >
           {data.map((s, i) => (
@@ -138,7 +138,7 @@ export function SociosDonut({
           formatter={(v) => formatMXN2(Number(v ?? 0))}
           cursor={{ fill: "rgba(15,118,110,0.04)" }}
           contentStyle={{
-            border: "1px solid rgba(15,23,42,0.06)",
+            border: "1px solid var(--pc-border)",
             borderRadius: 12,
             fontSize: 12,
             boxShadow: "0 8px 24px rgba(15,23,42,0.08)",

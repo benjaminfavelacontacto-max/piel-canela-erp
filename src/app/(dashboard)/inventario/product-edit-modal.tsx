@@ -129,7 +129,7 @@ export function ProductEditModal({
         onClick={onClose}
       >
         <div
-          className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+          className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-pc-card shadow-2xl animate-in zoom-in-95 fade-in duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -278,7 +278,7 @@ export function ProductEditModal({
               type="button"
               onClick={onSave}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c] disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-pc-teal px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pc-teal-hover disabled:opacity-60"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -295,7 +295,7 @@ export function ProductEditModal({
 }
 
 const inputCls =
-  "w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+  "w-full rounded-xl border border-gray-200 bg-pc-card px-3 py-2 text-sm text-gray-900 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20"
 
 function Group({
   icon,

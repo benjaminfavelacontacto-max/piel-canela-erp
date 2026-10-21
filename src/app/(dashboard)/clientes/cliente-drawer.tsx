@@ -241,12 +241,12 @@ export function ClienteDrawer({
       >
         <SheetHandle {...sheet.handleProps} />
         {/* Hero */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-pc-card to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 md:right-4 md:top-4 md:size-8"
+            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-pc-card hover:text-gray-700 md:right-4 md:top-4 md:size-8"
           >
             <X className="size-4" />
           </button>
@@ -284,7 +284,7 @@ export function ClienteDrawer({
             <Stat
               label="LTV"
               value={formatMXN2(cliente.ltv)}
-              accent="text-[#0F766E]"
+              accent="text-pc-teal-ink"
             />
             <Stat
               label="Utilidad"
@@ -301,21 +301,21 @@ export function ClienteDrawer({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link
               href={`/clientes/${cliente.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
             >
               <ExternalLink className="size-3" />
               Ver ficha
             </Link>
             <Link
               href={`/clientes/${cliente.id}/editar`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
             >
               <Pencil className="size-3" />
               Editar
             </Link>
             <Link
               href={`/cotizaciones/nueva?cliente=${cliente.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F766E] px-2.5 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-[#115E59]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-pc-teal px-2.5 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-pc-teal-hover"
             >
               <FileText className="size-3" />
               Nueva cotización
@@ -323,7 +323,7 @@ export function ClienteDrawer({
             {cliente.telefono && (
               <a
                 href={`tel:${cliente.telefono}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
               >
                 <Phone className="size-3" />
                 Llamar
@@ -346,7 +346,7 @@ export function ClienteDrawer({
             {cliente.email && (
               <a
                 href={`mailto:${cliente.email}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
               >
                 <Mail className="size-3" />
                 Email
@@ -356,7 +356,7 @@ export function ClienteDrawer({
               <button
                 type="button"
                 onClick={() => onDelete(cliente)}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-600 shadow-sm transition hover:bg-rose-50"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-pc-card px-2.5 py-1.5 text-xs font-medium text-rose-600 shadow-sm transition hover:bg-rose-50"
               >
                 <Trash2 className="size-3" />
                 Eliminar
@@ -416,7 +416,7 @@ export function ClienteDrawer({
               <RecurMini
                 label="# Compras"
                 value={cliente.ventas_count.toString()}
-                accent="text-[#0F766E]"
+                accent="text-pc-teal-ink"
               />
               <RecurMini
                 label="Frec."
@@ -454,7 +454,7 @@ export function ClienteDrawer({
             </div>
             {/* Mini barras 12 meses */}
             {cliente.ventas_count > 0 && (
-              <div className="mt-3 rounded-xl border border-gray-100 bg-white/80 p-3">
+              <div className="mt-3 rounded-xl border border-gray-100 bg-pc-card/80 p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                     Compras últimos 12 meses
@@ -474,7 +474,7 @@ export function ClienteDrawer({
                         title={`${m.label}: ${formatMXN2(m.total)} (${m.count})`}
                       >
                         <div
-                          className={`w-full rounded-t ${m.total > 0 ? "bg-gradient-to-t from-pink-400 to-pink-600" : "bg-gray-100"}`}
+                          className={`w-full rounded-t ${m.total > 0 ? "bg-gradient-to-t from-pink-400 to-[oklch(59.2%_0.249_0.584)]" : "bg-gray-100"}`}
                           style={{ height: `${h}px` }}
                         />
                         <span className="text-[8.5px] uppercase text-gray-400">
@@ -498,7 +498,7 @@ export function ClienteDrawer({
                 {productosTop.map((p, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-xs font-semibold text-gray-900">
@@ -511,7 +511,7 @@ export function ClienteDrawer({
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-bold tabular-nums text-[#0F766E]">
+                      <div className="text-xs font-bold tabular-nums text-pc-teal-ink">
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
@@ -540,12 +540,12 @@ export function ClienteDrawer({
                   return (
                     <li
                       key={v.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                     >
                       <div className="min-w-0 flex-1">
                         <Link
                           href={`/ventas/${v.id}`}
-                          className="block truncate font-mono text-xs text-[#0F766E] hover:underline"
+                          className="block truncate font-mono text-xs text-pc-teal-ink hover:underline"
                         >
                           {v.numero}
                         </Link>
@@ -594,7 +594,7 @@ export function ClienteDrawer({
                   return (
                     <li
                       key={c.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                      className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                     >
                       <div className="min-w-0 flex-1">
                         <Link
@@ -716,13 +716,13 @@ export function ClienteDrawer({
                     icon={<Target className="size-3.5" />}
                     label="Prob. 30d"
                     value={`${(prediccion.probabilidadProx30 * 100).toFixed(0)}%`}
-                    accent="text-[#0F766E]"
+                    accent="text-pc-teal-ink"
                   />
                   <PredCard
                     icon={<Target className="size-3.5" />}
                     label="Prob. 60d"
                     value={`${(prediccion.probabilidadProx60 * 100).toFixed(0)}%`}
-                    accent="text-[#0F766E]"
+                    accent="text-pc-teal-ink"
                   />
                   <PredCard
                     icon={<TrendingUp className="size-3.5" />}
@@ -764,7 +764,7 @@ export function ClienteDrawer({
 
                 {/* Seasonality / patrón mensual */}
                 {prediccion.seasonality.some((s) => s > 0) && (
-                  <div className="rounded-xl border border-gray-100 bg-white p-3">
+                  <div className="rounded-xl border border-gray-100 bg-pc-card p-3">
                     <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                       Estacionalidad de compra
                     </div>
@@ -778,7 +778,7 @@ export function ClienteDrawer({
                           <div
                             className={`w-full rounded-t ${
                               s > 0
-                                ? "bg-gradient-to-t from-pink-400 to-pink-600"
+                                ? "bg-gradient-to-t from-pink-400 to-[oklch(59.2%_0.249_0.584)]"
                                 : "bg-gray-100"
                             }`}
                             style={{
@@ -799,7 +799,7 @@ export function ClienteDrawer({
 
                 {/* Probabilidad mes a mes (próximos 6) */}
                 {prediccion.probMesesFuturos.some((p) => p > 0.05) && (
-                  <div className="rounded-xl border border-violet-200/60 bg-gradient-to-r from-violet-50/30 to-white p-3">
+                  <div className="rounded-xl border border-violet-200/60 bg-gradient-to-r from-violet-50/30 to-pc-card p-3">
                     <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-violet-700">
                       Prob. de compra · próximos 6 meses
                     </div>
@@ -876,7 +876,7 @@ function Avatar({ nombre, size = 32 }: { nombre: string; size?: number }) {
   const grad = palette[Math.abs(hash) % palette.length]
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${grad} font-bold text-white shadow-sm ring-2 ring-white`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${grad} font-bold text-white shadow-sm ring-2 ring-pc-card`}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
       {initials || "?"}
@@ -894,7 +894,7 @@ function Stat({
   accent: string
 }) {
   return (
-    <div className="rounded-lg bg-white/70 p-2 ring-1 ring-gray-200/60 backdrop-blur">
+    <div className="rounded-lg bg-pc-card/70 p-2 ring-1 ring-gray-200/60 backdrop-blur">
       <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
         {label}
       </div>
@@ -937,7 +937,7 @@ function RecurMini({
   accent: string
 }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-white p-2">
+    <div className="rounded-lg border border-gray-100 bg-pc-card p-2">
       <div className="text-[9.5px] uppercase tracking-wide text-gray-500">
         {label}
       </div>
@@ -960,7 +960,7 @@ function PredCard({
   accent: string
 }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-white p-2">
+    <div className="rounded-lg border border-gray-100 bg-pc-card p-2">
       <div className={`flex items-center gap-1 ${accent}`}>
         {icon}
         <span className="text-[9.5px] uppercase tracking-wide text-gray-500">
@@ -1002,7 +1002,7 @@ function TimelineItem({
   return (
     <li className="relative">
       <span
-        className={`absolute -left-[21px] top-1 size-2 rounded-full ring-2 ring-white ${dotColor[tone]}`}
+        className={`absolute -left-[21px] top-1 size-2 rounded-full ring-2 ring-pc-card ${dotColor[tone]}`}
       />
       <Wrap>
         <div className="flex items-center gap-1 text-xs font-medium text-gray-800">

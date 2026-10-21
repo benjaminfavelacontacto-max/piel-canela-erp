@@ -20,7 +20,7 @@ export type GrupoProducto = {
 
 /** Familias por prefijo de SKU. El orden importa: gana la primera que casa. */
 const POR_SKU: Array<[RegExp, GrupoProducto]> = [
-  [/^CN-/i, { label: "Cintas", tone: "text-[#0F766E] bg-[#F9FAFB]" }],
+  [/^CN-/i, { label: "Cintas", tone: "text-pc-teal-ink bg-pc-subtle" }],
   [/^AC-/i, { label: "Activadores", tone: "text-emerald-700 bg-emerald-50" }],
   [/^OX/i, { label: "Emulsión", tone: "text-teal-700 bg-teal-50" }],
   [/^PB-/i, { label: "Polvo blanquear", tone: "text-violet-700 bg-violet-50" }],

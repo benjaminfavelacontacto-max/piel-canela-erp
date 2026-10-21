@@ -199,7 +199,7 @@ export default async function PielCanelaPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-[28px] font-bold leading-tight tracking-[-0.03em] text-gray-900">
-            <Home className="size-6 text-[#8B5CF6]" />
+            <Home className="size-6 text-pc-violet-ink" />
             Piel Canela — Productos para terraza
           </h1>
           <p className="mt-1 max-w-2xl text-[13px] text-gray-500">
@@ -229,7 +229,7 @@ export default async function PielCanelaPage() {
               <span className="mx-1.5 text-white/25">−</span>costo real {mxn(totCosto)}
             </p>
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right backdrop-blur">
+          <div className="rounded-xl border border-pc-card/10 bg-pc-card/[0.04] px-4 py-3 text-right backdrop-blur">
             <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-white/45">
               Se ha llevado
             </p>
@@ -255,13 +255,13 @@ export default async function PielCanelaPage() {
 
       {/* Productos llevados por tipo (resumen general) */}
       {categorias.length === 0 ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-400 shadow-sm">
+        <div className="rounded-2xl border border-gray-100 bg-pc-card p-10 text-center text-sm text-gray-400 shadow-sm">
           Piel Canela no ha registrado consumo interno todavía. Usa <b>Nueva salida</b> para empezar.
         </div>
       ) : (
         <div className="space-y-4">
           {categorias.map((cat) => (
-            <section key={cat.nombre} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <section key={cat.nombre} className="overflow-hidden rounded-2xl border border-gray-100 bg-pc-card shadow-sm">
               <header className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-3">
                 <div className="flex items-center gap-2">
                   <Package className="size-4 text-gray-400" strokeWidth={1.75} />
@@ -309,7 +309,7 @@ export default async function PielCanelaPage() {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="font-medium text-gray-900 group-hover/prod:text-[#7C3AED] group-hover/prod:underline">{p.nombre}</p>
+                              <p className="font-medium text-gray-900 group-hover/prod:text-pc-violet-ink group-hover/prod:underline">{p.nombre}</p>
                               <p className="text-[10px] text-gray-400">{p.sku}</p>
                             </div>
                           </Link>
@@ -333,9 +333,9 @@ export default async function PielCanelaPage() {
 }
 
 const TONES: Record<"amber" | "indigo" | "rose", { bg: string; border: string; text: string }> = {
-  amber: { bg: "rgba(217,119,6,0.06)", border: "rgba(217,119,6,0.18)", text: "#B45309" },
-  indigo: { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.18)", text: "#4F46E5" },
-  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.18)", text: "#B91C1C" },
+  amber: { bg: "rgba(217,119,6,0.06)", border: "rgba(217,119,6,0.18)", text: "var(--pc-warning-ink)" },
+  indigo: { bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.18)", text: "var(--pc-indigo-ink)" },
+  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.18)", text: "var(--pc-danger-ink)" },
 }
 
 function Kpi({
@@ -355,7 +355,7 @@ function Kpi({
 }) {
   const t = TONES[tone]
   return (
-    <div className="rounded-2xl border bg-white p-4 shadow-sm" style={{ borderColor: t.border, background: strong ? t.bg : undefined }}>
+    <div className="rounded-2xl border bg-pc-card p-4 shadow-sm" style={{ borderColor: t.border, background: strong ? t.bg : undefined }}>
       <div className="flex items-center gap-1.5">
         <Icon className="size-3.5" style={{ color: t.text }} />
         <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: t.text }}>{label}</p>

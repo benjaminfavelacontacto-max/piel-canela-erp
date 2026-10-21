@@ -173,7 +173,7 @@ export default async function ClienteFichaPage({
 
       {/* Contacto */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <div className="rounded-2xl border border-pc-line-soft bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Contacto
           </h2>
@@ -181,7 +181,7 @@ export default async function ClienteFichaPage({
             {c.telefono && (
               <li className="flex items-center gap-2">
                 <Phone className="size-4 text-gray-400" strokeWidth={1.75} />
-                <a href={`tel:${c.telefono}`} className="hover:text-[#7C3AED]">{c.telefono}</a>
+                <a href={`tel:${c.telefono}`} className="hover:text-pc-violet-ink">{c.telefono}</a>
                 <a
                   href={`https://wa.me/${c.telefono.replace(/\D/g, "")}`}
                   target="_blank"
@@ -195,7 +195,7 @@ export default async function ClienteFichaPage({
             {c.email && (
               <li className="flex items-center gap-2">
                 <Mail className="size-4 text-gray-400" strokeWidth={1.75} />
-                <a href={`mailto:${c.email}`} className="truncate hover:text-[#7C3AED]">{c.email}</a>
+                <a href={`mailto:${c.email}`} className="truncate hover:text-pc-violet-ink">{c.email}</a>
               </li>
             )}
             {dir && (
@@ -210,7 +210,7 @@ export default async function ClienteFichaPage({
               return (
                 <li key={k} className="flex items-center gap-2">
                   <Icon className="size-4 text-gray-400" strokeWidth={1.75} />
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="truncate hover:text-[#7C3AED]">
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="truncate hover:text-pc-violet-ink">
                     {String(v)}
                   </a>
                 </li>
@@ -235,7 +235,7 @@ export default async function ClienteFichaPage({
         </div>
 
         {/* Historial de ventas */}
-        <div className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] lg:col-span-2">
+        <div className="rounded-2xl border border-pc-line-soft bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] lg:col-span-2">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
             <ShoppingBag className="size-4 text-gray-400" strokeWidth={1.75} />
             Compras ({ventas.length})
@@ -258,7 +258,7 @@ export default async function ClienteFichaPage({
                   {ventas.map((v) => (
                     <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50/60">
                       <td className="py-2 pr-3">
-                        <Link href={`/ventas/${v.id}`} className="font-mono text-xs text-[#7C3AED] hover:underline">
+                        <Link href={`/ventas/${v.id}`} className="font-mono text-xs text-pc-violet-ink hover:underline">
                           {v.numero ?? v.id.slice(0, 8)}
                         </Link>
                       </td>
@@ -278,7 +278,7 @@ export default async function ClienteFichaPage({
       </section>
 
       {/* Cotizaciones */}
-      <section className="rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <section className="rounded-2xl border border-pc-line-soft bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
           <FileText className="size-4 text-gray-400" strokeWidth={1.75} />
           Cotizaciones ({cots.length})
@@ -300,7 +300,7 @@ export default async function ClienteFichaPage({
                 {cots.map((q) => (
                   <tr key={q.id} className="border-b border-gray-50 hover:bg-gray-50/60">
                     <td className="py-2 pr-3">
-                      <Link href={`/cotizaciones/${q.id}`} className="font-mono text-xs text-[#7C3AED] hover:underline">
+                      <Link href={`/cotizaciones/${q.id}`} className="font-mono text-xs text-pc-violet-ink hover:underline">
                         {q.numero ?? q.id.slice(0, 8)}
                       </Link>
                     </td>

@@ -280,10 +280,10 @@ export function EstimadoIngresos({
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] p-5"
+      className="relative overflow-hidden rounded-2xl border border-pc-line-soft p-5"
       style={{
         background:
-          "radial-gradient(ellipse at top right, rgba(139,92,246,0.04), transparent 50%), radial-gradient(ellipse at bottom left, rgba(15,118,110,0.03), transparent 50%), white",
+          "radial-gradient(ellipse at top right, rgba(139,92,246,0.04), transparent 50%), radial-gradient(ellipse at bottom left, rgba(15,118,110,0.03), transparent 50%), var(--pc-bg-card)",
         boxShadow:
           "0 1px 2px rgba(15,23,42,0.03), 0 8px 24px rgba(15,23,42,0.02)",
       }}
@@ -306,7 +306,7 @@ export function EstimadoIngresos({
               className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
               style={{
                 background:
-                  "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                  "linear-gradient(135deg, var(--pc-violet) 0%, var(--pc-violet) 100%)",
                 boxShadow:
                   "0 1px 2px rgba(139,92,246,0.2), 0 4px 12px rgba(139,92,246,0.15)",
               }}
@@ -315,11 +315,11 @@ export function EstimadoIngresos({
             </span>
             <div>
               <h3
-                className="text-[15px] font-semibold tracking-[-0.02em] text-[#0F172A]"
+                className="text-[15px] font-semibold tracking-[-0.02em] text-pc-ink"
               >
                 AI Revenue Intelligence
               </h3>
-              <p className="mt-0.5 text-[11px] text-[#64748B]">
+              <p className="mt-0.5 text-[11px] text-pc-ink-3">
                 Predicciones basadas en recurrencia y patrones de recompra
               </p>
             </div>
@@ -328,7 +328,7 @@ export function EstimadoIngresos({
             className="inline-flex items-center gap-1.5"
             style={{
               background: "rgba(139,92,246,0.10)",
-              color: "#7C3AED",
+              color: "var(--pc-violet-ink)",
               border: "1px solid rgba(139,92,246,0.25)",
               padding: "2px 8px",
               borderRadius: "9999px",
@@ -339,8 +339,8 @@ export function EstimadoIngresos({
             }}
           >
             <span className="relative flex size-1.5">
-              <span className="absolute inset-0 animate-ping rounded-full opacity-75" style={{ background: "#8B5CF6" }} />
-              <span className="relative size-1.5 rounded-full" style={{ background: "#8B5CF6" }} />
+              <span className="absolute inset-0 animate-ping rounded-full opacity-75" style={{ background: "var(--pc-violet)" }} />
+              <span className="relative size-1.5 rounded-full" style={{ background: "var(--pc-violet)" }} />
             </span>
             Predictivo
           </span>
@@ -351,7 +351,7 @@ export function EstimadoIngresos({
           <div
             className="relative flex items-start gap-4 overflow-hidden"
             style={{
-              background: "white",
+              background: "var(--pc-bg-card)",
               border: "none",
               boxShadow:
                 "0 4px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.03)",
@@ -376,7 +376,7 @@ export function EstimadoIngresos({
               <div className="flex items-center gap-2">
                 <p
                   className="text-[15px] tracking-[-0.015em]"
-                  style={{ color: "#111827", fontWeight: 500 }}
+                  style={{ color: "var(--pc-text)", fontWeight: 500 }}
                 >
                   {seasonalInsights.proxTempAlta.mesNombre.charAt(0).toUpperCase() +
                     seasonalInsights.proxTempAlta.mesNombre.slice(1)}{" "}
@@ -409,7 +409,7 @@ export function EstimadoIngresos({
                         style={{
                           background:
                             i < bars
-                              ? "linear-gradient(180deg, #C5A47E, #A8895F)"
+                              ? "linear-gradient(180deg, #C5A47E, var(--pc-gold-ink))"
                               : "rgba(197,164,126,0.18)",
                         }}
                       />
@@ -420,12 +420,12 @@ export function EstimadoIngresos({
               </div>
               <p
                 className="mt-1 text-[12px] leading-relaxed"
-                style={{ color: "#64748b" }}
+                style={{ color: "var(--pc-text-secondary)" }}
               >
                 Históricamente{" "}
                 <span
                   className="font-semibold tabular-nums"
-                  style={{ color: "#111827" }}
+                  style={{ color: "var(--pc-text)" }}
                 >
                   +
                   {Math.round(
@@ -440,20 +440,20 @@ export function EstimadoIngresos({
               <div
                 className="relative shrink-0 rounded-lg px-3 py-2"
                 style={{
-                  background: "#f8fafc",
-                  border: "1px solid #f1f5f9",
+                  background: "var(--pc-bg-subtle)",
+                  border: "1px solid var(--pc-hair-soft)",
                 }}
               >
                 <p
                   className="text-[9px] font-semibold uppercase"
-                  style={{ color: "#64748b", letterSpacing: "0.1em" }}
+                  style={{ color: "var(--pc-text-secondary)", letterSpacing: "0.1em" }}
                 >
                   Promedio histórico
                 </p>
                 <p
                   className="mt-0.5 text-base tabular-nums tracking-[-0.025em]"
                   style={{
-                    color: "#111827",
+                    color: "var(--pc-text)",
                     fontWeight: 500,
                     fontFeatureSettings: '"tnum" 1',
                   }}
@@ -467,7 +467,7 @@ export function EstimadoIngresos({
 
         {/* AI tiles compactos — sin cards visibles */}
         <div
-          className="grid grid-cols-2 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/60 backdrop-blur-sm lg:grid-cols-4"
+          className="grid grid-cols-2 overflow-hidden rounded-xl border border-pc-line-soft bg-pc-card/60 backdrop-blur-sm lg:grid-cols-4"
         >
           <AiTile
             icon={<Target className="size-3.5" strokeWidth={1.75} />}
@@ -514,7 +514,7 @@ export function EstimadoIngresos({
 
 
         {/* Lista de clientes probable recompra */}
-        <article className="rounded-xl border border-[rgba(15,23,42,0.05)] bg-white/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
+        <article className="rounded-xl border border-pc-line-soft bg-pc-card/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm">
           <header className="mb-3">
             <div className="flex items-center gap-1.5">
               <Sparkles className="size-3.5 text-amber-600" />
@@ -542,7 +542,7 @@ export function EstimadoIngresos({
                 return (
                   <li
                     key={c.id}
-                    className="rounded-lg border border-gray-100 bg-gradient-to-r from-white to-gray-50/40 p-2"
+                    className="rounded-lg border border-gray-100 bg-gradient-to-r from-pc-card to-gray-50/40 p-2"
                   >
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
@@ -560,7 +560,7 @@ export function EstimadoIngresos({
                         >
                           {c.score.toFixed(0)}%
                         </span>
-                        <div className="mt-0.5 text-[10px] tabular-nums text-[#0F766E]">
+                        <div className="mt-0.5 text-[10px] tabular-nums text-pc-teal-ink">
                           {formatMXN2(c.estimado)}
                         </div>
                       </div>
@@ -615,7 +615,7 @@ function AiTile({
         ? "text-amber-600"
         : tone === "rose"
           ? "text-rose-600"
-          : "text-[#0F766E]"
+          : "text-pc-teal-ink"
   // Glow rgb por tono — para hover halo
   const glowRgb =
     tone === "violet"
@@ -627,7 +627,7 @@ function AiTile({
           : "15,118,110"
   return (
     <div
-      className="group relative px-4 py-3 transition-all duration-180 hover:bg-white/55"
+      className="group relative px-4 py-3 transition-all duration-180 hover:bg-pc-card/55"
       style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = `inset 1px 0 0 0 rgba(15,23,42,0.04), inset 0 -2px 0 0 rgba(${glowRgb},0.4), 0 4px 16px rgba(${glowRgb},0.06)`
@@ -642,7 +642,7 @@ function AiTile({
             {icon}
           </span>
           <p
-            className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+            className="text-[9.5px] font-semibold uppercase text-pc-ink-3/70"
             style={{ letterSpacing: "0.12em" }}
           >
             {label}
@@ -662,13 +662,13 @@ function AiTile({
         )}
       </div>
       <p
-        className="mt-1.5 text-[20px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-[#0F172A]"
+        className="mt-1.5 text-[20px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-pc-ink"
         style={{ fontFeatureSettings: '"tnum" 1, "ss01" 1' }}
       >
         {value}
       </p>
       {sub && (
-        <p className="mt-1 text-[10.5px] leading-tight text-[#64748B]">{sub}</p>
+        <p className="mt-1 text-[10.5px] leading-tight text-pc-ink-3">{sub}</p>
       )}
     </div>
   )

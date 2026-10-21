@@ -33,8 +33,8 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
       style={{
         // Fondo casi sólido (sin backdrop-filter): el blur sobre una barra fija
         // vuelve a pintar en cada frame del scroll y se nota en Android de gama media.
-        background: "rgba(255,255,255,0.97)",
-        borderColor: "rgba(15,23,42,0.08)",
+        background: "var(--pc-bg-card)",
+        borderColor: "var(--pc-border)",
         paddingBottom: "var(--pc-safe-bottom)",
         paddingLeft: "var(--pc-safe-left)",
         paddingRight: "var(--pc-safe-right)",
@@ -49,13 +49,13 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className="relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-black/[0.03]"
-                style={{ color: active ? "#0F766E" : "#64748B" }}
+                style={{ color: active ? "var(--pc-accent-ink)" : "var(--pc-text-secondary)" }}
               >
                 {active && (
                   <span
                     aria-hidden
                     className="absolute inset-x-5 top-0 h-0.5 rounded-b-full"
-                    style={{ background: "#0F766E" }}
+                    style={{ background: "var(--pc-accent)" }}
                   />
                 )}
                 <Icon
@@ -74,13 +74,13 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
             onClick={onMore}
             aria-label="Más secciones"
             className="relative flex h-full w-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-black/[0.03]"
-            style={{ color: !inTabs ? "#0F766E" : "#64748B" }}
+            style={{ color: !inTabs ? "var(--pc-accent-ink)" : "var(--pc-text-secondary)" }}
           >
             {!inTabs && (
               <span
                 aria-hidden
                 className="absolute inset-x-5 top-0 h-0.5 rounded-b-full"
-                style={{ background: "#0F766E" }}
+                style={{ background: "var(--pc-accent)" }}
               />
             )}
             <MoreHorizontal

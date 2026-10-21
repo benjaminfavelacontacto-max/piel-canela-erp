@@ -64,7 +64,7 @@ const categoriaBadge: Record<string, string> = {
   "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
   AEROGRAFÍA: "bg-purple-100 text-purple-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
-  "POLVO DE BLANQUEAR": "bg-[#DFF7F4] text-[#0F766E]",
+  "POLVO DE BLANQUEAR": "bg-pc-teal-soft text-pc-teal-ink",
   HUMECTANTES: "bg-cyan-100 text-cyan-700",
   EXFOLIANTS: "bg-indigo-100 text-indigo-700",
   "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
@@ -167,14 +167,14 @@ export function ProductDrawer({
       />
       {/* Drawer */}
       <aside
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-2xl animate-in slide-in-from-bottom duration-300 md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-[520px] md:rounded-none md:slide-in-from-right"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-pc-card shadow-2xl animate-in slide-in-from-bottom duration-300 md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-[520px] md:rounded-none md:slide-in-from-right"
         style={sheet.style}
         onClick={(e) => e.stopPropagation()}
       >
         <SheetHandle {...sheet.handleProps} />
         <div className="min-h-0 flex-1 overflow-y-auto">
         {/* Sticky header */}
-        <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-pc-card/90 px-6 py-4 backdrop-blur">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-wide text-gray-400">
               Producto
@@ -292,7 +292,7 @@ export function ProductDrawer({
               }
             />
             <Stat
-              icon={<Layers className="size-4 text-[#0F766E]" />}
+              icon={<Layers className="size-4 text-pc-teal-ink" />}
               label="Valor inventario"
               value={
                 producto.valor_inventario != null
@@ -473,7 +473,7 @@ export function ProductDrawer({
               <div className="overflow-hidden rounded-xl border border-gray-100">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+                    <tr className="border-b border-pc-line-soft bg-pc-subtle">
                       <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-gray-500">
                         Venta
                       </th>
@@ -497,7 +497,7 @@ export function ProductDrawer({
                         <td className="px-3 py-2">
                           <Link
                             href={`/ventas/${v.venta_id}`}
-                            className="font-mono text-[#0F766E] hover:underline"
+                            className="font-mono text-pc-teal-ink hover:underline"
                             onClick={onClose}
                           >
                             {v.venta_numero}
@@ -590,7 +590,7 @@ export function ProductDrawer({
             <Link
               href={`/cotizaciones/nueva`}
               onClick={onClose}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-700 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3 py-2.5 text-xs font-medium text-gray-700 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
             >
               <ShoppingBag className="size-3.5" />
               Crear cotización
@@ -599,7 +599,7 @@ export function ProductDrawer({
               type="button"
               onClick={onEdit}
               title="Editar stock, precios y costos"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-700 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3 py-2.5 text-xs font-medium text-gray-700 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
             >
               <Pencil className="size-3.5" />
               Editar producto
@@ -626,7 +626,7 @@ function Stat({
   children?: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-3">
+    <div className="rounded-xl border border-gray-100 bg-pc-card p-3">
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-[10px] uppercase tracking-wide text-gray-500">
@@ -658,7 +658,7 @@ function MiniStat({
         ? "text-amber-700"
         : "text-gray-900"
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-3">
+    <div className="rounded-xl border border-gray-100 bg-pc-card p-3">
       <p className="text-[10px] uppercase tracking-wide text-gray-500">
         {label}
       </p>

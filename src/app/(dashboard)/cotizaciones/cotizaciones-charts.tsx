@@ -31,7 +31,7 @@ export function CotizacionesCharts({
 }) {
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <article className="rounded-2xl border border-gray-200 bg-pc-card p-5 shadow-sm">
         <header className="mb-3">
           <h3 className="text-sm font-semibold text-gray-900">
             Conversiones por mes
@@ -48,29 +48,29 @@ export function CotizacionesCharts({
           >
             <defs>
               <linearGradient id="cotsBarGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
-                <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="var(--pc-chart-real)" stopOpacity={0.92} />
+                <stop offset="100%" stopColor="var(--pc-chart-real)" stopOpacity={0.35} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="rgba(148,163,184,0.12)" strokeDasharray="0" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--pc-text-muted)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--pc-text-muted)" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
             <Tooltip
               cursor={{ fill: "rgba(15,118,110,0.04)" }}
               contentStyle={{
-                border: "1px solid rgba(15,23,42,0.06)",
+                border: "1px solid var(--pc-border)",
                 borderRadius: 12,
                 fontSize: 12,
                 boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
               }}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-            <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="#CBD5E1" radius={[12, 12, 4, 4]} barSize={22} opacity={0.92} />
+            <Bar dataKey="cotsCreadas" name="Cotizaciones creadas" fill="var(--pc-chart-comparative)" radius={[12, 12, 4, 4]} barSize={22} opacity={0.92} />
             <Bar dataKey="conversiones" name="Convertidas en venta" fill="url(#cotsBarGradient)" radius={[12, 12, 4, 4]} barSize={22} opacity={0.92} />
           </BarChart>
         </ResponsiveContainer>
       </article>
-      <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <article className="rounded-2xl border border-gray-200 bg-pc-card p-5 shadow-sm">
         <header className="mb-3">
           <h3 className="text-sm font-semibold text-gray-900">
             Valor convertido vs Pipeline
@@ -86,14 +86,14 @@ export function CotizacionesCharts({
           >
             <defs>
               <linearGradient id="gradValorConvertido" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
-                <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="var(--pc-chart-real)" stopOpacity={0.92} />
+                <stop offset="100%" stopColor="var(--pc-chart-real)" stopOpacity={0.35} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="rgba(148,163,184,0.12)" strokeDasharray="0" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--pc-text-muted)" }} axisLine={false} tickLine={false} />
             <YAxis
-              tick={{ fontSize: 11, fill: "#94A3B8" }}
+              tick={{ fontSize: 11, fill: "var(--pc-text-muted)" }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) =>
@@ -104,7 +104,7 @@ export function CotizacionesCharts({
             <Tooltip
               cursor={{ fill: "rgba(15,118,110,0.04)" }}
               contentStyle={{
-                border: "1px solid rgba(15,23,42,0.06)",
+                border: "1px solid var(--pc-border)",
                 borderRadius: 12,
                 fontSize: 12,
                 boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
@@ -126,7 +126,7 @@ export function CotizacionesCharts({
               type="monotone"
               dataKey="pipelineCreado"
               name="Pipeline creado"
-              stroke="#94A3B8"
+              stroke="var(--pc-text-muted)"
               strokeWidth={2.2}
               dot={false}
             />

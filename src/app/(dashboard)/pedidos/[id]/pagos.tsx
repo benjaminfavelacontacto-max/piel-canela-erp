@@ -87,7 +87,7 @@ export function Pagos({
   }
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-gray-100 bg-pc-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-gray-900">
@@ -104,7 +104,7 @@ export function Pagos({
             setAbierto((v) => !v)
             setError(null)
           }}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
         >
           {abierto ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
           {abierto ? "Cancelar" : "Agregar pago"}
@@ -159,7 +159,7 @@ export function Pagos({
               type="button"
               onClick={guardar}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[oklch(59.6%_0.145_163.225)] px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[oklch(50.8%_0.118_165.612)] disabled:opacity-50"
             >
               {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
               Guardar pago
@@ -250,7 +250,7 @@ export function Pagos({
           <div>
             <p
               className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: completo ? "#047857" : "#B45309" }}
+              style={{ color: completo ? "var(--pc-success-ink)" : "var(--pc-warning-ink)" }}
             >
               {completo && <CheckCircle2 className="size-3.5" />}
               Pagado al proveedor
@@ -278,7 +278,7 @@ export function Pagos({
           </div>
           <span
             className="text-[24px] font-bold leading-none tabular-nums"
-            style={{ color: completo ? "#047857" : "#B45309" }}
+            style={{ color: completo ? "var(--pc-success-ink)" : "var(--pc-warning-ink)" }}
           >
             {Math.min(100, cobertura).toFixed(0)}%
           </span>
@@ -288,7 +288,7 @@ export function Pagos({
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${Math.min(100, cobertura)}%`,
-              background: completo ? "#059669" : "#D97706",
+              background: completo ? "var(--pc-success)" : "var(--pc-warning)",
             }}
           />
         </div>

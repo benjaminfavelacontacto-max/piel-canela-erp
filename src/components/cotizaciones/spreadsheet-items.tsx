@@ -258,7 +258,7 @@ export function SpreadsheetItems({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-pc-card shadow-sm">
         <table
           className="w-full select-none text-sm"
           onMouseLeave={() => {
@@ -406,7 +406,7 @@ function SelectionBar({
   if (stats.count === 0) return null
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-3 duration-200">
-      <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-2xl backdrop-blur-md">
+      <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-pc-card px-5 py-3 shadow-2xl backdrop-blur-md">
         <Stat label="Suma" value={formatMXN2(stats.sum)} highlight />
         <Sep />
         <Stat label="Promedio" value={formatMXN2(stats.avg)} />

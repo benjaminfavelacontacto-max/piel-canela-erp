@@ -176,44 +176,44 @@ const STATUS_CONF: Record<
   // ─── Activos / saludables → emerald soft ───
   recurrente: {
     label: "Recurrente",
-    bg: "bg-[#D1FAE5]",
-    text: "text-[#059669]",
+    bg: "bg-pc-green-soft",
+    text: "text-pc-green-ink",
     ring: "ring-emerald-200/50",
-    dot: "bg-[#059669]",
+    dot: "bg-pc-green",
   },
   activo: {
     label: "Activo",
-    bg: "bg-[#DFF7F4]",
-    text: "text-[#0F766E]",
+    bg: "bg-pc-teal-soft",
+    text: "text-pc-teal-ink",
     ring: "ring-teal-200/50",
-    dot: "bg-[#0F766E]",
+    dot: "bg-pc-teal",
   },
   nuevo: {
     label: "Nuevo",
-    bg: "bg-[#DBEAFE]",
-    text: "text-[#2563EB]",
+    bg: "bg-pc-blue-soft",
+    text: "text-pc-blue-ink",
     ring: "ring-blue-200/50",
-    dot: "bg-[#2563EB]",
+    dot: "bg-pc-blue",
   },
   // ─── Atención → amber soft ───
   inactivo: {
     label: "Inactivo",
-    bg: "bg-[#FEF3C7]",
-    text: "text-[#D97706]",
+    bg: "bg-pc-amber-soft",
+    text: "text-pc-amber-ink",
     ring: "ring-amber-200/50",
-    dot: "bg-[#D97706]",
+    dot: "bg-pc-amber",
   },
   // ─── Neutral / sin actividad → gray ───
   prospecto: {
     label: "Prospecto",
-    bg: "bg-[#F3F5F7]",
+    bg: "bg-pc-hover",
     text: "text-gray-600",
     ring: "ring-gray-200",
     dot: "bg-gray-400",
   },
   sin_actividad: {
     label: "Sin ventas",
-    bg: "bg-[#F3F5F7]",
+    bg: "bg-pc-hover",
     text: "text-gray-500",
     ring: "ring-gray-200",
     dot: "bg-gray-300",
@@ -240,7 +240,7 @@ function Avatar({ nombre }: { nombre: string }) {
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("")
   return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F3F5F7] text-[11px] font-semibold text-gray-700 ring-1 ring-[#E7EAF0]">
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-pc-hover text-[11px] font-semibold text-gray-700 ring-1 ring-pc-line">
       {initials || "?"}
     </div>
   )
@@ -742,7 +742,7 @@ export function ClientesDashboard({
                   : v >= 2
                     ? "bg-teal-50 text-teal-700"
                     : v === 1
-                      ? "bg-[#F9FAFB] text-[#0F766E]"
+                      ? "bg-pc-subtle text-pc-teal-ink"
                       : "bg-gray-50 text-gray-400"
               }`}
             >
@@ -947,12 +947,12 @@ export function ClientesDashboard({
             dias === 0 ? "hoy" : dias < 0 ? `hace ${-dias}d` : `en ${dias}d`
           const color =
             dias < -7
-              ? "#B91C1C"
+              ? "var(--pc-danger-ink)"
               : dias < 0
-                ? "#B45309"
+                ? "var(--pc-warning-ink)"
                 : dias <= 14
-                  ? "#047857"
-                  : "#475569"
+                  ? "var(--pc-success-ink)"
+                  : "var(--pc-text-body)"
           const accion =
             p.riesgoAbandono >= 0.6
               ? "Contactar"
@@ -993,7 +993,7 @@ export function ClientesDashboard({
           }
           const pct = Math.round(p.probabilidadProx60 * 100)
           const color =
-            pct >= 60 ? "#047857" : pct >= 30 ? "#B45309" : "#94A3B8"
+            pct >= 60 ? "var(--pc-success-ink)" : pct >= 30 ? "var(--pc-warning-ink)" : "var(--pc-text-muted)"
           return (
             <div className="mx-auto flex w-20 flex-col items-center gap-1">
               <span
@@ -1214,7 +1214,7 @@ export function ClientesDashboard({
 
             {/* Split panel — Activos / Saldo (compacto horizontal) */}
             <section
-              className="grid grid-cols-1 overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.05)] bg-white sm:grid-cols-2"
+              className="grid grid-cols-1 overflow-hidden rounded-2xl border border-pc-line-soft bg-pc-card sm:grid-cols-2"
               style={{ boxShadow: "0 1px 2px rgba(15,23,42,0.03)" }}
             >
               <SplitMetric
@@ -1246,7 +1246,7 @@ export function ClientesDashboard({
               className="flex flex-wrap gap-2"
               style={{
                 padding: "10px 12px",
-                background: "#f8fafc",
+                background: "var(--pc-bg-subtle)",
                 borderRadius: "12px",
               }}
             >
@@ -1326,11 +1326,11 @@ export function ClientesDashboard({
         </div>
 
       {/* Tabla */}
-      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm max-md:order-1">
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-pc-card shadow-sm max-md:order-1">
         {/* Toolbar */}
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.04)] bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 md:px-5">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-pc-line-soft bg-gradient-to-r from-pc-card to-gray-50/50 px-4 py-3 md:px-5">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-[#0F766E]" />
+            <Sparkles className="size-4 text-pc-teal-ink" />
             <h2 className="text-sm font-semibold text-gray-900">
               Base de clientes
             </h2>
@@ -1348,7 +1348,7 @@ export function ClientesDashboard({
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
                 placeholder="Buscar nombre, negocio, RFC, email, ciudad…"
-                className="h-11 w-full rounded-xl md:h-10 md:w-72 border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4]"
+                className="h-11 w-full rounded-xl md:h-10 md:w-72 border border-gray-200 bg-pc-card pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft"
               />
             </div>
             <button
@@ -1356,7 +1356,7 @@ export function ClientesDashboard({
               onClick={() => setFiltersOpenM((o) => !o)}
               aria-expanded={filtersOpenM}
               aria-label="Filtros y orden"
-              className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 md:hidden"
+              className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-pc-card text-gray-600 md:hidden"
             >
               <SlidersHorizontal className="size-4" />
             </button>
@@ -1371,7 +1371,7 @@ export function ClientesDashboard({
                 const [id, dir] = e.target.value.split(":")
                 setSorting([{ id, desc: dir === "desc" }])
               }}
-              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none md:hidden"
+              className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm text-gray-700 focus:outline-none md:hidden"
             >
               <option value="ltv:desc">Mayor LTV</option>
               <option value="ultimo_pedido:desc">Compra más reciente</option>
@@ -1384,7 +1384,7 @@ export function ClientesDashboard({
               onChange={(e) =>
                 setStatusFilter(e.target.value as "todos" | ClienteStatus)
               }
-              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-10"
+              className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-10"
             >
               <option value="todos">Todos los estatus</option>
               <option value="activo">Activos</option>
@@ -1397,7 +1397,7 @@ export function ClientesDashboard({
             <select
               value={tipoFilter}
               onChange={(e) => setTipoFilter(e.target.value)}
-              className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#DFF7F4] md:h-10"
+              className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-10"
             >
               <option value="todos">Todos los tipos</option>
               {TIPOS_CLIENTE.map((t) => (
@@ -1410,7 +1410,7 @@ export function ClientesDashboard({
               <button
                 type="button"
                 onClick={() => setShowColumnMenu((s) => !s)}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
               >
                 <Columns3 className="size-4" />
                 Columnas
@@ -1421,8 +1421,8 @@ export function ClientesDashboard({
                     className="fixed inset-0 z-20"
                     onClick={() => setShowColumnMenu(false)}
                   />
-                  <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                    <div className="border-b border-[rgba(15,23,42,0.04)] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+                  <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-pc-card shadow-xl">
+                    <div className="border-b border-pc-line-soft px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                       Mostrar columnas
                     </div>
                     <ul className="max-h-72 overflow-y-auto py-1">
@@ -1436,7 +1436,7 @@ export function ClientesDashboard({
                                 type="checkbox"
                                 checked={col.getIsVisible()}
                                 onChange={col.getToggleVisibilityHandler()}
-                                className="size-3.5 accent-[#0F766E]"
+                                className="size-3.5 accent-pc-teal"
                               />
                               <span className="capitalize">
                                 {col.id.replace(/_/g, " ")}
@@ -1455,9 +1455,9 @@ export function ClientesDashboard({
         </header>
 
         {/* Filtros inteligentes de predicción (móvil: una fila deslizable) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[rgba(15,23,42,0.04)] bg-[#FBFCFD] px-4 py-2 md:flex-wrap md:overflow-visible md:px-5">
+        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-pc-line-soft bg-pc-subtle px-4 py-2 md:flex-wrap md:overflow-visible md:px-5">
           <span className="mr-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-            <Sparkles className="size-3 text-[#4F46E5]" />
+            <Sparkles className="size-3 text-pc-indigo-ink" />
             Predicción
           </span>
           {PRED_FILTERS.map((f) => {
@@ -1469,9 +1469,9 @@ export function ClientesDashboard({
                 onClick={() => setPredFilter(f.key)}
                 className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all md:py-1 md:text-[11px]"
                 style={{
-                  background: active ? "rgba(99,102,241,0.10)" : "white",
-                  color: active ? "#4F46E5" : "#64748B",
-                  border: `1px solid ${active ? "rgba(99,102,241,0.30)" : "rgba(15,23,42,0.08)"}`,
+                  background: active ? "rgba(99,102,241,0.10)" : "var(--pc-bg-card)",
+                  color: active ? "var(--pc-indigo-ink)" : "var(--pc-text-secondary)",
+                  border: `1px solid ${active ? "rgba(99,102,241,0.30)" : "var(--pc-border)"}`,
                 }}
               >
                 {f.label}
@@ -1480,8 +1480,8 @@ export function ClientesDashboard({
                   style={{
                     background: active
                       ? "rgba(99,102,241,0.20)"
-                      : "rgba(15,23,42,0.06)",
-                    color: active ? "#4F46E5" : "#94A3B8",
+                      : "var(--pc-border)",
+                    color: active ? "var(--pc-indigo-ink)" : "var(--pc-text-muted)",
                   }}
                 >
                   {predCounts[f.key]}
@@ -1511,7 +1511,7 @@ export function ClientesDashboard({
             <button
               type="button"
               onClick={() => setMobileLimit((n) => n + 30)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-pc-card text-sm font-medium text-gray-700"
             >
               Mostrar más ({table.getRowModel().rows.length - mobileLimit})
             </button>
@@ -1521,7 +1521,7 @@ export function ClientesDashboard({
         {/* Body */}
         <div className="relative hidden max-w-full overflow-auto md:block">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
+            <thead className="sticky top-0 z-10 bg-pc-subtle backdrop-blur-sm">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} className="border-b border-gray-200">
                   {hg.headers.map((h, idx) => {
@@ -1563,7 +1563,7 @@ export function ClientesDashboard({
                   <Fragment key={row.id}>
                     <tr
                       onClick={() => setSelectedCliente(row.original)}
-                      className={`group border-b border-[rgba(15,23,42,0.04)] cursor-pointer transition-colors hover:bg-[#F9FAFB]/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
+                      className={`group border-b border-pc-line-soft cursor-pointer transition-colors hover:bg-pc-subtle/40 ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}
                     >
                       {row.getVisibleCells().map((cell, idx) => {
                         const isFirst = idx === 0
@@ -1578,7 +1578,7 @@ export function ClientesDashboard({
                           <td
                             key={cell.id}
                             style={{ width: cell.column.getSize() }}
-                            className={`px-4 py-3 align-middle ${alignClass} ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[#F9FAFB]/60" : ""}`}
+                            className={`px-4 py-3 align-middle ${alignClass} ${isFirst ? "sticky left-0 z-[1] bg-pc-card group-hover:bg-pc-subtle/60" : ""}`}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
@@ -1586,7 +1586,7 @@ export function ClientesDashboard({
                       })}
                     </tr>
                     {row.getIsExpanded() && (
-                      <tr className="border-b border-gray-200 bg-gradient-to-r from-white/30 via-white to-white">
+                      <tr className="border-b border-gray-200 bg-gradient-to-r from-pc-card/30 via-pc-card to-pc-card">
                         <td
                           colSpan={row.getVisibleCells().length}
                           className="px-6 py-4"
@@ -1615,7 +1615,7 @@ export function ClientesDashboard({
             <select
               value={pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none"
+              className="h-7 rounded-md border border-gray-200 bg-pc-card px-2 text-[11px] text-gray-700 focus:outline-none"
             >
               {[10, 25, 50, 100].map((n) => (
                 <option key={n} value={n}>
@@ -1629,7 +1629,7 @@ export function ClientesDashboard({
               type="button"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-pc-card px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="size-3" />
               Anterior
@@ -1645,7 +1645,7 @@ export function ClientesDashboard({
               type="button"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-pc-card px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Siguiente
               <ChevronRight className="size-3" />
@@ -1660,7 +1660,7 @@ export function ClientesDashboard({
         href="/clientes/nuevo"
         aria-label="Nuevo cliente"
         className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.35)] transition-transform active:scale-95 md:hidden"
-        style={{ background: "#7C3AED" }}
+        style={{ background: "var(--pc-violet)" }}
       >
         <UserPlus className="size-5" strokeWidth={2.25} />
         Nuevo cliente
@@ -1727,7 +1727,7 @@ function ClienteCard({
             ? "Compra atrasada " + -dias + "d"
             : "Compra en " + dias + "d",
       color:
-        dias < -7 ? "#B91C1C" : dias < 0 ? "#B45309" : dias <= 14 ? "#047857" : "#475569",
+        dias < -7 ? "var(--pc-danger-ink)" : dias < 0 ? "var(--pc-warning-ink)" : dias <= 14 ? "var(--pc-success-ink)" : "var(--pc-text-body)",
     }
   }
   return (
@@ -1735,7 +1735,7 @@ function ClienteCard({
       onOpen={onOpen}
       ariaLabel={`Cliente ${display}, LTV ${formatMXN(c.ltv)}`}
       leading={
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F3F5F7] text-sm font-semibold text-gray-700 ring-1 ring-[#E7EAF0]">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-pc-hover text-sm font-semibold text-gray-700 ring-1 ring-pc-line">
           {iniciales}
         </div>
       }
@@ -1757,7 +1757,7 @@ function ClienteCard({
         <>
           <StatusPill status={c.status} />
           {c.saldo_total > 0 && (
-            <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2 py-1 text-[11px] font-semibold tabular-nums text-[#B45309]">
+            <span className="inline-flex items-center rounded-full bg-pc-amber-soft px-2 py-1 text-[11px] font-semibold tabular-nums text-pc-amber-ink">
               Debe {formatMXN(c.saldo_total)}
             </span>
           )}
@@ -1819,7 +1819,7 @@ function MicroSpark({
     "L 0 " + h,
     "Z",
   ].join(" ")
-  const stroke = color ?? (dark ? "rgba(255,255,255,0.5)" : "#0F766E")
+  const stroke = color ?? (dark ? "rgba(255,255,255,0.5)" : "var(--pc-accent)")
   const gradId = useId().replace(/:/g, "")
   return (
     <svg
@@ -2022,7 +2022,7 @@ function BestClienteMetric({
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
           style={{
             background:
-              "linear-gradient(135deg, #C5A47E 0%, #A8895F 100%)",
+              "linear-gradient(135deg, #C5A47E 0%, var(--pc-gold-ink) 100%)",
             boxShadow:
               "0 1px 2px rgba(197,164,126,0.3), 0 4px 12px rgba(197,164,126,0.15)",
           }}
@@ -2091,7 +2091,7 @@ function SplitMetric({
       ? "text-emerald-700"
       : accent === "rose"
         ? "text-rose-600"
-        : "text-[#0F172A]"
+        : "text-pc-ink"
   const barColor =
     accent === "emerald"
       ? "bg-emerald-500"
@@ -2111,7 +2111,7 @@ function SplitMetric({
       style={{ boxShadow: "inset 1px 0 0 0 rgba(15,23,42,0.04)" }}
     >
       <p
-        className="text-[9.5px] font-semibold uppercase text-[#64748B]/70"
+        className="text-[9.5px] font-semibold uppercase text-pc-ink-3/70"
         style={{ letterSpacing: "0.14em" }}
       >
         {label}
@@ -2124,11 +2124,11 @@ function SplitMetric({
           {value}
         </p>
         {sub && (
-          <p className="text-[10.5px] tabular-nums text-[#94A3B8]">{sub}</p>
+          <p className="text-[10.5px] tabular-nums text-pc-ink-4">{sub}</p>
         )}
       </div>
       {progress !== undefined && (
-        <div className="mt-2 h-[3px] w-20 overflow-hidden rounded-full bg-[rgba(15,23,42,0.04)]">
+        <div className="mt-2 h-[3px] w-20 overflow-hidden rounded-full bg-[var(--pc-border-soft)]">
           <div
             className={`h-[3px] rounded-full ${barColor} transition-all duration-500`}
             style={{ width: `${pct}%`, opacity: 0.7 }}
@@ -2152,14 +2152,14 @@ function InsightPill({
 }) {
   const toneClass =
     tone === "emerald"
-      ? "text-[#0F766E]"
+      ? "text-pc-teal-ink"
       : tone === "amber"
-        ? "text-[#B45309]"
+        ? "text-pc-amber-ink"
         : tone === "rose"
-          ? "text-[#B91C1C]"
+          ? "text-pc-red-ink"
           : tone === "violet"
-            ? "text-[#7C3AED]"
-            : "text-[#64748B]"
+            ? "text-pc-violet-ink"
+            : "text-pc-ink-3"
   const glowRgb =
     tone === "emerald"
       ? "15,118,110"
@@ -2172,7 +2172,7 @@ function InsightPill({
             : "100,116,139"
   return (
     <span
-      className={`group inline-flex items-center gap-1.5 rounded-full bg-white/55 px-2 py-[3px] text-[10px] font-semibold tabular-nums backdrop-blur-md transition-all duration-180 hover:-translate-y-0.5 ${toneClass}`}
+      className={`group inline-flex items-center gap-1.5 rounded-full bg-pc-card/55 px-2 py-[3px] text-[10px] font-semibold tabular-nums backdrop-blur-md transition-all duration-180 hover:-translate-y-0.5 ${toneClass}`}
       style={{
         boxShadow: `inset 0 0 0 1px rgba(${glowRgb},0.10), 0 1px 2px rgba(15,23,42,0.02)`,
         letterSpacing: "-0.005em",
@@ -2196,7 +2196,7 @@ function InsightPill({
 function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
   return (
     <div className="grid gap-3 lg:grid-cols-3">
-      <div className="rounded-xl border border-gray-100 bg-white/80 p-3 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-pc-card/80 p-3 shadow-sm">
         <h4 className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
           Información
         </h4>
@@ -2226,7 +2226,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
           )}
         </dl>
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white/80 p-3 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-pc-card/80 p-3 shadow-sm">
         <h4 className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
           Métricas
         </h4>
@@ -2234,7 +2234,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
           <Mini
             label="Total compras"
             value={formatMXN2(cliente.ltv)}
-            tone="text-[#0F766E]"
+            tone="text-pc-teal-ink"
           />
           <Mini
             label="Utilidad"
@@ -2261,7 +2261,7 @@ function ExpandedClienteRow({ cliente }: { cliente: EnrichedCliente }) {
           />
         </div>
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white/80 p-3 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-pc-card/80 p-3 shadow-sm">
         <h4 className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
           Recurrencia
         </h4>

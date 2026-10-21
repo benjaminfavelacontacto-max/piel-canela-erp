@@ -326,21 +326,21 @@ export function VentaForm({
       )}
 
       {cotizacion && (
-        <div className="mb-4 flex items-center justify-between rounded-xl border border-pink-200 bg-[#F9FAFB] p-4 text-sm">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-pink-200 bg-pc-subtle p-4 text-sm">
           <div className="flex items-center gap-3">
-            <FileText className="size-4 text-[#0F766E]" />
+            <FileText className="size-4 text-pc-teal-ink" />
             <div>
-              <div className="font-medium text-[#115E59]">
+              <div className="font-medium text-pc-teal-ink">
                 Cotización <span className="font-mono">{cotizacion.numero}</span>
               </div>
-              <div className="text-xs text-[#0F766E]">
+              <div className="text-xs text-pc-teal-ink">
                 {cotizacion.itemsCount} producto(s) — totales bloqueados
               </div>
             </div>
           </div>
           <Link
             href={`/cotizaciones/${cotizacion.id}`}
-            className="text-xs text-[#0F766E] hover:underline"
+            className="text-xs text-pc-teal-ink hover:underline"
           >
             Ver cotización
           </Link>
@@ -349,7 +349,7 @@ export function VentaForm({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <section className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Datos generales
             </h2>
@@ -360,7 +360,7 @@ export function VentaForm({
                   value={numero}
                   onChange={(e) => setNumero(e.target.value)}
                   placeholder="PC-210526001-V-Cliente"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm font-mono focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
                 />
               </Field>
               <Field label="Fecha">
@@ -368,14 +368,14 @@ export function VentaForm({
                   type="date"
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
                 />
               </Field>
               <Field label="Cliente" className="md:col-span-2">
                 <select
                   value={clienteId}
                   onChange={(e) => setClienteId(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
                 >
                   <option value="">Selecciona un cliente…</option>
                   {clientes.map((c) => (
@@ -395,7 +395,7 @@ export function VentaForm({
           </div>
 
           {!lockedFromCotizacion && (
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
               <div className="mb-1 flex items-center justify-between">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Productos <span className="text-gray-400">(opcional)</span>
@@ -417,7 +417,7 @@ export function VentaForm({
                   if (e.target.value) addLinea(e.target.value)
                 }}
                 disabled={productos.length === 0}
-                className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E] disabled:opacity-50"
+                className="mb-3 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal disabled:opacity-50"
               >
                 <option value="">
                   {productos.length === 0
@@ -553,7 +553,7 @@ export function VentaForm({
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Totales
             </h2>
@@ -610,7 +610,7 @@ export function VentaForm({
                       type="button"
                       onClick={() => setIvaActivo((v) => !v)}
                       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
-                        ivaActivo ? "bg-amber-600" : "bg-gray-300"
+                        ivaActivo ? "bg-[oklch(66.6%_0.179_58.318)]" : "bg-gray-300"
                       }`}
                       role="switch"
                       aria-checked={ivaActivo}
@@ -627,7 +627,7 @@ export function VentaForm({
                     </button>
                   </div>
                   {ivaActivo && (
-                    <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-[11px] tabular-nums text-amber-900">
+                    <p className="mt-2 rounded-md bg-pc-card/70 px-2 py-1 text-[11px] tabular-nums text-amber-900">
                       IVA 16%: <strong>{formatMXN2(totals.iva)}</strong> · Total:{" "}
                       <strong>{formatMXN2(totals.total)}</strong>
                     </p>
@@ -677,7 +677,7 @@ export function VentaForm({
                     type="button"
                     onClick={() => setIvaActivo((v) => !v)}
                     className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                      ivaActivo ? "bg-[#0F766E]" : "bg-gray-300"
+                      ivaActivo ? "bg-pc-teal" : "bg-gray-300"
                     }`}
                     aria-pressed={ivaActivo}
                   >
@@ -701,7 +701,7 @@ export function VentaForm({
             )}
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Pago
             </h2>
@@ -710,7 +710,7 @@ export function VentaForm({
                 <select
                   value={metodoPago}
                   onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                  className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
                 >
                   <option value="transferencia">Transferencia</option>
                   <option value="efectivo">Efectivo</option>
@@ -745,7 +745,7 @@ export function VentaForm({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Notas
             </h2>
@@ -754,7 +754,7 @@ export function VentaForm({
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
               placeholder="Notas internas, referencia de pago, etc."
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </div>
 
@@ -762,7 +762,7 @@ export function VentaForm({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-pc-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="size-4" />
             {pending ? "Guardando…" : "Guardar Venta"}
@@ -770,7 +770,7 @@ export function VentaForm({
         </section>
 
         <aside className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Resumen
             </h2>
@@ -793,7 +793,7 @@ export function VentaForm({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               División de socios
             </h2>
@@ -870,7 +870,7 @@ function NumberInput({
         const v = parseFloat(e.target.value)
         onChange(Number.isNaN(v) ? 0 : v)
       }}
-      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+      className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm tabular-nums focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
     />
   )
 }

@@ -99,30 +99,30 @@ const ESTATUS_CONF: Record<
 > = {
   pagada_total: {
     label: "Pagada",
-    bg: "bg-[#D1FAE5]", // emerald-100
-    text: "text-[#047857]", // emerald-700
-    ring: "ring-[#A7F3D0]",
+    bg: "bg-pc-green-soft", // emerald-100
+    text: "text-pc-green-ink", // emerald-700
+    ring: "ring-pc-green-line",
     dot: "bg-[#10B981]", // emerald-500
   },
   pagada_parcial: {
     label: "Parcial",
-    bg: "bg-[#FEF3C7]", // amber-100
-    text: "text-[#B45309]", // amber-700
-    ring: "ring-[#FDE68A]",
+    bg: "bg-pc-amber-soft", // amber-100
+    text: "text-pc-amber-ink", // amber-700
+    ring: "ring-pc-amber-line",
     dot: "bg-[#F59E0B]", // amber-500
   },
   pendiente: {
     label: "Pendiente",
-    bg: "bg-[#DBEAFE]", // blue-100
-    text: "text-[#1D4ED8]", // blue-700
-    ring: "ring-[#BFDBFE]",
-    dot: "bg-[#3B82F6]", // blue-500
+    bg: "bg-pc-blue-soft", // blue-100
+    text: "text-pc-blue-ink", // blue-700
+    ring: "ring-pc-blue-line",
+    dot: "bg-pc-blue", // blue-500
   },
   cancelada: {
     label: "Cancelada",
-    bg: "bg-[#F1F5F9]", // slate-100
-    text: "text-[#475569]", // slate-600
-    ring: "ring-[#E2E8F0]",
+    bg: "bg-pc-hover", // slate-100
+    text: "text-pc-ink-2", // slate-600
+    ring: "ring-pc-line",
     dot: "bg-[#94A3B8]", // slate-400
   },
 }
@@ -194,7 +194,7 @@ function StatusCell({
         disabled={pending}
         title="Cambiar estatus"
         aria-label="Cambiar estatus de la venta"
-        className={`cursor-pointer appearance-none rounded-full border-0 py-1 pl-5 pr-7 text-[11px] font-semibold tabular-nums ring-1 transition-all duration-180 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0F766E]/30 ${conf.bg} ${conf.text} ${conf.ring} ${pending ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(15,23,42,0.06)]"}`}
+        className={`cursor-pointer appearance-none rounded-full border-0 py-1 pl-5 pr-7 text-[11px] font-semibold tabular-nums ring-1 transition-all duration-180 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-pc-teal/30 ${conf.bg} ${conf.text} ${conf.ring} ${pending ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(15,23,42,0.06)]"}`}
       >
         {ESTATUS_VENTA_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
@@ -233,9 +233,9 @@ function VendorPill({ v }: { v: EnrichedVenta["vendedor"] }) {
     return <span className="text-xs text-gray-300">—</span>
   // Pills neutros — el nombre diferencia, no el color
   const styles: Record<"Sandra" | "Benjamin" | "Ambos", string> = {
-    Sandra: "bg-[#F3F5F7] text-gray-700 ring-[#E7EAF0]",
-    Benjamin: "bg-[#F3F5F7] text-gray-700 ring-[#E7EAF0]",
-    Ambos: "bg-[#DFF7F4] text-[#0F766E] ring-emerald-200/60",
+    Sandra: "bg-pc-hover text-gray-700 ring-pc-line",
+    Benjamin: "bg-pc-hover text-gray-700 ring-pc-line",
+    Ambos: "bg-pc-teal-soft text-pc-teal-ink ring-emerald-200/60",
   }
   return (
     <span
@@ -345,7 +345,7 @@ function EditableMonto({
             setDraft(monto.toString())
           }
         }}
-        className={`w-24 rounded-md border-2 ${textColor} bg-white px-1.5 py-0.5 text-right text-xs font-semibold tabular-nums shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1`}
+        className={`w-24 rounded-md border-2 ${textColor} bg-pc-card px-1.5 py-0.5 text-right text-xs font-semibold tabular-nums shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1`}
       />
     )
   }
@@ -542,7 +542,7 @@ function VentaActionsCell({
           <Link
             href={`/cotizaciones/${venta.cotizacion_id}`}
             onClick={(e) => e.stopPropagation()}
-            className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
+            className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-pc-hover hover:text-gray-700 pointer-coarse:p-2.5"
             title="Ver cotización origen"
             aria-label="Ver cotización origen"
           >
@@ -553,7 +553,7 @@ function VentaActionsCell({
         <Link
           href={`/ventas/${venta.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-pc-hover hover:text-gray-700 pointer-coarse:p-2.5"
           title="Ver detalle"
           aria-label="Ver detalle"
         >
@@ -563,7 +563,7 @@ function VentaActionsCell({
         <Link
           href={`/ventas/${venta.id}/editar`}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 pointer-coarse:p-2.5"
+          className="rounded-md p-1.5 text-gray-400 transition-all duration-180 hover:bg-pc-hover hover:text-gray-700 pointer-coarse:p-2.5"
           title="Editar"
           aria-label="Editar"
         >
@@ -580,7 +580,7 @@ function VentaActionsCell({
               }
               setMenuOpen((o) => !o)
             }}
-            className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-[#F3F5F7] hover:text-gray-700 ${menuOpen ? "bg-[#F3F5F7] text-gray-700" : ""}`}
+            className={`rounded-md p-1.5 pointer-coarse:p-2.5 text-gray-400 transition-all duration-180 hover:bg-pc-hover hover:text-gray-700 ${menuOpen ? "bg-pc-hover text-gray-700" : ""}`}
             title="Más acciones"
             aria-label="Más acciones"
             aria-expanded={menuOpen}
@@ -592,7 +592,7 @@ function VentaActionsCell({
             <div
               role="menu"
               style={menuPos}
-              className="fixed z-50 min-w-[200px] overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
+              className="fixed z-50 min-w-[200px] overflow-hidden rounded-xl border border-pc-line bg-pc-card py-1 shadow-[0_8px_24px_rgba(15,23,42,0.10),0_2px_4px_rgba(15,23,42,0.04)]"
               onClick={(e) => e.stopPropagation()}
             >
               {puedeCobrar && (
@@ -616,7 +616,7 @@ function VentaActionsCell({
               >
                 Repetir pedido
               </VentaMenuItem>
-              <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
+              <div className="my-1 h-px bg-[var(--pc-border-soft)]" />
               {venta.estatus !== "cancelada" && (
                 <VentaMenuItem
                   icon={<XCircle className="size-3.5" strokeWidth={1.8} />}
@@ -641,7 +641,7 @@ function VentaActionsCell({
                   Reactivar venta
                 </VentaMenuItem>
               )}
-              <div className="my-1 h-px bg-[rgba(15,23,42,0.04)]" />
+              <div className="my-1 h-px bg-[var(--pc-border-soft)]" />
               <VentaMenuItem
                 icon={<Trash2 className="size-3.5" strokeWidth={1.8} />}
                 tone="danger"
@@ -699,7 +699,7 @@ function VentaMenuItem({
   const toneClass =
     tone === "danger"
       ? "text-rose-600 hover:bg-rose-50"
-      : "text-gray-700 hover:bg-[#F3F5F7]"
+      : "text-gray-700 hover:bg-pc-hover"
   return (
     <button
       type="button"
@@ -733,7 +733,7 @@ function ConfirmDeleteVentaModal({
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-sm rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
+        className="relative w-full max-w-sm rounded-2xl border border-pc-line bg-pc-card p-6 shadow-[0_24px_48px_rgba(15,23,42,0.16)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -755,7 +755,7 @@ function ConfirmDeleteVentaModal({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-[rgba(15,23,42,0.06)] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-[#F9FAFB]"
+            className="flex-1 rounded-xl border border-pc-line py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-pc-subtle"
           >
             Cancelar
           </button>
@@ -763,11 +763,11 @@ function ConfirmDeleteVentaModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[oklch(58.6%_0.253_17.585)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? (
               <>
-                <div className="size-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="size-3.5 animate-spin rounded-full border-2 border-pc-card border-t-transparent" />
                 Eliminando…
               </>
             ) : (
@@ -918,7 +918,7 @@ export function VentasTablePremium({
                 ? `/cotizaciones/${row.original.cotizacion_id}`
                 : `/ventas/${row.original.id}`
             }
-            className="whitespace-nowrap font-mono text-xs text-[#0F766E] transition hover:underline"
+            className="whitespace-nowrap font-mono text-xs text-pc-teal-ink transition hover:underline"
             onClick={(e) => e.stopPropagation()}
             title={
               row.original.cotizacion_id
@@ -1130,7 +1130,7 @@ export function VentasTablePremium({
               socioId={SANDRA_ID}
               monto={Number(getValue() ?? 0)}
               textColor="text-gray-900"
-              bgColor="bg-[#F3F5F7]"
+              bgColor="bg-pc-hover"
             />
           </div>
         ),
@@ -1161,7 +1161,7 @@ export function VentasTablePremium({
             <div className="flex items-center justify-end gap-2">
               <span className="text-xs tabular-nums text-gray-700">{v.toFixed(0)}%</span>
               <div className="h-1 w-10 rounded-full bg-gray-100">
-                <div className="h-1 rounded-full bg-[#0F766E]" style={{ width: `${Math.min(100, v)}%` }} />
+                <div className="h-1 rounded-full bg-pc-teal" style={{ width: `${Math.min(100, v)}%` }} />
               </div>
             </div>
           )
@@ -1297,11 +1297,11 @@ export function VentasTablePremium({
   const filteredCount = table.getFilteredRowModel().rows.length
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-pc-card shadow-sm">
       {/* Toolbar */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF1F4] bg-white px-4 py-3 md:px-5">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-pc-line-soft bg-pc-card px-4 py-3 md:px-5">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-[#0F766E]" />
+          <Sparkles className="size-4 text-pc-teal-ink" />
           <h2 className="text-sm font-semibold text-gray-900">
             Registros de venta
           </h2>
@@ -1318,7 +1318,7 @@ export function VentasTablePremium({
               placeholder="Buscar cliente, número, nota, método…"
               type="search"
               enterKeyHint="search"
-              className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 text-xs text-gray-700 md:h-8 md:w-72 placeholder:text-gray-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
+              className="h-11 w-full rounded-lg border border-gray-200 bg-pc-card pl-8 pr-3 text-xs text-gray-700 md:h-8 md:w-72 placeholder:text-gray-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-100"
             />
           </div>
           <select
@@ -1328,7 +1328,7 @@ export function VentasTablePremium({
               const [id, dir] = e.target.value.split(":")
               setSorting([{ id, desc: dir === "desc" }])
             }}
-            className="h-11 shrink-0 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none md:hidden"
+            className="h-11 shrink-0 rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:outline-none md:hidden"
           >
             <option value="fecha:desc">Más recientes</option>
             <option value="fecha:asc">Más antiguas</option>
@@ -1340,7 +1340,7 @@ export function VentasTablePremium({
             <button
               type="button"
               onClick={() => setShowColumnMenu((s) => !s)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-2.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
             >
               <Columns3 className="size-3.5" />
               Columnas
@@ -1351,8 +1351,8 @@ export function VentasTablePremium({
                   className="fixed inset-0 z-20"
                   onClick={() => setShowColumnMenu(false)}
                 />
-                <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                  <div className="border-b border-[rgba(15,23,42,0.04)] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
+                <div className="absolute right-0 top-full z-30 mt-1 w-56 overflow-hidden rounded-xl border border-gray-200 bg-pc-card shadow-xl">
+                  <div className="border-b border-pc-line-soft px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500">
                     Mostrar columnas
                   </div>
                   <ul className="max-h-72 overflow-y-auto py-1">
@@ -1408,7 +1408,7 @@ export function VentasTablePremium({
           className="w-full table-fixed text-sm"
           style={{ width: table.getTotalSize(), minWidth: "100%" }}
         >
-          <thead className="sticky top-0 z-10 bg-[#F9FAFB] backdrop-blur-sm">
+          <thead className="sticky top-0 z-10 bg-pc-subtle backdrop-blur-sm">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="border-b border-gray-200">
                 {hg.headers.map((h, idx) => {
@@ -1417,7 +1417,7 @@ export function VentasTablePremium({
                     <th
                       key={h.id}
                       style={{ width: h.getSize() }}
-                      className={`relative h-10 px-4 text-left font-medium ${isFirst ? "sticky left-0 z-20 bg-gray-50/95 shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
+                      className={`relative h-10 px-4 text-left font-medium ${isFirst ? "sticky left-0 z-20 bg-gray-50/95 shadow-[1px_0_0_0_var(--pc-hair)]" : ""}`}
                     >
                       {h.isPlaceholder
                         ? null
@@ -1443,7 +1443,7 @@ export function VentasTablePremium({
                 <Fragment key={row.id}>
                   <tr
                     onClick={() => onRowClick?.(row.original)}
-                    className={`group border-b border-[rgba(15,23,42,0.04)] transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-[rgba(15,118,110,0.03)]`}
+                    className={`group border-b border-pc-line-soft transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-[rgba(15,118,110,0.03)]`}
                   >
                     {row.getVisibleCells().map((cell, idx) => {
                       const isFirst = idx === 0
@@ -1451,7 +1451,7 @@ export function VentasTablePremium({
                         <td
                           key={cell.id}
                           style={{ width: cell.column.getSize() }}
-                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-white group-hover:bg-[rgba(15,118,110,0.03)] shadow-[1px_0_0_0_#e5e7eb]" : ""}`}
+                          className={`px-4 py-3 align-middle ${isFirst ? "sticky left-0 z-[1] bg-pc-card group-hover:bg-[rgba(15,118,110,0.03)] shadow-[1px_0_0_0_var(--pc-hair)]" : ""}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
@@ -1476,7 +1476,7 @@ export function VentasTablePremium({
       </div>
 
       {/* Pagination */}
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-white to-gray-50/50 px-4 py-3 text-xs md:px-5">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gradient-to-r from-pc-card to-gray-50/50 px-4 py-3 text-xs md:px-5">
         <div className="flex items-center gap-2 text-gray-600">
           <span>
             {pageIdx * pageSize + 1}–
@@ -1486,7 +1486,7 @@ export function VentasTablePremium({
           <select
             value={pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="hidden h-7 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 focus:outline-none sm:block"
+            className="hidden h-7 rounded-md border border-gray-200 bg-pc-card px-2 text-[11px] text-gray-700 focus:outline-none sm:block"
           >
             {[10, 25, 50, 100].map((n) => (
               <option key={n} value={n}>
@@ -1500,7 +1500,7 @@ export function VentasTablePremium({
             type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
+            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-pc-card px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
           >
             <ChevronLeft className="size-3" />
             Anterior
@@ -1514,7 +1514,7 @@ export function VentasTablePremium({
             type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
+            className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 bg-pc-card px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0 md:px-2 md:text-[11px]"
           >
             Siguiente
             <ChevronRight className="size-3" />
@@ -1553,7 +1553,7 @@ function VentaCard({
             {fechaFmt.format(new Date(venta.fecha))}
           </span>
           <span aria-hidden>·</span>
-          <span className="truncate font-mono text-[11px] text-[#0F766E]">
+          <span className="truncate font-mono text-[11px] text-pc-teal-ink">
             {venta.numero}
           </span>
         </>
@@ -1562,7 +1562,7 @@ function VentaCard({
         <>
           <StatusCell ventaId={venta.id} estatus={venta.estatus} />
           {saldo > 0 && !cancelada && venta.estatus !== "pagada_total" && (
-            <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2 py-1 text-[11px] font-semibold tabular-nums text-[#B45309]">
+            <span className="inline-flex items-center rounded-full bg-pc-amber-soft px-2 py-1 text-[11px] font-semibold tabular-nums text-pc-amber-ink">
               Debe {formatMXN2(saldo)}
             </span>
           )}
@@ -1592,7 +1592,7 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {/* Notas completas */}
-      <div className="rounded-xl border border-amber-200/60 bg-white/80 p-4 shadow-sm backdrop-blur lg:col-span-1">
+      <div className="rounded-xl border border-amber-200/60 bg-pc-card/80 p-4 shadow-sm backdrop-blur lg:col-span-1">
         <header className="mb-2 flex items-center gap-2">
           <span className="flex size-6 items-center justify-center rounded-md bg-amber-100 text-amber-700">
             <StickyNote className="size-3.5" />
@@ -1617,10 +1617,10 @@ function ExpandedRow({ venta }: { venta: EnrichedVenta }) {
       </div>
 
       {/* Reparto socios detalle */}
-      <div className="rounded-xl border border-[#E7EAF0] bg-white p-4 shadow-sm lg:col-span-2">
+      <div className="rounded-xl border border-pc-line bg-pc-card p-4 shadow-sm lg:col-span-2">
         <header className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex size-6 items-center justify-center rounded-md bg-[#F3F5F7] text-gray-600">
+            <span className="flex size-6 items-center justify-center rounded-md bg-pc-hover text-gray-600">
               <Users className="size-3.5" />
             </span>
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">
@@ -1724,18 +1724,18 @@ function SocioCard({
   // Paleta neutra — el nombre del socio diferencia, no el color
   const cfg = {
     pink: {
-      ring: "ring-[#E7EAF0]",
-      bg: "bg-white",
+      ring: "ring-pc-line",
+      bg: "bg-pc-card",
       text: "text-gray-900",
-      bar: "bg-[#0F766E]",
-      bgClass: "bg-[#F3F5F7]",
+      bar: "bg-pc-teal",
+      bgClass: "bg-pc-hover",
     },
     teal: {
-      ring: "ring-[#E7EAF0]",
-      bg: "bg-white",
+      ring: "ring-pc-line",
+      bg: "bg-pc-card",
       text: "text-gray-900",
-      bar: "bg-[#0F766E]",
-      bgClass: "bg-[#F3F5F7]",
+      bar: "bg-pc-teal",
+      bgClass: "bg-pc-hover",
     },
   }[color]
   return (
@@ -1752,7 +1752,7 @@ function SocioCard({
           bgColor={cfg.bgClass}
         />
       </div>
-      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/70">
+      <div className="mt-2 h-1 overflow-hidden rounded-full bg-pc-card/70">
         <div
           className={`h-full rounded-full ${cfg.bar} transition-all`}
           style={{ width: `${Math.min(100, pct)}%` }}
@@ -1777,7 +1777,7 @@ function Mini({
   accent?: string
 }) {
   return (
-    <div className="rounded-md bg-white/70 px-1 py-0.5">
+    <div className="rounded-md bg-pc-card/70 px-1 py-0.5">
       <div className="text-[8.5px] uppercase tracking-wide text-gray-500">
         {label}
       </div>

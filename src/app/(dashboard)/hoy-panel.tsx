@@ -102,7 +102,7 @@ export function HoyPanel({
               <li key={i.id} className="flex items-center gap-1">
                 <Link
                   href={`/ventas/${i.id}`}
-                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30"
+                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/30"
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-gray-900">{i.cliente}</span>
@@ -135,7 +135,7 @@ export function HoyPanel({
               <li key={i.id} className="flex items-center gap-1">
                 <Link
                   href={`/cotizaciones/${i.id}`}
-                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30"
+                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/30"
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-gray-900">{i.cliente}</span>
@@ -174,7 +174,7 @@ export function HoyPanel({
               <li key={i.id} className="flex items-center gap-1">
                 <Link
                   href={`/clientes/${i.id}`}
-                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/30"
+                  className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1 py-2 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-teal/30"
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-gray-900">{i.cliente}</span>

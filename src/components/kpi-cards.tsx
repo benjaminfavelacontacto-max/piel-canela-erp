@@ -36,7 +36,7 @@ const TONE: Record<
   { value: string; icon: string; chip: string }
 > = {
   neutral: { value: "text-gray-900", icon: "text-gray-500", chip: "bg-gray-100" },
-  teal: { value: "text-[#0F766E]", icon: "text-[#0F766E]", chip: "bg-[#DFF7F4]" },
+  teal: { value: "text-pc-teal-ink", icon: "text-pc-teal-ink", chip: "bg-pc-teal-soft" },
   emerald: { value: "text-emerald-700", icon: "text-emerald-700", chip: "bg-emerald-50" },
   rose: { value: "text-rose-700", icon: "text-rose-600", chip: "bg-rose-50" },
   amber: { value: "text-amber-700", icon: "text-amber-600", chip: "bg-amber-50" },
@@ -79,7 +79,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
             // tarjetas anima `transform`, y un transform ≠ none crea stacking
             // context — sin este z-index la tarjeta de al lado se pintaba
             // ENCIMA del popover (que iba antes en el DOM) y lo tapaba.
-            className={`relative rounded-2xl border border-black/5 bg-white p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-200 hover:border-[rgba(15,118,110,0.22)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.05)] sm:p-4 ${
+            className={`relative rounded-2xl border border-pc-line-soft bg-pc-card p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all duration-200 hover:border-[rgba(15,118,110,0.22)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.05)] sm:p-4 ${
               open ? "z-40" : "hover:-translate-y-px"
             }`}
           >
@@ -97,8 +97,8 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                 title="¿De dónde sale este número?"
                 className={`-mr-1 -mt-1 rounded-full p-1 transition-colors ${
                   open
-                    ? "bg-[#0F766E] text-white"
-                    : "text-gray-300 hover:bg-gray-100 hover:text-[#0F766E]"
+                    ? "bg-pc-teal text-white"
+                    : "text-gray-300 hover:bg-gray-100 hover:text-pc-teal-ink"
                 }`}
               >
                 <HelpCircle className="size-4" />
@@ -131,7 +131,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                     transparentaba y la cuenta se volvía ilegible.
                     En móvil las tarjetas van de 2 en 2 (~160px): la ayuda sale
                     como hoja inferior a lo ancho, sobre la barra de navegación. */}
-                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 max-sm:fixed max-sm:inset-x-3 max-sm:top-auto max-sm:bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] max-sm:max-h-[60dvh] max-sm:overflow-y-auto rounded-2xl border border-white/70 bg-white/95 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
+                <div className="absolute left-0 right-0 top-[calc(100%-6px)] z-30 max-sm:fixed max-sm:inset-x-3 max-sm:top-auto max-sm:bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] max-sm:max-h-[60dvh] max-sm:overflow-y-auto rounded-2xl border border-pc-card/70 bg-pc-card/95 p-3.5 shadow-[0_24px_48px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150 sm:left-auto sm:w-[21rem]">
                   <div className="flex items-center gap-2">
                     <span
                       className={`flex size-6 items-center justify-center rounded-lg ${t.chip}`}
@@ -145,7 +145,7 @@ export function KpiCards({ cards }: { cards: KpiCard[] }) {
                   <p className="mt-1.5 text-[11px] leading-snug text-gray-600">
                     {c.ayuda.que}
                   </p>
-                  <ul className="mt-2 space-y-1.5 rounded-xl bg-[#FAFAFA] p-2.5 ring-1 ring-inset ring-black/5">
+                  <ul className="mt-2 space-y-1.5 rounded-xl bg-pc-subtle p-2.5 ring-1 ring-inset ring-pc-line-soft">
                     {c.ayuda.filas.map((f, i) => (
                       <li
                         key={i}

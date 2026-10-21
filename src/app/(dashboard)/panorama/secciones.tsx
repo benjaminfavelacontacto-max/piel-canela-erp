@@ -50,7 +50,7 @@ export function Panel({
   className?: string
 }) {
   return (
-    <div className={`rounded-2xl border border-black/5 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] md:p-5 print:break-inside-avoid ${className}`}>
+    <div className={`rounded-2xl border border-pc-line-soft bg-pc-card p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] md:p-5 print:break-inside-avoid ${className}`}>
       {(titulo || derecha) && (
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -73,7 +73,7 @@ const TONO: Record<Tono, { label: string; chip: string; barra: string; icono: Re
 }
 
 /** Barra horizontal que crece al entrar. `pct` 0-100. */
-export function BarraH({ pct, color = "#0F766E", alto = 8, retraso = 0, fondo = "#F1F5F9" }: { pct: number; color?: string; alto?: number; retraso?: number; fondo?: string }) {
+export function BarraH({ pct, color = "var(--pc-accent-ink)", alto = 8, retraso = 0, fondo = "var(--pc-hair-soft)" }: { pct: number; color?: string; alto?: number; retraso?: number; fondo?: string }) {
   return (
     <div className="w-full overflow-hidden rounded-full" style={{ height: alto, background: fondo }} role="presentation">
       <div
@@ -107,14 +107,14 @@ export function BarraApilada({
 }
 
 /** Anillo de progreso (0-100). */
-export function Anillo({ pct, tamano = 112, color = "#0F766E", etiqueta, sub }: { pct: number; tamano?: number; color?: string; etiqueta: string; sub?: string }) {
+export function Anillo({ pct, tamano = 112, color = "var(--pc-accent-ink)", etiqueta, sub }: { pct: number; tamano?: number; color?: string; etiqueta: string; sub?: string }) {
   const r = 44
   const c = 2 * Math.PI * r
   const v = Math.max(0, Math.min(100, pct))
   return (
     <div className="relative shrink-0" style={{ width: tamano, height: tamano }}>
       <svg viewBox="0 0 112 112" className="size-full -rotate-90" role="img" aria-label={`${etiqueta}${sub ? " " + sub : ""}`}>
-        <circle cx="56" cy="56" r={r} fill="none" stroke="#E2E8F0" strokeWidth="10" />
+        <circle cx="56" cy="56" r={r} fill="none" stroke="var(--pc-hair)" strokeWidth="10" />
         <circle
           className="pc-ring-arc"
           cx="56"
@@ -158,7 +158,7 @@ export function Hallazgos({ items }: { items: Hallazgo[] }) {
       {items.map((h, i) => {
         const t = TONO[h.tono]
         return (
-          <li key={i} className="relative overflow-hidden rounded-2xl border border-black/5 bg-white p-4 pl-5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] print:break-inside-avoid">
+          <li key={i} className="relative overflow-hidden rounded-2xl border border-pc-line-soft bg-pc-card p-4 pl-5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] print:break-inside-avoid">
             <span className={`absolute inset-y-0 left-0 w-1.5 ${t.barra}`} aria-hidden />
             <div className="flex items-center gap-2">
               {t.icono}
@@ -167,7 +167,7 @@ export function Hallazgos({ items }: { items: Hallazgo[] }) {
             <p className="mt-2 text-sm font-semibold leading-snug text-gray-900">{h.titulo}</p>
             <p className="mt-1 text-xs leading-relaxed text-gray-600">{h.detalle}</p>
             {h.href && (
-              <Link href={h.href} className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-[#0F766E] hover:underline md:min-h-0">
+              <Link href={h.href} className="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-pc-teal-ink hover:underline md:min-h-0">
                 {h.accion ?? "Ver"} <ArrowRight className="size-3" aria-hidden />
               </Link>
             )}
@@ -196,9 +196,9 @@ export function RitmoMes({ p }: { p: Panorama }) {
   return (
     <Panel titulo={`Ritmo de ${r.mesLabel}`} nota={`Día ${r.diaDelMes} de ${r.diasMes}. Las ventas llegan en bloques: la proyección es solo una referencia.`}>
       <div className="space-y-3.5">
-        {fila("Vendido en lo que va del mes", r.ventasMes, "#0F766E")}
+        {fila("Vendido en lo que va del mes", r.ventasMes, "var(--pc-accent)")}
         {fila("A este ritmo cerrarías en", r.proyeccion, "rgba(15,118,110,0.35)", undefined, 120)}
-        {fila("Promedio mensual de los últimos 6 meses", r.promedio6m, "#94A3B8", r.promedio6m > 0 ? `Llevas ${r.pctDelPromedio.toFixed(0)}% de un mes promedio.` : undefined, 240)}
+        {fila("Promedio mensual de los últimos 6 meses", r.promedio6m, "var(--pc-text-muted)", r.promedio6m > 0 ? `Llevas ${r.pctDelPromedio.toFixed(0)}% de un mes promedio.` : undefined, 240)}
       </div>
     </Panel>
   )
@@ -253,7 +253,7 @@ export function Pareto({ p }: { p: Panorama }) {
             </span>
             <span aria-hidden />
             <div className="col-span-2">
-              <BarraH pct={(t.ingresos / max) * 100} alto={6} color={t.acumPct <= 80 ? "#0F766E" : "#94A3B8"} retraso={i * 50} />
+              <BarraH pct={(t.ingresos / max) * 100} alto={6} color={t.acumPct <= 80 ? "var(--pc-accent)" : "var(--pc-text-muted)"} retraso={i * 50} />
             </div>
           </li>
         ))}
@@ -278,7 +278,7 @@ export function CapitalPanel({ p }: { p: Panorama }) {
           pct={c.pctRecuperado}
           etiqueta={`${c.pctRecuperado.toFixed(0)}%`}
           sub="de lo invertido ya recuperado"
-          color={c.pctRecuperado >= 100 ? "#059669" : "#0F766E"}
+          color={c.pctRecuperado >= 100 ? "var(--pc-success)" : "var(--pc-accent)"}
           tamano={132}
         />
         <div className="min-w-0 flex-1 space-y-4">
@@ -287,7 +287,7 @@ export function CapitalPanel({ p }: { p: Panorama }) {
               <span className="font-medium text-gray-700">Invertido (compras y envíos)</span>
               <span className="font-semibold tabular-nums">{formatMXN(c.invertido)}</span>
             </div>
-            <BarraApilada alto={16} segmentos={[{ pct: w(c.invertido), color: "#64748B", titulo: "Invertido" }]} />
+            <BarraApilada alto={16} segmentos={[{ pct: w(c.invertido), color: "var(--pc-text-secondary)", titulo: "Invertido" }]} />
           </div>
           <div>
             <div className="mb-1 flex items-baseline justify-between text-xs">
@@ -297,13 +297,13 @@ export function CapitalPanel({ p }: { p: Panorama }) {
             <BarraApilada
               alto={16}
               segmentos={[
-                { pct: w(c.recuperado), color: "#0F766E", titulo: "Recuperado en ventas" },
+                { pct: w(c.recuperado), color: "var(--pc-accent-ink)", titulo: "Recuperado en ventas" },
                 { pct: w(c.inventarioCosto), color: "#38BDF8", titulo: "Inventario a costo" },
                 { pct: w(c.porCobrar), color: "#F59E0B", titulo: "Por cobrar" },
               ]}
             />
             <ul className="mt-2.5 grid gap-1.5 sm:grid-cols-3">
-              <Leyenda color="#0F766E" texto="Recuperado" valor={formatMXNshort(c.recuperado)} />
+              <Leyenda color="var(--pc-accent-ink)" texto="Recuperado" valor={formatMXNshort(c.recuperado)} />
               <Leyenda color="#38BDF8" texto="Inventario a costo" valor={formatMXNshort(c.inventarioCosto)} />
               <Leyenda color="#F59E0B" texto="Por cobrar" valor={formatMXNshort(c.porCobrar)} />
             </ul>
@@ -320,7 +320,7 @@ export function CapitalPanel({ p }: { p: Panorama }) {
 
 // ─────────────── Inventario ───────────────
 
-const COLOR_TRAMO = { activo: "#059669", lento: "#F59E0B", parado: "#EF4444", nuevo: "#38BDF8" } as const
+const COLOR_TRAMO = { activo: "var(--pc-success)", lento: "#F59E0B", parado: "#EF4444", nuevo: "#38BDF8" } as const
 
 export function InventarioPanel({ p }: { p: Panorama }) {
   const inv = p.inventario
@@ -338,7 +338,7 @@ export function InventarioPanel({ p }: { p: Panorama }) {
           <ul className="divide-y divide-gray-50">
             {inv.parados.map((x) => (
               <li key={x.sku} className="flex items-start justify-between gap-3 py-2 text-xs">
-                <Link href={`/inventario?producto=${encodeURIComponent(x.sku)}`} className="min-w-0 font-medium leading-snug text-gray-800 hover:text-[#0F766E] hover:underline">
+                <Link href={`/inventario?producto=${encodeURIComponent(x.sku)}`} className="min-w-0 font-medium leading-snug text-gray-800 hover:text-pc-teal-ink hover:underline">
                   {x.nombre}
                 </Link>
                 <div className="shrink-0 text-right">
@@ -359,14 +359,14 @@ export function InventarioPanel({ p }: { p: Panorama }) {
 
 // ─────────────── Clientes ───────────────
 
-const COLORES_CLIENTES = ["#0F766E", "#14B8A6", "#38BDF8", "#818CF8", "#F59E0B", "#94A3B8"]
+const COLORES_CLIENTES = ["var(--pc-accent)", "#14B8A6", "#38BDF8", "#818CF8", "#F59E0B", "var(--pc-text-muted)"]
 
 export function ClientesPanel({ p }: { p: Panorama }) {
   const c = p.clientes
   const resto = Math.max(0, 100 - c.top.slice(0, 5).reduce((s, x) => s + x.pct, 0))
   const segs = [
     ...c.top.slice(0, 5).map((x, i) => ({ pct: x.pct, color: COLORES_CLIENTES[i], titulo: x.nombre })),
-    { pct: resto, color: "#E2E8F0", titulo: "Resto de clientes" },
+    { pct: resto, color: "var(--pc-hair)", titulo: "Resto de clientes" },
   ]
   const alerta = c.top2Pct >= 60
   return (
@@ -406,8 +406,8 @@ export function ClientesPanel({ p }: { p: Panorama }) {
 export function EmbudoPanel({ p }: { p: Panorama }) {
   const e = p.embudo
   const filas = [
-    { label: "Cotizaciones creadas", n: e.total, color: "#94A3B8" },
-    { label: "Vendidas (aceptadas)", n: e.aceptadas, color: "#059669" },
+    { label: "Cotizaciones creadas", n: e.total, color: "var(--pc-text-muted)" },
+    { label: "Vendidas (aceptadas)", n: e.aceptadas, color: "var(--pc-success-ink)" },
     { label: "Vencidas", n: e.vencidas, color: "#F59E0B" },
     { label: "Rechazadas", n: e.rechazadas, color: "#EF4444" },
     { label: "Borradores / en espera", n: e.borradores + e.enviadas, color: "#38BDF8" },
@@ -468,7 +468,7 @@ export function ComprasPanel({ p }: { p: Panorama }) {
                 {formatMXN(x.mxn)} · TC ${x.tc.toFixed(2)} · envío {x.envioPct.toFixed(0)}%
               </span>
             </div>
-            <BarraH pct={(x.mxn / max) * 100} color="#0F766E" alto={8} retraso={i * 80} />
+            <BarraH pct={(x.mxn / max) * 100} color="var(--pc-accent-ink)" alto={8} retraso={i * 80} />
           </li>
         ))}
       </ul>
@@ -554,7 +554,7 @@ export function CalidadDatos({ p }: { p: Panorama }) {
               <p className="mt-0.5 text-xs leading-relaxed text-gray-600">{f.detalle}</p>
             </div>
             {f.href && (
-              <Link href={f.href} className="inline-flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-[#0F766E] hover:underline md:min-h-0">
+              <Link href={f.href} className="inline-flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-pc-teal-ink hover:underline md:min-h-0">
                 {f.accion} <ArrowRight className="size-3" aria-hidden />
               </Link>
             )}

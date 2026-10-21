@@ -52,19 +52,19 @@ export function SugerenciaPedido({
   if (filas.length === 0) return null
 
   return (
-    <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-pc-line bg-pc-card p-5 shadow-sm">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
-            <Sparkles className="size-4 text-[#0F766E]" />
+          <h2 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
+            <Sparkles className="size-4 text-pc-teal-ink" />
             Más vendidos · sugerencia de pedido
           </h2>
-          <p className="text-[11.5px] text-[#64748B]">
+          <p className="text-[11.5px] text-pc-ink-3">
             Top 20 por unidades vendidas (histórico), con el ritmo mensual real de cada uno
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[11.5px] text-[#64748B]">Cubrir:</span>
+          <span className="text-[11.5px] text-pc-ink-3">Cubrir:</span>
           {HORIZONTES.map((h) => (
             <button
               key={h}
@@ -73,8 +73,8 @@ export function SugerenciaPedido({
               className="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition-colors"
               style={
                 horizonte === h
-                  ? { background: "#0F766E", color: "white" }
-                  : { background: "#F1F5F9", color: "#475569" }
+                  ? { background: "var(--pc-accent)", color: "white" }
+                  : { background: "var(--pc-hair-soft)", color: "var(--pc-text-body)" }
               }
             >
               {h} {h === 1 ? "mes" : "meses"}
@@ -86,31 +86,31 @@ export function SugerenciaPedido({
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-[12.5px]">
           <thead>
-            <tr className="border-b border-[#EEF1F4] text-left">
-              <th className="px-2 py-2 text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+            <tr className="border-b border-pc-line-soft text-left">
+              <th className="px-2 py-2 text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Producto
               </th>
-              <th className="px-2 py-2 text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Categoría
               </th>
-              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Stock
               </th>
-              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Vendidas
               </th>
-              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Ritmo
               </th>
-              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Se agota en
               </th>
-              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-[#64748B]">
+              <th className="px-2 py-2 text-right text-[10.5px] font-semibold uppercase tracking-wide text-pc-ink-3">
                 Pedido sugerido
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F1F5F9]">
+          <tbody className="divide-y divide-pc-line-soft">
             {filas.map(({ producto: p, ritmoMensual, mesesParaAgotar }) => {
               const catKey = p.categoria.toUpperCase()
               const palette = CATEGORIA_COLOR[catKey] ?? CATEGORIA_COLOR.OTROS
@@ -122,10 +122,10 @@ export function SugerenciaPedido({
               return (
                 <tr key={p.sku} className="hover:bg-gray-50/60">
                   <td className="px-2 py-2.5">
-                    <p className="font-medium text-[#0F172A]">
+                    <p className="font-medium text-pc-ink">
                       {p.nombre_display ?? p.nombre}
                     </p>
-                    <p className="font-mono text-[10.5px] text-[#94A3B8]">
+                    <p className="font-mono text-[10.5px] text-pc-ink-4">
                       {p.sku}
                     </p>
                   </td>
@@ -137,25 +137,25 @@ export function SugerenciaPedido({
                       {catKey}
                     </span>
                   </td>
-                  <td className="px-2 py-2.5 text-right tabular-nums text-[#334155]">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-pc-ink-2">
                     {p.stock_actual.toLocaleString("es-MX")}
                   </td>
-                  <td className="px-2 py-2.5 text-right tabular-nums text-[#334155]">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-pc-ink-2">
                     {p.unidades_vendidas.toLocaleString("es-MX")}
                   </td>
-                  <td className="px-2 py-2.5 text-right tabular-nums text-[#64748B]">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-pc-ink-3">
                     {ritmoMensual > 0 ? `${ritmoMensual.toFixed(1)} u/mes` : "—"}
                   </td>
-                  <td className="px-2 py-2.5 text-right tabular-nums text-[#64748B]">
+                  <td className="px-2 py-2.5 text-right tabular-nums text-pc-ink-3">
                     {fmtAgotar(mesesParaAgotar, p.stock_actual)}
                   </td>
                   <td className="px-2 py-2.5 text-right">
                     {sugerido > 0 ? (
-                      <span className="text-[13.5px] font-bold tabular-nums text-[#0F766E]">
+                      <span className="text-[13.5px] font-bold tabular-nums text-pc-teal-ink">
                         {sugerido.toLocaleString("es-MX")}
                       </span>
                     ) : (
-                      <span className="text-[12.5px] tabular-nums text-[#94A3B8]">
+                      <span className="text-[12.5px] tabular-nums text-pc-ink-4">
                         Cubierto
                       </span>
                     )}
@@ -166,7 +166,7 @@ export function SugerenciaPedido({
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-[10.5px] text-[#94A3B8]">
+      <p className="mt-3 text-[10.5px] text-pc-ink-4">
         Pedido sugerido = ritmo mensual real × meses a cubrir (o el stock
         mínimo del producto, lo que sea mayor) − stock actual.
       </p>

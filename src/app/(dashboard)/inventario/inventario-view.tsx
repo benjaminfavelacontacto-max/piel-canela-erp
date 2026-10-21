@@ -76,7 +76,7 @@ const categoriaBadgeColor: Record<string, string> = {
   CINTAS: "bg-orange-100 text-orange-700",
   "EMULSIÓN REVELADORA": "bg-blue-100 text-blue-700",
   "POLVO DE BLANQUEAR": "bg-purple-100 text-purple-700",
-  EXFOLIANTS: "bg-[#DFF7F4] text-[#0F766E]",
+  EXFOLIANTS: "bg-pc-teal-soft text-pc-teal-ink",
   HUMECTANTES: "bg-indigo-100 text-indigo-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
   AEROGRAFÍA: "bg-red-100 text-red-700",
@@ -88,18 +88,18 @@ function categoriaClass(c: string): string {
 }
 
 export const CATEGORIA_COLOR: Record<string, { bg: string; text: string }> = {
-  ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
-  POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
-  CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
-  "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "#1D4ED8" },
-  "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "#7E22CE" },
-  EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "#0F766E" },
-  HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
-  "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
-  AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "#B91C1C" },
-  "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
-  SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "#BE185D" },
-  OTROS: { bg: "rgba(100,116,139,0.10)", text: "#475569" },
+  ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "var(--pc-accent-ink)" },
+  POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "var(--pc-success-ink)" },
+  CINTAS: { bg: "rgba(217,119,6,0.10)", text: "var(--pc-warning-ink)" },
+  "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "var(--pc-info-ink)" },
+  "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "var(--pc-purple-ink)" },
+  EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "var(--pc-accent-ink)" },
+  HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "var(--pc-indigo-ink)" },
+  "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "var(--pc-warning-ink)" },
+  AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "var(--pc-danger-ink)" },
+  "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "var(--pc-cyan-ink)" },
+  SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "var(--pc-pink-ink)" },
+  OTROS: { bg: "rgba(100,116,139,0.10)", text: "var(--pc-text-body)" },
 }
 
 function norm(s: string): string {
@@ -482,7 +482,7 @@ export function InventarioView({
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="hidden items-center gap-1.5 rounded-xl bg-[#0F766E] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c] md:inline-flex"
+              className="hidden items-center gap-1.5 rounded-xl bg-pc-teal px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pc-teal-hover md:inline-flex"
             >
               <Plus className="size-4" />
               Nuevo producto
@@ -515,16 +515,16 @@ export function InventarioView({
       <SugerenciaPedido productos={productos} sales={salesTop} />
 
       {/* Dashboard por tipo: stock por categoría */}
-      <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-sm max-md:order-3 md:mt-2 md:p-5">
+      <section className="rounded-2xl border border-pc-line bg-pc-card p-4 shadow-sm max-md:order-3 md:mt-2 md:p-5">
         <div
           className="flex flex-wrap items-end justify-between gap-2"
           style={{ marginBottom: 16 }}
         >
           <div>
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
               Stock por categoría
             </h2>
-            <p className="text-[11.5px] text-[#64748B]">
+            <p className="text-[11.5px] text-pc-ink-3">
               Click en una categoría para filtrar la tabla · {stockPorCategoria.length} categorías
             </p>
           </div>
@@ -532,7 +532,7 @@ export function InventarioView({
             <button
               type="button"
               onClick={() => setCategoriaF("")}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11.5px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+              className="rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-[11.5px] font-medium text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
             >
               ✕ Quitar filtro: {categoriaF}
             </button>
@@ -552,12 +552,12 @@ export function InventarioView({
                 key={c.categoria}
                 type="button"
                 onClick={() => handleCategoriaClick(c.categoria, isActive)}
-                className="group rounded-xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="group rounded-xl border bg-pc-card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
                 style={{
-                  borderColor: isActive ? palette.text : "rgba(15,23,42,0.06)",
+                  borderColor: isActive ? palette.text : "var(--pc-border)",
                   boxShadow: isActive
                     ? `0 0 0 2px ${palette.bg}, 0 4px 12px rgba(15,23,42,0.04)`
-                    : "0 1px 2px rgba(15,23,42,0.03)",
+                    : "0 1px 2px var(--pc-border-soft)",
                 }}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -579,12 +579,12 @@ export function InventarioView({
                 <p
                   className="mt-2 text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums"
                   style={{
-                    color: c.stockTotal > 0 ? "#0F172A" : "#94A3B8",
+                    color: c.stockTotal > 0 ? "var(--pc-text)" : "var(--pc-text-muted)",
                   }}
                 >
                   {c.stockTotal.toLocaleString("es-MX")}
                 </p>
-                <p className="mt-1 text-[10.5px] text-[#64748B]">unidades en stock</p>
+                <p className="mt-1 text-[10.5px] text-pc-ink-3">unidades en stock</p>
                 <div className="mt-2 h-1 overflow-hidden rounded-full bg-gray-100">
                   <div
                     className="h-full rounded-full transition-all"
@@ -615,7 +615,7 @@ export function InventarioView({
       </section>
 
       {/* Search + filters */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm max-md:order-1 md:p-4">
+      <section className="rounded-2xl border border-gray-200 bg-pc-card p-3 shadow-sm max-md:order-1 md:p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex min-w-0 flex-1 items-center gap-2 md:min-w-[260px]">
           <div className="relative min-w-0 flex-1">
@@ -626,7 +626,7 @@ export function InventarioView({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por SKU, nombre, categoría…"
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-pc-card pl-10 pr-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
             />
           </div>
           <button
@@ -634,11 +634,11 @@ export function InventarioView({
             onClick={() => setFiltersOpenM((o) => !o)}
             aria-expanded={filtersOpenM}
             aria-label="Filtros y orden"
-            className="relative flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 md:hidden"
+            className="relative flex size-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-pc-card text-gray-600 md:hidden"
           >
             <SlidersHorizontal className="size-4" />
             {hasFilters && (
-              <span className="absolute right-2 top-2 size-2 rounded-full bg-[#0F766E]" />
+              <span className="absolute right-2 top-2 size-2 rounded-full bg-pc-teal" />
             )}
           </button>
           </div>
@@ -653,7 +653,7 @@ export function InventarioView({
               setSortKey(k as SortKey)
               setSortDir(d as SortDir)
             }}
-            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:outline-none md:hidden"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:outline-none md:hidden"
           >
             <option value="nombre:asc">Nombre A–Z</option>
             <option value="stock_actual:asc">Menos stock primero</option>
@@ -666,7 +666,7 @@ export function InventarioView({
             aria-label="Filtrar por estatus de stock"
             value={estatusF}
             onChange={(e) => setEstatusF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
           >
             {ESTATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -678,7 +678,7 @@ export function InventarioView({
             aria-label="Filtrar por categoría"
             value={categoriaF}
             onChange={(e) => setCategoriaF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
           >
             <option value="">Todas las categorías</option>
             {categorias.map((c) => (
@@ -691,7 +691,7 @@ export function InventarioView({
             aria-label="Filtrar por proveedor"
             value={proveedorF}
             onChange={(e) => setProveedorF(e.target.value)}
-            className="h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 md:h-auto md:py-2.5"
+            className="h-11 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20 md:h-auto md:py-2.5"
             disabled={proveedores.length === 0}
           >
             <option value="">Todos los proveedores</option>
@@ -707,7 +707,7 @@ export function InventarioView({
             className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors md:h-auto md:py-2.5 ${
               topSellersOnly
                 ? "border-amber-200 bg-amber-50 text-amber-700"
-                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                : "border-gray-200 bg-pc-card text-gray-700 hover:bg-gray-50"
             }`}
           >
             <Sparkles className="size-4" />
@@ -766,7 +766,7 @@ export function InventarioView({
       {/* Table */}
       <section
         ref={tableRef}
-        className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden scroll-mt-6 max-md:order-2"
+        className="rounded-2xl border border-gray-100 bg-pc-card shadow-sm overflow-hidden scroll-mt-6 max-md:order-2"
       >
         {categoriaF && (
           <div
@@ -791,7 +791,7 @@ export function InventarioView({
             <button
               type="button"
               onClick={() => setCategoriaF("")}
-              className="rounded-md bg-white/70 px-2.5 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-white"
+              className="rounded-md bg-pc-card/70 px-2.5 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-pc-card"
             >
               ✕ Quitar filtro
             </button>
@@ -824,7 +824,7 @@ export function InventarioView({
             <button
               type="button"
               onClick={() => setMobileLimit((n) => n + 30)}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-pc-card text-sm font-medium text-gray-700"
             >
               Mostrar más ({sorted.length - mobileLimit})
             </button>
@@ -842,9 +842,9 @@ export function InventarioView({
               ))}
             </colgroup>
             <thead>
-              <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+              <tr className="border-b border-pc-line-soft bg-pc-subtle">
                 <th
-                  className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative sticky z-20 bg-[#F9FAFB]"
+                  className="py-3 px-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider relative sticky z-20 bg-pc-subtle"
                   style={{ left: stickyLefts[0] }}
                   title={HELP_BY_COL[0]}
                 >
@@ -900,7 +900,7 @@ export function InventarioView({
             </tbody>
             {sorted.length > 0 && (
               <tfoot>
-                <tr className="border-t-2 border-[#EEF1F4] bg-[#F9FAFB]">
+                <tr className="border-t-2 border-pc-line-soft bg-pc-subtle">
                   <td colSpan={5} className="py-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
                     Totales · {filtered.length} SKUs
                   </td>
@@ -942,7 +942,7 @@ export function InventarioView({
         type="button"
         onClick={() => setCreateOpen(true)}
         aria-label="Nuevo producto"
-        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-[#0F766E] pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
+        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-pc-teal pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
       >
         <Plus className="size-5" strokeWidth={2.25} />
         Nuevo producto
@@ -1106,7 +1106,7 @@ function SortableTh({
     <th
       onClick={() => onSort(k)}
       title={HELP_BY_COL[colIndex]}
-      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"} ${stickyLeft !== undefined ? "sticky z-20 bg-[#F9FAFB]" : ""}`}
+      className={`py-3 px-2 text-${align} text-[10px] font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors relative ${active ? "text-emerald-700" : "text-gray-500 hover:text-gray-900"} ${stickyLeft !== undefined ? "sticky z-20 bg-pc-subtle" : ""}`}
       style={
         stickyLeft !== undefined
           ? {
@@ -1227,7 +1227,7 @@ function ProductRow({
     >
       {/* Foto — upload con drag & drop (columna fija) */}
       <td
-        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        className="py-2 px-2 sticky z-10 bg-pc-card group-hover:bg-gray-50"
         style={{ left: stickyLefts[0] }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1241,7 +1241,7 @@ function ProductRow({
 
       {/* Categoría (columna fija) */}
       <td
-        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        className="py-2 px-2 sticky z-10 bg-pc-card group-hover:bg-gray-50"
         style={{ left: stickyLefts[1] }}
       >
         <span
@@ -1254,7 +1254,7 @@ function ProductRow({
 
       {/* Peso (columna fija) */}
       <td
-        className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap sticky z-10 bg-white group-hover:bg-gray-50"
+        className="py-2 px-2 text-xs text-gray-500 whitespace-nowrap sticky z-10 bg-pc-card group-hover:bg-gray-50"
         style={{ left: stickyLefts[2] }}
       >
         {p.peso ?? "—"}
@@ -1262,7 +1262,7 @@ function ProductRow({
 
       {/* Producto (columna fija — última, con sombra separadora) */}
       <td
-        className="py-2 px-2 sticky z-10 bg-white group-hover:bg-gray-50"
+        className="py-2 px-2 sticky z-10 bg-pc-card group-hover:bg-gray-50"
         style={{
           maxWidth: "160px",
           left: stickyLefts[3],
@@ -1437,7 +1437,7 @@ function ActualizarTCButton({ tcActual }: { tcActual: number }) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-pc-card px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:opacity-50"
     >
       <RefreshCw className={`size-3 ${pending ? "animate-spin" : ""}`} />
       {pending ? "Actualizando…" : "Actualizar TC"}

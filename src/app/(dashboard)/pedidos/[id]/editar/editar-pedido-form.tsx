@@ -241,7 +241,7 @@ export function EditarPedidoForm({
                 onChange={(e) => setBusqueda(e.target.value)}
               />
               {filtrados.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-pc-card shadow-lg">
                   {filtrados.map((p) => {
                     const ya = items.some((i) => i.producto_id === p.id)
                     return (
@@ -361,15 +361,15 @@ export function EditarPedidoForm({
             >
               <span
                 className="flex size-4 items-center justify-center rounded text-[10px] font-bold text-white"
-                style={{ background: divisionIgual ? "#0F766E" : "rgba(15,23,42,0.10)" }}
+                style={{ background: divisionIgual ? "var(--pc-accent)" : "var(--pc-border-strong)" }}
               >
                 {divisionIgual ? "✓" : ""}
               </span>
               División 50/50
             </button>
             {[
-              { label: "Sandra", value: sandra, input: sandraInput, set: setSandraInput, color: "#B91C1C" },
-              { label: "Benjamin", value: benjamin, input: benjaminInput, set: setBenjaminInput, color: "#4F46E5" },
+              { label: "Sandra", value: sandra, input: sandraInput, set: setSandraInput, color: "var(--pc-danger-ink)" },
+              { label: "Benjamin", value: benjamin, input: benjaminInput, set: setBenjaminInput, color: "var(--pc-indigo-ink)" },
             ].map((s) => (
               <Field key={s.label} label={`${s.label} (USD)`} className="mb-2">
                 <input
@@ -447,9 +447,9 @@ function Field({
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5" style={{ borderTop: strong ? "1px solid rgba(15,23,42,0.06)" : "none", paddingTop: strong ? 8 : undefined }}>
+    <div className="flex items-center justify-between py-1.5" style={{ borderTop: strong ? "1px solid var(--pc-border)" : "none", paddingTop: strong ? 8 : undefined }}>
       <span className="text-[11px] uppercase tracking-[0.06em] text-gray-500">{label}</span>
-      <span className="tabular-nums" style={{ fontSize: strong ? 14 : 12.5, fontWeight: strong ? 700 : 500, color: strong ? "#0F172A" : "#475569" }}>
+      <span className="tabular-nums" style={{ fontSize: strong ? 14 : 12.5, fontWeight: strong ? 700 : 500, color: strong ? "var(--pc-text)" : "var(--pc-text-body)" }}>
         {value}
       </span>
     </div>

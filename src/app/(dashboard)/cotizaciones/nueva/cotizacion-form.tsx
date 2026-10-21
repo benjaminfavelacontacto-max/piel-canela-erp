@@ -506,7 +506,7 @@ export function CotizacionForm({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4 p-4 sm:gap-6 sm:p-6">
       <aside className="min-w-0 lg:sticky lg:top-6 self-start space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">Cliente</h2>
           <ClientePicker
             clientes={clientes}
@@ -514,7 +514,7 @@ export function CotizacionForm({
             onSelect={handleSelectCliente}
           />
           {cliente && (
-            <div className="mt-3 space-y-1.5 rounded-lg bg-gradient-to-br from-pink-50/60 to-white p-3 text-xs">
+            <div className="mt-3 space-y-1.5 rounded-lg bg-gradient-to-br from-pink-50/60 to-pc-card p-3 text-xs">
               <div className="flex items-center justify-between">
                 <strong className="text-sm text-gray-900">
                   {cliente.nombre_negocio ?? cliente.nombre}
@@ -561,7 +561,7 @@ export function CotizacionForm({
                   setClienteId("")
                   if (!isEdit) setNumero("")
                 }}
-                className="mt-2 text-[10.5px] text-[#0F766E] hover:text-[#115E59] hover:underline"
+                className="mt-2 text-[10.5px] text-pc-teal-ink hover:text-pc-teal-ink hover:underline"
               >
                 Cambiar cliente
               </button>
@@ -569,7 +569,7 @@ export function CotizacionForm({
           )}
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">Productos</h2>
           {productosError && (
             <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
@@ -583,7 +583,7 @@ export function CotizacionForm({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre o SKU…"
-              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="w-full rounded-lg border border-gray-200 bg-pc-card py-2 pl-9 pr-3 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </div>
           <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-gray-100">
@@ -599,8 +599,8 @@ export function CotizacionForm({
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedProductId(p.id)}
-                    className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-[#F9FAFB] ${
-                      active ? "bg-[#F9FAFB]" : "bg-white"
+                    className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-pc-subtle ${
+                      active ? "bg-pc-subtle" : "bg-pc-card"
                     }`}
                   >
                     {p.imagen_url ? (
@@ -628,7 +628,7 @@ export function CotizacionForm({
                             {p.peso}
                           </span>
                         )}
-                        <span className="font-semibold text-[#0F766E]">
+                        <span className="font-semibold text-pc-teal-ink">
                           {formatMXN2(p.precio)}
                         </span>
                       </div>
@@ -650,7 +650,7 @@ export function CotizacionForm({
                 setCantidad(v === "" ? "" : Math.max(1, parseInt(v, 10) || 1))
               }}
               onBlur={() => setCantidad((c) => (c === "" || c < 1 ? 1 : c))}
-              className="w-20 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="w-20 rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
             <button
               type="button"
@@ -658,8 +658,8 @@ export function CotizacionForm({
               disabled={!selectedProduct}
               className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white shadow-sm disabled:cursor-not-allowed disabled:bg-gray-300 ${
                 comoRegalo
-                  ? "bg-fuchsia-600 hover:bg-fuchsia-700"
-                  : "bg-teal-600 hover:bg-teal-700"
+                  ? "bg-[oklch(59.1%_0.293_322.896)] hover:bg-[oklch(51.8%_0.253_323.949)]"
+                  : "bg-[oklch(60%_0.118_184.704)] hover:bg-[oklch(51.1%_0.096_186.391)]"
               }`}
             >
               {comoRegalo ? <Gift className="size-4" /> : <Plus className="size-4" />}
@@ -672,7 +672,7 @@ export function CotizacionForm({
             className={`mt-2 flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 transition-colors ${
               comoRegalo
                 ? "border-fuchsia-200 bg-fuchsia-50/70"
-                : "border-gray-200 bg-white hover:bg-gray-50"
+                : "border-gray-200 bg-pc-card hover:bg-gray-50"
             }`}
           >
             <input
@@ -825,7 +825,7 @@ export function CotizacionForm({
           )}
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5 shadow-sm space-y-3">
           <h2 className="text-sm font-semibold text-gray-900">Detalles</h2>
 
           <label className="block text-xs">
@@ -840,7 +840,7 @@ export function CotizacionForm({
               value={numero}
               onChange={(e) => setNumero(e.target.value)}
               placeholder="PC-020626001-C-Cliente (automático)"
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm font-mono focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </label>
 
@@ -851,7 +851,7 @@ export function CotizacionForm({
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
               />
             </label>
             <label className="block text-xs">
@@ -860,7 +860,7 @@ export function CotizacionForm({
                 type="date"
                 value={validaHasta}
                 onChange={(e) => setValidaHasta(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
               />
             </label>
           </div>
@@ -876,7 +876,7 @@ export function CotizacionForm({
               type="button"
               onClick={() => setIvaActivo((v) => !v)}
               className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 ${
-                ivaActivo ? "bg-[#0F766E]" : "bg-gray-300"
+                ivaActivo ? "bg-pc-teal" : "bg-gray-300"
               }`}
               role="switch"
               aria-checked={ivaActivo}
@@ -895,17 +895,17 @@ export function CotizacionForm({
 
           {/* Resumen inteligente del pedido (real-time) */}
           {items.length > 0 && (
-            <div className="rounded-xl border border-pink-200/60 bg-gradient-to-br from-pink-50/70 via-white to-teal-50/40 p-3 shadow-sm">
+            <div className="rounded-xl border border-pink-200/60 bg-gradient-to-br from-pink-50/70 via-pc-card to-teal-50/40 p-3 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span className="flex size-5 items-center justify-center rounded-md bg-[#DFF7F4] text-[#0F766E]">
+                  <span className="flex size-5 items-center justify-center rounded-md bg-pc-teal-soft text-pc-teal-ink">
                     <FileText className="size-3" />
                   </span>
-                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#0F766E]">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-wider text-pc-teal-ink">
                     Resumen del pedido
                   </span>
                 </div>
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-[#0F766E] ring-1 ring-[#DFF7F4]/60">
+                <span className="rounded-full bg-pc-card px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-pc-teal-ink ring-1 ring-pc-teal-soft/60">
                   {itemsCount} ítems · {piezasTotal} pzs
                 </span>
               </div>
@@ -937,7 +937,7 @@ export function CotizacionForm({
                             className={`flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold transition-colors ${
                               c.ahorro > 0
                                 ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                                : "text-gray-400 hover:bg-white hover:text-emerald-600"
+                                : "text-gray-400 hover:bg-pc-card hover:text-emerald-600"
                             }`}
                           >
                             <BadgePercent className="size-3" />
@@ -950,7 +950,7 @@ export function CotizacionForm({
                       <span className="flex items-center gap-2 tabular-nums text-gray-700">
                         <span className="text-gray-500">{c.cantidad} ítems</span>
                         <span className="font-semibold">{c.piezas} pzs</span>
-                        <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-900 ring-1 ring-gray-200/60">
+                        <span className="rounded bg-pc-card px-1.5 py-0.5 text-[10px] font-semibold text-gray-900 ring-1 ring-gray-200/60">
                           {formatMXN2(c.monto)}
                         </span>
                       </span>
@@ -981,7 +981,7 @@ export function CotizacionForm({
                   onClick={() => setDescuentoTipo("monto")}
                   className={`rounded px-2 py-0.5 font-medium transition ${
                     descuentoTipo === "monto"
-                      ? "bg-white text-gray-900 shadow-sm"
+                      ? "bg-pc-card text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
@@ -992,7 +992,7 @@ export function CotizacionForm({
                   onClick={() => setDescuentoTipo("pct")}
                   className={`rounded px-2 py-0.5 font-medium transition ${
                     descuentoTipo === "pct"
-                      ? "bg-white text-gray-900 shadow-sm"
+                      ? "bg-pc-card text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
@@ -1010,7 +1010,7 @@ export function CotizacionForm({
                   setDescuentoValor(Number(e.target.value) || 0)
                 }
                 placeholder="0"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 pr-8 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 pr-8 text-sm tabular-nums focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
               />
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500">
                 {descuentoTipo === "pct" ? "%" : "$"}
@@ -1047,13 +1047,13 @@ export function CotizacionForm({
                 value={costoEnvio || ""}
                 onChange={(e) => setCostoEnvio(Number(e.target.value) || 0)}
                 placeholder="0.00"
-                className="w-full rounded-lg border border-gray-200 bg-white pl-6 pr-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                className="w-full rounded-lg border border-gray-200 bg-pc-card pl-6 pr-3 py-2 text-sm tabular-nums focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
               />
             </div>
           </div>
 
           {/* Resumen financiero (lectura) — misma cascada que ve el cliente */}
-          <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-3 space-y-1.5 text-xs">
+          <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-gray-50 to-pc-card p-3 space-y-1.5 text-xs">
             {t.descuentoProductos > 0 && (
               <>
                 <Row
@@ -1136,7 +1136,7 @@ export function CotizacionForm({
                   <Gift className="size-3" />
                   Regalos
                 </span>
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-fuchsia-700 ring-1 ring-fuchsia-200">
+                <span className="rounded-full bg-pc-card px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-fuchsia-700 ring-1 ring-fuchsia-200">
                   {regalos.lineas} {regalos.lineas === 1 ? "ítem" : "ítems"} ·{" "}
                   {regalos.piezas} pzs
                 </span>
@@ -1177,14 +1177,14 @@ export function CotizacionForm({
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </label>
         </div>
 
         {/* Acciones: barra fija sobre el contenido en móvil (siempre a la
             mano, respetando el home indicator) y bloque normal en desktop. */}
-        <div className="pc-safe-bottom fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-black/5 bg-white/95 px-4 pt-3 backdrop-blur-xl lg:static lg:z-auto lg:flex-col lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <div className="pc-safe-bottom fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-pc-line-soft bg-pc-card/95 px-4 pt-3 backdrop-blur-xl lg:static lg:z-auto lg:flex-col lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
           <div className="flex min-w-0 flex-1 flex-col justify-center lg:hidden">
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
               Total
@@ -1197,7 +1197,7 @@ export function CotizacionForm({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0F766E] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 lg:h-auto lg:w-full lg:py-2.5"
+            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-pc-teal px-5 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 lg:h-auto lg:w-full lg:py-2.5"
           >
             <Save className="size-4" />
             {pending ? "Guardando…" : "Guardar"}
@@ -1207,7 +1207,7 @@ export function CotizacionForm({
             onClick={handlePdf}
             disabled={generandoPdf}
             aria-label="Descargar PDF"
-            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 lg:h-auto lg:w-full lg:py-2.5"
+            className="pc-tap flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 lg:h-auto lg:w-full lg:py-2.5"
           >
             <FileDown className="size-4" />
             {generandoPdf ? (
@@ -1229,7 +1229,7 @@ export function CotizacionForm({
           type="button"
           onClick={() => setVerPreviewMovil((v) => !v)}
           aria-expanded={verPreviewMovil}
-          className="pc-tap mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-black/5 bg-white px-4 py-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50 lg:hidden"
+          className="pc-tap mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-pc-line-soft bg-pc-card px-4 py-3 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50 lg:hidden"
         >
           <span className="min-w-0">
             <span className="block text-[13.5px] font-semibold text-gray-900">
@@ -1244,7 +1244,7 @@ export function CotizacionForm({
         </button>
         <div
           ref={previewBoxRef}
-          className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:block ${
+          className={`overflow-hidden rounded-xl border border-gray-200 bg-pc-card shadow-sm lg:block ${
             verPreviewMovil ? "block" : "hidden"
           }`}
           style={{ height: previewH * previewScale }}
@@ -1291,7 +1291,7 @@ function DescuentoLoteEditor({
   }
 
   return (
-    <div className="mt-1.5 rounded-lg bg-white p-2 ring-1 ring-emerald-100">
+    <div className="mt-1.5 rounded-lg bg-pc-card p-2 ring-1 ring-emerald-100">
       <p className="mb-1.5 text-[10.5px] text-gray-600">
         Descuento a <strong>{grupo}</strong> · {partidas}{" "}
         {partidas === 1 ? "producto cobrado" : "productos cobrados"}
@@ -1304,7 +1304,7 @@ function DescuentoLoteEditor({
             onClick={() => aplicar("pct", pct)}
             className={`rounded px-2 py-1 text-[11px] font-semibold tabular-nums transition-colors ${
               tipo === "pct" && valor === pct
-                ? "bg-emerald-600 text-white"
+                ? "bg-[oklch(59.6%_0.145_163.225)] text-white"
                 : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
             }`}
           >
@@ -1316,7 +1316,7 @@ function DescuentoLoteEditor({
             type="button"
             onClick={() => aplicar("pct", valor)}
             className={`rounded px-1.5 py-0.5 font-semibold transition ${
-              tipo === "pct" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+              tipo === "pct" ? "bg-pc-card text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
             %
@@ -1326,7 +1326,7 @@ function DescuentoLoteEditor({
             onClick={() => aplicar("monto", valor)}
             className={`rounded px-1.5 py-0.5 font-semibold transition ${
               tipo === "monto"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-pc-card text-gray-900 shadow-sm"
                 : "text-gray-500"
             }`}
           >
@@ -1386,7 +1386,7 @@ function DescuentoLineaEditor({
   const ahorroLinea = descuentoPartida(item)
 
   return (
-    <div className="mt-1.5 rounded-md bg-white p-2 ring-1 ring-emerald-100">
+    <div className="mt-1.5 rounded-md bg-pc-card p-2 ring-1 ring-emerald-100">
       <div className="flex items-center gap-1.5">
         <div className="inline-flex shrink-0 items-center rounded bg-gray-100 p-0.5 text-[10px]">
           <button
@@ -1394,7 +1394,7 @@ function DescuentoLineaEditor({
             onClick={() => onChange("pct", valor)}
             className={`rounded px-1.5 py-0.5 font-semibold transition ${
               tipo === "pct"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-pc-card text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -1405,7 +1405,7 @@ function DescuentoLineaEditor({
             onClick={() => onChange("monto", valor)}
             className={`rounded px-1.5 py-0.5 font-semibold transition ${
               tipo === "monto"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-pc-card text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -1512,7 +1512,7 @@ function ClientePicker({
           setOpen(true)
           setQuery("")
         }}
-        className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm transition hover:border-pink-300"
+        className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-left text-sm transition hover:border-pink-300"
       >
         <span className="truncate text-gray-900">
           {selected.nombre_negocio ?? selected.nombre}
@@ -1536,7 +1536,7 @@ function ClientePicker({
           onFocus={() => setOpen(true)}
           placeholder="Buscar por nombre, negocio, RFC, ciudad…"
           autoComplete="off"
-          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+          className="w-full rounded-lg border border-gray-200 bg-pc-card py-2 pl-9 pr-3 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
         />
       </div>
       {open && (
@@ -1545,7 +1545,7 @@ function ClientePicker({
             className="fixed inset-0 z-10"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-lg border border-gray-200 bg-white shadow-xl">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-lg border border-gray-200 bg-pc-card shadow-xl">
             {filtered.length === 0 ? (
               <div className="p-3 text-center text-xs text-gray-500">
                 No se encontraron clientes con ese criterio.
@@ -1560,7 +1560,7 @@ function ClientePicker({
                     setOpen(false)
                     setQuery("")
                   }}
-                  className="flex w-full items-start gap-2 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 hover:bg-[#F9FAFB]/60"
+                  className="flex w-full items-start gap-2 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 hover:bg-pc-subtle/60"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -1589,7 +1589,7 @@ function ClientePicker({
                 href="/clientes/nuevo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 rounded-md bg-[#F9FAFB] px-2 py-1.5 text-[11px] font-medium text-[#0F766E] transition hover:bg-[#DFF7F4]"
+                className="flex items-center justify-center gap-1.5 rounded-md bg-pc-subtle px-2 py-1.5 text-[11px] font-medium text-pc-teal-ink transition hover:bg-pc-teal-soft"
               >
                 + Crear nuevo cliente
               </a>

@@ -133,7 +133,7 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
             setAbierto(true)
             setExito(null)
           }}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#8B5CF6] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-pc-violet px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED]"
         >
           <PackagePlus className="size-4" />
           Nueva salida
@@ -144,11 +144,11 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
   }
 
   return (
-    <section className="w-full rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
+    <section className="w-full rounded-2xl border border-purple-100 bg-pc-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-gray-900">
-            <Home className="size-4 text-[#8B5CF6]" />
+            <Home className="size-4 text-pc-violet-ink" />
             Nueva salida a la terraza
           </h3>
           <p className="text-[11.5px] text-gray-500">
@@ -173,15 +173,15 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
       {/* Datos automáticos (como cotización) */}
       <div className="mb-3 grid grid-cols-3 gap-2 rounded-xl border border-purple-50 bg-purple-50/40 px-3 py-2 text-[11px]">
         <div>
-          <p className="font-semibold uppercase tracking-[0.06em] text-[#7C3AED]">Cliente</p>
+          <p className="font-semibold uppercase tracking-[0.06em] text-pc-violet-ink">Cliente</p>
           <p className="mt-0.5 text-gray-700">Piel Canela</p>
         </div>
         <div>
-          <p className="font-semibold uppercase tracking-[0.06em] text-[#7C3AED]">Fecha</p>
+          <p className="font-semibold uppercase tracking-[0.06em] text-pc-violet-ink">Fecha</p>
           <p className="mt-0.5 text-gray-700">{hoyLabel()}</p>
         </div>
         <div>
-          <p className="font-semibold uppercase tracking-[0.06em] text-[#7C3AED]">Folio</p>
+          <p className="font-semibold uppercase tracking-[0.06em] text-pc-violet-ink">Folio</p>
           <p className="mt-0.5 text-gray-700">Automático (PC-…-Piel Canela)</p>
         </div>
       </div>
@@ -189,13 +189,13 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
       {/* Buscador */}
       <div className="relative mb-3">
         <input
-          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#8B5CF6] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20"
+          className="w-full rounded-xl border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-violet focus:outline-none focus:ring-2 focus:ring-pc-violet/20"
           placeholder="Buscar producto por SKU o nombre…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
         {filtrados.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-pc-card shadow-lg">
             {filtrados.map((p) => {
               const ya = filas.some((f) => f.producto_id === p.id)
               return (
@@ -267,7 +267,7 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
             <tfoot>
               <tr className="border-t border-gray-200 text-[12px] font-bold text-gray-900">
                 <td className="px-2 py-2" colSpan={3}>Total (valor público)</td>
-                <td className="px-2 py-2 text-right tabular-nums text-[#7C3AED]">{mxn(totalMXN)}</td>
+                <td className="px-2 py-2 text-right tabular-nums text-pc-violet-ink">{mxn(totalMXN)}</td>
                 <td />
               </tr>
             </tfoot>
@@ -289,7 +289,7 @@ export function NuevaSalida({ productos }: { productos: ProductoBase[] }) {
           type="button"
           onClick={guardar}
           disabled={pending || filas.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#8B5CF6] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED] disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-pc-violet px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED] disabled:opacity-50"
         >
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Home className="size-4" />}
           {pending ? "Guardando…" : "Registrar salida"}

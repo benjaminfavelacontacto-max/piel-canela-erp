@@ -270,13 +270,13 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
       {step === "catalog" ? (
         <>
           {/* Búsqueda + filtros */}
-          <div className="mb-4 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <input
               type="text"
               placeholder="Buscar producto o SKU…"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-4 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+              className="mb-3 w-full rounded-xl border border-pc-line bg-pc-card px-4 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
             />
             <div className="flex flex-wrap gap-2">
               {categorias.map((cat) => (
@@ -285,8 +285,8 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                   onClick={() => setCategoriaActiva(cat)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     categoriaActiva === cat
-                      ? "bg-[#0F766E] text-white shadow-sm"
-                      : "bg-[#F3F5F7] text-gray-600 hover:bg-[#EEF1F4]"
+                      ? "bg-pc-teal text-white shadow-sm"
+                      : "bg-pc-hover text-gray-600 hover:bg-pc-line-soft"
                   }`}
                 >
                   {cat}
@@ -321,15 +321,15 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
               return (
                 <div
                   key={producto.id}
-                  className={`relative overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
+                  className={`relative overflow-hidden rounded-xl border border-pc-line bg-pc-card shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
                     agotado
                       ? "opacity-75"
                       : "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
                   }`}
                 >
-                  <div className="relative flex h-36 items-center justify-center bg-[#F9FAFB]">
+                  <div className="relative flex h-36 items-center justify-center bg-pc-subtle">
                     {agotado && (
-                      <span className="absolute left-2 top-2 z-10 rounded-md bg-gray-900/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                         Agotado
                       </span>
                     )}
@@ -358,7 +358,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     <p className="mt-0.5 text-sm font-semibold leading-tight text-gray-900">
                       {producto.nombre}
                     </p>
-                    <p className="mt-1 text-base font-bold text-[#0F766E]">
+                    <p className="mt-1 text-base font-bold text-pc-teal-ink">
                       {formatMXN(producto.precio)}
                     </p>
 
@@ -366,7 +366,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                       <button
                         type="button"
                         disabled
-                        className="mt-2 w-full cursor-not-allowed rounded-lg bg-[#F3F5F7] py-1.5 text-xs font-medium text-gray-400"
+                        className="mt-2 w-full cursor-not-allowed rounded-lg bg-pc-hover py-1.5 text-xs font-medium text-gray-400"
                       >
                         Agotado
                       </button>
@@ -377,7 +377,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           onClick={() =>
                             updateCantidad(producto.id, enCarrito.cantidad - 1)
                           }
-                          className="flex size-7 items-center justify-center rounded-lg bg-[#F3F5F7] font-bold text-gray-700 transition-colors hover:bg-[#EEF1F4]"
+                          className="flex size-7 items-center justify-center rounded-lg bg-pc-hover font-bold text-gray-700 transition-colors hover:bg-pc-line-soft"
                           aria-label="Quitar uno"
                         >
                           −
@@ -390,7 +390,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           onClick={() =>
                             updateCantidad(producto.id, enCarrito.cantidad + 1)
                           }
-                          className="flex size-7 items-center justify-center rounded-lg bg-[#0F766E] font-bold text-white transition-colors hover:bg-[#115E59]"
+                          className="flex size-7 items-center justify-center rounded-lg bg-pc-teal font-bold text-white transition-colors hover:bg-pc-teal-hover"
                           aria-label="Agregar uno"
                         >
                           +
@@ -400,7 +400,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                       <button
                         type="button"
                         onClick={() => addToCart(producto)}
-                        className="mt-2 w-full rounded-lg bg-[#0F766E] py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#115E59]"
+                        className="mt-2 w-full rounded-lg bg-pc-teal py-1.5 text-xs font-medium text-white transition-colors hover:bg-pc-teal-hover"
                       >
                         + Agregar
                       </button>
@@ -422,7 +422,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
               <button
                 type="button"
                 onClick={() => setStep("checkout")}
-                className="flex items-center gap-4 rounded-2xl bg-[#0F766E] px-6 py-4 text-white shadow-[0_8px_24px_rgba(15,118,110,0.25)] transition-all hover:-translate-y-0.5 hover:bg-[#115E59] active:translate-y-0"
+                className="flex items-center gap-4 rounded-2xl bg-pc-teal px-6 py-4 text-white shadow-[0_8px_24px_rgba(15,118,110,0.25)] transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover active:translate-y-0"
               >
                 <span className="rounded-lg bg-white/20 px-2 py-0.5 text-sm font-bold tabular-nums">
                   {totalUnidades}
@@ -458,12 +458,12 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
           </button>
 
           {/* Resumen del pedido */}
-          <div className="mb-4 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <h2 className="mb-4 font-semibold text-gray-900">Tu pedido</h2>
             {cart.map((item) => (
               <div
                 key={item.producto.id}
-                className="flex items-center gap-3 border-b border-[rgba(15,23,42,0.04)] py-2.5 last:border-0"
+                className="flex items-center gap-3 border-b border-pc-line-soft py-2.5 last:border-0"
               >
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium">
@@ -477,7 +477,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     onClick={() =>
                       updateCantidad(item.producto.id, item.cantidad - 1)
                     }
-                    className="size-6 rounded bg-[#F3F5F7] text-xs font-bold text-gray-600 hover:bg-[#EEF1F4]"
+                    className="size-6 rounded bg-pc-hover text-xs font-bold text-gray-600 hover:bg-pc-line-soft"
                     aria-label="Quitar uno"
                   >
                     −
@@ -490,7 +490,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     onClick={() =>
                       updateCantidad(item.producto.id, item.cantidad + 1)
                     }
-                    className="size-6 rounded bg-[#F3F5F7] text-xs font-bold text-gray-600 hover:bg-[#EEF1F4]"
+                    className="size-6 rounded bg-pc-hover text-xs font-bold text-gray-600 hover:bg-pc-line-soft"
                     aria-label="Agregar uno"
                   >
                     +
@@ -501,9 +501,9 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                 </p>
               </div>
             ))}
-            <div className="mt-4 flex items-center justify-between border-t border-[rgba(15,23,42,0.06)] pt-3">
+            <div className="mt-4 flex items-center justify-between border-t border-pc-line pt-3">
               <p className="font-semibold text-gray-900">Total estimado</p>
-              <p className="text-xl font-bold tabular-nums text-[#0F766E]">
+              <p className="text-xl font-bold tabular-nums text-pc-teal-ink">
                 {formatMXN(totalCarrito)}
               </p>
             </div>
@@ -513,7 +513,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
           </div>
 
           {/* Datos del cliente */}
-          <div className="mb-4 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <h2 className="mb-4 font-semibold text-gray-900">Tus datos</h2>
             <div className="space-y-3">
               {/* Teléfono — primer campo, busca cliente existente al teclear */}
@@ -529,16 +529,16 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     onChange={(e) => buscarPorTelefono(e.target.value)}
                     className={`w-full rounded-xl border px-3 py-2.5 text-sm transition-all focus:outline-none focus:ring-4 ${
                       clienteMatch
-                        ? "border-emerald-300 bg-[#DFF7F4]/30 focus:border-[#0F766E] focus:ring-[rgba(15,118,110,0.12)]"
-                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E] focus:ring-[rgba(15,118,110,0.12)]"
+                        ? "border-emerald-300 bg-pc-teal-soft/30 focus:border-pc-teal focus:ring-[rgba(15,118,110,0.12)]"
+                        : "border-pc-line bg-pc-card focus:border-pc-teal focus:ring-[rgba(15,118,110,0.12)]"
                     }`}
                   />
                   <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                     {buscandoCliente ? (
-                      <div className="size-4 animate-spin rounded-full border-2 border-[#0F766E] border-t-transparent" />
+                      <div className="size-4 animate-spin rounded-full border-2 border-pc-teal border-t-transparent" />
                     ) : clienteMatch ? (
                       <span
-                        className="text-base text-[#0F766E]"
+                        className="text-base text-pc-teal-ink"
                         aria-hidden
                       >
                         ✓
@@ -548,15 +548,15 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                 </div>
 
                 {clienteMatch && (
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-[#DFF7F4]/60 px-3 py-2">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#0F766E] text-xs font-semibold text-white">
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-pc-teal-soft/60 px-3 py-2">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-pc-teal text-xs font-semibold text-white">
                       {clienteMatch.nombre?.[0] ?? "?"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-[#115E59]">
+                      <p className="text-xs font-semibold text-pc-teal-ink">
                         ¡Te reconocemos!
                       </p>
-                      <p className="truncate text-xs text-[#0F766E]">
+                      <p className="truncate text-xs text-pc-teal-ink">
                         {clienteMatch.nombre}
                         {clienteMatch.nombre_negocio
                           ? ` · ${clienteMatch.nombre_negocio}`
@@ -566,7 +566,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     <button
                       type="button"
                       onClick={clearMatch}
-                      className="text-[#94A3B8] transition-colors hover:text-gray-700"
+                      className="text-pc-ink-4 transition-colors hover:text-gray-700"
                       aria-label="No soy yo"
                     >
                       ✕
@@ -600,8 +600,8 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     }
                     className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
                       clienteMatch
-                        ? "border-emerald-200 bg-[#DFF7F4]/30 focus:border-[#0F766E]"
-                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E]"
+                        ? "border-emerald-200 bg-pc-teal-soft/30 focus:border-pc-teal"
+                        : "border-pc-line bg-pc-card focus:border-pc-teal"
                     }`}
                   />
                   <input
@@ -615,8 +615,8 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     }
                     className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
                       clienteMatch
-                        ? "border-emerald-200 bg-[#DFF7F4]/30 focus:border-[#0F766E]"
-                        : "border-[rgba(15,23,42,0.06)] bg-white focus:border-[#0F766E]"
+                        ? "border-emerald-200 bg-pc-teal-soft/30 focus:border-pc-teal"
+                        : "border-pc-line bg-pc-card focus:border-pc-teal"
                     }`}
                   />
                   <div className="grid grid-cols-2 gap-3">
@@ -629,7 +629,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           email: e.target.value,
                         }))
                       }
-                      className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                      className="rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
                     />
                     <input
                       placeholder="Ciudad"
@@ -640,7 +640,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           ciudad: e.target.value,
                         }))
                       }
-                      className="rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                      className="rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
                     />
                   </div>
                   <textarea
@@ -653,7 +653,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                       }))
                     }
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                    className="w-full resize-none rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
                   />
                 </div>
               )}
@@ -674,7 +674,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
               !clienteData.nombre.trim() ||
               !clienteData.telefono.trim()
             }
-            className="w-full rounded-2xl bg-[#0F766E] py-4 text-base font-bold text-white shadow-[0_4px_12px_rgba(15,118,110,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#115E59] hover:shadow-[0_8px_24px_rgba(15,118,110,0.22)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            className="w-full rounded-2xl bg-pc-teal py-4 text-base font-bold text-white shadow-[0_4px_12px_rgba(15,118,110,0.18)] transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover hover:shadow-[0_8px_24px_rgba(15,118,110,0.22)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {submitting ? "Enviando…" : "Enviar pedido →"}
           </button>
@@ -706,20 +706,20 @@ function CintaGroupCard({
       type="button"
       onClick={agotado ? undefined : onElegir}
       disabled={agotado}
-      className={`relative block overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
+      className={`relative block overflow-hidden rounded-xl border border-pc-line bg-pc-card text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
         agotado
           ? "cursor-not-allowed opacity-75"
           : "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
       }`}
     >
-      <div className="relative flex h-36 items-center justify-center bg-[#F9FAFB]">
+      <div className="relative flex h-36 items-center justify-center bg-pc-subtle">
         {agotado && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-gray-900/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
             Agotado
           </span>
         )}
         {unidadesEnCarrito > 0 && (
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0F766E] px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-pc-teal px-2 py-0.5 text-[10px] font-bold text-white">
             {unidadesEnCarrito} en pedido
           </span>
         )}
@@ -743,7 +743,7 @@ function CintaGroupCard({
         <p className="mt-0.5 text-sm font-semibold leading-tight text-gray-900">
           {grupo.base}
         </p>
-        <p className="mt-1 text-base font-bold text-[#0F766E]">
+        <p className="mt-1 text-base font-bold text-pc-teal-ink">
           {variosPrecios ? "desde " : ""}
           {formatMXN(precioMin)}
         </p>
@@ -753,7 +753,7 @@ function CintaGroupCard({
               key={v.producto.id}
               className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
                 v.producto.stock > 0
-                  ? "bg-[#EAF6F4] text-[#0F766E]"
+                  ? "bg-pc-teal-soft text-pc-teal-ink"
                   : "bg-gray-100 text-gray-300 line-through"
               }`}
             >
@@ -763,7 +763,7 @@ function CintaGroupCard({
         </div>
         <span
           className={`mt-2 block w-full rounded-lg py-1.5 text-center text-xs font-medium ${
-            agotado ? "bg-[#F3F5F7] text-gray-400" : "bg-[#0F766E] text-white"
+            agotado ? "bg-pc-hover text-gray-400" : "bg-pc-teal text-white"
           }`}
         >
           {agotado ? "Agotado" : "Elegir medida"}
@@ -798,10 +798,10 @@ function MedidaPicker({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-md sm:rounded-2xl"
+        className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl bg-pc-card shadow-2xl sm:max-w-md sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-[rgba(15,23,42,0.06)] px-5 py-4">
+        <header className="flex items-center justify-between border-b border-pc-line px-5 py-4">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-wide text-gray-400">
               Elige la medida
@@ -820,7 +820,7 @@ function MedidaPicker({
           </button>
         </header>
 
-        <ul className="max-h-[55vh] divide-y divide-[rgba(15,23,42,0.04)] overflow-y-auto">
+        <ul className="max-h-[55vh] divide-y divide-pc-line-soft overflow-y-auto">
           {grupo.variantes.map((v) => {
             const p = v.producto
             const enCarrito = cart.find((i) => i.producto.id === p.id)
@@ -840,7 +840,7 @@ function MedidaPicker({
                   </p>
                 </div>
                 {agotado ? (
-                  <span className="rounded-lg bg-[#F3F5F7] px-3 py-1.5 text-xs font-medium text-gray-400">
+                  <span className="rounded-lg bg-pc-hover px-3 py-1.5 text-xs font-medium text-gray-400">
                     Agotado
                   </span>
                 ) : enCarrito ? (
@@ -848,7 +848,7 @@ function MedidaPicker({
                     <button
                       type="button"
                       onClick={() => updateCantidad(p.id, enCarrito.cantidad - 1)}
-                      className="flex size-7 items-center justify-center rounded-lg bg-[#F3F5F7] font-bold text-gray-700 transition-colors hover:bg-[#EEF1F4]"
+                      className="flex size-7 items-center justify-center rounded-lg bg-pc-hover font-bold text-gray-700 transition-colors hover:bg-pc-line-soft"
                       aria-label="Quitar uno"
                     >
                       −
@@ -859,7 +859,7 @@ function MedidaPicker({
                     <button
                       type="button"
                       onClick={() => updateCantidad(p.id, enCarrito.cantidad + 1)}
-                      className="flex size-7 items-center justify-center rounded-lg bg-[#0F766E] font-bold text-white transition-colors hover:bg-[#115E59]"
+                      className="flex size-7 items-center justify-center rounded-lg bg-pc-teal font-bold text-white transition-colors hover:bg-pc-teal-hover"
                       aria-label="Agregar uno"
                     >
                       +
@@ -869,7 +869,7 @@ function MedidaPicker({
                   <button
                     type="button"
                     onClick={() => addToCart(p)}
-                    className="rounded-lg bg-[#0F766E] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#115E59]"
+                    className="rounded-lg bg-pc-teal px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-pc-teal-hover"
                   >
                     + Agregar
                   </button>
@@ -879,11 +879,11 @@ function MedidaPicker({
           })}
         </ul>
 
-        <footer className="border-t border-[rgba(15,23,42,0.06)] p-4">
+        <footer className="border-t border-pc-line p-4">
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-xl bg-[#0F766E] py-3 text-sm font-bold text-white transition-colors hover:bg-[#115E59]"
+            className="w-full rounded-xl bg-pc-teal py-3 text-sm font-bold text-white transition-colors hover:bg-pc-teal-hover"
           >
             {totalGrupo > 0
               ? `Listo · ${totalGrupo} agregada${totalGrupo === 1 ? "" : "s"}`

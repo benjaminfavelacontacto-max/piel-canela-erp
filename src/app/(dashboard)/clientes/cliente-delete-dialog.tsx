@@ -75,7 +75,7 @@ export function ClienteDeleteDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="fixed left-1/2 top-1/2 z-[70] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl"
+        className="fixed left-1/2 top-1/2 z-[70] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-200 bg-pc-card p-6 shadow-2xl"
       >
         <button
           type="button"
@@ -140,7 +140,7 @@ export function ClienteDeleteDialog({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-lg border border-gray-200 bg-pc-card px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -149,7 +149,7 @@ export function ClienteDeleteDialog({
               type="button"
               onClick={desactivar}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[oklch(66.6%_0.179_58.318)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[oklch(55.5%_0.163_48.998)] disabled:opacity-50"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -163,7 +163,7 @@ export function ClienteDeleteDialog({
               type="button"
               onClick={confirmDelete}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[oklch(58.6%_0.253_17.585)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[oklch(51.4%_0.222_16.935)] disabled:opacity-50"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />

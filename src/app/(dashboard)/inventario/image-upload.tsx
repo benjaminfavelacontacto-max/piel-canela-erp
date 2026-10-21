@@ -119,12 +119,12 @@ export function ImageUpload({
             ? "none"
             : dragging
               ? "2px dashed rgba(5,150,105,0.55)"
-              : "1.5px dashed rgba(15,23,42,0.18)",
+              : "1.5px dashed var(--pc-border-strong)",
           background: imagen
             ? "transparent"
             : dragging
               ? "rgba(5,150,105,0.06)"
-              : "rgba(15,23,42,0.03)",
+              : "var(--pc-border-soft)",
           cursor: imagen ? "default" : "pointer",
         }}
         title={imagen ? "Click para opciones" : "Subir imagen"}
@@ -157,7 +157,7 @@ export function ImageUpload({
                   e.stopPropagation()
                   handleEliminar()
                 }}
-                className="rounded px-1.5 py-0.5 text-[8px] font-semibold text-rose-300 hover:bg-rose-500/20"
+                className="rounded px-1.5 py-0.5 text-[8px] font-semibold text-[#FDA4AF] hover:bg-rose-500/20"
               >
                 Quitar
               </button>
@@ -166,7 +166,7 @@ export function ImageUpload({
         ) : isPending ? (
           <div
             className="size-3.5 animate-spin rounded-full border-2 border-gray-200"
-            style={{ borderTopColor: "#047857" }}
+            style={{ borderTopColor: "var(--pc-success)" }}
           />
         ) : (
           <span className="text-[9px] font-bold text-gray-400">{initials}</span>
@@ -177,7 +177,7 @@ export function ImageUpload({
           <span
             className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
             style={{
-              background: "#047857",
+              background: "var(--pc-success)",
               boxShadow: "0 0 6px rgba(5,150,105,0.5)",
             }}
           >
@@ -190,7 +190,7 @@ export function ImageUpload({
       {error && (
         <div
           className="absolute left-0 top-full z-50 mt-1 whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium text-white shadow-md"
-          style={{ background: "#B91C1C" }}
+          style={{ background: "var(--pc-danger)" }}
           onClick={(e) => e.stopPropagation()}
         >
           {error}

@@ -178,20 +178,20 @@ export default async function VentaDetailPage({
   )
 
   const COLORES_CAT: Record<string, { bg: string; text: string }> = {
-    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
-    ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "#0F766E" },
-    POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
-    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
-    "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "#7E22CE" },
-    "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "#1D4ED8" },
-    "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
-    EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "#0F766E" },
-    HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
-    "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
-    AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "#B91C1C" },
-    SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "#BE185D" },
-    SOMBRILLA: { bg: "rgba(197,164,126,0.12)", text: "#A8895F" },
-    OTROS: { bg: "rgba(100,116,139,0.10)", text: "#475569" },
+    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "var(--pc-warning-ink)" },
+    ACTIVADORES: { bg: "rgba(15,118,110,0.10)", text: "var(--pc-accent-ink)" },
+    POTENCIADORES: { bg: "rgba(5,150,105,0.10)", text: "var(--pc-success-ink)" },
+    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "var(--pc-cyan-ink)" },
+    "POLVO DE BLANQUEAR": { bg: "rgba(147,51,234,0.10)", text: "var(--pc-purple-ink)" },
+    "EMULSIÓN REVELADORA": { bg: "rgba(37,99,235,0.10)", text: "var(--pc-info-ink)" },
+    "ACEITE CORPORAL": { bg: "rgba(217,119,6,0.10)", text: "var(--pc-warning-ink)" },
+    EXFOLIANTS: { bg: "rgba(15,118,110,0.08)", text: "var(--pc-accent-ink)" },
+    HUMECTANTES: { bg: "rgba(99,102,241,0.10)", text: "var(--pc-indigo-ink)" },
+    "DYE COLOR": { bg: "rgba(8,145,178,0.10)", text: "var(--pc-cyan-ink)" },
+    AEROGRAFÍA: { bg: "rgba(220,38,38,0.10)", text: "var(--pc-danger-ink)" },
+    SHAMPOO: { bg: "rgba(220,38,127,0.10)", text: "var(--pc-pink-ink)" },
+    SOMBRILLA: { bg: "rgba(197,164,126,0.12)", text: "var(--pc-gold-ink)" },
+    OTROS: { bg: "rgba(100,116,139,0.10)", text: "var(--pc-text-body)" },
   }
   const getColorCat = (cat: string) => COLORES_CAT[cat] ?? COLORES_CAT.OTROS
 
@@ -225,7 +225,7 @@ export default async function VentaDetailPage({
                   {" · "}
                   <Link
                     href={`/cotizaciones/${venta.cotizacion_id}`}
-                    className="text-[#0F766E] hover:underline"
+                    className="text-pc-teal-ink hover:underline"
                   >
                     Ver cotización
                   </Link>
@@ -248,7 +248,7 @@ export default async function VentaDetailPage({
           )}
           <Link
             href={`/ventas/${id}/editar`}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59]"
+            className="inline-flex items-center gap-2 rounded-lg bg-pc-teal px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover"
           >
             <Pencil className="size-4" />
             Editar venta
@@ -281,7 +281,7 @@ export default async function VentaDetailPage({
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        <section className="rounded-xl border border-gray-200 bg-white">
+        <section className="rounded-xl border border-gray-200 bg-pc-card">
           <header className="border-b border-gray-100 px-5 py-3">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Productos
@@ -294,7 +294,7 @@ export default async function VentaDetailPage({
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#EEF1F4] bg-[#F9FAFB]">
+                <tr className="border-b border-pc-line-soft bg-pc-subtle">
                   <th className="w-14 px-3 py-2"></th>
                   <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                     Producto
@@ -445,7 +445,7 @@ export default async function VentaDetailPage({
         </section>
 
         <aside className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Cliente
             </h2>
@@ -467,7 +467,7 @@ export default async function VentaDetailPage({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Pago
             </h2>
@@ -486,14 +486,14 @@ export default async function VentaDetailPage({
 
           {/* DESGLOSE POR TIPO */}
           {desgloseArray.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-pc-card">
               <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Tipos de Producto
                 </h2>
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums text-gray-500"
-                  style={{ background: "rgba(15,23,42,0.05)" }}
+                  style={{ background: "var(--pc-border)" }}
                 >
                   {desgloseArray.length}{" "}
                   {desgloseArray.length === 1 ? "tipo" : "tipos"}
@@ -534,7 +534,7 @@ export default async function VentaDetailPage({
                               : item.categoria}
                           </span>
                           <div className="flex shrink-0 items-center gap-1.5">
-                            <span className="text-[11px] font-bold tabular-nums text-[#0F172A]">
+                            <span className="text-[11px] font-bold tabular-nums text-pc-ink">
                               {item.unidades}u
                             </span>
                             <span className="text-[9.5px] tabular-nums text-gray-400">
@@ -564,14 +564,14 @@ export default async function VentaDetailPage({
                 <span className="text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
                   Total unidades
                 </span>
-                <span className="text-[13px] font-bold tabular-nums text-[#0F172A]">
+                <span className="text-[13px] font-bold tabular-nums text-pc-ink">
                   {totalUds}
                 </span>
               </div>
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               División de socios
             </h2>
@@ -603,7 +603,7 @@ export default async function VentaDetailPage({
           </div>
 
           {notas && (
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Notas
               </h2>
@@ -611,7 +611,7 @@ export default async function VentaDetailPage({
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Inventario
             </h2>

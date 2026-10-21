@@ -187,16 +187,16 @@ export function NotificationBell() {
       {/* ─── TOAST ─── */}
       {toast && (
         <div className="fixed top-4 right-4 z-[100] w-full max-w-sm">
-          <div className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-4 shadow-[0_12px_32px_rgba(15,23,42,0.12),0_4px_12px_rgba(15,23,42,0.06)]">
+          <div className="relative overflow-hidden rounded-2xl border border-pc-line bg-pc-card p-4 shadow-[0_12px_32px_rgba(15,23,42,0.12),0_4px_12px_rgba(15,23,42,0.06)]">
             <div
-              className="pointer-events-none absolute left-0 top-0 h-[3px] bg-[#0F766E]"
+              className="pointer-events-none absolute left-0 top-0 h-[3px] bg-pc-teal"
               style={{
                 animation: "pc-shrink 8s linear forwards",
                 width: "100%",
               }}
             />
             <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#DFF7F4] text-[#0F766E]">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-pc-teal-soft text-pc-teal-ink">
                 <ShoppingCart className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
@@ -207,7 +207,7 @@ export function NotificationBell() {
                   {toast.mensaje}
                 </p>
                 {toast.datos?.cliente_telefono && (
-                  <p className="mt-1 text-xs font-medium text-[#0F766E]">
+                  <p className="mt-1 text-xs font-medium text-pc-teal-ink">
                     📱 {toast.datos.cliente_telefono}
                   </p>
                 )}
@@ -226,7 +226,7 @@ export function NotificationBell() {
                 <button
                   type="button"
                   onClick={() => irACotizacion(toast)}
-                  className="flex-1 rounded-xl bg-[#0F766E] py-2 text-xs font-semibold text-white transition-colors hover:bg-[#115E59]"
+                  className="flex-1 rounded-xl bg-pc-teal py-2 text-xs font-semibold text-white transition-colors hover:bg-pc-teal-hover"
                 >
                   Ver pedido →
                 </button>
@@ -237,7 +237,7 @@ export function NotificationBell() {
                       href={wp}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600"
+                      className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[oklch(59.6%_0.145_163.225)]"
                     >
                       💬 WhatsApp
                     </a>
@@ -255,12 +255,12 @@ export function NotificationBell() {
           ref={bellRef}
           type="button"
           onClick={togglePanel}
-          className="relative rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-[rgba(15,23,42,0.04)] hover:text-gray-900"
+          className="relative rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-[var(--pc-border-soft)] hover:text-gray-900"
           aria-label="Notificaciones"
         >
           <Bell className="size-4" strokeWidth={1.75} />
           {nuevas > 0 && (
-            <span className="absolute -right-1 -top-1 flex size-[18px] items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+            <span className="absolute -right-1 -top-1 flex size-[18px] items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-pc-card">
               {nuevas > 9 ? "9+" : nuevas}
             </span>
           )}

@@ -274,7 +274,7 @@ export default async function PanoramaPage({ searchParams }: { searchParams: Pro
     <div className="mx-auto max-w-[1200px] space-y-8 p-4 pb-24 md:p-8 md:pb-10 print:space-y-5 print:p-0">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#0F766E]">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-pc-teal-ink">
             <Gauge className="size-3.5" aria-hidden /> Panorama del negocio
           </p>
           <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-[-0.03em] text-gray-900">Cómo vamos, qué preocupa y qué hacer</h1>
@@ -283,14 +283,14 @@ export default async function PanoramaPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
-          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-0.5" role="group" aria-label="Periodo">
+          <div className="inline-flex rounded-xl border border-gray-200 bg-pc-card p-0.5" role="group" aria-label="Periodo">
             {PERIODOS.map((x) => (
               <Link
                 key={x.clave}
                 href={`/panorama?p=${x.clave}`}
                 aria-current={periodo === x.clave ? "true" : undefined}
                 className={`inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-semibold transition-colors md:min-h-0 md:py-1.5 ${
-                  periodo === x.clave ? "bg-[#0F766E] text-white" : "text-gray-600 hover:bg-gray-50"
+                  periodo === x.clave ? "bg-pc-teal text-white" : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 {x.label}
@@ -304,11 +304,11 @@ export default async function PanoramaPage({ searchParams }: { searchParams: Pro
       </header>
 
       {/* Navegación por secciones (se desliza en móvil) */}
-      <nav aria-label="Secciones del panorama" className="sticky top-0 z-20 -mx-4 overflow-x-auto border-b border-black/5 bg-[#F5F7F6]/95 px-4 py-2 backdrop-blur md:-mx-8 md:px-8 print:hidden">
+      <nav aria-label="Secciones del panorama" className="sticky top-0 z-20 -mx-4 overflow-x-auto border-b border-pc-line-soft bg-pc-app/95 px-4 py-2 backdrop-blur md:-mx-8 md:px-8 print:hidden">
         <ul className="flex w-max gap-1.5">
           {SECCIONES.map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="inline-flex min-h-9 items-center rounded-full border border-gray-200 bg-white px-3.5 text-xs font-semibold text-gray-700 hover:border-[#0F766E]/40 hover:text-[#0F766E]">
+              <a href={`#${s.id}`} className="inline-flex min-h-9 items-center rounded-full border border-gray-200 bg-pc-card px-3.5 text-xs font-semibold text-gray-700 hover:border-pc-teal/40 hover:text-pc-teal-ink">
                 {s.label}
               </a>
             </li>

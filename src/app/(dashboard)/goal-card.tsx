@@ -57,7 +57,7 @@ export function GoalCard({
     <div className="pc-kpi-card group">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-500">
-          <Target className="size-3.5 text-[#0F766E]" />
+          <Target className="size-3.5 text-pc-teal-ink" />
           Meta mensual
         </p>
         {editing ? (
@@ -65,7 +65,7 @@ export function GoalCard({
             type="button"
             onClick={commit}
             aria-label="Guardar meta"
-            className="rounded-md p-1 text-[#0F766E] transition-colors hover:bg-black/5"
+            className="rounded-md p-1 text-pc-teal-ink transition-colors hover:bg-pc-tint"
           >
             <Check className="size-3.5" />
           </button>
@@ -77,7 +77,7 @@ export function GoalCard({
               setEditing(true)
             }}
             aria-label="Editar meta mensual"
-            className="rounded-md p-1 text-gray-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-black/5 hover:text-gray-600 focus-visible:opacity-100"
+            className="rounded-md p-1 text-gray-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-pc-tint hover:text-gray-600 focus-visible:opacity-100"
           >
             <Pencil className="size-3.5" />
           </button>
@@ -94,7 +94,7 @@ export function GoalCard({
           onKeyDown={(e) => e.key === "Enter" && commit()}
           onBlur={commit}
           aria-label="Nueva meta mensual en pesos"
-          className="w-full rounded-lg border border-[#0F766E]/30 bg-white px-2 py-1 text-xl font-bold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+          className="w-full rounded-lg border border-pc-teal/30 bg-pc-card px-2 py-1 text-xl font-bold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-pc-teal/20"
         />
       ) : (
         <p className="text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums text-gray-900">
@@ -105,12 +105,12 @@ export function GoalCard({
       <div>
         <div className="h-2 overflow-hidden rounded-full bg-black/[0.05]">
           <div
-            className="h-full rounded-full bg-[#0F766E] transition-all duration-700 ease-out"
+            className="h-full rounded-full bg-pc-teal transition-all duration-700 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>
         <div className="mt-1.5 flex items-baseline justify-between text-[11px]">
-          <span className="font-semibold tabular-nums text-[#0F766E]">
+          <span className="font-semibold tabular-nums text-pc-teal-ink">
             {pct.toFixed(0)}%
           </span>
           <span className="text-gray-500">

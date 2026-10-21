@@ -33,7 +33,7 @@ const categoriaBadge: Record<string, string> = {
   OXIGENANTES: "bg-blue-100 text-blue-700",
   AEROGRAFÍA: "bg-purple-100 text-purple-700",
   "ACEITE CORPORAL": "bg-amber-100 text-amber-700",
-  "POLVO DE BLANQUEAR": "bg-[#DFF7F4] text-[#0F766E]",
+  "POLVO DE BLANQUEAR": "bg-pc-teal-soft text-pc-teal-ink",
   HUMECTANTES: "bg-cyan-100 text-cyan-700",
   EXFOLIANTS: "bg-indigo-100 text-indigo-700",
   "DYE COLOR": "bg-fuchsia-100 text-fuchsia-700",
@@ -286,8 +286,8 @@ export default async function EstadisticasPage({
               change={cambioGanancia}
             />
             <Kpi
-              icon={<ShoppingCart className="size-5 text-[#0F766E]" />}
-              iconBg="bg-[#F9FAFB] group-hover:bg-[#DFF7F4]"
+              icon={<ShoppingCart className="size-5 text-pc-teal-ink" />}
+              iconBg="bg-pc-subtle group-hover:bg-pc-teal-soft"
               label="Órdenes"
               value={<AnimatedNumber value={totalOrdenes} />}
               sub={
@@ -318,7 +318,7 @@ export default async function EstadisticasPage({
 
           {/* ─── Insights premium ─── */}
           {insights.length > 0 && (
-            <section className="rounded-2xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-700 p-6 text-white shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500">
+            <section className="rounded-2xl bg-gradient-to-br from-[oklch(60%_0.118_184.704)] via-[oklch(51.1%_0.096_186.391)] to-[oklch(50.8%_0.118_165.612)] p-6 text-white shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500">
               <div className="mb-5 flex items-center gap-2">
                 <div className="rounded-xl bg-white/10 p-2 backdrop-blur-sm">
                   <Sparkles className="size-5" />
@@ -346,7 +346,7 @@ export default async function EstadisticasPage({
 
           {/* ─── Chart + Top Clientes (3/5 + 2/5) ─── */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md lg:col-span-3">
+            <section className="rounded-2xl border border-gray-100 bg-pc-card p-4 shadow-sm transition-all hover:shadow-md lg:col-span-3">
               <header className="mb-4 flex items-center gap-2">
                 <BarChart3 className="size-4 text-teal-600" />
                 <h3 className="font-semibold text-gray-900">
@@ -361,7 +361,7 @@ export default async function EstadisticasPage({
               <MonthlyChart data={stats.ventasPorMes} />
             </section>
 
-            <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden lg:col-span-2">
+            <section className="rounded-2xl border border-gray-100 bg-pc-card shadow-sm overflow-hidden lg:col-span-2">
               <header className="border-b border-gray-50 p-5">
                 <h3 className="flex items-center gap-2 font-semibold">
                   <Users className="size-4 text-teal-600" />
@@ -382,7 +382,7 @@ export default async function EstadisticasPage({
               </span>
             </div>
             {stats.topProductos.length === 0 ? (
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center text-sm text-gray-400">
+              <div className="rounded-2xl border border-gray-100 bg-pc-card p-4 text-center text-sm text-gray-400">
                 Sin datos.
               </div>
             ) : (
@@ -390,7 +390,7 @@ export default async function EstadisticasPage({
                 {stats.topProductos.map((p: ProductoStats, i) => (
                   <div
                     key={`${p.sku}-${i}`}
-                    className="group rounded-xl border border-gray-100 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+                    className="group rounded-xl border border-gray-100 bg-pc-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
                   >
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -453,7 +453,7 @@ function Kpi({
   change?: number | null
 }) {
   return (
-    <div className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div className="group rounded-2xl border border-gray-100 bg-pc-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <div className={`rounded-xl p-2.5 transition-colors ${iconBg}`}>
           {icon}

@@ -90,7 +90,7 @@ export function EditVentaForm({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
       <section className="space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5 space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Pago
           </h2>
@@ -103,7 +103,7 @@ export function EditVentaForm({
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </label>
 
@@ -120,7 +120,7 @@ export function EditVentaForm({
                 const v = parseFloat(e.target.value)
                 setCantidadPagada(Number.isNaN(v) ? 0 : v)
               }}
-              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm tabular-nums focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
             />
           </label>
 
@@ -140,7 +140,7 @@ export function EditVentaForm({
                 type="button"
                 onClick={() => setIvaActivo((v) => !v)}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
-                  ivaActivo ? "bg-amber-600" : "bg-gray-300"
+                  ivaActivo ? "bg-[oklch(66.6%_0.179_58.318)]" : "bg-gray-300"
                 }`}
                 role="switch"
                 aria-checked={ivaActivo}
@@ -157,7 +157,7 @@ export function EditVentaForm({
               </button>
             </div>
             {ivaActivo && (
-              <p className="mt-2 rounded-md bg-white/70 px-2 py-1 text-xs tabular-nums text-amber-900">
+              <p className="mt-2 rounded-md bg-pc-card/70 px-2 py-1 text-xs tabular-nums text-amber-900">
                 IVA 16%: <strong>{formatMXN2(computed.iva)}</strong> · Total:{" "}
                 <strong>{formatMXN2(subtotal + computed.iva - descuento)}</strong>
               </p>
@@ -165,7 +165,7 @@ export function EditVentaForm({
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Notas
           </h2>
@@ -174,7 +174,7 @@ export function EditVentaForm({
             onChange={(e) => setNotas(e.target.value)}
             rows={4}
             placeholder="Notas internas, referencia de pago, etc."
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+            className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
           />
         </div>
 
@@ -182,7 +182,7 @@ export function EditVentaForm({
           type="button"
           onClick={handleSave}
           disabled={pending}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-pc-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Save className="size-4" />
           {pending ? "Guardando…" : "Guardar cambios"}
@@ -190,7 +190,7 @@ export function EditVentaForm({
       </section>
 
       <aside className="space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-xl border border-gray-200 bg-pc-card p-5">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Resumen
           </h2>

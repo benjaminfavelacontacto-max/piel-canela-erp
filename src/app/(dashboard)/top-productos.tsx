@@ -51,7 +51,7 @@ export function TopProductos({
           metric={(p) => `${p.piezas.toLocaleString("es-MX")} pzs`}
           metricSub={(p) => formatMXN(p.ingresos)}
           barValue={(p) => p.piezas}
-          barClass="bg-[#0F766E]"
+          barClass="bg-pc-teal"
         />
         <RankPanel
           icon={<CircleDollarSign className="size-4 text-emerald-600" />}
@@ -115,7 +115,7 @@ function RankPanel({
         </div>
         <Link
           href="/ventas/estadisticas"
-          className="inline-flex shrink-0 items-center gap-1 text-xs text-[#0F766E] hover:underline"
+          className="inline-flex shrink-0 items-center gap-1 text-xs text-pc-teal-ink hover:underline"
         >
           Detalle <ArrowRight className="size-3" />
         </Link>
@@ -140,10 +140,10 @@ function RankPanel({
                   <img
                     src={p.imagen}
                     alt=""
-                    className="size-8 shrink-0 rounded-lg border border-black/5 object-cover"
+                    className="size-8 shrink-0 rounded-lg border border-pc-line-soft object-cover"
                   />
                 ) : (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#F5F7F6] font-mono text-[9px] font-semibold text-gray-400">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-pc-app font-mono text-[9px] font-semibold text-gray-400">
                     {(p.sku ?? p.nombre).replace(/[^A-Z0-9]/gi, "").slice(0, 2).toUpperCase()}
                   </span>
                 )}
@@ -152,7 +152,7 @@ function RankPanel({
                     <p className="truncate text-[12.5px] font-medium text-gray-900">
                       {p.nombre}
                       {p.piezasMes > 0 && (
-                        <span className="ml-1.5 rounded bg-[#DFF7F4] px-1 py-px text-[9px] font-semibold text-[#0F766E]">
+                        <span className="ml-1.5 rounded bg-pc-teal-soft px-1 py-px text-[9px] font-semibold text-pc-teal-ink">
                           +{p.piezasMes} este mes
                         </span>
                       )}

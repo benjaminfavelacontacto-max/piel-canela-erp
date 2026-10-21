@@ -91,7 +91,7 @@ export function PagoRapidoDialog({
           e.preventDefault()
           if (valido) enviar(valor)
         }}
-        className="pc-pb-safe relative w-full rounded-t-3xl bg-white p-5 shadow-2xl md:max-w-sm md:rounded-2xl"
+        className="pc-pb-safe relative w-full rounded-t-3xl bg-pc-card p-5 shadow-2xl md:max-w-sm md:rounded-2xl"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -137,7 +137,7 @@ export function PagoRapidoDialog({
               max={venta.saldo}
               value={monto}
               onChange={(e) => setMonto(e.target.value)}
-              className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-7 pr-3 text-lg font-semibold tabular-nums focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+              className="h-12 w-full rounded-xl border border-gray-200 bg-pc-card pl-7 pr-3 text-lg font-semibold tabular-nums focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20"
             />
           </div>
         </label>
@@ -161,14 +161,14 @@ export function PagoRapidoDialog({
             type="button"
             onClick={() => enviar(venta.saldo)}
             disabled={pending}
-            className="h-12 flex-1 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="h-12 flex-1 rounded-xl border border-gray-200 bg-pc-card text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Liquidar todo
           </button>
           <button
             type="submit"
             disabled={pending || !valido}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F766E] text-sm font-semibold text-white hover:bg-[#115E59] disabled:opacity-50"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-pc-teal text-sm font-semibold text-white hover:bg-pc-teal-hover disabled:opacity-50"
           >
             {pending && <Loader2 className="size-4 animate-spin" />}
             Registrar pago

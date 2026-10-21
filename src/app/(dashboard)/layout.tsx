@@ -61,7 +61,7 @@ export default function DashboardLayout({
       >
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-black/5 bg-white">
+            <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-pc-line-soft bg-pc-card">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/icons/icon-192.png"
@@ -78,7 +78,7 @@ export default function DashboardLayout({
               <p
                 className="text-[10px] font-medium uppercase"
                 style={{
-                  color: "rgba(0,0,0,0.35)",
+                  color: "var(--pc-text-muted)",
                   letterSpacing: "0.12em",
                 }}
               >
@@ -91,7 +91,7 @@ export default function DashboardLayout({
             type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Cerrar menú"
-            className="flex size-7 items-center justify-center rounded-lg text-gray-500 hover:bg-black/5 md:hidden"
+            className="flex size-7 items-center justify-center rounded-lg text-gray-500 hover:bg-pc-tint md:hidden"
           >
             <X className="size-4" strokeWidth={2} />
           </button>
@@ -104,11 +104,11 @@ export default function DashboardLayout({
               setMobileOpen(false)
               window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))
             }}
-            className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-[rgba(15,23,42,0.08)] bg-white/70 px-3 text-sm text-gray-500 transition hover:bg-white md:h-9"
+            className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-pc-line bg-pc-card/70 px-3 text-sm text-gray-500 transition hover:bg-pc-card md:h-9"
           >
             <Search className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
             <span className="flex-1 text-left">Buscar…</span>
-            <kbd className="hidden rounded-md border border-gray-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-500 md:inline">
+            <kbd className="hidden rounded-md border border-gray-200 bg-pc-card px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-500 md:inline">
               ⌘K
             </kbd>
           </button>
@@ -123,7 +123,7 @@ export default function DashboardLayout({
         <div
           className="mx-3 mb-4 flex items-center justify-between gap-2 rounded-2xl px-3 py-3"
           style={{
-            background: "#FFFFFF",
+            background: "var(--pc-bg-card)",
             border: "1px solid rgba(0,0,0,0.05)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
           }}
@@ -152,7 +152,7 @@ export default function DashboardLayout({
       <main
         // tabIndex=0: la región con scroll debe poder enfocarse con teclado (WCAG 2.1.1)
         tabIndex={0}
-        className="min-w-0 flex-1 scroll-smooth overflow-y-auto overflow-x-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0F766E]/40 print:overflow-visible"
+        className="min-w-0 flex-1 scroll-smooth overflow-y-auto overflow-x-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-pc-teal/40 print:overflow-visible"
         style={{ background: "transparent" }}
       >
         {/* Móvil: respeta notch arriba y deja espacio para la barra inferior */}

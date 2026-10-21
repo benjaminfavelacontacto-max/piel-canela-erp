@@ -11,14 +11,14 @@ export default async function SuccessPage({
 
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-[#DFF7F4]">
+      <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-pc-teal-soft">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="36"
           height="36"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#0F766E"
+          stroke="var(--pc-chart-real)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -33,7 +33,7 @@ export default async function SuccessPage({
         Gracias por tu pedido. Nos pondremos en contacto contigo muy pronto con
         tu cotización formal.
       </p>
-      <div className="mb-6 rounded-xl border border-[rgba(15,23,42,0.06)] bg-white p-4">
+      <div className="mb-6 rounded-xl border border-pc-line bg-pc-card p-4">
         <p className="text-[10px] uppercase tracking-wider text-gray-400">
           Número de referencia
         </p>
@@ -43,7 +43,7 @@ export default async function SuccessPage({
         href={wpUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-md"
+        className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[oklch(59.6%_0.145_163.225)] hover:shadow-md"
       >
         Confirmar por WhatsApp
       </a>

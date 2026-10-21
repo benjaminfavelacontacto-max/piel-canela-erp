@@ -69,5 +69,5 @@ export function sheetClass({
   dragging: boolean
   maxW: string
 }) {
-  return `fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-white shadow-2xl ease-out md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full ${maxW} md:rounded-none ${dragging ? "" : "transition-transform duration-300"} ${open ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full md:translate-y-0"}`
+  return `fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl bg-pc-card shadow-2xl ease-out md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full ${maxW} md:rounded-none ${dragging ? "" : "transition-transform duration-300"} ${open ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full md:translate-y-0"}`
 }

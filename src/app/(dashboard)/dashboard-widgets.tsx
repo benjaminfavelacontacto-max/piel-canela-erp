@@ -99,12 +99,12 @@ export function DashboardWidgets({ slots }: { slots: WidgetSlot[] }) {
               }}
               aria-label={`Reordenar sección ${slot.nombre}`}
               title="Arrastra para reordenar"
-              className="absolute -left-1 top-3 z-10 hidden cursor-grab rounded-md p-1 text-gray-300 opacity-0 transition-opacity duration-150 hover:bg-black/5 hover:text-gray-500 active:cursor-grabbing group-hover/widget:opacity-100 md:block"
+              className="absolute -left-1 top-3 z-10 hidden cursor-grab rounded-md p-1 text-gray-300 opacity-0 transition-opacity duration-150 hover:bg-pc-tint hover:text-gray-500 active:cursor-grabbing group-hover/widget:opacity-100 md:block"
             >
               <GripVertical className="size-4" />
             </button>
             {over && (
-              <div className="absolute -top-3 left-0 right-0 h-0.5 rounded-full bg-[#0F766E]/40" />
+              <div className="absolute -top-3 left-0 right-0 h-0.5 rounded-full bg-pc-teal/40" />
             )}
             {slot.node}
           </section>

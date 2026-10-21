@@ -8,16 +8,20 @@ import {
   Gauge,
   LayoutDashboard,
   Loader2,
+  Monitor,
+  Moon,
   Package,
   Plus,
   Search,
   ShoppingBag,
   ShoppingCart,
+  Sun,
   TrendingUp,
   Users,
   type LucideIcon,
 } from "lucide-react"
 import { buscarGlobal, type ResultadoBusqueda } from "./command-palette-actions"
+import { applyTheme, type ThemePref } from "@/lib/theme"
 
 type Item = {
   key: string
@@ -26,6 +30,10 @@ type Item = {
   href: string
   icon: LucideIcon
   grupo: string
+  /** Si existe, la fila cambia el tema en vez de navegar. */
+  tema?: ThemePref
+  /** Palabras extra para la búsqueda local (p. ej. "tema"). */
+  extra?: string
 }
 
 const ACCIONES: Item[] = [
@@ -45,6 +53,12 @@ const SECCIONES: Item[] = [
   { key: "s-ped", titulo: "Pedidos de compra", href: "/pedidos", icon: ShoppingCart, grupo: "Ir a" },
   { key: "s-fin", titulo: "Finanzas", href: "/finanzas", icon: TrendingUp, grupo: "Ir a" },
   { key: "s-pc", titulo: "Piel Canela (salidas)", href: "/piel-canela", icon: Home, grupo: "Ir a" },
+]
+
+const APARIENCIA: Item[] = [
+  { key: "t-dark", titulo: "Modo oscuro", href: "", icon: Moon, grupo: "Apariencia", tema: "dark", extra: "tema noche" },
+  { key: "t-light", titulo: "Modo claro", href: "", icon: Sun, grupo: "Apariencia", tema: "light", extra: "tema dia" },
+  { key: "t-system", titulo: "Modo del sistema", href: "", icon: Monitor, grupo: "Apariencia", tema: "system", extra: "tema automatico" },
 ]
 
 const ICONO: Record<ResultadoBusqueda["tipo"], LucideIcon> = {
@@ -155,9 +169,9 @@ export function CommandPalette() {
 
   const items: Item[] = useMemo(() => {
     const consulta = q.trim().toLowerCase()
-    if (consulta.length < 2) return [...ACCIONES, ...SECCIONES]
-    const locales = [...ACCIONES, ...SECCIONES].filter((i) =>
-      i.titulo.toLowerCase().includes(consulta),
+    if (consulta.length < 2) return [...ACCIONES, ...SECCIONES, ...APARIENCIA]
+    const locales = [...ACCIONES, ...SECCIONES, ...APARIENCIA].filter((i) =>
+      (i.titulo + " " + (i.extra ?? "")).toLowerCase().includes(consulta),
     )
     const rem = remotos.q === q.trim() ? remotos.items : []
     return [...rem, ...locales]
@@ -165,6 +179,10 @@ export function CommandPalette() {
 
   function ir(item: Item) {
     cerrar()
+    if (item.tema) {
+      applyTheme(item.tema)
+      return
+    }
     router.push(item.href)
   }
 
@@ -200,7 +218,7 @@ export function CommandPalette() {
         role="dialog"
         aria-modal="true"
         aria-label="Buscar y navegar"
-        className="relative flex max-h-dvh w-full flex-col overflow-hidden bg-white shadow-2xl md:max-h-[70vh] md:max-w-xl md:rounded-2xl"
+        className="relative flex max-h-dvh w-full flex-col overflow-hidden bg-pc-card shadow-2xl md:max-h-[70vh] md:max-w-xl md:rounded-2xl"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 pt-[max(0.25rem,var(--pc-safe-top))] md:pt-0">
           <Search className="size-4 shrink-0 text-gray-400" aria-hidden />
@@ -257,12 +275,12 @@ export function CommandPalette() {
                   onMouseMove={() => setActivo(i)}
                   onClick={() => ir(it)}
                   className={`flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left ${
-                    i === activo ? "bg-[#0F766E]/[0.07]" : ""
+                    i === activo ? "bg-pc-teal/[0.07]" : ""
                   }`}
                 >
                   <span
                     className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                      i === activo ? "bg-[#0F766E] text-white" : "bg-gray-100 text-gray-500"
+                      i === activo ? "bg-pc-teal text-white" : "bg-gray-100 text-gray-500"
                     }`}
                   >
                     <Icono className="size-4" aria-hidden />

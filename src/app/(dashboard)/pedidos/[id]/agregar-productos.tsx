@@ -126,7 +126,7 @@ export function AgregarProductosPedido({
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
       >
         <PackagePlus className="size-4" />
         Agregar productos
@@ -135,7 +135,7 @@ export function AgregarProductosPedido({
   }
 
   return (
-    <section className="rounded-2xl border border-teal-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-teal-100 bg-pc-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="flex items-center gap-1.5 text-[14px] font-semibold text-gray-900">
@@ -164,13 +164,13 @@ export function AgregarProductosPedido({
       {/* Buscador */}
       <div className="relative mb-3">
         <input
-          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0F766E] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20"
+          className="w-full rounded-xl border border-gray-200 bg-pc-card px-3 py-2 text-sm focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal/20"
           placeholder="Buscar producto por SKU o nombre…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
         {filtrados.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-pc-card shadow-lg">
             {filtrados.map((p) => {
               const ya = filas.some((f) => f.producto_id === p.id)
               return (
@@ -281,7 +281,7 @@ export function AgregarProductosPedido({
           type="button"
           onClick={guardar}
           disabled={pending || filas.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F766E] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c635c] disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-pc-teal px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pc-teal-hover disabled:opacity-50"
         >
           {pending ? (
             <Loader2 className="size-4 animate-spin" />

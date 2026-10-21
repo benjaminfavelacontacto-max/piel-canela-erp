@@ -37,14 +37,14 @@ function CustomTooltip({
     ganancia: "Ganancia",
   }
   return (
-    <div className="min-w-[180px] rounded-xl border border-gray-100 bg-white p-3 shadow-xl">
+    <div className="min-w-[180px] rounded-xl border border-gray-100 bg-pc-card p-3 shadow-xl">
       <p className="mb-2 text-sm font-semibold text-gray-800">{label}</p>
       {payload.map((p, i) => (
         <div
           key={`${p.dataKey ?? p.name ?? i}`}
           className="flex items-center justify-between gap-4 text-xs"
         >
-          <span style={{ color: p.color ?? "#6b7280" }}>
+          <span style={{ color: p.color ?? "var(--pc-text-secondary)" }}>
             {NAMES[String(p.dataKey ?? "")] ?? p.name ?? "—"}
           </span>
           <span className="font-bold tabular-nums text-gray-900">
@@ -91,8 +91,8 @@ export function MonthlyChart({
       >
         <defs>
           <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0F766E" stopOpacity={0.92} />
-            <stop offset="100%" stopColor="#0F766E" stopOpacity={0.35} />
+            <stop offset="0%" stopColor="var(--pc-chart-real)" stopOpacity={0.92} />
+            <stop offset="100%" stopColor="var(--pc-chart-real)" stopOpacity={0.35} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -102,12 +102,12 @@ export function MonthlyChart({
         />
         <XAxis
           dataKey="label"
-          tick={{ fill: "#94A3B8", fontSize: 11 }}
+          tick={{ fill: "var(--pc-text-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#94A3B8", fontSize: 11 }}
+          tick={{ fill: "var(--pc-text-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) =>
@@ -134,7 +134,7 @@ export function MonthlyChart({
           type="monotone"
           dataKey="ganancia"
           name="Ganancia"
-          stroke="#94A3B8"
+          stroke="var(--pc-text-muted)"
           strokeWidth={2.2}
           dot={false}
           animationDuration={1200}

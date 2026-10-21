@@ -309,7 +309,7 @@ export default async function PedidoDetailPage({
               className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
               style={{
                 background: "rgba(5,150,105,0.10)",
-                color: "#047857",
+                color: "var(--pc-success-ink)",
                 border: "1px solid rgba(5,150,105,0.20)",
               }}
             >
@@ -327,7 +327,7 @@ export default async function PedidoDetailPage({
         </div>
         <Link
           href={`/pedidos/${pedido.id}/editar`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-pc-card px-3.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
         >
           <Pencil className="size-4" />
           Editar pedido
@@ -346,7 +346,7 @@ export default async function PedidoDetailPage({
       {/* ═══ KPI Principal — Costo real del pedido ═══ */}
       <section
         className="relative overflow-hidden rounded-2xl p-6 shadow-sm"
-        style={{ background: "linear-gradient(120deg, #1e293b 0%, #0f172a 100%)" }}
+        style={{ background: "linear-gradient(120deg, #1e293b 0%, var(--pc-text) 100%)" }}
       >
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="min-w-0">
@@ -363,7 +363,7 @@ export default async function PedidoDetailPage({
               <span className="mx-1.5 text-white/25">+</span>Comisiones {formatMXN(totComisionMXN)}
             </p>
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right backdrop-blur">
+          <div className="rounded-xl border border-pc-card/10 bg-pc-card/[0.04] px-4 py-3 text-right backdrop-blur">
             <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-white/45">
               USD enviado al proveedor
             </p>
@@ -374,7 +374,7 @@ export default async function PedidoDetailPage({
       </section>
 
       {/* ═══ Bloque 1 — Resumen del pedido ═══ */}
-      <section className="rounded-2xl border border-gray-100 bg-white px-5 py-5 shadow-sm">
+      <section className="rounded-2xl border border-gray-100 bg-pc-card px-5 py-5 shadow-sm">
         <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
           <ResumenMetric icon={Boxes} tone="slate" value={totalUnidades.toLocaleString("es-MX")} label="Unidades pedidas" />
           <ResumenMetric icon={Tag} tone="slate" value={String(items.length)} label="SKUs distintos" />
@@ -394,7 +394,7 @@ export default async function PedidoDetailPage({
 
       {/* ═══ Bloque 2 (Logística) + Bloque 4 (Inversionistas) ═══ */}
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-100 bg-pc-card p-5 shadow-sm">
           <h3 className="mb-4 flex items-center gap-1.5 text-[13px] font-semibold text-gray-900">
             <Truck className="size-4 text-amber-600" />
             Logística del envío
@@ -406,7 +406,7 @@ export default async function PedidoDetailPage({
             <StatBlock tone="amber" label="Representa del pedido" value={pct(envioPctPedido)} />
           </div>
         </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-100 bg-pc-card p-5 shadow-sm">
           <h3 className="mb-4 flex items-center gap-1.5 text-[13px] font-semibold text-gray-900">
             <Users className="size-4 text-gray-500" />
             Participación de socios
@@ -436,7 +436,7 @@ export default async function PedidoDetailPage({
 
       {/* Items por categoría */}
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-500 shadow-sm">
+        <div className="rounded-2xl border border-gray-100 bg-pc-card p-10 text-center text-sm text-gray-500 shadow-sm">
           Este pedido no tiene items detallados (sólo monto de inversión).
         </div>
       ) : (
@@ -458,7 +458,7 @@ export default async function PedidoDetailPage({
             return (
               <section
                 key={cat}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+                className="overflow-hidden rounded-2xl border border-gray-100 bg-pc-card shadow-sm"
               >
                 <header className="flex items-center justify-between gap-2 border-b border-gray-100 px-5 py-3">
                   <div className="flex items-center gap-2">
@@ -590,7 +590,7 @@ export default async function PedidoDetailPage({
                             <td
                               className="px-3 py-2.5 text-right font-semibold tabular-nums"
                               style={{
-                                color: profitPositive ? "#047857" : "#B91C1C",
+                                color: profitPositive ? "var(--pc-success-ink)" : "var(--pc-danger-ink)",
                               }}
                             >
                               {item.precio_publico_mxn > 0
@@ -600,7 +600,7 @@ export default async function PedidoDetailPage({
                             <td
                               className="px-3 py-2.5 text-right font-semibold tabular-nums"
                               style={{
-                                color: profitPositive ? "#047857" : "#B91C1C",
+                                color: profitPositive ? "var(--pc-success-ink)" : "var(--pc-danger-ink)",
                               }}
                             >
                               {margen != null ? `${margen.toFixed(1)}%` : "—"}
@@ -635,11 +635,11 @@ const TONES: Record<
   "slate" | "indigo" | "amber" | "emerald" | "rose",
   { bg: string; border: string; text: string; bar: string }
 > = {
-  slate: { bg: "rgba(71,85,105,0.06)", border: "rgba(71,85,105,0.16)", text: "#475569", bar: "#64748B" },
-  indigo: { bg: "rgba(99,102,241,0.07)", border: "rgba(99,102,241,0.18)", text: "#4F46E5", bar: "#6366F1" },
-  amber: { bg: "rgba(217,119,6,0.07)", border: "rgba(217,119,6,0.18)", text: "#B45309", bar: "#D97706" },
-  emerald: { bg: "rgba(5,150,105,0.07)", border: "rgba(5,150,105,0.18)", text: "#047857", bar: "#059669" },
-  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.16)", text: "#B91C1C", bar: "#DC2626" },
+  slate: { bg: "rgba(71,85,105,0.06)", border: "rgba(71,85,105,0.16)", text: "var(--pc-text-body)", bar: "var(--pc-text-secondary)" },
+  indigo: { bg: "rgba(99,102,241,0.07)", border: "rgba(99,102,241,0.18)", text: "var(--pc-indigo-ink)", bar: "#6366F1" },
+  amber: { bg: "rgba(217,119,6,0.07)", border: "rgba(217,119,6,0.18)", text: "var(--pc-warning-ink)", bar: "var(--pc-warning)" },
+  emerald: { bg: "rgba(5,150,105,0.07)", border: "rgba(5,150,105,0.18)", text: "var(--pc-success-ink)", bar: "var(--pc-success)" },
+  rose: { bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.16)", text: "var(--pc-danger-ink)", bar: "var(--pc-danger)" },
 }
 
 // Bloque 1 — métrica de resumen (icono + número grande + etiqueta)
@@ -694,7 +694,7 @@ function KpiCard({
   const t = TONES[tone]
   return (
     <div
-      className="rounded-2xl border bg-white p-4 shadow-sm"
+      className="rounded-2xl border bg-pc-card p-4 shadow-sm"
       style={{ borderColor: t.border, background: big ? t.bg : undefined }}
     >
       <div className="flex items-center gap-1.5">

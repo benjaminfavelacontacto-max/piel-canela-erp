@@ -37,43 +37,43 @@ export interface TipoData {
 }
 
 const COLORES_CATEGORIA: Record<string, string> = {
-  ACTIVADORES: "#0F766E",
-  POTENCIADORES: "#047857",
-  CINTAS: "#B45309",
-  "EMULSIÓN REVELADORA": "#1D4ED8",
-  EMULSIÓN: "#1D4ED8",
-  "POLVO DE BLANQUEAR": "#7E22CE",
-  POLVOS: "#7E22CE",
-  "ACEITE CORPORAL": "#B45309",
-  ACEITE: "#B45309",
-  OXIGENANTES: "#0E7490",
-  AEROGRAFÍA: "#B91C1C",
-  AEROSOL: "#EA580C",
-  HUMECTANTES: "#4F46E5",
-  HIDRATANTES: "#4F46E5",
-  EXFOLIANTS: "#A16207",
-  EXFOLIANTES: "#A16207",
-  "DYE COLOR": "#0E7490",
-  SOMBRILLA: "#A8895F",
-  SOMBRILLAS: "#A8895F",
-  SHAMPOO: "#BE185D",
-  OTROS: "#475569",
-  "SIN CATEGORÍA": "#64748B",
+  ACTIVADORES: "var(--pc-accent-ink)",
+  POTENCIADORES: "var(--pc-success-ink)",
+  CINTAS: "var(--pc-warning-ink)",
+  "EMULSIÓN REVELADORA": "var(--pc-info-ink)",
+  EMULSIÓN: "var(--pc-info-ink)",
+  "POLVO DE BLANQUEAR": "var(--pc-purple-ink)",
+  POLVOS: "var(--pc-purple-ink)",
+  "ACEITE CORPORAL": "var(--pc-warning-ink)",
+  ACEITE: "var(--pc-warning-ink)",
+  OXIGENANTES: "var(--pc-cyan-ink)",
+  AEROGRAFÍA: "var(--pc-danger-ink)",
+  AEROSOL: "var(--pc-orange-ink)",
+  HUMECTANTES: "var(--pc-indigo-ink)",
+  HIDRATANTES: "var(--pc-indigo-ink)",
+  EXFOLIANTS: "var(--pc-warning-ink)",
+  EXFOLIANTES: "var(--pc-warning-ink)",
+  "DYE COLOR": "var(--pc-cyan-ink)",
+  SOMBRILLA: "var(--pc-gold-ink)",
+  SOMBRILLAS: "var(--pc-gold-ink)",
+  SHAMPOO: "var(--pc-pink-ink)",
+  OTROS: "var(--pc-text-body)",
+  "SIN CATEGORÍA": "var(--pc-text-secondary)",
 }
 
 // Paleta de fallback (tonos saturados que funcionan en light theme)
 const FALLBACK_COLORS = [
-  "#D97706",
-  "#059669",
-  "#4F46E5",
+  "var(--pc-warning)",
+  "var(--pc-success)",
+  "var(--pc-indigo-ink)",
   "#DB2777",
   "#0D9488",
-  "#7C3AED",
-  "#EA580C",
+  "var(--pc-violet-ink)",
+  "var(--pc-orange-ink)",
   "#0891B2",
   "#65A30D",
-  "#DC2626",
-  "#2563EB",
+  "var(--pc-danger)",
+  "var(--pc-info)",
   "#C026D3",
 ]
 const colorCache: Record<string, string> = {}
@@ -103,25 +103,25 @@ const ESTATUS_CONFIG: Record<
 > = {
   pagada_total: {
     label: "Pagada",
-    color: "#047857",
+    color: "var(--pc-success-ink)",
     bg: "rgba(5,150,105,0.10)",
     border: "rgba(5,150,105,0.20)",
   },
   pagada_parcial: {
     label: "Parcial",
-    color: "#B45309",
+    color: "var(--pc-warning-ink)",
     bg: "rgba(217,119,6,0.10)",
     border: "rgba(217,119,6,0.20)",
   },
   pendiente: {
     label: "Pendiente",
-    color: "#B91C1C",
+    color: "var(--pc-danger-ink)",
     bg: "rgba(220,38,38,0.10)",
     border: "rgba(220,38,38,0.20)",
   },
   cancelada: {
     label: "Cancelada",
-    color: "#475569",
+    color: "var(--pc-text-body)",
     bg: "rgba(100,116,139,0.10)",
     border: "rgba(100,116,139,0.20)",
   },
@@ -142,7 +142,7 @@ function CustomTooltip({
   return (
     <div
       style={{
-        background: "white",
+        background: "var(--pc-bg-card)",
         border: `1px solid ${getColor(d.categoria)}40`,
         borderRadius: 12,
         padding: "12px 16px",
@@ -167,7 +167,7 @@ function CustomTooltip({
         style={{
           fontSize: 18,
           fontWeight: 700,
-          color: "#0F172A",
+          color: "var(--pc-text)",
           fontVariantNumeric: "tabular-nums",
           marginBottom: 4,
           letterSpacing: "-0.025em",
@@ -175,11 +175,11 @@ function CustomTooltip({
       >
         {fmtMXN(d.totalVentas)}
       </p>
-      <p style={{ fontSize: 11, color: "#64748B" }}>
+      <p style={{ fontSize: 11, color: "var(--pc-text-secondary)" }}>
         {d.totalUnidades.toLocaleString("es-MX")} unidades · {d.ordenes.length}{" "}
         órdenes
       </p>
-      <p style={{ fontSize: 10, color: "#94A3B8", marginTop: 6 }}>
+      <p style={{ fontSize: 10, color: "var(--pc-text-muted)", marginTop: 6 }}>
         Click para ver órdenes →
       </p>
     </div>
@@ -192,7 +192,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
   if (data.length === 0) {
     return (
-      <section className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-8 text-center text-sm text-gray-500 shadow-sm">
+      <section className="rounded-2xl border border-pc-line bg-pc-card p-8 text-center text-sm text-gray-500 shadow-sm">
         Sin ventas registradas para análisis por tipo todavía.
       </section>
     )
@@ -200,14 +200,14 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
   return (
     <div className="space-y-3">
-      <section className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm">
+      <section className="overflow-hidden rounded-2xl border border-pc-line bg-pc-card shadow-sm">
         {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-pc-line-soft px-6 py-4">
           <div>
             <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
               Análisis de Ventas
             </p>
-            <h2 className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+            <h2 className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
               Ventas por Tipo de Producto
             </h2>
           </div>
@@ -217,7 +217,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 Total MXN
               </p>
               <p
-                className="mt-0.5 text-[16px] font-bold tabular-nums text-[#0F172A]"
+                className="mt-0.5 text-[16px] font-bold tabular-nums text-pc-ink"
                 style={{ letterSpacing: "-0.025em" }}
               >
                 {fmtMXN(totalGeneral)}
@@ -228,7 +228,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 Total Unidades
               </p>
               <p
-                className="mt-0.5 text-[16px] font-bold tabular-nums text-[#0F172A]"
+                className="mt-0.5 text-[16px] font-bold tabular-nums text-pc-ink"
                 style={{ letterSpacing: "-0.025em" }}
               >
                 {data.reduce((s, d) => s + d.totalUnidades, 0).toLocaleString("es-MX")}
@@ -243,7 +243,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
           style={{ minHeight: 320 }}
         >
           {/* COL 1: Barras */}
-          <div className="border-b border-[rgba(15,23,42,0.04)] px-5 pt-4 pb-3 lg:border-b-0 lg:border-r">
+          <div className="border-b border-pc-line-soft px-5 pt-4 pb-3 lg:border-b-0 lg:border-r">
             <p className="mb-3 text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
               Ingresos por categoría
             </p>
@@ -264,14 +264,14 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(15,23,42,0.06)"
+                  stroke="var(--pc-border)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="categoria"
                   tick={{
                     fontSize: 9,
-                    fill: "#64748B",
+                    fill: "var(--pc-text-secondary)",
                     fontWeight: 600,
                     letterSpacing: "0.04em",
                   }}
@@ -280,13 +280,13 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                   tickFormatter={(v: string) => (v.length > 8 ? v.slice(0, 8) + "…" : v)}
                 />
                 <YAxis
-                  tick={{ fontSize: 9, fill: "#94A3B8" }}
+                  tick={{ fontSize: 9, fill: "var(--pc-text-muted)" }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}K`}
                   width={38}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.03)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--pc-border-soft)" }} />
                 <Bar dataKey="totalVentas" radius={[5, 5, 0, 0]} maxBarSize={44}>
                   {data.map((entry) => {
                     const isActive = seleccionado?.categoria === entry.categoria
@@ -294,9 +294,9 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     return (
                       <Cell
                         key={entry.categoria}
-                        fill={isActive ? color : `${color}AA`}
+                        fill={isActive ? color : `color-mix(in srgb, ${color} 67%, transparent)`}
                         style={{
-                          filter: isActive ? `drop-shadow(0 4px 8px ${color}40)` : "none",
+                          filter: isActive ? `drop-shadow(0 4px 8px color-mix(in srgb, ${color} 25%, transparent))` : "none",
                           transition: "all 0.2s",
                         }}
                       />
@@ -311,7 +311,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
           </div>
 
           {/* COL 2: Dona */}
-          <div className="flex flex-col items-center border-b border-[rgba(15,23,42,0.04)] px-3 pt-4 pb-3 lg:border-b-0 lg:border-r">
+          <div className="flex flex-col items-center border-b border-pc-line-soft px-3 pt-4 pb-3 lg:border-b-0 lg:border-r">
             <p className="mb-3 self-start pl-2 text-[9.5px] font-semibold uppercase tracking-[0.10em] text-gray-400">
               Unidades por categoría
             </p>
@@ -343,12 +343,12 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                         return (
                           <Cell
                             key={entry.categoria}
-                            fill={isActive ? color : `${color}AA`}
-                            stroke={isActive ? color : "white"}
+                            fill={isActive ? color : `color-mix(in srgb, ${color} 67%, transparent)`}
+                            stroke={isActive ? color : "var(--pc-bg-card)"}
                             strokeWidth={2}
                             style={{
                               filter: isActive
-                                ? `drop-shadow(0 4px 8px ${color}40)`
+                                ? `drop-shadow(0 4px 8px color-mix(in srgb, ${color} 25%, transparent))`
                                 : "none",
                               transition: "all 0.2s",
                             }}
@@ -371,7 +371,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                       return (
                         <div
                           style={{
-                            background: "white",
+                            background: "var(--pc-bg-card)",
                             border: `1px solid ${getColor(d.categoria)}40`,
                             borderRadius: 12,
                             padding: "10px 14px",
@@ -395,17 +395,17 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                             style={{
                               fontSize: 18,
                               fontWeight: 700,
-                              color: "#0F172A",
+                              color: "var(--pc-text)",
                               letterSpacing: "-0.025em",
                               fontVariantNumeric: "tabular-nums",
                             }}
                           >
                             {d.totalUnidades.toLocaleString("es-MX")} uds
                           </p>
-                          <p style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>
+                          <p style={{ fontSize: 10, color: "var(--pc-text-secondary)", marginTop: 3 }}>
                             {pct}% · {d.ordenes.length} órdenes
                           </p>
-                          <p style={{ fontSize: 9, color: "#94A3B8", marginTop: 4 }}>
+                          <p style={{ fontSize: 9, color: "var(--pc-text-muted)", marginTop: 4 }}>
                             Click para ver detalle →
                           </p>
                         </div>
@@ -421,7 +421,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     fill={
                       seleccionado
                         ? getColor(seleccionado.categoria)
-                        : "#0F172A"
+                        : "var(--pc-text)"
                     }
                     fontSize={seleccionado ? 18 : 20}
                     fontWeight={700}
@@ -444,7 +444,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     y="58%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill="#94A3B8"
+                    fill="var(--pc-text-muted)"
                     fontSize={9}
                     fontWeight={600}
                     fontFamily="inherit"
@@ -486,10 +486,10 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                         prev?.categoria === tipo.categoria ? null : tipo,
                       )
                     }
-                    className="rounded-xl border bg-white px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                    className="rounded-xl border bg-pc-card px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm"
                     style={{
-                      borderColor: isSelected ? color : "rgba(15,23,42,0.06)",
-                      background: isSelected ? `${color}08` : "white",
+                      borderColor: isSelected ? color : "var(--pc-border)",
+                      background: isSelected ? `color-mix(in srgb, ${color} 3%, transparent)` : "var(--pc-bg-card)",
                     }}
                   >
                     <div className="mb-1 flex items-center justify-between gap-1">
@@ -498,13 +498,13 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                           className="size-1.5 shrink-0 rounded-full"
                           style={{
                             background: color,
-                            boxShadow: isSelected ? `0 0 6px ${color}80` : "none",
+                            boxShadow: isSelected ? `0 0 6px color-mix(in srgb, ${color} 50%, transparent)` : "none",
                           }}
                         />
                         <span
                           className="truncate text-[10.5px] font-semibold"
                           style={{
-                            color: isSelected ? color : "#475569",
+                            color: isSelected ? color : "var(--pc-text-body)",
                             maxWidth: 110,
                             letterSpacing: "0.02em",
                           }}
@@ -545,7 +545,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
       {/* Drill-down panel */}
       {seleccionado && (
         <section
-          className="overflow-hidden rounded-2xl border bg-white shadow-sm"
+          className="overflow-hidden rounded-2xl border bg-pc-card shadow-sm"
           style={{
             borderColor: `${getColor(seleccionado.categoria)}40`,
             boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 0 0 1px ${getColor(seleccionado.categoria)}10`,
@@ -582,17 +582,17 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 {
                   label: "Total vendido",
                   value: fmtMXN(seleccionado.totalVentas),
-                  color: "#0F172A",
+                  color: "var(--pc-text)",
                 },
                 {
                   label: "Unidades",
                   value: seleccionado.totalUnidades.toLocaleString("es-MX"),
-                  color: "#475569",
+                  color: "var(--pc-text-body)",
                 },
                 {
                   label: "Órdenes",
                   value: String(seleccionado.ordenes.length),
-                  color: "#475569",
+                  color: "var(--pc-text-body)",
                 },
               ].map((s, i) => (
                 <div key={i} className="text-right">
@@ -610,7 +610,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
               <button
                 type="button"
                 onClick={() => setSeleccionado(null)}
-                className="flex size-7 items-center justify-center rounded-md border border-gray-200 bg-white text-[16px] text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-700"
+                className="flex size-7 items-center justify-center rounded-md border border-gray-200 bg-pc-card text-[16px] text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-700"
                 aria-label="Cerrar"
               >
                 ×
@@ -620,7 +620,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
           {/* Header de columnas */}
           <div
-            className="grid items-center gap-5 border-b border-[rgba(15,23,42,0.06)] px-8 py-3"
+            className="grid items-center gap-5 border-b border-pc-line px-8 py-3"
             style={{
               gridTemplateColumns: "1fr 160px 100px 100px 130px 100px 40px",
             }}
@@ -654,7 +654,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
               .map((orden) => {
                 const sc = ESTATUS_CONFIG[orden.estatus ?? ""] ?? {
                   label: orden.estatus ?? "—",
-                  color: "#94A3B8",
+                  color: "var(--pc-text-muted)",
                   bg: "rgba(100,116,139,0.10)",
                   border: "rgba(100,116,139,0.20)",
                 }
@@ -662,7 +662,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                 return (
                   <div
                     key={orden.id}
-                    className="grid items-center gap-5 overflow-hidden border-b border-[rgba(15,23,42,0.03)] px-8 py-3.5 transition-colors hover:bg-gray-50/60"
+                    className="grid items-center gap-5 overflow-hidden border-b border-pc-line-soft px-8 py-3.5 transition-colors hover:bg-gray-50/60"
                     style={{
                       gridTemplateColumns:
                         "1fr 160px 100px 100px 130px 100px 40px",
@@ -697,7 +697,7 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
 
                     {/* Cliente */}
                     <p
-                      className="truncate text-[12.5px] font-medium text-[#475569]"
+                      className="truncate text-[12.5px] font-medium text-pc-ink-2"
                       title={orden.cliente}
                     >
                       {orden.cliente}
@@ -717,9 +717,9 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                       <span
                         className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold tabular-nums"
                         style={{
-                          background: `${catColor}10`,
+                          background: `color-mix(in srgb, ${catColor} 6%, transparent)`,
                           color: catColor,
-                          border: `1px solid ${catColor}25`,
+                          border: `1px solid color-mix(in srgb, ${catColor} 14%, transparent)`,
                         }}
                       >
                         {orden.unidadesCat ?? 0}
@@ -755,19 +755,19 @@ export function VentasPorTipo({ data }: { data: TipoData[] }) {
                     <Link
                       href={`/ventas/${orden.id}`}
                       title={`Abrir orden ${orden.numero ?? ""}`}
-                      className="mx-auto flex size-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-400 transition-all hover:-translate-y-0.5"
+                      className="mx-auto flex size-8 items-center justify-center rounded-md border border-gray-200 bg-pc-card text-gray-400 transition-all hover:-translate-y-0.5"
                       style={{ fontSize: 14 }}
                       onMouseEnter={(e) => {
                         const el = e.currentTarget
-                        el.style.background = `${catColor}10`
-                        el.style.borderColor = `${catColor}40`
+                        el.style.background = `color-mix(in srgb, ${catColor} 6%, transparent)`
+                        el.style.borderColor = `color-mix(in srgb, ${catColor} 25%, transparent)`
                         el.style.color = catColor
                       }}
                       onMouseLeave={(e) => {
                         const el = e.currentTarget
-                        el.style.background = "white"
+                        el.style.background = "var(--pc-bg-card)"
                         el.style.borderColor = "rgb(229 231 235)"
-                        el.style.color = "#9CA3AF"
+                        el.style.color = "var(--pc-text-muted)"
                       }}
                     >
                       ↗

@@ -53,6 +53,18 @@ Distribuidora de productos de bronceado (cremas activadoras, potenciadoras, oxig
 - NO usar colores oklch o lab en PDFs (usar hex hardcodeado)
 - Light theme V1.1 — paleta: emerald-700 `#047857`, indigo-600 `#4F46E5`, amber-700 `#B45309`, rose-700 `#B91C1C`, cyan-700 `#0E7490`, slate `#475569`
 
+## Regla: tema oscuro (Claro / Oscuro / Sistema) — colores = tokens, NO hex nuevos
+- Preferencia en `localStorage["pc-theme"]` (por defecto **Claro**) → clase `dark` en `<html>`. Script anti-parpadeo en `<head>` del layout raíz. Selector en la barra lateral y en ⌘K. Archivos: `src/lib/theme.ts`, `use-theme.ts`, `components/theme-toggle.tsx`, `theme-sync.tsx`.
+- Tokens en `globals.css`: `--pc-*` (claro en `:root`, oscuro en `:root.dark`) y utilidades Tailwind `bg-pc-card|app|raised|hover|subtle|tint`, `text-pc-ink|ink-2|ink-3|ink-4`, `border-pc-line|line-soft|line-strong`, acento `pc-teal|-hover|-ink|-soft`, estados `pc-green|amber|red|blue` con `-ink|-soft|-line`, y `pc-violet-ink|indigo-ink|cyan-ink|pink-ink|purple-ink|gold-ink|orange-ink`.
+- **"ink" = versión de TEXTO del color** (oscura en claro, clara en oscuro). Texto de color → `text-pc-*-ink`; relleno sólido → `bg-pc-*`; tinte de fondo → `bg-pc-*-soft`; borde/anillo → `border-pc-*-line`.
+- Estilos en línea, SVG y Recharts → `var(--pc-…)` (p. ej. `CHART.real`), nunca `#hex`. Excepciones: paletas categóricas de datos y paneles SIEMPRE oscuros (banner IA, notificaciones, login), que conservan `text-white` / `border-white/10`.
+- Las clases de la paleta de Tailwind (`text-gray-600`, `bg-emerald-50`, `border-amber-200`…) **ya se adaptan solas**: sus variables se reasignan en `:root.dark` (generado con `node scripts/gen-dark-palette.mjs`; no editar a mano ese bloque).
+- ⚠ Rellenos sólidos con texto blanco (`bg-emerald-600/700…`, banners) se aclararían en oscuro: usar un token (`bg-pc-teal`) o color fijo `bg-[oklch(…)]`. El pulgar de los interruptores es `bg-white` fijo.
+- ⚠ Concatenar alfa a un color (`${color}20`) no funciona con `var()` → `color-mix(in srgb, ${color} 12%, transparent)`.
+- ⚠ Metadatos (`manifest.ts`, `viewport.themeColor`) NO admiten `var()` ni se tokenizan.
+- PDF de cotización (`CotizacionPreview`, `lib/pdf.ts`) y reporte impreso: siempre en claro (hex fijo; `ThemeSync` quita `dark` al imprimir y `pdf.ts` al clonar).
+- Rollback: tag `v-pre-tema-oscuro`.
+
 ## Paleta actual: IA Amatista (módulo Clientes)
 - Header banner: `linear-gradient(90deg, #1E1A33, #2A244A)`
 - Acento principal: `#8B5CF6` (púrpura eléctrico)

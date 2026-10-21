@@ -326,12 +326,12 @@ export function QuickQuote({
   return (
     <div className="min-h-screen pb-40">
       {/* ─── Encabezado compacto ─── */}
-      <header className="sticky top-0 z-20 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-pc-line-soft bg-pc-card/90 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <Link
             href="/cotizaciones"
             aria-label="Volver a cotizaciones"
-            className="pc-tap -ml-1 flex size-9 items-center justify-center rounded-xl text-gray-400 active:bg-black/5"
+            className="pc-tap -ml-1 flex size-9 items-center justify-center rounded-xl text-gray-400 active:bg-pc-tint"
           >
             <ArrowLeft className="size-5" />
           </Link>
@@ -345,7 +345,7 @@ export function QuickQuote({
           </div>
           <Link
             href="/cotizaciones/nueva"
-            className="pc-tap shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-[#0F766E] active:bg-black/5"
+            className="pc-tap shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-pc-teal-ink active:bg-pc-tint"
           >
             Modo completo
           </Link>
@@ -363,15 +363,15 @@ export function QuickQuote({
         <button
           type="button"
           onClick={() => setSheet("cliente")}
-          className="pc-tap flex w-full items-center gap-3 rounded-2xl border border-black/5 bg-white p-4 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50"
+          className="pc-tap flex w-full items-center gap-3 rounded-2xl border border-pc-line-soft bg-pc-card p-4 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50"
         >
           <span
             className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold ${
-              cliente ? "text-white" : "bg-[#F5F7F6] text-gray-400"
+              cliente ? "text-white" : "bg-pc-app text-gray-400"
             }`}
             style={
               cliente
-                ? { background: "linear-gradient(135deg,#0F766E,#14B8A6)" }
+                ? { background: "linear-gradient(135deg,var(--pc-accent),#14B8A6)" }
                 : undefined
             }
           >
@@ -404,14 +404,14 @@ export function QuickQuote({
           type="button"
           onClick={() => setSheet("producto")}
           className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-4 text-[15px] font-semibold text-white shadow-[0_4px_14px_rgba(15,118,110,0.25)] active:scale-[0.99]"
-          style={{ background: "linear-gradient(135deg,#0F766E,#0D6A62)" }}
+          style={{ background: "linear-gradient(135deg,var(--pc-accent),var(--pc-accent-hover))" }}
         >
           <Plus className="size-5" />
           Agregar productos
         </button>
 
         {lineas.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-black/10 bg-white/60 px-4 py-10 text-center">
+          <div className="rounded-2xl border border-dashed border-pc-line bg-pc-card/60 px-4 py-10 text-center">
             <ShoppingBasket className="mx-auto size-7 text-gray-300" />
             <p className="mt-2 text-[13px] font-medium text-gray-500">
               Sin productos todavía
@@ -433,7 +433,7 @@ export function QuickQuote({
                       ? "border-fuchsia-200 bg-fuchsia-50/60"
                       : conDesc
                         ? "border-emerald-200 bg-emerald-50/50"
-                        : "border-black/5 bg-white"
+                        : "border-pc-line-soft bg-pc-card"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -442,10 +442,10 @@ export function QuickQuote({
                       <img
                         src={l.imagen_url}
                         alt=""
-                        className="size-11 shrink-0 rounded-xl border border-black/5 object-cover"
+                        className="size-11 shrink-0 rounded-xl border border-pc-line-soft object-cover"
                       />
                     ) : (
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F7F6] font-mono text-[10px] font-semibold text-gray-400">
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-pc-app font-mono text-[10px] font-semibold text-gray-400">
                         {(l.sku ?? l.nombre)
                           .replace(/[^A-Z0-9]/gi, "")
                           .slice(0, 3)
@@ -456,12 +456,12 @@ export function QuickQuote({
                       <p className="text-[14px] font-medium leading-tight text-gray-900">
                         {l.nombre}
                         {l.es_regalo && (
-                          <span className="ml-1.5 rounded bg-fuchsia-600 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
+                          <span className="ml-1.5 rounded bg-[oklch(59.1%_0.293_322.896)] px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
                             Regalo
                           </span>
                         )}
                         {conDesc && (
-                          <span className="ml-1.5 rounded bg-emerald-600 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
+                          <span className="ml-1.5 rounded bg-[oklch(59.6%_0.145_163.225)] px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
                             −{etiquetaDescuento(l)}
                           </span>
                         )}
@@ -498,7 +498,7 @@ export function QuickQuote({
                         type="button"
                         onClick={() => quitar(key)}
                         aria-label={`Quitar ${l.nombre}`}
-                        className="pc-tap -mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-300 active:bg-black/5 active:text-rose-600"
+                        className="pc-tap -mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-300 active:bg-pc-tint active:text-rose-600"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -536,7 +536,7 @@ export function QuickQuote({
                         className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
                           conDesc
                             ? "bg-emerald-100 text-emerald-700"
-                            : "text-gray-400 active:bg-black/5"
+                            : "text-gray-400 active:bg-pc-tint"
                         }`}
                       >
                         <BadgePercent className="size-4" />
@@ -550,7 +550,7 @@ export function QuickQuote({
                       className={`pc-tap ml-1 flex h-9 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium ${
                         l.es_regalo
                           ? "bg-fuchsia-100 text-fuchsia-700"
-                          : "text-gray-400 active:bg-black/5"
+                          : "text-gray-400 active:bg-pc-tint"
                       }`}
                     >
                       <Gift className="size-4" />
@@ -562,7 +562,7 @@ export function QuickQuote({
                       un monto exacto por pieza está el modo completo: aquí
                       manda la velocidad frente al cliente. */}
                   {descAbierto === key && !l.es_regalo && (
-                    <div className="mt-2.5 border-t border-black/5 pt-2.5">
+                    <div className="mt-2.5 border-t border-pc-line-soft pt-2.5">
                       <p className="mb-1.5 text-[11.5px] text-gray-500">
                         Descuento a este producto ·{" "}
                         <span className="tabular-nums">
@@ -582,8 +582,8 @@ export function QuickQuote({
                               aria-pressed={activo}
                               className={`pc-tap h-10 rounded-xl text-[13px] font-semibold tabular-nums transition-colors ${
                                 activo
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-[#F5F7F6] text-gray-600"
+                                  ? "bg-[oklch(59.6%_0.145_163.225)] text-white"
+                                  : "bg-pc-app text-gray-600"
                               }`}
                             >
                               {pct === 0 ? "Sin" : `${pct}%`}
@@ -604,7 +604,7 @@ export function QuickQuote({
           <button
             type="button"
             onClick={() => setSheet("ajustes")}
-            className="pc-tap flex w-full items-center justify-between gap-2 rounded-2xl border border-black/5 bg-white px-4 py-3.5 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50"
+            className="pc-tap flex w-full items-center justify-between gap-2 rounded-2xl border border-pc-line-soft bg-pc-card px-4 py-3.5 text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] active:bg-gray-50"
           >
             <span className="min-w-0">
               <span className="block text-[13.5px] font-semibold text-gray-900">
@@ -627,7 +627,7 @@ export function QuickQuote({
       </div>
 
       {/* ─── Barra fija de total + guardar ─── */}
-      <div className="pc-safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-black/5 bg-white/95 px-4 pt-3 backdrop-blur-xl">
+      <div className="pc-safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-pc-line-soft bg-pc-card/95 px-4 pt-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">
@@ -650,10 +650,10 @@ export function QuickQuote({
             onClick={guardar}
             disabled={pending}
             className="pc-tap flex h-12 shrink-0 items-center gap-2 rounded-2xl px-5 text-[15px] font-semibold text-white shadow-[0_4px_14px_rgba(15,118,110,0.25)] transition-transform active:scale-[0.97] disabled:opacity-60"
-            style={{ background: "linear-gradient(135deg,#0F766E,#0D6A62)" }}
+            style={{ background: "linear-gradient(135deg,var(--pc-accent),var(--pc-accent-hover))" }}
           >
             {pending ? (
-              <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="size-4 animate-spin rounded-full border-2 border-pc-card border-t-transparent" />
             ) : (
               <Check className="size-5" />
             )}
@@ -739,8 +739,8 @@ function Sheet({
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      <header className="flex items-center gap-2 border-b border-black/5 px-4 py-3">
+    <div className="fixed inset-0 z-50 flex flex-col bg-pc-card">
+      <header className="flex items-center gap-2 border-b border-pc-line-soft px-4 py-3">
         <h2 className="min-w-0 flex-1 text-[16px] font-bold tracking-[-0.02em] text-gray-900">
           {title}
         </h2>
@@ -748,7 +748,7 @@ function Sheet({
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="pc-tap flex size-9 items-center justify-center rounded-xl text-gray-400 active:bg-black/5"
+          className="pc-tap flex size-9 items-center justify-center rounded-xl text-gray-400 active:bg-pc-tint"
         >
           <X className="size-5" />
         </button>
@@ -757,7 +757,7 @@ function Sheet({
         {children}
       </div>
       {footer && (
-        <div className="pc-safe-bottom border-t border-black/5 bg-white px-4 pt-3">
+        <div className="pc-safe-bottom border-t border-pc-line-soft bg-pc-card px-4 pt-3">
           {footer}
         </div>
       )}
@@ -796,7 +796,7 @@ function ClienteSheet({
 
   return (
     <Sheet title="Elegir cliente" onClose={onClose}>
-      <div className="sticky top-0 z-10 bg-white px-4 pb-2 pt-3">
+      <div className="sticky top-0 z-10 bg-pc-card px-4 pb-2 pt-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -806,7 +806,7 @@ function ClienteSheet({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Nombre, negocio o teléfono…"
             autoComplete="off"
-            className="h-12 w-full rounded-xl border border-black/10 bg-white pl-9 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-[#0F766E]/40 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/15"
+            className="h-12 w-full rounded-xl border border-pc-line bg-pc-card pl-9 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-pc-teal/40 focus:outline-none focus:ring-2 focus:ring-pc-teal/15"
           />
         </div>
       </div>
@@ -825,7 +825,7 @@ function ClienteSheet({
               >
                 <span
                   className="flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg,#0F766E,#14B8A6)" }}
+                  style={{ background: "linear-gradient(135deg,var(--pc-accent),#14B8A6)" }}
                 >
                   {(c.nombre_negocio ?? c.nombre)[0]?.toUpperCase()}
                 </span>
@@ -848,7 +848,7 @@ function ClienteSheet({
       <div className="px-4 py-4">
         <Link
           href="/clientes/nuevo"
-          className="pc-tap flex items-center justify-center gap-2 rounded-xl border border-black/10 bg-white py-3 text-[14px] font-medium text-[#0F766E] active:bg-gray-50"
+          className="pc-tap flex items-center justify-center gap-2 rounded-xl border border-pc-line bg-pc-card py-3 text-[14px] font-medium text-pc-teal-ink active:bg-gray-50"
         >
           <Plus className="size-4" />
           Crear cliente nuevo
@@ -903,14 +903,14 @@ function ProductoSheet({
           type="button"
           onClick={onClose}
           className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-semibold text-white active:scale-[0.99]"
-          style={{ background: "linear-gradient(135deg,#0F766E,#0D6A62)" }}
+          style={{ background: "linear-gradient(135deg,var(--pc-accent),var(--pc-accent-hover))" }}
         >
           <Check className="size-5" />
           Listo{piezas > 0 ? ` · ${piezas} pzs` : ""}
         </button>
       }
     >
-      <div className="sticky top-0 z-10 space-y-2 bg-white px-4 pb-2 pt-3">
+      <div className="sticky top-0 z-10 space-y-2 bg-pc-card px-4 pb-2 pt-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -920,7 +920,7 @@ function ProductoSheet({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nombre o SKU…"
             autoComplete="off"
-            className="h-12 w-full rounded-xl border border-black/10 bg-white pl-9 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-[#0F766E]/40 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/15"
+            className="h-12 w-full rounded-xl border border-pc-line bg-pc-card pl-9 pr-3 text-gray-900 placeholder:text-gray-400 focus:border-pc-teal/40 focus:outline-none focus:ring-2 focus:ring-pc-teal/15"
           />
         </div>
         <button
@@ -929,8 +929,8 @@ function ProductoSheet({
           aria-pressed={modoRegalo}
           className={`pc-tap flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-medium transition-colors ${
             modoRegalo
-              ? "bg-fuchsia-600 text-white"
-              : "bg-[#F5F7F6] text-gray-600"
+              ? "bg-[oklch(59.1%_0.293_322.896)] text-white"
+              : "bg-pc-app text-gray-600"
           }`}
         >
           <Gift className="size-4" />
@@ -972,10 +972,10 @@ function ProductoSheet({
                       <img
                         src={p.imagen_url}
                         alt=""
-                        className="size-11 shrink-0 rounded-xl border border-black/5 object-cover"
+                        className="size-11 shrink-0 rounded-xl border border-pc-line-soft object-cover"
                       />
                     ) : (
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F7F6] font-mono text-[10px] font-semibold text-gray-400">
+                      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-pc-app font-mono text-[10px] font-semibold text-gray-400">
                         {(p.sku ?? p.nombre)
                           .replace(/[^A-Z0-9]/gi, "")
                           .slice(0, 3)
@@ -986,7 +986,7 @@ function ProductoSheet({
                       <span className="block truncate text-[15px] font-medium text-gray-900">
                         {p.nombre}
                         {conDesc && (
-                          <span className="ml-1.5 rounded bg-emerald-600 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
+                          <span className="ml-1.5 rounded bg-[oklch(59.6%_0.145_163.225)] px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
                             −{etiquetaDescuento(linea!)}
                           </span>
                         )}
@@ -1005,7 +1005,7 @@ function ProductoSheet({
                           <>
                             {p.sku ? `${p.sku} · ` : ""}
                             <span
-                              className={`font-semibold ${modoRegalo ? "text-fuchsia-600" : "text-[#0F766E]"}`}
+                              className={`font-semibold ${modoRegalo ? "text-fuchsia-600" : "text-pc-teal-ink"}`}
                             >
                               {modoRegalo ? "Gratis" : formatMXN2(p.precio)}
                             </span>
@@ -1029,7 +1029,7 @@ function ProductoSheet({
                       onClick={() => onAdd(p, modoRegalo)}
                       aria-label={`Agregar ${p.nombre}`}
                       className={`pc-tap flex size-9 shrink-0 items-center justify-center rounded-xl text-white ${
-                        modoRegalo ? "bg-fuchsia-600" : "bg-[#0F766E]"
+                        modoRegalo ? "bg-[oklch(59.1%_0.293_322.896)]" : "bg-pc-teal"
                       }`}
                     >
                       {modoRegalo ? (
@@ -1075,7 +1075,7 @@ function ProductoSheet({
                       className={`pc-tap flex h-8 items-center gap-1 rounded-lg px-2.5 text-[11.5px] font-medium ${
                         conDesc
                           ? "bg-emerald-100 text-emerald-700"
-                          : "bg-[#F5F7F6] text-gray-500"
+                          : "bg-pc-app text-gray-500"
                       }`}
                     >
                       <BadgePercent className="size-3.5" />
@@ -1100,8 +1100,8 @@ function ProductoSheet({
                             aria-pressed={activo}
                             className={`pc-tap h-9 rounded-lg text-[12px] font-semibold tabular-nums transition-colors ${
                               activo
-                                ? "bg-emerald-600 text-white"
-                                : "bg-[#F5F7F6] text-gray-600"
+                                ? "bg-[oklch(59.6%_0.145_163.225)] text-white"
+                                : "bg-pc-app text-gray-600"
                             }`}
                           >
                             {pct === 0 ? "Sin" : `${pct}%`}
@@ -1169,7 +1169,7 @@ function AjustesSheet({
           type="button"
           onClick={onClose}
           className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-semibold text-white active:scale-[0.99]"
-          style={{ background: "linear-gradient(135deg,#0F766E,#0D6A62)" }}
+          style={{ background: "linear-gradient(135deg,var(--pc-accent),var(--pc-accent-hover))" }}
         >
           <Check className="size-5" />
           Listo
@@ -1178,7 +1178,7 @@ function AjustesSheet({
     >
       <div className="space-y-4 p-4">
         {/* IVA */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/5 bg-white p-4">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-pc-line-soft bg-pc-card p-4">
           <div className="min-w-0">
             <p className="text-[14.5px] font-semibold text-gray-900">IVA 16%</p>
             <p className="text-[12px] text-gray-500">
@@ -1192,7 +1192,7 @@ function AjustesSheet({
             aria-checked={ivaActivo}
             aria-label="Aplicar IVA"
             className={`pc-tap relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-              ivaActivo ? "bg-[#0F766E]" : "bg-gray-300"
+              ivaActivo ? "bg-pc-teal" : "bg-gray-300"
             }`}
           >
             <span
@@ -1205,7 +1205,7 @@ function AjustesSheet({
         </div>
 
         {/* Descuento con botones grandes */}
-        <div className="rounded-2xl border border-black/5 bg-white p-4">
+        <div className="rounded-2xl border border-pc-line-soft bg-pc-card p-4">
           <p className="text-[14.5px] font-semibold text-gray-900">Descuento</p>
           <div className="mt-3 grid grid-cols-5 gap-2">
             {[0, 5, 10, 15, 20].map((pct) => (
@@ -1216,8 +1216,8 @@ function AjustesSheet({
                 aria-pressed={descuentoPct === pct}
                 className={`pc-tap h-11 rounded-xl text-[14px] font-semibold tabular-nums transition-colors ${
                   descuentoPct === pct
-                    ? "bg-[#0F766E] text-white"
-                    : "bg-[#F5F7F6] text-gray-600"
+                    ? "bg-pc-teal text-white"
+                    : "bg-pc-app text-gray-600"
                 }`}
               >
                 {pct}%
@@ -1233,7 +1233,7 @@ function AjustesSheet({
 
         {/* Descuento por lote — toda una familia de un toque */}
         {grupos.length > 0 && (
-          <div className="rounded-2xl border border-black/5 bg-white p-4">
+          <div className="rounded-2xl border border-pc-line-soft bg-pc-card p-4">
             <p className="text-[14.5px] font-semibold text-gray-900">
               Descuento por lote
             </p>
@@ -1264,7 +1264,7 @@ function AjustesSheet({
                         key={pct}
                         type="button"
                         onClick={() => onDescuentoGrupo(g.label, pct)}
-                        className="pc-tap h-10 rounded-xl bg-[#F5F7F6] text-[13px] font-semibold tabular-nums text-gray-600 transition-colors active:bg-emerald-600 active:text-white"
+                        className="pc-tap h-10 rounded-xl bg-pc-app text-[13px] font-semibold tabular-nums text-gray-600 transition-colors active:bg-[oklch(59.6%_0.145_163.225)] active:text-white"
                       >
                         {pct === 0 ? "Sin" : `${pct}%`}
                       </button>
@@ -1277,7 +1277,7 @@ function AjustesSheet({
         )}
 
         {/* Notas */}
-        <div className="rounded-2xl border border-black/5 bg-white p-4">
+        <div className="rounded-2xl border border-pc-line-soft bg-pc-card p-4">
           <label className="block">
             <span className="text-[14.5px] font-semibold text-gray-900">
               Notas (opcional)
@@ -1287,13 +1287,13 @@ function AjustesSheet({
               onChange={(e) => setNotas(e.target.value)}
               rows={3}
               placeholder="Entrega, condiciones, referencia…"
-              className="mt-2 w-full rounded-xl border border-black/10 bg-white p-3 text-gray-900 placeholder:text-gray-400 focus:border-[#0F766E]/40 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/15"
+              className="mt-2 w-full rounded-xl border border-pc-line bg-pc-card p-3 text-gray-900 placeholder:text-gray-400 focus:border-pc-teal/40 focus:outline-none focus:ring-2 focus:ring-pc-teal/15"
             />
           </label>
         </div>
 
         {/* Resumen — la misma cascada que verá el cliente en el PDF */}
-        <div className="rounded-2xl bg-[#FAFAFA] p-4 text-[13px]">
+        <div className="rounded-2xl bg-pc-subtle p-4 text-[13px]">
           {descuentoProductos > 0 && (
             <>
               <Row
@@ -1329,7 +1329,7 @@ function AjustesSheet({
             </>
           )}
           {iva > 0 && <Row label="IVA 16%" value={formatMXN2(iva)} />}
-          <div className="mt-2 border-t border-black/5 pt-2">
+          <div className="mt-2 border-t border-pc-line-soft pt-2">
             <Row label="Total" value={formatMXN2(total)} bold />
           </div>
           {ahorroCliente > 0 && (
@@ -1393,7 +1393,7 @@ function ExitoSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm">
-      <div className="pc-safe-bottom rounded-t-3xl bg-white px-5 pt-6">
+      <div className="pc-safe-bottom rounded-t-3xl bg-pc-card px-5 pt-6">
         <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-emerald-50">
           <Check className="size-7 text-emerald-600" />
         </div>
@@ -1411,7 +1411,7 @@ function ExitoSheet({
           <Link
             href={`/cotizaciones/${id}`}
             className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-semibold text-white active:scale-[0.99]"
-            style={{ background: "linear-gradient(135deg,#0F766E,#0D6A62)" }}
+            style={{ background: "linear-gradient(135deg,var(--pc-accent),var(--pc-accent-hover))" }}
           >
             <FileText className="size-5" />
             Ver y descargar PDF
@@ -1421,7 +1421,7 @@ function ExitoSheet({
               href={`https://wa.me/${waTel}?text=${waText}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3.5 text-[15px] font-semibold text-gray-800 active:bg-gray-50"
+              className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl border border-pc-line bg-pc-card py-3.5 text-[15px] font-semibold text-gray-800 active:bg-gray-50"
             >
               <MessageCircle className="size-5 text-emerald-600" />
               Avisar por WhatsApp
@@ -1430,7 +1430,7 @@ function ExitoSheet({
           <button
             type="button"
             onClick={onOtra}
-            className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-medium text-[#0F766E] active:bg-gray-50"
+            className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-medium text-pc-teal-ink active:bg-gray-50"
           >
             <Plus className="size-5" />
             Hacer otra cotización

@@ -73,7 +73,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-pc-card shadow-sm">
       <header className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
         <Boxes className="size-4 text-gray-400" strokeWidth={1.75} />
         <h2 className="text-[13px] font-semibold text-gray-900">Salidas</h2>
@@ -93,7 +93,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                 className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-purple-50/40"
               >
                 {open ? (
-                  <ChevronDown className="size-4 shrink-0 text-[#8B5CF6]" />
+                  <ChevronDown className="size-4 shrink-0 text-pc-violet-ink" />
                 ) : (
                   <ChevronRight className="size-4 shrink-0 text-gray-400" />
                 )}
@@ -102,7 +102,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                   <p className="font-mono text-[10.5px] text-gray-400">{s.numero}</p>
                 </div>
                 <div className="ml-auto flex items-center gap-4 text-[12px] tabular-nums">
-                  <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-[#7C3AED]">
+                  <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-pc-violet-ink">
                     {s.items.length} {s.items.length === 1 ? "ítem" : "ítems"}
                   </span>
                   <span className="text-gray-500">{s.unidades} u</span>
@@ -114,7 +114,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
               {/* Detalle desplegado (como cotización) */}
               {open && (
                 <div className="border-t border-gray-50 bg-gray-50/40 px-5 py-4">
-                  <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white">
+                  <div className="overflow-x-auto rounded-xl border border-gray-100 bg-pc-card">
                     <table className="w-full text-[12.5px]">
                       <thead>
                         <tr className="border-b border-gray-50 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">
@@ -132,7 +132,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                               <td className="px-3 py-2">
                                 <Link
                                   href={`/inventario?producto=${encodeURIComponent(i.sku)}`}
-                                  className="font-medium text-gray-900 hover:text-[#7C3AED] hover:underline"
+                                  className="font-medium text-gray-900 hover:text-pc-violet-ink hover:underline"
                                 >
                                   {i.nombre}
                                 </Link>
@@ -151,7 +151,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                                   }
                                   className={`h-8 w-16 rounded-lg border px-2 text-center tabular-nums ${
                                     cant !== i.cantidad
-                                      ? "border-[#8B5CF6] bg-purple-50"
+                                      ? "border-pc-violet bg-purple-50"
                                       : "border-gray-200"
                                   }`}
                                 />
@@ -170,7 +170,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <Link
                       href={`/ventas/${s.id}`}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-gray-500 hover:text-[#7C3AED]"
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-gray-500 hover:text-pc-violet-ink"
                     >
                       Ver salida completa <ArrowRight className="size-3.5" />
                     </Link>
@@ -182,7 +182,7 @@ export function SalidasList({ salidas }: { salidas: Salida[] }) {
                         type="button"
                         onClick={() => guardar(s)}
                         disabled={pending || !dirty(s)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#8B5CF6] px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED] disabled:opacity-40"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-pc-violet px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[#7C3AED] disabled:opacity-40"
                       >
                         {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                         Guardar cambios

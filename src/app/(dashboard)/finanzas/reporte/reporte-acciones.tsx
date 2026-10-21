@@ -26,7 +26,7 @@ export function ReporteAcciones({
         id="reporte-mes"
         value={mes}
         onChange={(e) => router.push(`/finanzas/reporte?mes=${e.target.value}`)}
-        className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium capitalize text-gray-800 md:h-10"
+        className="h-11 rounded-xl border border-gray-200 bg-pc-card px-3 text-sm font-medium capitalize text-gray-800 md:h-10"
       >
         {opciones.map((o) => (
           <option key={o.value} value={o.value}>
@@ -37,14 +37,14 @@ export function ReporteAcciones({
       <button
         type="button"
         onClick={() => downloadCSV(csv.nombre, csv.headers, csv.rows)}
-        className="inline-flex h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 md:h-10"
+        className="inline-flex h-11 items-center gap-2 rounded-xl border border-gray-200 bg-pc-card px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 md:h-10"
       >
         <Download className="size-4" aria-hidden /> CSV
       </button>
       <button
         type="button"
         onClick={() => window.print()}
-        className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#0F766E] px-4 text-sm font-semibold text-white hover:bg-[#115E59] md:h-10"
+        className="inline-flex h-11 items-center gap-2 rounded-xl bg-pc-teal px-4 text-sm font-semibold text-white hover:bg-pc-teal-hover md:h-10"
       >
         <Printer className="size-4" aria-hidden /> Imprimir / PDF
       </button>

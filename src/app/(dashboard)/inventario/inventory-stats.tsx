@@ -48,18 +48,18 @@ export function InventoryStats({
 
   // Pills tonales sobre fondo claro — tonos saturados con bg suave
   const pillColors: Record<string, { bg: string; text: string }> = {
-    ACTIVADORES: { bg: "rgba(5,150,105,0.10)", text: "#047857" },
-    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "#B45309" },
-    POTENCIADORES: { bg: "rgba(99,102,241,0.10)", text: "#4F46E5" },
-    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "#0E7490" },
-    OTROS: { bg: "rgba(100,116,139,0.08)", text: "#475569" },
+    ACTIVADORES: { bg: "rgba(5,150,105,0.10)", text: "var(--pc-success-ink)" },
+    CINTAS: { bg: "rgba(217,119,6,0.10)", text: "var(--pc-warning-ink)" },
+    POTENCIADORES: { bg: "rgba(99,102,241,0.10)", text: "var(--pc-indigo-ink)" },
+    OXIGENANTES: { bg: "rgba(8,145,178,0.10)", text: "var(--pc-cyan-ink)" },
+    OTROS: { bg: "rgba(100,116,139,0.08)", text: "var(--pc-text-body)" },
   }
 
   const cards: StatCard[] = [
     {
       label: "VALOR INVENTARIO",
       value: formatMXN(valorInventario),
-      valueColor: "#0F172A",
+      valueColor: "var(--pc-text)",
       sub: `${totalSkus} SKUs activos`,
       icon: <Package style={{ width: 16, height: 16 }} />,
       iconBg: "rgba(99,102,241,0.10)",
@@ -72,7 +72,7 @@ export function InventoryStats({
     {
       label: "CAPITAL INVERTIDO",
       value: formatMXN(capitalInvertido),
-      valueColor: "#0F172A",
+      valueColor: "var(--pc-text)",
       sub: "costo total de compra de stock disponible",
       icon: <DollarSign style={{ width: 16, height: 16 }} />,
       iconBg: "rgba(197,164,126,0.18)",
@@ -84,7 +84,7 @@ export function InventoryStats({
     {
       label: "UTILIDAD POTENCIAL",
       value: formatMXN(utilidadPotencial),
-      valueColor: "#047857",
+      valueColor: "var(--pc-success-ink)",
       sub: "si se vende todo el stock",
       icon: <TrendingUp style={{ width: 16, height: 16 }} />,
       iconBg: "rgba(5,150,105,0.10)",
@@ -95,10 +95,10 @@ export function InventoryStats({
       value: stockCritico,
       valueColor:
         stockCritico > 10
-          ? "#B91C1C"
+          ? "var(--pc-danger-ink)"
           : stockCritico > 5
-            ? "#B45309"
-            : "#047857",
+            ? "var(--pc-warning-ink)"
+            : "var(--pc-success-ink)",
       sub: `${agotados} agotados · ${stockBajo} bajos`,
       icon: <AlertTriangle style={{ width: 16, height: 16 }} />,
       iconBg:
@@ -125,8 +125,8 @@ export function InventoryStats({
         <div
           key={i}
           style={{
-            background: "white",
-            border: "1px solid rgba(15,23,42,0.06)",
+            background: "var(--pc-bg-card)",
+            border: "1px solid var(--pc-border)",
             borderRadius: 14,
             padding: "14px 16px",
             display: "flex",
@@ -162,7 +162,7 @@ export function InventoryStats({
                 fontWeight: 600,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "#64748B",
+                color: "var(--pc-text-secondary)",
               }}
             >
               {card.label}
@@ -176,7 +176,7 @@ export function InventoryStats({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#475569",
+                color: "var(--pc-text-body)",
                 flexShrink: 0,
               }}
             >
@@ -193,7 +193,7 @@ export function InventoryStats({
                   : 24,
               fontWeight: 700,
               letterSpacing: "-0.03em",
-              color: card.valueColor || "#0F172A",
+              color: card.valueColor || "var(--pc-text)",
               fontVariantNumeric: "tabular-nums",
               lineHeight: 1,
               marginBottom: 6,
@@ -207,7 +207,7 @@ export function InventoryStats({
             <p
               style={{
                 fontSize: 11,
-                color: "#64748B",
+                color: "var(--pc-text-secondary)",
                 marginBottom: card.pills ? 6 : 0,
                 lineHeight: 1.35,
               }}
@@ -267,7 +267,7 @@ export function InventoryStats({
                   background: card.trend.positive
                     ? "rgba(5,150,105,0.10)"
                     : "rgba(220,38,38,0.10)",
-                  color: card.trend.positive ? "#047857" : "#B91C1C",
+                  color: card.trend.positive ? "var(--pc-success-ink)" : "var(--pc-danger-ink)",
                   border: `1px solid ${
                     card.trend.positive
                       ? "rgba(5,150,105,0.20)"

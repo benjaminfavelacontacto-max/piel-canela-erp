@@ -67,7 +67,7 @@ function Kpi({
   sub?: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+    <div className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums tracking-tight text-gray-900">{value}</p>
       {sub && <p className="mt-1 text-xs text-gray-500">{sub}</p>}
@@ -246,7 +246,7 @@ export default async function ReporteMensualPage({
 
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0F766E]">Piel Canela · Reporte mensual</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-pc-teal-ink">Piel Canela · Reporte mensual</p>
           <h1 className="text-[28px] font-bold capitalize leading-tight tracking-[-0.03em] text-gray-900">
             {etiquetaMes(mes)}
           </h1>
@@ -265,7 +265,7 @@ export default async function ReporteMensualPage({
         <Kpi label="Ticket promedio" value={formatMXN2(ticket)} sub={<Delta actual={ticket} previo={ticketPrev} />} />
       </section>
 
-      <section aria-label="Socios" className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+      <section aria-label="Socios" className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Socios</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -298,7 +298,7 @@ export default async function ReporteMensualPage({
       </section>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <section aria-label="Por categoría" className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+        <section aria-label="Por categoría" className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">Ventas por categoría</h2>
           {categorias.length === 0 ? (
             <p className="py-4 text-sm text-gray-500">Sin ventas con productos este mes.</p>
@@ -316,7 +316,7 @@ export default async function ReporteMensualPage({
         </section>
 
         <div className="space-y-5">
-          <section aria-label="Mejores clientes" className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+          <section aria-label="Mejores clientes" className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
             <h2 className="mb-3 text-sm font-semibold text-gray-900">Mejores clientes</h2>
             {topClientes.length === 0 ? (
               <p className="py-2 text-sm text-gray-500">—</p>
@@ -332,7 +332,7 @@ export default async function ReporteMensualPage({
               </ul>
             )}
           </section>
-          <section aria-label="Productos más vendidos" className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+          <section aria-label="Productos más vendidos" className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
             <h2 className="mb-3 text-sm font-semibold text-gray-900">Productos más vendidos</h2>
             {topProductos.length === 0 ? (
               <p className="py-2 text-sm text-gray-500">—</p>
@@ -350,7 +350,7 @@ export default async function ReporteMensualPage({
         </div>
       </div>
 
-      <section aria-label="Por cobrar" className="rounded-xl border border-gray-200 bg-white p-4 print:break-inside-avoid">
+      <section aria-label="Por cobrar" className="rounded-xl border border-gray-200 bg-pc-card p-4 print:break-inside-avoid">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold text-gray-900">Por cobrar (acumulado)</h2>
           <span className="text-sm font-semibold tabular-nums text-amber-700">{formatMXN2(cobrar.total)}</span>
@@ -373,7 +373,7 @@ export default async function ReporteMensualPage({
         )}
       </section>
 
-      <section aria-label="Detalle de ventas" className="rounded-xl border border-gray-200 bg-white p-4">
+      <section aria-label="Detalle de ventas" className="rounded-xl border border-gray-200 bg-pc-card p-4">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Detalle de ventas ({ventas.length})</h2>
         {ventas.length === 0 ? (
           <p className="py-4 text-sm text-gray-500">No hay ventas registradas este mes.</p>

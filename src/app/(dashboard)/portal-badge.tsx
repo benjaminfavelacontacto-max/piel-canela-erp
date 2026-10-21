@@ -122,7 +122,7 @@ export function PortalBadge({
               maxWidth: "calc(100vw - 24px)",
               maxHeight: 400,
               overflowY: "auto",
-              background: "#0f172a",
+              background: "var(--pc-text)",
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 14,
               boxShadow: "0 16px 48px rgba(0,0,0,0.6)",

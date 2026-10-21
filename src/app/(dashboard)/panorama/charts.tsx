@@ -17,7 +17,7 @@ import { formatMXN, formatMXNshort } from "@/lib/utils"
 import type { MesPunto, Panorama } from "@/lib/panorama"
 
 const tooltipStyle = {
-  border: "1px solid rgba(15,23,42,0.06)",
+  border: "1px solid var(--pc-border)",
   borderRadius: 12,
   fontSize: 12,
   boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
@@ -60,7 +60,7 @@ export function VentasUtilidadChart({ data }: { data: MesPunto[] }) {
             ))}
           </Bar>
           <Line type="monotone" dataKey="utilidad" name="Utilidad registrada" stroke="#F59E0B" strokeWidth={2.2} dot={false} animationDuration={1100} />
-          <Line type="monotone" dataKey="promedio3m" name="Promedio móvil 3 m" stroke="#64748B" strokeWidth={2} strokeDasharray="5 4" dot={false} animationDuration={1300} />
+          <Line type="monotone" dataKey="promedio3m" name="Promedio móvil 3 m" stroke="var(--pc-text-secondary)" strokeWidth={2} strokeDasharray="5 4" dot={false} animationDuration={1300} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

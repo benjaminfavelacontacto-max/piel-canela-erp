@@ -393,9 +393,9 @@ export function RecurrenciaAnalytics({
           label="Tasa de recompra"
           value={`${kpis.recompraPct.toFixed(0)}%`}
           sub={`${clientes.filter((c) => c.ventas_count >= 2).length} de ${clientes.filter((c) => c.ventas_count > 0).length} repiten`}
-          accent="text-[#0F766E]"
-          gradient="from-white via-white to-white/50"
-          ring="ring-[#E7EAF0]"
+          accent="text-pc-teal-ink"
+          gradient="from-pc-card via-pc-card to-pc-card/50"
+          ring="ring-pc-line"
         />
         <AnalyticsCard
           icon={<Crown className="size-4" />}
@@ -405,7 +405,7 @@ export function RecurrenciaAnalytics({
           }
           sub={kpis.masGrande ? formatMXN(kpis.masGrande.ltv) : ""}
           accent="text-amber-700"
-          gradient="from-amber-50 via-white to-orange-50/50"
+          gradient="from-amber-50 via-pc-card to-orange-50/50"
           ring="ring-amber-100"
           truncate
         />
@@ -423,7 +423,7 @@ export function RecurrenciaAnalytics({
               : ""
           }
           accent="text-emerald-700"
-          gradient="from-emerald-50 via-white to-teal-50/50"
+          gradient="from-emerald-50 via-pc-card to-teal-50/50"
           ring="ring-emerald-100"
           truncate
         />
@@ -433,20 +433,20 @@ export function RecurrenciaAnalytics({
           value={kpis.inactivosCount.toString()}
           sub={`${formatMXN(kpis.inactivosLTV)} en LTV "perdido"`}
           accent="text-rose-700"
-          gradient="from-white via-white to-white/50"
+          gradient="from-pc-card via-pc-card to-pc-card/50"
           ring="ring-rose-100"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Heatmap top 10 clientes */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <article className="rounded-2xl border border-gray-200 bg-pc-card p-5 shadow-sm lg:col-span-2">
           <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
                 Heatmap de compras
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${mode === "predictivo" ? "bg-violet-100 text-violet-700" : "bg-[#DFF7F4] text-[#0F766E]"}`}
+                  className={`rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${mode === "predictivo" ? "bg-violet-100 text-violet-700" : "bg-pc-teal-soft text-pc-teal-ink"}`}
                 >
                   {mode === "predictivo" ? "predictivo" : "histórico"}
                 </span>
@@ -463,14 +463,14 @@ export function RecurrenciaAnalytics({
                 <button
                   type="button"
                   onClick={() => setMode("historico")}
-                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "historico" ? "bg-white text-[#0F766E] shadow-sm" : "text-gray-500"}`}
+                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "historico" ? "bg-pc-card text-pc-teal-ink shadow-sm" : "text-gray-500"}`}
                 >
                   Histórico
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("predictivo")}
-                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "predictivo" ? "bg-white text-violet-700 shadow-sm" : "text-gray-500"}`}
+                  className={`rounded px-2 py-0.5 font-medium transition ${mode === "predictivo" ? "bg-pc-card text-violet-700 shadow-sm" : "text-gray-500"}`}
                 >
                   Predictivo
                 </button>
@@ -479,14 +479,14 @@ export function RecurrenciaAnalytics({
                 <button
                   type="button"
                   onClick={() => setGranularity("mensual")}
-                  className={`rounded px-2 py-0.5 font-medium transition ${granularity === "mensual" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                  className={`rounded px-2 py-0.5 font-medium transition ${granularity === "mensual" ? "bg-pc-card text-gray-900 shadow-sm" : "text-gray-500"}`}
                 >
                   Mensual
                 </button>
                 <button
                   type="button"
                   onClick={() => setGranularity("trimestral")}
-                  className={`rounded px-2 py-0.5 font-medium transition ${granularity === "trimestral" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+                  className={`rounded px-2 py-0.5 font-medium transition ${granularity === "trimestral" ? "bg-pc-card text-gray-900 shadow-sm" : "text-gray-500"}`}
                 >
                   Trimestral
                 </button>
@@ -495,7 +495,7 @@ export function RecurrenciaAnalytics({
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[10.5px] text-gray-700 focus:border-[#0F766E] focus:outline-none focus:ring-1 focus:ring-[#DFF7F4]"
+                  className="h-7 rounded-md border border-gray-200 bg-pc-card px-2 text-[10.5px] text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal-soft"
                 >
                   <option value="12m">Últimos 12 meses</option>
                   <option value="all">Todos los años (global)</option>
@@ -517,13 +517,13 @@ export function RecurrenciaAnalytics({
               <table className="text-[10px]">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 bg-white pr-3 text-left text-[9.5px] font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="sticky left-0 bg-pc-card pr-3 text-left text-[9.5px] font-semibold uppercase tracking-wider text-gray-400">
                       Cliente
                     </th>
                     {buckets.map((b) => (
                       <th
                         key={b.key}
-                        className={`px-1 pb-1 text-center font-semibold ${b.isCurrent ? "text-[#0F766E]" : "text-gray-400"}`}
+                        className={`px-1 pb-1 text-center font-semibold ${b.isCurrent ? "text-pc-teal-ink" : "text-gray-400"}`}
                       >
                         {b.label}
                       </th>
@@ -534,7 +534,7 @@ export function RecurrenciaAnalytics({
                   {heatmap.map((row) => (
                     <tr key={row.clienteId}>
                       <td
-                        className="sticky left-0 max-w-[160px] truncate bg-white py-1 pr-3 text-xs font-medium text-gray-800"
+                        className="sticky left-0 max-w-[160px] truncate bg-pc-card py-1 pr-3 text-xs font-medium text-gray-800"
                         title={row.cliente}
                       >
                         {row.cliente}
@@ -548,7 +548,7 @@ export function RecurrenciaAnalytics({
                             c.total === 0 || (c.prob ?? 0) < 0.05
                               ? "bg-gray-50 text-gray-300"
                               : intensity >= 0.7
-                                ? "bg-violet-600 text-white hover:ring-2 hover:ring-violet-400"
+                                ? "bg-[oklch(54.1%_0.281_293.009)] text-white hover:ring-2 hover:ring-violet-400"
                                 : intensity >= 0.4
                                   ? "bg-violet-400 text-white hover:ring-2 hover:ring-violet-300"
                                   : intensity >= 0.15
@@ -559,12 +559,12 @@ export function RecurrenciaAnalytics({
                             c.total === 0
                               ? "bg-gray-50 text-gray-300 hover:bg-gray-100"
                               : intensity >= 0.7
-                                ? "bg-[#0F766E] text-white hover:ring-2 hover:ring-emerald-200"
+                                ? "bg-pc-teal text-white hover:ring-2 hover:ring-emerald-200"
                                 : intensity >= 0.4
-                                  ? "bg-[#0F766E] text-white hover:ring-2 hover:ring-[#DFF7F4]"
+                                  ? "bg-pc-teal text-white hover:ring-2 hover:ring-pc-teal-soft"
                                   : intensity >= 0.15
-                                    ? "bg-[#DFF7F4] text-[#0F766E] hover:ring-2 hover:ring-[#DFF7F4]"
-                                    : "bg-[#DFF7F4] text-[#0F766E] hover:ring-2 hover:ring-[#E7EAF0]"
+                                    ? "bg-pc-teal-soft text-pc-teal-ink hover:ring-2 hover:ring-pc-teal-soft"
+                                    : "bg-pc-teal-soft text-pc-teal-ink hover:ring-2 hover:ring-pc-line"
                         }
                         const isPredictivo = mode === "predictivo"
                         const tooltipDetail = isPredictivo
@@ -607,7 +607,7 @@ export function RecurrenciaAnalytics({
         </article>
 
         {/* Top recurrentes */}
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <article className="rounded-2xl border border-gray-200 bg-pc-card p-5 shadow-sm">
           <header className="mb-3">
             <h3 className="text-sm font-semibold text-gray-900">
               Top recurrentes
@@ -625,7 +625,7 @@ export function RecurrenciaAnalytics({
               {topRecurrentes.map((c, i) => (
                 <li
                   key={c.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 bg-gradient-to-r from-white to-gray-50/40 p-2"
+                  className="flex items-center justify-between rounded-lg border border-gray-100 bg-gradient-to-r from-pc-card to-gray-50/40 p-2"
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -653,7 +653,7 @@ export function RecurrenciaAnalytics({
                       </div>
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#DFF7F4] px-2 py-0.5 text-[10.5px] font-bold text-[#0F766E] tabular-nums">
+                  <span className="rounded-full bg-pc-teal-soft px-2 py-0.5 text-[10.5px] font-bold text-pc-teal-ink tabular-nums">
                     {c.ventas_count}
                   </span>
                 </li>
@@ -664,7 +664,7 @@ export function RecurrenciaAnalytics({
       </div>
 
       {/* Line chart: clientes activos por mes (datos históricos reales) */}
-      <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <article className="rounded-2xl border border-gray-200 bg-pc-card p-5 shadow-sm">
         <header className="mb-3 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
@@ -689,12 +689,12 @@ export function RecurrenciaAnalytics({
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#EEF1F4"
+                stroke="var(--pc-hair-soft)"
                 vertical={false}
               />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                tick={{ fontSize: 12, fill: "var(--pc-text-muted)" }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -704,7 +704,7 @@ export function RecurrenciaAnalytics({
                 orientation="left"
                 domain={[0, Math.max(5, maxClientesPorMes + 1)]}
                 allowDecimals={false}
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                tick={{ fontSize: 12, fill: "var(--pc-text-muted)" }}
                 axisLine={false}
                 tickLine={false}
                 label={{
@@ -712,7 +712,7 @@ export function RecurrenciaAnalytics({
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 11,
-                  fill: "#9CA3AF",
+                  fill: "var(--pc-text-muted)",
                   style: { textAnchor: "middle" },
                 }}
               />
@@ -723,12 +723,12 @@ export function RecurrenciaAnalytics({
                 tickFormatter={(v: number) =>
                   v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
                 }
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                tick={{ fontSize: 12, fill: "var(--pc-text-muted)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ fill: "#F3F5F7", opacity: 0.3 }}
+                cursor={{ fill: "var(--pc-bg-hover)", opacity: 0.3 }}
                 content={<ActivosPorMesTooltip />}
               />
               <Legend
@@ -741,7 +741,7 @@ export function RecurrenciaAnalytics({
               <Bar
                 yAxisId="ingreso"
                 dataKey="ingreso"
-                fill="#CBD5E1"
+                fill="var(--pc-chart-comparative)"
                 radius={[6, 6, 0, 0]}
                 animationDuration={800}
                 name="ingreso"
@@ -750,9 +750,9 @@ export function RecurrenciaAnalytics({
                 yAxisId="clientes"
                 type="monotone"
                 dataKey="clientes"
-                stroke="#0F766E"
+                stroke="var(--pc-chart-real)"
                 strokeWidth={2.5}
-                dot={{ r: 5, fill: "#0F766E", strokeWidth: 2, stroke: "white" }}
+                dot={{ r: 5, fill: "var(--pc-chart-real)", strokeWidth: 2, stroke: "var(--pc-bg-card)" }}
                 activeDot={{ r: 7 }}
                 animationDuration={1000}
                 name="clientes"
@@ -876,16 +876,16 @@ function DrilldownModal({
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
       />
       <div
-        className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-pc-card shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-white via-white to-violet-50/50 px-6 py-4">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pc-card via-pc-card to-violet-50/50 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 hover:bg-white hover:text-gray-700"
+            className="absolute right-3 top-3 rounded-full p-1.5 text-gray-400 hover:bg-pc-card hover:text-gray-700"
           >
             <X className="size-4" />
           </button>
@@ -901,7 +901,7 @@ function DrilldownModal({
           <p className="text-xs text-gray-500">{periodLabel}</p>
           {/* Stats */}
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <Stat label="Total" value={formatMXN2(total)} accent="text-[#0F766E]" />
+            <Stat label="Total" value={formatMXN2(total)} accent="text-pc-teal-ink" />
             <Stat
               label="Órdenes"
               value={`${ventasInBucket.length} venta${ventasInBucket.length === 1 ? "" : "s"}`}
@@ -928,12 +928,12 @@ function DrilldownModal({
                 {ventasInBucket.map((v) => (
                   <li
                     key={v.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                   >
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/ventas/${v.id}`}
-                        className="block truncate font-mono text-xs text-[#0F766E] hover:underline"
+                        className="block truncate font-mono text-xs text-pc-teal-ink hover:underline"
                       >
                         {v.numero}
                       </Link>
@@ -965,7 +965,7 @@ function DrilldownModal({
                 {cotsInBucket.map((c) => (
                   <li
                     key={c.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                   >
                     <div className="min-w-0 flex-1">
                       <Link
@@ -1002,7 +1002,7 @@ function DrilldownModal({
                 {productosInBucket.slice(0, 12).map((p, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-white p-2"
+                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-pc-card p-2"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-xs font-semibold text-gray-900">
@@ -1015,7 +1015,7 @@ function DrilldownModal({
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-bold tabular-nums text-[#0F766E]">
+                      <div className="text-xs font-bold tabular-nums text-pc-teal-ink">
                         {p.cantidad} und
                       </div>
                       <div className="text-[10px] tabular-nums text-gray-500">
@@ -1038,7 +1038,7 @@ function DrilldownModal({
         <footer className="border-t border-gray-100 bg-gray-50/50 px-6 py-3">
           <Link
             href={`/ventas?cliente=${clienteId}&desde=${bucket.start.toISOString().slice(0, 10)}&hasta=${bucket.end.toISOString().slice(0, 10)}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[#0F766E] hover:text-[#0F766E] hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-medium text-pc-teal-ink hover:text-pc-teal-ink hover:underline"
           >
             Ver en /ventas con filtros aplicados
             <ExternalLink className="size-3" />
@@ -1079,7 +1079,7 @@ function Stat({
   accent: string
 }) {
   return (
-    <div className="rounded-lg bg-white/80 p-2 ring-1 ring-gray-200/60 backdrop-blur">
+    <div className="rounded-lg bg-pc-card/80 p-2 ring-1 ring-gray-200/60 backdrop-blur">
       <div className="text-[10px] uppercase tracking-wider text-gray-500">
         {label}
       </div>
@@ -1148,7 +1148,7 @@ function ActivosPorMesTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="min-w-[200px] rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+    <div className="min-w-[200px] rounded-xl border border-gray-100 bg-pc-card p-4 shadow-xl">
       <p className="mb-3 border-b border-gray-100 pb-2 font-semibold capitalize text-gray-800">
         {label}
       </p>
@@ -1166,7 +1166,7 @@ function ActivosPorMesTooltip({
             <div className="flex items-center gap-2">
               <span
                 className="size-2.5 rounded-full"
-                style={{ backgroundColor: p.color ?? "#9ca3af" }}
+                style={{ backgroundColor: p.color ?? "var(--pc-text-muted)" }}
               />
               <span className="text-sm text-gray-500">
                 {isClientes ? "Clientes activos" : "Ingreso del mes"}

@@ -44,39 +44,39 @@ const STATUS_CONFIG: Record<
   en_transito: {
     label: "En tránsito",
     bg: "rgba(8,145,178,0.10)",
-    color: "#0E7490",
+    color: "var(--pc-cyan-ink)",
     border: "rgba(8,145,178,0.20)",
   },
   recibido: {
     label: "Recibido",
     bg: "rgba(5,150,105,0.10)",
-    color: "#047857",
+    color: "var(--pc-success-ink)",
     border: "rgba(5,150,105,0.20)",
   },
   vendido: {
     label: "Vendido",
     bg: "rgba(99,102,241,0.10)",
-    color: "#4F46E5",
+    color: "var(--pc-indigo-ink)",
     border: "rgba(99,102,241,0.20)",
   },
   parcial: {
     label: "Venta parcial",
     bg: "rgba(217,119,6,0.10)",
-    color: "#B45309",
+    color: "var(--pc-warning-ink)",
     border: "rgba(217,119,6,0.20)",
   },
   pendiente: {
     label: "Pendiente",
     bg: "rgba(220,38,38,0.10)",
-    color: "#B91C1C",
+    color: "var(--pc-danger-ink)",
     border: "rgba(220,38,38,0.20)",
   },
 }
 
 function tcColor(tc: number): string {
-  if (tc <= 18.5) return "#047857"
-  if (tc <= 20) return "#B45309"
-  return "#B91C1C"
+  if (tc <= 18.5) return "var(--pc-success-ink)"
+  if (tc <= 20) return "var(--pc-warning-ink)"
+  return "var(--pc-danger-ink)"
 }
 function tcBg(tc: number): { bg: string; border: string } {
   if (tc <= 18.5)
@@ -228,7 +228,7 @@ export default async function PedidosPage() {
       />
 
       {list.length === 0 ? (
-        <div className="rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-10 text-center text-sm text-gray-500 shadow-sm">
+        <div className="rounded-2xl border border-pc-line bg-pc-card p-10 text-center text-sm text-gray-500 shadow-sm">
           No hay pedidos registrados todavía.
         </div>
       ) : (
@@ -257,10 +257,10 @@ export default async function PedidosPage() {
             return (
               <article
                 key={pedido.id}
-                className="overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white shadow-sm transition-all hover:-translate-y-0.5"
+                className="overflow-hidden rounded-2xl border border-pc-line bg-pc-card shadow-sm transition-all hover:-translate-y-0.5"
                 style={{ transition: "all 0.15s cubic-bezier(0.4,0,0.2,1)" }}
               >
-                <header className="flex items-center justify-between gap-4 border-b border-[rgba(15,23,42,0.04)] px-6 py-4">
+                <header className="flex items-center justify-between gap-4 border-b border-pc-line-soft px-6 py-4">
                   <Link
                     href={`/pedidos/${pedido.id}`}
                     className="flex flex-1 items-center gap-3 transition-opacity hover:opacity-70"
@@ -274,14 +274,14 @@ export default async function PedidosPage() {
                         border: tipoIsCintas
                           ? "1px solid rgba(217,119,6,0.20)"
                           : "1px solid rgba(99,102,241,0.20)",
-                        color: tipoIsCintas ? "#B45309" : "#4F46E5",
+                        color: tipoIsCintas ? "var(--pc-warning-ink)" : "var(--pc-indigo-ink)",
                       }}
                     >
                       <Package className="size-5" strokeWidth={1.75} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+                        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-pc-ink">
                           {pedido.nombre}
                         </h2>
                         <span
@@ -295,7 +295,7 @@ export default async function PedidosPage() {
                           {sc.label}
                         </span>
                       </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-[#64748B]">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-pc-ink-3">
                         <span>
                           {parseFecha(pedido.fecha).toLocaleDateString("es-MX", {
                             day: "numeric",
@@ -313,7 +313,7 @@ export default async function PedidosPage() {
                   </Link>
                   <Link
                     href={`/pedidos/${pedido.id}`}
-                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-[rgba(15,23,42,0.10)] bg-white px-4 py-2 text-[12px] font-medium text-[#475569] transition-all hover:border-[rgba(15,23,42,0.18)] hover:bg-[rgba(15,23,42,0.02)] hover:text-[#0F172A]"
+                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-pc-line bg-pc-card px-4 py-2 text-[12px] font-medium text-pc-ink-2 transition-all hover:border-pc-line-strong hover:bg-[var(--pc-border-soft)] hover:text-pc-ink"
                   >
                     Abrir pedido
                     <span className="text-[14px] opacity-60">↗</span>
@@ -321,7 +321,7 @@ export default async function PedidosPage() {
                 </header>
 
                 {/* Chips horizontales agrupados: COMPRA · COSTOS · RESULTADO */}
-                <div className="flex flex-wrap items-center gap-2 border-t border-[rgba(15,23,42,0.04)] px-6 py-4">
+                <div className="flex flex-wrap items-center gap-2 border-t border-pc-line-soft px-6 py-4">
                   <SectionLabel>Compra</SectionLabel>
                   <Chip label="unidades" value={totalItems.toLocaleString("es-MX")} />
                   <Chip label="SKUs" value={String(items.length)} />
@@ -338,12 +338,12 @@ export default async function PedidosPage() {
                   <Chip
                     label="envío"
                     value={`$${Number(pedido.costo_envio_usd).toFixed(0)} USD`}
-                    color="#B45309"
+                    color="var(--pc-warning-ink)"
                   />
                   <Chip
                     label="invertido"
                     value={formatMXN(invTotal)}
-                    color="#A8895F"
+                    color="var(--pc-gold-ink)"
                   />
 
                   {profitPed > 0 && (
@@ -353,7 +353,7 @@ export default async function PedidosPage() {
                       <Chip
                         label="profit"
                         value={`↑ ${formatMXN(profitPed)}`}
-                        color="#047857"
+                        color="var(--pc-success-ink)"
                         bg="rgba(5,150,105,0.08)"
                         border="rgba(5,150,105,0.20)"
                         bold
@@ -361,7 +361,7 @@ export default async function PedidosPage() {
                       {roi > 0 && (
                         <Chip
                           value={`+${roi}% ROI`}
-                          color="#047857"
+                          color="var(--pc-success-ink)"
                           bg="rgba(5,150,105,0.05)"
                           border="rgba(5,150,105,0.15)"
                         />
@@ -371,7 +371,7 @@ export default async function PedidosPage() {
                 </div>
 
                 {pedido.notas && (
-                  <p className="border-t border-[rgba(15,23,42,0.04)] bg-[rgba(15,23,42,0.02)] px-6 py-2.5 text-[11px] italic text-[#64748B]">
+                  <p className="border-t border-pc-line-soft bg-[var(--pc-border-soft)] px-6 py-2.5 text-[11px] italic text-pc-ink-3">
                     {pedido.notas}
                   </p>
                 )}
@@ -391,7 +391,7 @@ function SectionLabel({
   children: React.ReactNode
   tone?: "emerald"
 }) {
-  const color = tone === "emerald" ? "rgba(5,150,105,0.55)" : "#94A3B8"
+  const color = tone === "emerald" ? "var(--pc-success-ink)" : "var(--pc-text-muted)"
   return (
     <span
       className="mr-1.5 text-[10.5px] font-semibold uppercase"
@@ -409,9 +409,9 @@ function Sep() {
 function Chip({
   label,
   value,
-  color = "#475569",
-  bg = "rgba(15,23,42,0.04)",
-  border = "rgba(15,23,42,0.08)",
+  color = "var(--pc-text-body)",
+  bg = "var(--pc-border-soft)",
+  border = "var(--pc-border)",
   bold = false,
 }: {
   label?: string

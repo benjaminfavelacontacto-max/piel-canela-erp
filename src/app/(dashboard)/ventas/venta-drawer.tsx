@@ -202,11 +202,11 @@ export function VentaDrawer({
       >
         <SheetHandle {...sheet.handleProps} />
         {/* Hero / Header */}
-        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-white to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
+        <header className="relative border-b border-gray-100 bg-gradient-to-br from-pink-50 via-pc-card to-teal-50/40 px-5 pb-5 pt-3 md:px-6 md:pt-6">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 md:right-4 md:top-4 md:size-8"
+            className="absolute right-3 top-2 flex size-11 items-center justify-center rounded-full text-gray-400 transition hover:bg-pc-card hover:text-gray-700 md:right-4 md:top-4 md:size-8"
             aria-label="Cerrar"
           >
             <X className="size-4" />
@@ -245,7 +245,7 @@ export function VentaDrawer({
               <Stat
                 label="Cobrado"
                 value={formatMXN2(cantPagada)}
-                accent="text-[#0F766E]"
+                accent="text-pc-teal-ink"
                 sub={`${progresoPago.toFixed(0)}%`}
               />
             </div>
@@ -254,14 +254,14 @@ export function VentaDrawer({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link
               href={`/ventas/${venta.id}/editar`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
             >
               <Pencil className="size-3" />
               Editar
             </Link>
             <Link
               href={`/ventas/${venta.id}`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 md:min-h-0 md:px-2.5"
             >
               <ExternalLink className="size-3" />
               Detalle completo
@@ -270,7 +270,7 @@ export function VentaDrawer({
               <button
                 type="button"
                 onClick={() => setPagoOpen(true)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#0F766E] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#115E59] md:min-h-0 md:px-2.5"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-pc-teal px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-pc-teal-hover md:min-h-0 md:px-2.5"
               >
                 <Wallet className="size-3" />
                 Registrar pago
@@ -285,7 +285,7 @@ export function VentaDrawer({
                 setRepitiendo(false)
                 if (r && !r.ok) toast.error(r.error)
               }}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 md:min-h-0 md:px-2.5"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-pc-card px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 md:min-h-0 md:px-2.5"
             >
               <Copy className="size-3" />
               {repitiendo ? "Creando…" : "Repetir pedido"}
@@ -293,7 +293,7 @@ export function VentaDrawer({
             {venta.cotizacion_id && (
               <Link
                 href={`/cotizaciones/${venta.cotizacion_id}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-200 bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#0F766E] transition hover:bg-[#DFF7F4]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pc-subtle px-2.5 py-1.5 text-xs font-medium text-pc-teal-ink transition hover:bg-pc-teal-soft"
               >
                 <FileText className="size-3" />
                 Cotización origen
@@ -316,9 +316,9 @@ export function VentaDrawer({
                     monto={Number(sandraVS.monto ?? 0)}
                     pagado={!!sandraVS.pagado}
                     total={total}
-                    color="from-pink-500 to-pink-600"
-                    bg="bg-[#F9FAFB]"
-                    text="text-[#0F766E]"
+                    color="from-pink-500 to-[oklch(59.2%_0.249_0.584)]"
+                    bg="bg-pc-subtle"
+                    text="text-pc-teal-ink"
                   />
                 )}
                 {benjaminVS && (
@@ -327,7 +327,7 @@ export function VentaDrawer({
                     monto={Number(benjaminVS.monto ?? 0)}
                     pagado={!!benjaminVS.pagado}
                     total={total}
-                    color="from-teal-500 to-teal-600"
+                    color="from-teal-500 to-[oklch(60%_0.118_184.704)]"
                     bg="bg-teal-50"
                     text="text-teal-700"
                   />
@@ -350,7 +350,7 @@ export function VentaDrawer({
                   {progresoPago.toFixed(0)}%
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white">
+              <div className="h-1.5 overflow-hidden rounded-full bg-pc-card">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all"
                   style={{ width: `${progresoPago}%` }}
@@ -362,7 +362,7 @@ export function VentaDrawer({
                 </div>
               )}
               {venta.metodo && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-[10.5px] font-medium text-gray-700">
+                <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-pc-card px-2 py-0.5 text-[10.5px] font-medium text-gray-700">
                   Método: <strong>{venta.metodo}</strong>
                 </div>
               )}
@@ -395,7 +395,7 @@ export function VentaDrawer({
                   return (
                     <li
                       key={i}
-                      className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white p-2.5 transition hover:border-gray-200"
+                      className="flex items-start gap-3 rounded-lg border border-gray-100 bg-pc-card p-2.5 transition hover:border-gray-200"
                     >
                       <div className="size-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
                         {it.productos?.imagen_url && (
@@ -445,7 +445,7 @@ export function VentaDrawer({
           {/* Resumen financiero */}
           <Section icon={CircleDollarSign} title="Resumen financiero">
             {/* Bloque 1: Cobro */}
-            <div className="rounded-lg border border-gray-100 bg-white p-3 mb-2">
+            <div className="rounded-lg border border-gray-100 bg-pc-card p-3 mb-2">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                 Cobro
               </div>
@@ -466,7 +466,7 @@ export function VentaDrawer({
             </div>
 
             {/* Bloque 2: Costos */}
-            <div className="rounded-lg border border-gray-100 bg-white p-3 mb-2">
+            <div className="rounded-lg border border-gray-100 bg-pc-card p-3 mb-2">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                 Costos
               </div>
@@ -489,7 +489,7 @@ export function VentaDrawer({
             </div>
 
             {/* Bloque 3: Utilidad */}
-            <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-white p-3">
+            <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-pc-card p-3">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
                 Utilidad
               </div>
@@ -559,10 +559,10 @@ export function VentaDrawer({
             <Section icon={FileText} title="Cotización origen">
               <Link
                 href={`/cotizaciones/${venta.cotizacion_id}`}
-                className="group flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 transition hover:border-pink-300 hover:shadow-sm"
+                className="group flex items-center justify-between rounded-lg border border-gray-200 bg-pc-card p-3 transition hover:border-pink-300 hover:shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-md bg-[#F9FAFB] text-[#0F766E]">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-pc-subtle text-pc-teal-ink">
                     <FileText className="size-4" />
                   </div>
                   <div>
@@ -574,7 +574,7 @@ export function VentaDrawer({
                     </div>
                   </div>
                 </div>
-                <ExternalLink className="size-3.5 text-gray-400 transition group-hover:text-[#0F766E]" />
+                <ExternalLink className="size-3.5 text-gray-400 transition group-hover:text-pc-teal-ink" />
               </Link>
             </Section>
           )}
@@ -670,7 +670,7 @@ function Stat({
   sub?: string
 }) {
   return (
-    <div className="rounded-lg bg-white/70 p-2 ring-1 ring-gray-200/60 backdrop-blur">
+    <div className="rounded-lg bg-pc-card/70 p-2 ring-1 ring-gray-200/60 backdrop-blur">
       <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
         {label}
       </div>
@@ -706,7 +706,7 @@ function SocioBar({
         <div className="flex items-center gap-1.5">
           <span className={`text-xs font-bold ${text}`}>{nombre}</span>
           {pagado && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-pc-card px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
               <ShieldCheck className="size-2.5" />
               Cobrado
             </span>
@@ -716,7 +716,7 @@ function SocioBar({
           {formatMXN2(monto)}
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white">
+      <div className="h-1.5 overflow-hidden rounded-full bg-pc-card">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${color}`}
           style={{ width: `${Math.min(100, pct)}%` }}
@@ -770,7 +770,7 @@ function TimelineItem({
   return (
     <li className="relative">
       <span
-        className={`absolute -left-[21px] top-1 size-2 rounded-full ring-2 ring-white ${dotColor[tone]}`}
+        className={`absolute -left-[21px] top-1 size-2 rounded-full ring-2 ring-pc-card ${dotColor[tone]}`}
       />
       <div className="text-xs font-medium text-gray-800">{label}</div>
       {date && (
@@ -800,7 +800,7 @@ function InsightCard({
         ? "text-rose-700"
         : "text-gray-900"
   return (
-    <div className="rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50/50 p-3">
+    <div className="rounded-lg border border-gray-100 bg-gradient-to-br from-pc-card to-gray-50/50 p-3">
       <div className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
         {label}
       </div>
