@@ -9,6 +9,12 @@ import {
   nombreCorto,
 } from "@/lib/numero-orden"
 import { formatMXN } from "@/lib/utils"
+import { desgloseConIva, promoPortal } from "@/lib/promos-portal"
+import { esClienteVip } from "@/lib/clientes-vip"
+import {
+  errorSinColumnasDescuentoLinea,
+  sinCamposDescuentoLinea,
+} from "@/lib/descuentos"
 
 /** Últimos 10 dígitos del teléfono (ignora lada país/formato). */
 function normalizeTel(t: string): string {
@@ -46,6 +52,8 @@ export type ClienteMatch = {
   email: string | null
   ciudad: string | null
   telefono: string | null
+  /** Cliente VIP: envío gratis (la lista vive en el servidor). */
+  vip: boolean
 }
 
 /**
@@ -78,10 +86,10 @@ export async function buscarClientePorTelefono(
     .ilike("telefono", `%${last10}%`)
     .limit(5)
 
-  const match = ((data ?? []) as ClienteMatch[]).find(
+  const match = ((data ?? []) as Omit<ClienteMatch, "vip">[]).find(
     (c) => normalizeTel(c.telefono ?? "") === last10,
   )
-  return match ?? null
+  return match ? { ...match, vip: esClienteVip(match.id) } : null
 }
 
 /** ¿El número (en versión -C- o -V-) ya existe en cotizaciones o ventas? */
@@ -179,23 +187,36 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   }
   const { data: prodRows } = await supabase
     .from("productos")
-    .select("id, activo, precios_producto(precio, listas_precios(nombre))")
+    .select("id, sku, activo, precios_producto(precio, listas_precios(nombre))")
     .in("id", productoIds)
   type ProdRow = {
     id: string
+    sku: string | null
     activo: boolean | null
     precios_producto: {
       precio: number | null
       listas_precios: { nombre: string } | null
     }[]
   }
-  const priceMap = new Map<string, number>()
+  // precio de lista y, si hay promoción (Sem Sol), el precio que se cobra.
+  const priceMap = new Map<
+    string,
+    { lista: number; precio: number; descuentoPct: number | null }
+  >()
   for (const p of (prodRows ?? []) as unknown as ProdRow[]) {
     if (p.activo === false) continue
     const precio = p.precios_producto?.find(
       (pp) => pp.listas_precios?.nombre === "Pública MXN",
     )?.precio
-    if (precio != null && Number(precio) > 0) priceMap.set(p.id, Number(precio))
+    if (precio != null && Number(precio) > 0) {
+      const lista = Number(precio)
+      const promo = promoPortal(p.sku ?? "", lista)
+      priceMap.set(p.id, {
+        lista,
+        precio: promo?.precio ?? lista,
+        descuentoPct: promo?.descuentoPct ?? null,
+      })
+    }
   }
   if (input.items.some((i) => !priceMap.has(i.producto_id))) {
     return {
@@ -204,10 +225,15 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
         "Uno o más productos ya no están disponibles. Actualiza el catálogo e inténtalo de nuevo.",
     }
   }
-  const pricedItems = input.items.map((i) => ({
-    ...i,
-    precio: priceMap.get(i.producto_id) as number,
-  }))
+  const pricedItems = input.items.map((i) => {
+    const p = priceMap.get(i.producto_id)!
+    return {
+      ...i,
+      precio: p.precio,
+      precioLista: p.lista,
+      descuentoPct: p.descuentoPct,
+    }
+  })
 
   const fecha = new Date()
 
@@ -267,10 +293,12 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
     clienteId = nuevo.id as string
   }
 
-  const subtotal = pricedItems.reduce(
-    (s, i) => s + i.precio * i.cantidad,
-    0,
+  // Subtotal a precio YA rebajado (las promos viven dentro del subtotal, igual
+  // que el descuento por producto del ERP) + IVA 16% que se le mostró al cliente.
+  const { subtotal, iva } = desgloseConIva(
+    pricedItems.reduce((s, i) => s + i.precio * i.cantidad, 0),
   )
+  const vip = esClienteVip(clienteId)
 
   const validaHasta = new Date(fecha.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -284,7 +312,10 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   let notas: string | null
   if (reconocido && clienteId) {
     numero = await generarNumeroEstandar(supabase, clienteId, fecha)
-    notas = input.cliente.notas.trim() || null
+    notas =
+      [vip ? "Cliente VIP: envío gratis." : null, input.cliente.notas.trim() || null]
+        .filter(Boolean)
+        .join("\n") || null
   } else {
     const dd = String(fecha.getDate()).padStart(2, "0")
     const mm = String(fecha.getMonth() + 1).padStart(2, "0")
@@ -314,7 +345,7 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
       valida_hasta: validaHasta.toISOString().slice(0, 10),
       moneda: "MXN",
       subtotal,
-      iva: 0,
+      iva,
       descuento: 0,
       costo_productos: 0,
       costo_envio: 0,
@@ -332,16 +363,30 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
   }
 
   // cotizacion_items.subtotal es GENERATED — NO insertarlo
-  const { error: errItems } = await supabase.from("cotizacion_items").insert(
-    pricedItems.map((item, i) => ({
-      cotizacion_id: cotizacion.id as string,
-      producto_id: item.producto_id,
-      cantidad: item.cantidad,
-      precio_unitario: item.precio,
-      costo_unitario: 0,
-      sort_order: i,
-    })),
-  )
+  // Con promoción: precio_unitario = ya rebajado, precio_lista = el de catálogo y
+  // descuento_tipo/valor = cómo se rebajó → la cotización muestra precio original
+  // y descuento. Sin la migración de descuentos se reintenta sin esas 2 columnas.
+  const filas = pricedItems.map((item, i) => ({
+    cotizacion_id: cotizacion.id as string,
+    producto_id: item.producto_id,
+    cantidad: item.cantidad,
+    precio_unitario: item.precio,
+    costo_unitario: 0,
+    sort_order: i,
+    ...(item.descuentoPct != null
+      ? {
+          precio_lista: item.precioLista,
+          descuento_tipo: "pct" as const,
+          descuento_valor: item.descuentoPct,
+        }
+      : {}),
+  }))
+  let { error: errItems } = await supabase.from("cotizacion_items").insert(filas)
+  if (errorSinColumnasDescuentoLinea(errItems)) {
+    ;({ error: errItems } = await supabase
+      .from("cotizacion_items")
+      .insert(filas.map((f) => sinCamposDescuentoLinea(f))))
+  }
 
   if (errItems) {
     return {
@@ -363,7 +408,7 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
     .insert({
       tipo: "pedido_portal",
       titulo: "Nuevo pedido del portal",
-      mensaje: `${cliLabel} solicitó ${input.items.length} producto${input.items.length === 1 ? "" : "s"} por ${formatMXN(subtotal)}`,
+      mensaje: `${cliLabel} solicitó ${input.items.length} producto${input.items.length === 1 ? "" : "s"} por ${formatMXN(subtotal + iva)} (IVA incl.)${vip ? " · cliente VIP, envío gratis" : ""}`,
       datos: {
         cotizacion_numero: numero,
         cotizacion_id: cotizacion.id,
@@ -374,6 +419,8 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
         cliente_ciudad: input.cliente.ciudad.trim() || null,
         items_count: input.items.length,
         subtotal,
+        iva,
+        vip,
         notas: input.cliente.notas.trim() || null,
         url: `/cotizaciones/${cotizacion.id}/confirmar`,
       },

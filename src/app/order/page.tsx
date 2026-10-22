@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { promoPortal } from "@/lib/promos-portal"
 import { OrderCatalog, type Producto } from "./order-catalog"
 
 // Catálogo público siempre fresco (refleja stock casi en tiempo real).
@@ -83,6 +84,7 @@ export default async function OrderPage() {
         p.precios_producto?.find(
           (pp) => pp.listas_precios?.nombre === "Pública MXN",
         )?.precio ?? 0
+      const promo = promoPortal(p.sku ?? "", Number(precio))
       return {
         id: p.id,
         sku: p.sku ?? "",
@@ -92,7 +94,10 @@ export default async function OrderPage() {
           ? `${STORAGE_URL}${encodeURIComponent(p.imagen_url)}`
           : null,
         categoria: p.categorias?.nombre ?? "OTROS",
-        precio: Number(precio),
+        // Con promoción (Sem Sol): se cobra el rebajado y se muestra el de lista tachado.
+        precio: promo?.precio ?? Number(precio),
+        precioLista: promo ? promo.precioLista : null,
+        descuentoPct: promo ? promo.descuentoPct : null,
         stock: stockMap.get(p.id) ?? 0,
       }
     })

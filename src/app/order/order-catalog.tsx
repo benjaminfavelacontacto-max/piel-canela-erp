@@ -19,6 +19,8 @@ import {
   type ClienteMatch,
 } from "./actions"
 import { formatMXN } from "@/lib/utils"
+import { desgloseConIva, IVA_PORTAL } from "@/lib/promos-portal"
+import { VipBanner } from "./vip-banner"
 
 export interface Producto {
   id: string
@@ -27,7 +29,12 @@ export interface Producto {
   peso: string | null
   imagen_url: string | null
   categoria: string
+  /** Precio que se cobra (ya con promoción, si la hay). */
   precio: number
+  /** Precio de catálogo cuando hay promoción (se muestra tachado). */
+  precioLista?: number | null
+  /** % de descuento de la promoción (para la etiqueta). */
+  descuentoPct?: number | null
   stock: number
 }
 
@@ -335,6 +342,17 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
     0,
   )
   const totalUnidades = cart.reduce((s, i) => s + i.cantidad, 0)
+  const desglose = desgloseConIva(totalCarrito)
+  // Lo que se ahorran con promociones (precio de lista − precio cobrado).
+  const ahorroPromos = cart.reduce(
+    (s, i) =>
+      s +
+      (i.producto.precioLista
+        ? (i.producto.precioLista - i.producto.precio) * i.cantidad
+        : 0),
+    0,
+  )
+  const esVip = !!clienteMatch?.vip
 
   async function buscarPorTelefono(tel: string) {
     setClienteData((p) => ({ ...p, telefono: tel }))
@@ -621,7 +639,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                   </span>
                   <span className="block text-xs text-white/75">
                     {totalUnidades}{" "}
-                    {totalUnidades === 1 ? "pieza" : "piezas"} · sin IVA ni envío
+                    {totalUnidades === 1 ? "pieza" : "piezas"} · subtotal sin IVA
                   </span>
                 </span>
                 <span className="text-lg font-bold tabular-nums">
@@ -790,7 +808,24 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                       </div>
                     </div>
 
-                    {clienteMatch && (
+                    {clienteMatch?.vip && (
+                      <div className="space-y-2">
+                        <VipBanner
+                          nombre={
+                            clienteMatch.nombre?.split(" ")[0] || "bienvenida"
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={clearMatch}
+                          className="text-xs text-pc-ink-4 underline-offset-2 hover:text-pc-ink hover:underline"
+                        >
+                          No soy yo
+                        </button>
+                      </div>
+                    )}
+
+                    {clienteMatch && !clienteMatch.vip && (
                       <div className="flex items-center gap-2.5 rounded-xl border border-pc-green-line bg-pc-green-soft px-3 py-2.5">
                         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-pc-teal text-xs font-semibold text-white">
                           {clienteMatch.nombre?.[0] ?? "?"}
@@ -928,7 +963,17 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           {item.producto.nombre}
                         </p>
                         <p className="mt-0.5 text-xs text-pc-ink-4">
+                          {item.producto.precioLista ? (
+                            <span className="mr-1 line-through">
+                              {formatMXN(item.producto.precioLista)}
+                            </span>
+                          ) : null}
                           {formatMXN(item.producto.precio)} c/u
+                          {item.producto.descuentoPct ? (
+                            <span className="ml-1.5 rounded bg-pc-green-soft px-1 py-0.5 text-[10px] font-bold text-pc-green-ink">
+                              −{Math.round(item.producto.descuentoPct)}%
+                            </span>
+                          ) : null}
                         </p>
                         <div className="mt-1.5 flex items-center gap-2">
                           <Stepper
@@ -955,14 +1000,55 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex items-center justify-between border-t border-pc-line pt-4">
-                  <p className="font-semibold text-pc-ink">Total estimado</p>
-                  <p className="text-2xl font-bold tabular-nums text-pc-teal-ink">
-                    {formatMXN(totalCarrito)}
+                <div className="mt-2 border-t border-pc-line pt-4">
+                  <p className="mb-2 text-sm font-semibold text-pc-ink">
+                    Total estimado
                   </p>
+                  <dl className="space-y-1.5 text-sm">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-pc-ink-3">Subtotal</dt>
+                      <dd className="tabular-nums text-pc-ink">
+                        {formatMXN(desglose.subtotal)}
+                      </dd>
+                    </div>
+                    {ahorroPromos > 0 && (
+                      <div className="flex items-center justify-between text-pc-green-ink">
+                        <dt>Ya incluye tu ahorro en promociones</dt>
+                        <dd className="tabular-nums">
+                          −{formatMXN(ahorroPromos)}
+                        </dd>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <dt className="text-pc-ink-3">
+                        IVA ({Math.round(IVA_PORTAL * 100)}%)
+                      </dt>
+                      <dd className="tabular-nums text-pc-ink">
+                        {formatMXN(desglose.iva)}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-pc-ink-3">Envío</dt>
+                      <dd
+                        className={
+                          esVip
+                            ? "font-semibold text-pc-green-ink"
+                            : "text-pc-ink-3"
+                        }
+                      >
+                        {esVip ? "Gratis · VIP" : "Se cotiza aparte"}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3 flex items-center justify-between border-t border-pc-line pt-3">
+                    <p className="font-semibold text-pc-ink">Total</p>
+                    <p className="text-2xl font-bold tabular-nums text-pc-teal-ink">
+                      {formatMXN(desglose.total)}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-xs text-pc-ink-4">
-                  Precio sin IVA ni envío. Te enviaremos una cotización formal.
+                <p className="mt-2 text-xs text-pc-ink-4">
+                  Te enviaremos una cotización formal para confirmar.
                 </p>
 
                 <div className="hidden lg:block">{enviar}</div>
@@ -1047,6 +1133,23 @@ function StockTag({ stock }: { stock: number }) {
   return null
 }
 
+// ─── Sello de oferta sobre la foto (siempre rojo: se lee en claro y oscuro) ───
+function PromoSello({ pct }: { pct: number }) {
+  return (
+    <div
+      className="absolute right-0 top-0 z-10 flex flex-col items-center rounded-bl-2xl bg-[#DC2626] px-3 py-1.5 text-white shadow-md"
+      aria-label={`Oferta, ${Math.round(pct)} por ciento de descuento`}
+    >
+      <span className="text-[10px] font-bold uppercase leading-none tracking-widest">
+        Oferta
+      </span>
+      <span className="text-xl font-extrabold leading-tight tabular-nums">
+        −{Math.round(pct)}%
+      </span>
+    </div>
+  )
+}
+
 // ─── Tarjeta de producto ────────────────────────────────────────────
 function ProductCard({
   producto,
@@ -1075,6 +1178,9 @@ function ProductCard({
             Agotado
           </span>
         )}
+        {!agotado && producto.descuentoPct ? (
+          <PromoSello pct={producto.descuentoPct} />
+        ) : null}
         {producto.imagen_url ? (
           <Image
             src={producto.imagen_url}
@@ -1094,10 +1200,15 @@ function ProductCard({
         <p className="mt-0.5 line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-pc-ink">
           {producto.nombre}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <p className="text-lg font-bold tabular-nums text-pc-teal-ink">
             {formatMXN(producto.precio)}
           </p>
+          {producto.precioLista ? (
+            <p className="text-sm tabular-nums text-pc-ink-4 line-through">
+              {formatMXN(producto.precioLista)}
+            </p>
+          ) : null}
           <StockTag stock={producto.stock} />
         </div>
 
