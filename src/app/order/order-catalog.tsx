@@ -3,6 +3,17 @@
 import Image from "next/image"
 import { useMemo, useState } from "react"
 import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  Minus,
+  Plus,
+  Search,
+  ShoppingBag,
+  Trash2,
+  X,
+} from "lucide-react"
+import {
   submitOrder,
   buscarClientePorTelefono,
   type ClienteMatch,
@@ -67,11 +78,55 @@ export type GrupoCinta = {
   variantes: VarianteCinta[]
 }
 
+// ─── Categorías: orden y nombre legible ─────────────────────────────
+// Las que no estén aquí se muestran al final, con su nombre en minúsculas.
+const ORDEN_CATEGORIAS = [
+  "ACTIVADORES",
+  "POTENCIADORES",
+  "EMULSIÓN REVELADORA",
+  "POLVO DE BLANQUEAR",
+  "EXFOLIANTS",
+  "HUMECTANTES",
+  "AEROGRAFÍA",
+  "CINTAS",
+  "OTROS",
+]
+
+// Categorías de 1-2 productos se juntan en "Otros" para que el filtro quede corto.
+const CATEGORIAS_EN_OTROS = new Set(["ACEITE CORPORAL", "SOMBRILLA"])
+
+function grupoCategoria(cat: string): string {
+  return CATEGORIAS_EN_OTROS.has(cat) ? "OTROS" : cat
+}
+
+function ordenCategoria(cat: string): number {
+  const i = ORDEN_CATEGORIAS.indexOf(cat)
+  return i === -1 ? ORDEN_CATEGORIAS.length : i
+}
+
+function nombreCategoria(cat: string): string {
+  if (cat === "TODOS") return "Todos"
+  if (cat === "EXFOLIANTS") return "Exfoliantes"
+  const t = cat.toLowerCase()
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+// Con 3 piezas o menos avisamos "últimas piezas" (sin revelar el número).
+const STOCK_BAJO = 3
+
+const inputCls =
+  "w-full rounded-xl border border-pc-line bg-pc-card px-3.5 py-3 text-sm text-pc-ink placeholder:text-pc-ink-4 transition-colors focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-pc-teal/15"
+
+type DisplayItem =
+  | { kind: "single"; sortName: string; categoria: string; producto: Producto }
+  | { kind: "group"; sortName: string; categoria: string; grupo: GrupoCinta }
+
 export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState("TODOS")
   const [busqueda, setBusqueda] = useState("")
+  const [catSheet, setCatSheet] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
-  const [step, setStep] = useState<"catalog" | "checkout">("catalog")
+  const [step, setStepRaw] = useState<"catalog" | "checkout">("catalog")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   // Grupo de cinta abierto en el selector de medida (null = cerrado)
@@ -90,10 +145,10 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const [buscandoCliente, setBuscandoCliente] = useState(false)
   const [clienteMatch, setClienteMatch] = useState<ClienteMatch | null>(null)
 
-  const categorias = useMemo(
-    () => ["TODOS", ...Array.from(new Set(productos.map((p) => p.categoria)))],
-    [productos],
-  )
+  const setStep = (s: "catalog" | "checkout") => {
+    setStepRaw(s)
+    window.scrollTo({ top: 0 })
+  }
 
   // Grupos de cinta por tipo (se arman una vez sobre TODO el catálogo).
   const cintaGroups = useMemo<GrupoCinta[]>(() => {
@@ -115,62 +170,97 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
     return arr
   }, [productos])
 
-  // Lista a renderizar: productos sueltos (no-cinta) + grupos de cinta.
-  // Las cintas de una sola medida se muestran como tarjeta normal.
-  type DisplayItem =
-    | { kind: "single"; sortName: string; producto: Producto }
-    | { kind: "group"; sortName: string; grupo: GrupoCinta }
-
-  const displayList = useMemo<DisplayItem[]>(() => {
-    const q = busqueda.trim().toLowerCase()
-    const inCat = (cat: string) =>
-      categoriaActiva === "TODOS" || cat === categoriaActiva
+  // Todo lo que se puede mostrar (sin filtros): productos sueltos + grupos de
+  // cinta. Las cintas de una sola medida se muestran como tarjeta normal.
+  const todosLosItems = useMemo<DisplayItem[]>(() => {
     const out: DisplayItem[] = []
-
     for (const p of productos) {
       if (p.categoria === CINTA_CAT) continue
-      if (!inCat(p.categoria)) continue
-      if (
-        q &&
-        !(
-          p.nombre.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q)
-        )
-      )
-        continue
-      out.push({ kind: "single", sortName: p.nombre.toLowerCase(), producto: p })
+      out.push({
+        kind: "single",
+        sortName: p.nombre.toLowerCase(),
+        categoria: grupoCategoria(p.categoria),
+        producto: p,
+      })
     }
-
-    if (inCat(CINTA_CAT)) {
-      for (const g of cintaGroups) {
-        if (
-          q &&
-          !(
-            g.base.toLowerCase().includes(q) ||
-            g.variantes.some(
-              (v) =>
-                v.producto.nombre.toLowerCase().includes(q) ||
-                v.producto.sku.toLowerCase().includes(q) ||
-                v.medida.toLowerCase().includes(q),
-            )
-          )
-        )
-          continue
-        if (g.variantes.length === 1) {
-          out.push({
-            kind: "single",
-            sortName: g.base.toLowerCase(),
-            producto: g.variantes[0].producto,
-          })
-        } else {
-          out.push({ kind: "group", sortName: g.base.toLowerCase(), grupo: g })
-        }
+    for (const g of cintaGroups) {
+      if (g.variantes.length === 1) {
+        out.push({
+          kind: "single",
+          sortName: g.base.toLowerCase(),
+          categoria: CINTA_CAT,
+          producto: g.variantes[0].producto,
+        })
+      } else {
+        out.push({
+          kind: "group",
+          sortName: g.base.toLowerCase(),
+          categoria: CINTA_CAT,
+          grupo: g,
+        })
       }
     }
-
-    out.sort((a, b) => a.sortName.localeCompare(b.sortName, "es"))
     return out
-  }, [productos, cintaGroups, categoriaActiva, busqueda])
+  }, [productos, cintaGroups])
+
+  // Chips de categoría con su número de tarjetas.
+  const categorias = useMemo(() => {
+    const conteo = new Map<string, number>()
+    for (const it of todosLosItems)
+      conteo.set(it.categoria, (conteo.get(it.categoria) ?? 0) + 1)
+    const cats = [...conteo.keys()].sort(
+      (a, b) =>
+        ordenCategoria(a) - ordenCategoria(b) || a.localeCompare(b, "es"),
+    )
+    return [
+      { cat: "TODOS", n: todosLosItems.length },
+      ...cats.map((cat) => ({ cat, n: conteo.get(cat) ?? 0 })),
+    ]
+  }, [todosLosItems])
+
+  // Secciones a renderizar, ya filtradas por categoría y búsqueda.
+  const secciones = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    const coincide = (it: DisplayItem) => {
+      if (!q) return true
+      if (it.kind === "single")
+        return (
+          it.producto.nombre.toLowerCase().includes(q) ||
+          it.producto.sku.toLowerCase().includes(q)
+        )
+      return (
+        it.grupo.base.toLowerCase().includes(q) ||
+        it.grupo.variantes.some(
+          (v) =>
+            v.producto.nombre.toLowerCase().includes(q) ||
+            v.producto.sku.toLowerCase().includes(q) ||
+            v.medida.toLowerCase().includes(q),
+        )
+      )
+    }
+    const porCat = new Map<string, DisplayItem[]>()
+    for (const it of todosLosItems) {
+      if (categoriaActiva !== "TODOS" && it.categoria !== categoriaActiva)
+        continue
+      if (!coincide(it)) continue
+      const arr = porCat.get(it.categoria) ?? []
+      arr.push(it)
+      porCat.set(it.categoria, arr)
+    }
+    return [...porCat.entries()]
+      .sort(
+        ([a], [b]) =>
+          ordenCategoria(a) - ordenCategoria(b) || a.localeCompare(b, "es"),
+      )
+      .map(([cat, items]) => ({
+        cat,
+        items: [...items].sort((a, b) =>
+          a.sortName.localeCompare(b.sortName, "es"),
+        ),
+      }))
+  }, [todosLosItems, categoriaActiva, busqueda])
+
+  const hayResultados = secciones.length > 0
 
   const addToCart = (producto: Producto) => {
     if (producto.stock <= 0) return // agotado: no se puede cotizar
@@ -265,173 +355,299 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
     }
   }
 
+  const enviar = (
+    <>
+      {submitError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-xl border border-pc-red-line bg-pc-red-soft p-3 text-sm text-pc-red-ink"
+        >
+          {submitError}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={
+          submitting ||
+          !clienteData.nombre.trim() ||
+          !clienteData.telefono.trim()
+        }
+        className="mt-4 w-full rounded-xl bg-pc-teal py-3.5 text-base font-bold text-white shadow-sm transition-all hover:bg-pc-teal-hover disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {submitting ? "Enviando…" : "Enviar pedido"}
+      </button>
+      {(!clienteData.nombre.trim() ||
+        !clienteData.telefono.trim()) && (
+        <p className="mt-2 text-center text-xs text-pc-ink-4">
+          Escribe tu teléfono y nombre para poder enviarlo.
+        </p>
+      )}
+      <p className="mt-3 text-center text-xs text-pc-ink-4">
+        Te contactaremos con la cotización formal en menos de 24 horas
+      </p>
+    </>
+  )
+
+  const telefonoValido = clienteData.telefono.replace(/\D/g, "").length >= 10
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl pb-32">
       {step === "catalog" ? (
         <>
-          {/* Búsqueda + filtros */}
-          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <input
-              type="text"
-              placeholder="Buscar producto o SKU…"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="mb-3 w-full rounded-xl border border-pc-line bg-pc-card px-4 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-            />
-            <div className="flex flex-wrap gap-2">
-              {categorias.map((cat) => (
+          {/* Barra fija: búsqueda + categorías */}
+          <div className="sticky top-0 z-40 border-b border-pc-line bg-pc-app/90 px-4 pb-3 pt-3 backdrop-blur-md">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-pc-ink-4"
+                aria-hidden
+              />
+              <input
+                type="search"
+                inputMode="search"
+                aria-label="Buscar producto"
+                placeholder="Buscar producto…"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className={`${inputCls} pl-10 pr-10`}
+              />
+              {busqueda && (
                 <button
-                  key={cat}
-                  onClick={() => setCategoriaActiva(cat)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                    categoriaActiva === cat
-                      ? "bg-pc-teal text-white shadow-sm"
-                      : "bg-pc-hover text-gray-600 hover:bg-pc-line-soft"
-                  }`}
+                  type="button"
+                  onClick={() => setBusqueda("")}
+                  aria-label="Borrar búsqueda"
+                  className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-pc-ink-3 hover:bg-pc-hover hover:text-pc-ink"
                 >
-                  {cat}
+                  <X className="size-4" aria-hidden />
                 </button>
-              ))}
+              )}
+            </div>
+            {/* Móvil: un solo botón que abre la lista de categorías */}
+            <button
+              type="button"
+              onClick={() => setCatSheet(true)}
+              aria-haspopup="dialog"
+              className="mt-3 flex w-full items-center justify-between rounded-xl border border-pc-line bg-pc-card px-4 py-3 text-left md:hidden"
+            >
+              <span className="text-sm text-pc-ink-3">
+                Categoría:{" "}
+                <span className="font-semibold text-pc-ink">
+                  {nombreCategoria(categoriaActiva)}
+                </span>
+              </span>
+              <span className="flex items-center gap-2 text-sm font-medium text-pc-teal-ink">
+                Cambiar
+                <ChevronDown className="size-4" aria-hidden />
+              </span>
+            </button>
+
+            {/* Escritorio / tablet: botones de categoría en renglones */}
+            <div
+              role="tablist"
+              aria-label="Categorías"
+              className="mt-3 hidden flex-wrap gap-2 md:flex"
+            >
+              {categorias.map(({ cat, n }) => {
+                const activa = categoriaActiva === cat
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    role="tab"
+                    aria-selected={activa}
+                    onClick={() => setCategoriaActiva(cat)}
+                    className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+                      activa
+                        ? "border-pc-teal bg-pc-teal text-white shadow-sm"
+                        : "border-pc-line bg-pc-card text-pc-ink-2 hover:border-pc-line-strong hover:bg-pc-hover"
+                    }`}
+                  >
+                    {nombreCategoria(cat)}
+                    <span
+                      className={`rounded-full px-1.5 text-[11px] font-semibold tabular-nums ${
+                        activa
+                          ? "bg-white/20 text-white"
+                          : "bg-pc-tint text-pc-ink-3"
+                      }`}
+                    >
+                      {n}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          {/* Grid de productos */}
-          <div className="mb-24 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {displayList.map((item) => {
-              if (item.kind === "group") {
-                const unidades = item.grupo.variantes.reduce(
-                  (s, v) =>
-                    s +
-                    (cart.find((i) => i.producto.id === v.producto.id)
-                      ?.cantidad ?? 0),
-                  0,
-                )
-                return (
-                  <CintaGroupCard
-                    key={item.grupo.key}
-                    grupo={item.grupo}
-                    unidadesEnCarrito={unidades}
-                    onElegir={() => setMedidaGrupo(item.grupo)}
-                  />
-                )
-              }
-              const producto = item.producto
-              const enCarrito = cart.find((i) => i.producto.id === producto.id)
-              const agotado = producto.stock <= 0
-              return (
-                <div
-                  key={producto.id}
-                  className={`relative overflow-hidden rounded-xl border border-pc-line bg-pc-card shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
-                    agotado
-                      ? "opacity-75"
-                      : "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
-                  }`}
-                >
-                  <div className="relative flex h-36 items-center justify-center bg-pc-subtle">
-                    {agotado && (
-                      <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                        Agotado
-                      </span>
-                    )}
-                    {producto.imagen_url ? (
-                      <Image
-                        src={producto.imagen_url}
-                        alt={producto.nombre}
-                        width={240}
-                        height={144}
-                        sizes="240px"
-                        className={`h-full w-full object-contain p-2 ${
-                          agotado ? "grayscale" : ""
-                        }`}
-                      />
-                    ) : (
-                      <div className="text-3xl font-bold text-gray-200">
-                        {producto.sku.slice(0, 2)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <p className="text-[10px] uppercase tracking-wide text-gray-400">
-                      {producto.peso ? `${producto.peso} · ` : ""}
-                      {producto.sku}
-                    </p>
-                    <p className="mt-0.5 text-sm font-semibold leading-tight text-gray-900">
-                      {producto.nombre}
-                    </p>
-                    <p className="mt-1 text-base font-bold text-pc-teal-ink">
-                      {formatMXN(producto.precio)}
-                    </p>
-
-                    {agotado ? (
-                      <button
-                        type="button"
-                        disabled
-                        className="mt-2 w-full cursor-not-allowed rounded-lg bg-pc-hover py-1.5 text-xs font-medium text-gray-400"
-                      >
-                        Agotado
-                      </button>
-                    ) : enCarrito ? (
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateCantidad(producto.id, enCarrito.cantidad - 1)
-                          }
-                          className="flex size-7 items-center justify-center rounded-lg bg-pc-hover font-bold text-gray-700 transition-colors hover:bg-pc-line-soft"
-                          aria-label="Quitar uno"
-                        >
-                          −
-                        </button>
-                        <span className="w-6 text-center text-sm font-bold tabular-nums">
-                          {enCarrito.cantidad}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateCantidad(producto.id, enCarrito.cantidad + 1)
-                          }
-                          className="flex size-7 items-center justify-center rounded-lg bg-pc-teal font-bold text-white transition-colors hover:bg-pc-teal-hover"
-                          aria-label="Agregar uno"
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => addToCart(producto)}
-                        className="mt-2 w-full rounded-lg bg-pc-teal py-1.5 text-xs font-medium text-white transition-colors hover:bg-pc-teal-hover"
-                      >
-                        + Agregar
-                      </button>
-                    )}
-                  </div>
+          {/* Catálogo por secciones */}
+          <div className="space-y-8 px-4 pt-5">
+            {secciones.map(({ cat, items }) => (
+              <section key={cat} aria-labelledby={`cat-${cat}`}>
+                <div className="mb-3 flex items-baseline gap-2">
+                  <h2
+                    id={`cat-${cat}`}
+                    className="text-lg font-semibold tracking-tight text-pc-ink"
+                  >
+                    {nombreCategoria(cat)}
+                  </h2>
+                  <span className="text-sm text-pc-ink-4">
+                    {items.length}{" "}
+                    {items.length === 1 ? "producto" : "productos"}
+                  </span>
                 </div>
-              )
-            })}
-            {displayList.length === 0 && (
-              <div className="col-span-full py-16 text-center text-sm text-gray-500">
-                Sin productos con esos filtros.
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  {items.map((item) => {
+                    if (item.kind === "group") {
+                      const unidades = item.grupo.variantes.reduce(
+                        (s, v) =>
+                          s +
+                          (cart.find((i) => i.producto.id === v.producto.id)
+                            ?.cantidad ?? 0),
+                        0,
+                      )
+                      return (
+                        <CintaGroupCard
+                          key={item.grupo.key}
+                          grupo={item.grupo}
+                          unidadesEnCarrito={unidades}
+                          onElegir={() => setMedidaGrupo(item.grupo)}
+                        />
+                      )
+                    }
+                    const producto = item.producto
+                    return (
+                      <ProductCard
+                        key={producto.id}
+                        producto={producto}
+                        cantidad={
+                          cart.find((i) => i.producto.id === producto.id)
+                            ?.cantidad ?? 0
+                        }
+                        onAdd={() => addToCart(producto)}
+                        onChange={(n) => updateCantidad(producto.id, n)}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+
+            {!hayResultados && (
+              <div className="rounded-2xl border border-dashed border-pc-line-strong bg-pc-card px-6 py-14 text-center">
+                <Search
+                  className="mx-auto mb-3 size-8 text-pc-ink-4"
+                  aria-hidden
+                />
+                <p className="font-medium text-pc-ink">
+                  No encontramos productos
+                </p>
+                <p className="mt-1 text-sm text-pc-ink-3">
+                  Prueba con otra palabra o quita los filtros.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBusqueda("")
+                    setCategoriaActiva("TODOS")
+                  }}
+                  className="mt-4 rounded-xl bg-pc-teal px-4 py-2 text-sm font-semibold text-white hover:bg-pc-teal-hover"
+                >
+                  Ver todo el catálogo
+                </button>
               </div>
             )}
           </div>
 
-          {/* Carrito flotante */}
+          {/* Barra flotante del pedido */}
           {cart.length > 0 && (
-            <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 type="button"
                 onClick={() => setStep("checkout")}
-                className="flex items-center gap-4 rounded-2xl bg-pc-teal px-6 py-4 text-white shadow-[0_8px_24px_rgba(15,118,110,0.25)] transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover active:translate-y-0"
+                className="pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl bg-pc-teal py-3 pl-4 pr-5 text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover active:translate-y-0"
               >
-                <span className="rounded-lg bg-white/20 px-2 py-0.5 text-sm font-bold tabular-nums">
-                  {totalUnidades}
+                <span className="relative flex size-10 items-center justify-center rounded-xl bg-white/20">
+                  <ShoppingBag className="size-5" aria-hidden />
+                  <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-pc-teal-hover">
+                    {totalUnidades}
+                  </span>
                 </span>
-                <span className="font-semibold">Ver pedido</span>
-                <span className="ml-4 text-lg font-bold tabular-nums">
+                <span className="flex-1 text-left">
+                  <span className="block text-sm font-semibold leading-tight">
+                    Ver mi pedido
+                  </span>
+                  <span className="block text-xs text-white/75">
+                    {totalUnidades}{" "}
+                    {totalUnidades === 1 ? "pieza" : "piezas"} · sin IVA ni envío
+                  </span>
+                </span>
+                <span className="text-lg font-bold tabular-nums">
                   {formatMXN(totalCarrito)}
                 </span>
               </button>
+            </div>
+          )}
+
+          {/* Lista de categorías (móvil) */}
+          {catSheet && (
+            <div
+              className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden"
+              onClick={() => setCatSheet(false)}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Elegir categoría"
+            >
+              <div
+                className="max-h-[85vh] w-full overflow-hidden rounded-t-3xl border border-pc-line bg-pc-card shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <header className="flex items-center justify-between border-b border-pc-line px-5 py-4">
+                  <h3 className="text-base font-semibold text-pc-ink">
+                    Elige una categoría
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setCatSheet(false)}
+                    className="flex size-9 items-center justify-center rounded-full text-pc-ink-3 hover:bg-pc-hover hover:text-pc-ink"
+                    aria-label="Cerrar"
+                  >
+                    <X className="size-5" aria-hidden />
+                  </button>
+                </header>
+                <ul className="max-h-[70vh] divide-y divide-pc-line-soft overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+                  {categorias.map(({ cat, n }) => {
+                    const activa = categoriaActiva === cat
+                    return (
+                      <li key={cat}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCategoriaActiva(cat)
+                            setCatSheet(false)
+                            window.scrollTo({ top: 0 })
+                          }}
+                          className={`flex w-full items-center justify-between px-5 py-4 text-left text-base transition-colors ${
+                            activa
+                              ? "bg-pc-teal-soft font-semibold text-pc-teal-ink"
+                              : "text-pc-ink hover:bg-pc-hover"
+                          }`}
+                        >
+                          <span>{nombreCategoria(cat)}</span>
+                          <span className="flex items-center gap-2 text-sm text-pc-ink-3">
+                            {n}
+                            {activa && (
+                              <Check
+                                className="size-4 text-pc-teal-ink"
+                                aria-hidden
+                              />
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             </div>
           )}
 
@@ -448,241 +664,412 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
         </>
       ) : (
         /* ═══ CHECKOUT ═══ */
-        <div className="mx-auto max-w-2xl">
+        <div className="px-4 pt-5">
           <button
             type="button"
             onClick={() => setStep("catalog")}
-            className="mb-4 flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-700"
+            className="mb-4 inline-flex items-center gap-2 rounded-lg py-1 pr-2 text-sm font-medium text-pc-ink-3 transition-colors hover:text-pc-ink"
           >
-            ← Seguir comprando
+            <ArrowLeft className="size-4" aria-hidden />
+            Seguir agregando productos
           </button>
 
-          {/* Resumen del pedido */}
-          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <h2 className="mb-4 font-semibold text-gray-900">Tu pedido</h2>
-            {cart.map((item) => (
-              <div
-                key={item.producto.id}
-                className="flex items-center gap-3 border-b border-pc-line-soft py-2.5 last:border-0"
+          <h2 className="mb-5 text-2xl font-semibold tracking-tight text-pc-ink">
+            Revisa tu pedido
+          </h2>
+
+          {cart.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-pc-line-strong bg-pc-card px-6 py-14 text-center">
+              <ShoppingBag
+                className="mx-auto mb-3 size-8 text-pc-ink-4"
+                aria-hidden
+              />
+              <p className="font-medium text-pc-ink">Tu pedido está vacío</p>
+              <button
+                type="button"
+                onClick={() => setStep("catalog")}
+                className="mt-4 rounded-xl bg-pc-teal px-4 py-2 text-sm font-semibold text-white hover:bg-pc-teal-hover"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {item.producto.nombre}
-                  </p>
-                  <p className="text-xs text-gray-400">{item.producto.sku}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateCantidad(item.producto.id, item.cantidad - 1)
-                    }
-                    className="size-6 rounded bg-pc-hover text-xs font-bold text-gray-600 hover:bg-pc-line-soft"
-                    aria-label="Quitar uno"
-                  >
-                    −
-                  </button>
-                  <span className="w-5 text-center text-sm font-bold tabular-nums">
-                    {item.cantidad}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateCantidad(item.producto.id, item.cantidad + 1)
-                    }
-                    className="size-6 rounded bg-pc-hover text-xs font-bold text-gray-600 hover:bg-pc-line-soft"
-                    aria-label="Agregar uno"
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="w-24 text-right text-sm font-semibold tabular-nums">
-                  {formatMXN(item.producto.precio * item.cantidad)}
-                </p>
-              </div>
-            ))}
-            <div className="mt-4 flex items-center justify-between border-t border-pc-line pt-3">
-              <p className="font-semibold text-gray-900">Total estimado</p>
-              <p className="text-xl font-bold tabular-nums text-pc-teal-ink">
-                {formatMXN(totalCarrito)}
-              </p>
+                Ver productos
+              </button>
             </div>
-            <p className="mt-1 text-xs text-gray-400">
-              * Precio sin IVA ni envío. Te enviaremos una cotización formal.
-            </p>
-          </div>
-
-          {/* Datos del cliente */}
-          <div className="mb-4 rounded-2xl border border-pc-line bg-pc-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <h2 className="mb-4 font-semibold text-gray-900">Tus datos</h2>
-            <div className="space-y-3">
-              {/* Teléfono — primer campo, busca cliente existente al teclear */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-700">
-                  Teléfono / WhatsApp <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    placeholder="10 dígitos"
-                    value={clienteData.telefono}
-                    onChange={(e) => buscarPorTelefono(e.target.value)}
-                    className={`w-full rounded-xl border px-3 py-2.5 text-sm transition-all focus:outline-none focus:ring-4 ${
-                      clienteMatch
-                        ? "border-emerald-300 bg-pc-teal-soft/30 focus:border-pc-teal focus:ring-[rgba(15,118,110,0.12)]"
-                        : "border-pc-line bg-pc-card focus:border-pc-teal focus:ring-[rgba(15,118,110,0.12)]"
-                    }`}
-                  />
-                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-                    {buscandoCliente ? (
-                      <div className="size-4 animate-spin rounded-full border-2 border-pc-teal border-t-transparent" />
-                    ) : clienteMatch ? (
-                      <span
-                        className="text-base text-pc-teal-ink"
-                        aria-hidden
-                      >
-                        ✓
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-
-                {clienteMatch && (
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-pc-teal-soft/60 px-3 py-2">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-pc-teal text-xs font-semibold text-white">
-                      {clienteMatch.nombre?.[0] ?? "?"}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-pc-teal-ink">
-                        ¡Te reconocemos!
-                      </p>
-                      <p className="truncate text-xs text-pc-teal-ink">
-                        {clienteMatch.nombre}
-                        {clienteMatch.nombre_negocio
-                          ? ` · ${clienteMatch.nombre_negocio}`
-                          : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={clearMatch}
-                      className="text-pc-ink-4 transition-colors hover:text-gray-700"
-                      aria-label="No soy yo"
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-[1fr_380px] lg:items-start">
+              {/* Datos del cliente */}
+              <div className="order-2 rounded-2xl border border-pc-line bg-pc-card p-5 lg:order-1">
+                <h3 className="mb-4 text-base font-semibold text-pc-ink">
+                  Tus datos
+                </h3>
+                <div className="space-y-3">
+                  {/* Teléfono — primer campo, busca cliente existente al teclear */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="order-tel"
+                      className="text-sm font-medium text-pc-ink-2"
                     >
-                      ✕
-                    </button>
-                  </div>
-                )}
+                      Teléfono / WhatsApp{" "}
+                      <span className="text-pc-red-ink">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="order-tel"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="10 dígitos"
+                        value={clienteData.telefono}
+                        onChange={(e) => buscarPorTelefono(e.target.value)}
+                        className={`${inputCls} ${
+                          clienteMatch ? "border-pc-green-line" : ""
+                        }`}
+                      />
+                      <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
+                        {buscandoCliente ? (
+                          <div className="size-4 animate-spin rounded-full border-2 border-pc-teal border-t-transparent" />
+                        ) : clienteMatch ? (
+                          <Check
+                            className="size-4 text-pc-green-ink"
+                            aria-hidden
+                          />
+                        ) : null}
+                      </div>
+                    </div>
 
-                {!buscandoCliente &&
-                  !clienteMatch &&
-                  clienteData.telefono.replace(/\D/g, "").length >= 10 && (
-                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
-                      <p className="text-xs text-blue-700">
-                        ✨ Cliente nuevo — completa tus datos para continuar
-                      </p>
+                    {clienteMatch && (
+                      <div className="flex items-center gap-2.5 rounded-xl border border-pc-green-line bg-pc-green-soft px-3 py-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-pc-teal text-xs font-semibold text-white">
+                          {clienteMatch.nombre?.[0] ?? "?"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-pc-green-ink">
+                            ¡Te reconocemos!
+                          </p>
+                          <p className="truncate text-xs text-pc-green-ink">
+                            {clienteMatch.nombre}
+                            {clienteMatch.nombre_negocio
+                              ? ` · ${clienteMatch.nombre_negocio}`
+                              : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearMatch}
+                          className="flex size-8 items-center justify-center rounded-full text-pc-green-ink transition-colors hover:bg-pc-tint"
+                          aria-label="No soy yo"
+                          title="No soy yo"
+                        >
+                          <X className="size-4" aria-hidden />
+                        </button>
+                      </div>
+                    )}
+
+                    {!buscandoCliente && !clienteMatch && telefonoValido && (
+                      <div className="rounded-xl border border-pc-blue-line bg-pc-blue-soft px-3 py-2.5">
+                        <p className="text-sm text-pc-blue-ink">
+                          Eres cliente nuevo — completa tus datos para
+                          continuar.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Resto del formulario solo si ya hay teléfono válido */}
+                  {telefonoValido && (
+                    <div className="space-y-3">
+                      <input
+                        aria-label="Nombre completo"
+                        autoComplete="name"
+                        placeholder="Nombre completo *"
+                        required
+                        value={clienteData.nombre}
+                        onChange={(e) =>
+                          setClienteData((p) => ({
+                            ...p,
+                            nombre: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                      <input
+                        aria-label="Nombre de tu spa o negocio"
+                        autoComplete="organization"
+                        placeholder="Nombre de tu spa o negocio"
+                        value={clienteData.negocio}
+                        onChange={(e) =>
+                          setClienteData((p) => ({
+                            ...p,
+                            negocio: e.target.value,
+                          }))
+                        }
+                        className={inputCls}
+                      />
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <input
+                          type="email"
+                          aria-label="Email"
+                          autoComplete="email"
+                          placeholder="Email (opcional)"
+                          value={clienteData.email}
+                          onChange={(e) =>
+                            setClienteData((p) => ({
+                              ...p,
+                              email: e.target.value,
+                            }))
+                          }
+                          className={inputCls}
+                        />
+                        <input
+                          aria-label="Ciudad"
+                          autoComplete="address-level2"
+                          placeholder="Ciudad"
+                          value={clienteData.ciudad}
+                          onChange={(e) =>
+                            setClienteData((p) => ({
+                              ...p,
+                              ciudad: e.target.value,
+                            }))
+                          }
+                          className={inputCls}
+                        />
+                      </div>
+                      <textarea
+                        aria-label="Notas del pedido"
+                        placeholder="Notas o comentarios del pedido…"
+                        value={clienteData.notas}
+                        onChange={(e) =>
+                          setClienteData((p) => ({
+                            ...p,
+                            notas: e.target.value,
+                          }))
+                        }
+                        rows={3}
+                        className={`${inputCls} resize-none`}
+                      />
                     </div>
                   )}
+                </div>
               </div>
 
-              {/* Resto del formulario solo si ya hay teléfono válido */}
-              {clienteData.telefono.replace(/\D/g, "").length >= 10 && (
-                <div className="space-y-3">
-                  <input
-                    placeholder="Nombre completo *"
-                    required
-                    value={clienteData.nombre}
-                    onChange={(e) =>
-                      setClienteData((p) => ({
-                        ...p,
-                        nombre: e.target.value,
-                      }))
-                    }
-                    className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
-                      clienteMatch
-                        ? "border-emerald-200 bg-pc-teal-soft/30 focus:border-pc-teal"
-                        : "border-pc-line bg-pc-card focus:border-pc-teal"
-                    }`}
-                  />
-                  <input
-                    placeholder="Nombre de tu spa o negocio"
-                    value={clienteData.negocio}
-                    onChange={(e) =>
-                      setClienteData((p) => ({
-                        ...p,
-                        negocio: e.target.value,
-                      }))
-                    }
-                    className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] ${
-                      clienteMatch
-                        ? "border-emerald-200 bg-pc-teal-soft/30 focus:border-pc-teal"
-                        : "border-pc-line bg-pc-card focus:border-pc-teal"
-                    }`}
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      placeholder="Email (opcional)"
-                      value={clienteData.email}
-                      onChange={(e) =>
-                        setClienteData((p) => ({
-                          ...p,
-                          email: e.target.value,
-                        }))
-                      }
-                      className="rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-                    />
-                    <input
-                      placeholder="Ciudad"
-                      value={clienteData.ciudad}
-                      onChange={(e) =>
-                        setClienteData((p) => ({
-                          ...p,
-                          ciudad: e.target.value,
-                        }))
-                      }
-                      className="rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-                    />
-                  </div>
-                  <textarea
-                    placeholder="Notas o comentarios del pedido…"
-                    value={clienteData.notas}
-                    onChange={(e) =>
-                      setClienteData((p) => ({
-                        ...p,
-                        notas: e.target.value,
-                      }))
-                    }
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-pc-line bg-pc-card px-3 py-2.5 text-sm focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+              <div className="order-3 lg:hidden">{enviar}</div>
 
-          {submitError && (
-            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-              {submitError}
+              {/* Resumen del pedido */}
+              <div className="order-1 rounded-2xl border border-pc-line bg-pc-card p-5 lg:order-2 lg:sticky lg:top-4">
+                <h3 className="mb-1 text-base font-semibold text-pc-ink">
+                  Tu pedido{" "}
+                  <span className="font-normal text-pc-ink-4">
+                    ({totalUnidades}{" "}
+                    {totalUnidades === 1 ? "pieza" : "piezas"})
+                  </span>
+                </h3>
+                <ul className="divide-y divide-pc-line-soft">
+                  {cart.map((item) => (
+                    <li
+                      key={item.producto.id}
+                      className="flex items-center gap-3 py-3"
+                    >
+                      <Miniatura producto={item.producto} />
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-sm font-medium leading-snug text-pc-ink">
+                          {item.producto.nombre}
+                        </p>
+                        <p className="mt-0.5 text-xs text-pc-ink-4">
+                          {formatMXN(item.producto.precio)} c/u
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <Stepper
+                            cantidad={item.cantidad}
+                            onChange={(n) =>
+                              updateCantidad(item.producto.id, n)
+                            }
+                            compact
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateCantidad(item.producto.id, 0)}
+                            className="flex size-8 items-center justify-center rounded-lg text-pc-ink-4 transition-colors hover:bg-pc-red-soft hover:text-pc-red-ink"
+                            aria-label={`Quitar ${item.producto.nombre}`}
+                            title="Quitar"
+                          >
+                            <Trash2 className="size-4" aria-hidden />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold tabular-nums text-pc-ink">
+                        {formatMXN(item.producto.precio * item.cantidad)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 flex items-center justify-between border-t border-pc-line pt-4">
+                  <p className="font-semibold text-pc-ink">Total estimado</p>
+                  <p className="text-2xl font-bold tabular-nums text-pc-teal-ink">
+                    {formatMXN(totalCarrito)}
+                  </p>
+                </div>
+                <p className="mt-1 text-xs text-pc-ink-4">
+                  Precio sin IVA ni envío. Te enviaremos una cotización formal.
+                </p>
+
+                <div className="hidden lg:block">{enviar}</div>
+              </div>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={
-              submitting ||
-              !clienteData.nombre.trim() ||
-              !clienteData.telefono.trim()
-            }
-            className="w-full rounded-2xl bg-pc-teal py-4 text-base font-bold text-white shadow-[0_4px_12px_rgba(15,118,110,0.18)] transition-all hover:-translate-y-0.5 hover:bg-pc-teal-hover hover:shadow-[0_8px_24px_rgba(15,118,110,0.22)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          >
-            {submitting ? "Enviando…" : "Enviar pedido →"}
-          </button>
-          <p className="mt-3 text-center text-xs text-gray-400">
-            Te contactaremos con la cotización formal en menos de 24 horas
-          </p>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Piezas reutilizables ───────────────────────────────────────────
+
+/** Contador − N + (botones grandes para el dedo). */
+function Stepper({
+  cantidad,
+  onChange,
+  compact = false,
+}: {
+  cantidad: number
+  onChange: (n: number) => void
+  compact?: boolean
+}) {
+  const btn = compact ? "size-8" : "size-10"
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(cantidad - 1)}
+        className={`${btn} flex items-center justify-center rounded-lg bg-pc-hover text-pc-ink transition-colors hover:bg-pc-line-soft active:scale-95`}
+        aria-label="Quitar uno"
+      >
+        <Minus className="size-4" aria-hidden />
+      </button>
+      <span
+        className={`${compact ? "w-7" : "w-10"} text-center text-sm font-bold tabular-nums text-pc-ink`}
+        aria-live="polite"
+      >
+        {cantidad}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(cantidad + 1)}
+        className={`${btn} flex items-center justify-center rounded-lg bg-pc-teal text-white transition-colors hover:bg-pc-teal-hover active:scale-95`}
+        aria-label="Agregar uno"
+      >
+        <Plus className="size-4" aria-hidden />
+      </button>
+    </div>
+  )
+}
+
+function Miniatura({ producto }: { producto: Producto }) {
+  return (
+    <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-pc-line bg-white">
+      {producto.imagen_url ? (
+        <Image
+          src={producto.imagen_url}
+          alt=""
+          fill
+          sizes="56px"
+          className="object-contain p-1"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm font-bold text-pc-ink-4">
+          {producto.sku.slice(0, 2)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StockTag({ stock }: { stock: number }) {
+  if (stock <= 0) return null
+  if (stock <= STOCK_BAJO)
+    return (
+      <span className="rounded-md bg-pc-amber-soft px-1.5 py-0.5 text-[11px] font-semibold text-pc-amber-ink">
+        Últimas piezas
+      </span>
+    )
+  return null
+}
+
+// ─── Tarjeta de producto ────────────────────────────────────────────
+function ProductCard({
+  producto,
+  cantidad,
+  onAdd,
+  onChange,
+}: {
+  producto: Producto
+  cantidad: number
+  onAdd: () => void
+  onChange: (n: number) => void
+}) {
+  const agotado = producto.stock <= 0
+  const enCarrito = cantidad > 0
+  return (
+    <div
+      className={`flex flex-col overflow-hidden rounded-2xl border bg-pc-card transition-all ${
+        enCarrito
+          ? "border-pc-teal shadow-[0_0_0_1px_var(--pc-accent)]"
+          : "border-pc-line hover:border-pc-line-strong"
+      } ${agotado ? "opacity-70" : ""}`}
+    >
+      <div className="relative aspect-[4/3] bg-white">
+        {agotado && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+            Agotado
+          </span>
+        )}
+        {producto.imagen_url ? (
+          <Image
+            src={producto.imagen_url}
+            alt={producto.nombre}
+            fill
+            sizes="(min-width:1024px) 22vw, (min-width:768px) 30vw, 46vw"
+            className={`object-contain p-3 ${agotado ? "grayscale" : ""}`}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-3xl font-bold text-pc-ink-4/50">
+            {producto.sku.slice(0, 2)}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <p className="text-xs text-pc-ink-4">{producto.peso ?? " "}</p>
+        <p className="mt-0.5 line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-pc-ink">
+          {producto.nombre}
+        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="text-lg font-bold tabular-nums text-pc-teal-ink">
+            {formatMXN(producto.precio)}
+          </p>
+          <StockTag stock={producto.stock} />
+        </div>
+
+        <div className="mt-3 flex-1" />
+        {agotado ? (
+          <button
+            type="button"
+            disabled
+            className="w-full cursor-not-allowed rounded-xl bg-pc-hover py-2.5 text-sm font-medium text-pc-ink-4"
+          >
+            Agotado
+          </button>
+        ) : enCarrito ? (
+          <div className="flex justify-center">
+            <Stepper cantidad={cantidad} onChange={onChange} />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-pc-teal py-2.5 text-sm font-semibold text-white transition-colors hover:bg-pc-teal-hover active:scale-[0.98]"
+          >
+            <Plus className="size-4" aria-hidden />
+            Agregar
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -701,72 +1088,91 @@ function CintaGroupCard({
   const precios = grupo.variantes.map((v) => v.producto.precio)
   const precioMin = Math.min(...precios)
   const variosPrecios = new Set(precios).size > 1
+  const enCarrito = unidadesEnCarrito > 0
   return (
     <button
       type="button"
       onClick={agotado ? undefined : onElegir}
       disabled={agotado}
-      className={`relative block overflow-hidden rounded-xl border border-pc-line bg-pc-card text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-180 ${
+      className={`flex flex-col overflow-hidden rounded-2xl border bg-pc-card text-left transition-all ${
+        enCarrito
+          ? "border-pc-teal shadow-[0_0_0_1px_var(--pc-accent)]"
+          : "border-pc-line"
+      } ${
         agotado
-          ? "cursor-not-allowed opacity-75"
-          : "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+          ? "cursor-not-allowed opacity-70"
+          : "hover:border-pc-line-strong active:scale-[0.99]"
       }`}
     >
-      <div className="relative flex h-36 items-center justify-center bg-pc-subtle">
+      <div className="relative aspect-[4/3] w-full bg-white">
         {agotado && (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
             Agotado
           </span>
         )}
-        {unidadesEnCarrito > 0 && (
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-pc-teal px-2 py-0.5 text-[10px] font-bold text-white">
-            {unidadesEnCarrito} en pedido
+        {enCarrito && (
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-pc-teal px-2.5 py-0.5 text-[11px] font-bold text-white">
+            {unidadesEnCarrito} en tu pedido
           </span>
         )}
         {grupo.imagen_url ? (
           <Image
             src={grupo.imagen_url}
             alt={grupo.base}
-            width={240}
-            height={144}
-            sizes="240px"
-            className={`h-full w-full object-contain p-2 ${agotado ? "grayscale" : ""}`}
+            fill
+            sizes="(min-width:1024px) 22vw, (min-width:768px) 30vw, 46vw"
+            className={`object-contain p-3 ${agotado ? "grayscale" : ""}`}
           />
         ) : (
-          <div className="text-3xl font-bold text-gray-200">CN</div>
+          <div className="flex h-full items-center justify-center text-3xl font-bold text-pc-ink-4/50">
+            CN
+          </div>
         )}
       </div>
-      <div className="p-3">
-        <p className="text-[10px] uppercase tracking-wide text-gray-400">
-          Cinta · {grupo.variantes.length} medidas
+      <div className="flex w-full flex-1 flex-col p-3">
+        <p className="text-xs text-pc-ink-4">
+          {grupo.variantes.length} medidas
         </p>
-        <p className="mt-0.5 text-sm font-semibold leading-tight text-gray-900">
+        <p className="mt-0.5 line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-pc-ink">
           {grupo.base}
         </p>
-        <p className="mt-1 text-base font-bold text-pc-teal-ink">
-          {variosPrecios ? "desde " : ""}
+        <p className="mt-1 text-lg font-bold tabular-nums text-pc-teal-ink">
+          {variosPrecios ? (
+            <span className="mr-1 text-xs font-medium text-pc-ink-4">
+              desde
+            </span>
+          ) : null}
           {formatMXN(precioMin)}
         </p>
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1">
           {grupo.variantes.map((v) => (
             <span
               key={v.producto.id}
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+              className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${
                 v.producto.stock > 0
                   ? "bg-pc-teal-soft text-pc-teal-ink"
-                  : "bg-gray-100 text-gray-300 line-through"
+                  : "bg-pc-hover text-pc-ink-4 line-through"
               }`}
             >
               {v.medida}
             </span>
           ))}
         </div>
+        <div className="mt-3 flex-1" />
         <span
-          className={`mt-2 block w-full rounded-lg py-1.5 text-center text-xs font-medium ${
-            agotado ? "bg-pc-hover text-gray-400" : "bg-pc-teal text-white"
+          className={`block w-full rounded-xl py-2.5 text-center text-sm font-semibold ${
+            agotado
+              ? "bg-pc-hover text-pc-ink-4"
+              : enCarrito
+                ? "bg-pc-teal-soft text-pc-teal-ink"
+                : "bg-pc-teal text-white"
           }`}
         >
-          {agotado ? "Agotado" : "Elegir medida"}
+          {agotado
+            ? "Agotado"
+            : enCarrito
+              ? "Editar medidas"
+              : "Elegir medida"}
         </span>
       </div>
     </button>
@@ -794,33 +1200,45 @@ function MedidaPicker({
   )
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Elegir medida de ${grupo.base}`}
     >
       <div
-        className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl bg-pc-card shadow-2xl sm:max-w-md sm:rounded-2xl"
+        className="max-h-[88vh] w-full overflow-hidden rounded-t-3xl border border-pc-line bg-pc-card shadow-2xl sm:max-w-md sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-pc-line px-5 py-4">
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wide text-gray-400">
-              Elige la medida
-            </p>
-            <h3 className="truncate text-base font-semibold text-gray-900">
+        <header className="flex items-center gap-3 border-b border-pc-line px-5 py-4">
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-pc-line bg-white">
+            {grupo.imagen_url && (
+              <Image
+                src={grupo.imagen_url}
+                alt=""
+                fill
+                sizes="56px"
+                className="object-contain p-1"
+              />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-pc-ink-4">Elige la medida</p>
+            <h3 className="truncate text-base font-semibold text-pc-ink">
               {grupo.base}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-pc-ink-3 transition-colors hover:bg-pc-hover hover:text-pc-ink"
             aria-label="Cerrar"
           >
-            ✕
+            <X className="size-5" aria-hidden />
           </button>
         </header>
 
-        <ul className="max-h-[55vh] divide-y divide-pc-line-soft overflow-y-auto">
+        <ul className="max-h-[50vh] divide-y divide-pc-line-soft overflow-y-auto">
           {grupo.variantes.map((v) => {
             const p = v.producto
             const enCarrito = cart.find((i) => i.producto.id === p.id)
@@ -828,50 +1246,34 @@ function MedidaPicker({
             return (
               <li
                 key={p.id}
-                className="flex items-center justify-between gap-3 px-5 py-3"
+                className="flex items-center justify-between gap-3 px-5 py-3.5"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-base font-semibold text-pc-ink">
                     {v.medida}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-pc-ink-3">
                     {formatMXN(p.precio)}
                     {agotado ? " · Agotado" : ""}
                   </p>
                 </div>
                 {agotado ? (
-                  <span className="rounded-lg bg-pc-hover px-3 py-1.5 text-xs font-medium text-gray-400">
+                  <span className="rounded-lg bg-pc-hover px-3 py-2 text-xs font-medium text-pc-ink-4">
                     Agotado
                   </span>
                 ) : enCarrito ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateCantidad(p.id, enCarrito.cantidad - 1)}
-                      className="flex size-7 items-center justify-center rounded-lg bg-pc-hover font-bold text-gray-700 transition-colors hover:bg-pc-line-soft"
-                      aria-label="Quitar uno"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center text-sm font-bold tabular-nums">
-                      {enCarrito.cantidad}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateCantidad(p.id, enCarrito.cantidad + 1)}
-                      className="flex size-7 items-center justify-center rounded-lg bg-pc-teal font-bold text-white transition-colors hover:bg-pc-teal-hover"
-                      aria-label="Agregar uno"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <Stepper
+                    cantidad={enCarrito.cantidad}
+                    onChange={(n) => updateCantidad(p.id, n)}
+                  />
                 ) : (
                   <button
                     type="button"
                     onClick={() => addToCart(p)}
-                    className="rounded-lg bg-pc-teal px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-pc-teal-hover"
+                    className="flex items-center gap-1.5 rounded-xl bg-pc-teal px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-pc-teal-hover active:scale-95"
                   >
-                    + Agregar
+                    <Plus className="size-4" aria-hidden />
+                    Agregar
                   </button>
                 )}
               </li>
@@ -879,7 +1281,7 @@ function MedidaPicker({
           })}
         </ul>
 
-        <footer className="border-t border-pc-line p-4">
+        <footer className="border-t border-pc-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={onClose}

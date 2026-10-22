@@ -26,18 +26,18 @@ export default async function SuccessPage({
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
-      <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-pc-ink">
         ¡Pedido recibido!
       </h1>
-      <p className="mb-4 text-gray-500">
+      <p className="mb-4 text-pc-ink-3">
         Gracias por tu pedido. Nos pondremos en contacto contigo muy pronto con
         tu cotización formal.
       </p>
       <div className="mb-6 rounded-xl border border-pc-line bg-pc-card p-4">
-        <p className="text-[10px] uppercase tracking-wider text-gray-400">
+        <p className="text-[10px] uppercase tracking-wider text-pc-ink-4">
           Número de referencia
         </p>
-        <p className="mt-1 font-mono text-sm font-bold text-gray-700">{ref}</p>
+        <p className="mt-1 font-mono text-sm font-bold text-pc-ink-2">{ref}</p>
       </div>
       <a
         href={wpUrl}
@@ -50,7 +50,7 @@ export default async function SuccessPage({
       <p className="mt-6">
         <a
           href="/order"
-          className="text-xs text-gray-400 hover:text-gray-700 hover:underline"
+          className="text-xs text-pc-ink-4 hover:text-pc-ink hover:underline"
         >
           ← Volver al catálogo
         </a>

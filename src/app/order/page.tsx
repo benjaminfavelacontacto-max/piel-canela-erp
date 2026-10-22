@@ -7,12 +7,30 @@ export const dynamic = "force-dynamic"
 const STORAGE_URL =
   "https://szjzaajjpuomvpnghvzu.supabase.co/storage/v1/object/public/productos/"
 
-// Excepciones del catálogo público: presentaciones de 5 litros → solo venta
-// interna/mayoreo especial. Marcador en BD: productos.peso = '5lt' (los SKUs
-// además traen "-5L-").
-function ocultoEnCatalogoPublico(p: { peso: string | null; sku: string }): boolean {
+// Excepciones del catálogo público (lo que NO se ofrece a clientes en /order):
+//  - Presentaciones de 5 litros → solo venta interna/mayoreo especial.
+//    Marcador en BD: productos.peso = '5lt' (los SKUs además traen "-5L-").
+//  - Aerografía Rosa Baruk.
+//  - Toda la línea Dye Color.
+//  - Jabón líquido (Sabonete Liquido).
+function ocultoEnCatalogoPublico(p: {
+  peso: string | null
+  sku: string
+  nombre: string
+  categoria: string
+}): boolean {
   const peso = (p.peso ?? "").toLowerCase().replace(/[\s.]/g, "")
-  return peso.startsWith("5l") || /(^|[-_])5l([-_]|$)/i.test(p.sku)
+  if (peso.startsWith("5l") || /(^|[-_])5l([-_]|$)/i.test(p.sku)) return true
+  if (/baru?k/i.test(p.nombre) || /(^|[-_])bar($|[-_])/i.test(p.sku)) return true
+  if (
+    /dye/i.test(p.categoria) ||
+    /^dy[-_]/i.test(p.sku) ||
+    /dye\s*color/i.test(p.nombre)
+  )
+    return true
+  if (/sabonete|jab[oó]n/i.test(p.nombre) || /(^|[-_])sab($|[-_])/i.test(p.sku))
+    return true
+  return false
 }
 
 /**
@@ -60,7 +78,7 @@ export default async function OrderPage() {
   }
 
   const productos: Producto[] = ((prodData ?? []) as unknown as Row[])
-    .map((p) => {
+    .map((p): Producto => {
       const precio =
         p.precios_producto?.find(
           (pp) => pp.listas_precios?.nombre === "Pública MXN",
