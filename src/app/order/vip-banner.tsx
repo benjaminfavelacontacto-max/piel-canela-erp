@@ -86,9 +86,14 @@ export function VipBanner({ nombre }: { nombre: string }) {
               Cliente VIP
             </span>
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-[#E9D5FF]">
-            <Truck className="size-4 shrink-0" aria-hidden />
-            Tus envíos son <strong className="font-semibold text-white">totalmente gratis</strong>
+          <p className="mt-1.5 flex items-start gap-2 text-sm leading-snug text-[#E9D5FF]">
+            <Truck className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              Tus envíos son{" "}
+              <strong className="font-semibold text-white">
+                totalmente gratis
+              </strong>
+            </span>
           </p>
         </div>
       </div>
