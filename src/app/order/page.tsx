@@ -17,6 +17,8 @@ const STORAGE_URL =
 //  - Categorías completas retiradas POR EL MOMENTO (Exfoliantes y Humectantes):
 //    para volver a mostrarlas basta quitarlas de esta lista.
 const CATEGORIAS_OCULTAS = new Set(["EXFOLIANTS", "HUMECTANTES"])
+// ...salvo estos SKUs, que sí se ofrecen (solo el de fresa/Morango).
+const SKUS_VISIBLES_EN_CATEGORIAS_OCULTAS = new Set(["EX-850-MOR", "HI-850-MOR"])
 
 function ocultoEnCatalogoPublico(p: {
   peso: string | null
@@ -26,7 +28,11 @@ function ocultoEnCatalogoPublico(p: {
   categoria: string
 }): boolean {
   const nombre = p.nombres.join(" ")
-  if (CATEGORIAS_OCULTAS.has(p.categoria.toUpperCase())) return true
+  if (
+    CATEGORIAS_OCULTAS.has(p.categoria.toUpperCase()) &&
+    !SKUS_VISIBLES_EN_CATEGORIAS_OCULTAS.has(p.sku.toUpperCase())
+  )
+    return true
   const peso = (p.peso ?? "").toLowerCase().replace(/[\s.]/g, "")
   if (peso.startsWith("5l") || /(^|[-_])5l([-_]|$)/i.test(p.sku)) return true
   if (/baru?k/i.test(nombre) || /(^|[-_])bar($|[-_])/i.test(p.sku)) return true
