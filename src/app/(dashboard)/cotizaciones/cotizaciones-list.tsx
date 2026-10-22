@@ -29,6 +29,7 @@ import {
   Columns3,
   Copy,
   ExternalLink,
+  Tag,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -1312,6 +1313,13 @@ export function CotizacionesList({
               <Zap className="size-4" />
               <span className="sm:hidden">Cotización rápida</span>
               <span className="hidden sm:inline">Rápida</span>
+            </Link>
+            <Link
+              href="/cotizaciones/lista-precios"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+            >
+              <Tag className="size-4" />
+              Lista de precios
             </Link>
             <Link
               href="/cotizaciones/nueva"

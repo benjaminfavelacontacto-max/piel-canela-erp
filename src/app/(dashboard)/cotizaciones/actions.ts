@@ -2,6 +2,10 @@
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
+import {
+  mensajePorEscoger,
+  piezasPorEscogerEnCotizacion,
+} from "@/lib/cinta-por-escoger"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import {
@@ -285,6 +289,12 @@ export async function marcarVendida(
   },
 ) {
   const supabase = createAdminClient()
+
+  // "Cinta por escoger" no es un modelo real: sin elegir no hay qué descontar.
+  const porEscoger = await piezasPorEscogerEnCotizacion(supabase, cotizacionId)
+  if (porEscoger > 0) {
+    return { ok: false as const, error: mensajePorEscoger(porEscoger) }
+  }
 
   // Validación de existencias EN EL SERVIDOR. La RPC de descuento no valida
   // (deja el stock en negativo), y el aviso del detalle de cotización es sólo

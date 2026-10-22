@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
+import {
+  mensajePorEscoger,
+  piezasPorEscogerEnCotizacion,
+} from "@/lib/cinta-por-escoger"
 import { errorSinColumnasRegalo, sinCamposRegalo } from "@/lib/regalos"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
@@ -102,6 +106,14 @@ export async function saveVenta(input: SaveVentaInput) {
   // crear la venta siquiera. Ver auditoría de inventario 2026-07-25.
   let itemsParaStock: { producto_id: string | null; cantidad: number }[] = []
   if (input.cotizacion_id) {
+    // "Cinta por escoger" no es un modelo real: sin elegir no hay qué descontar.
+    const porEscoger = await piezasPorEscogerEnCotizacion(
+      supabase,
+      input.cotizacion_id,
+    )
+    if (porEscoger > 0) {
+      return { ok: false as const, error: mensajePorEscoger(porEscoger) }
+    }
     const { data: cotItems } = await supabase
       .from("cotizacion_items")
       .select("producto_id, cantidad")

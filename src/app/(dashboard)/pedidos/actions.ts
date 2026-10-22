@@ -66,6 +66,57 @@ async function snapshotProducto(
     .eq("id", productoId)
 }
 
+// Snapshot con COSTO PROMEDIO MÓVIL sobre el stock: mezcla lo que hay en bodega (al costo
+// vigente del producto) con la entrada nueva. Se guarda el promedio en USD y un
+// tipo_cambio "mezclado" tal que (precio_usd + costo_envio_usd) × tipo_cambio = costo
+// promedio en MXN → vista_inventario lo muestra sin cambios. Llamar ANTES de sumarStock.
+// Solo para entradas NUEVAS (crearPedido): re-snapshotear un pedido ya aplicado duplicaría
+// el peso de la entrada, por eso editar/agregar ítems sigue usando snapshotProducto.
+async function snapshotPromedio(
+  admin: Admin,
+  productoId: string,
+  precioUsd: number,
+  envioUnitUsd: number,
+  tc: number,
+  cantidad: number,
+) {
+  const [{ data: prod }, { data: inv }] = await Promise.all([
+    admin
+      .from("productos")
+      .select("precio_usd, costo_envio_usd, costo")
+      .eq("id", productoId)
+      .maybeSingle(),
+    admin
+      .from("inventario")
+      .select("stock_actual")
+      .eq("producto_id", productoId)
+      .maybeSingle(),
+  ])
+  const stock = Math.max(0, Number(inv?.stock_actual ?? 0))
+  const oldPrecio = Number(prod?.precio_usd) || 0
+  const oldEnvio = Number(prod?.costo_envio_usd) || 0
+  const oldMxn = Number(prod?.costo) || 0
+  const nuevoMxn = (precioUsd + envioUnitUsd) * tc
+  // Sin stock o sin costo previo confiable → el costo es el de la entrada.
+  if (stock <= 0 || oldMxn <= 0 || cantidad <= 0) {
+    return snapshotProducto(admin, productoId, precioUsd, envioUnitUsd, tc)
+  }
+  const w = stock + cantidad
+  const avgPrecio = (stock * oldPrecio + cantidad * precioUsd) / w
+  const avgEnvio = (stock * oldEnvio + cantidad * envioUnitUsd) / w
+  const avgMxn = (stock * oldMxn + cantidad * nuevoMxn) / w
+  const costoUsd = avgPrecio + avgEnvio
+  await admin
+    .from("productos")
+    .update({
+      precio_usd: avgPrecio,
+      costo_envio_usd: avgEnvio,
+      tipo_cambio: costoUsd > 0 ? avgMxn / costoUsd : tc,
+      costo: avgMxn,
+    })
+    .eq("id", productoId)
+}
+
 // Suma (o resta) stock al inventario; crea la fila si no existe.
 async function sumarStock(admin: Admin, productoId: string, delta: number) {
   if (!delta) return
@@ -263,7 +314,7 @@ export async function crearPedido(
       ...fields,
     })
     if (itErr) return { ok: false, error: `item: ${itErr.message}` }
-    await snapshotProducto(admin, pid, precio, envioUnit, tc)
+    await snapshotPromedio(admin, pid, precio, envioUnit, tc, cant)
     await sumarStock(admin, pid, cant)
   }
 

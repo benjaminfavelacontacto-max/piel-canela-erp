@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { VentaForm, type ProductoOpcion } from "../venta-form"
+import {
+  mensajePorEscoger,
+  piezasPorEscogerEnCotizacion,
+} from "@/lib/cinta-por-escoger"
 
 type Cliente = {
   id: string
@@ -107,12 +111,15 @@ export default async function NuevaVentaPage({
     } else if (!cot) {
       cotizacionError = `Cotización ${cotizacionId} no encontrada.`
     } else {
+      // Aviso desde que se abre el formulario, no hasta que falle al guardar.
+      const porEscoger = await piezasPorEscogerEnCotizacion(supabase, cot.id)
+      if (porEscoger > 0) cotizacionError = mensajePorEscoger(porEscoger)
       const { count } = await supabase
         .from("cotizacion_items")
         .select("*", { count: "exact", head: true })
         .eq("cotizacion_id", cot.id)
 
-      cotizacion = {
+      if (!cotizacionError) cotizacion = {
         id: cot.id,
         numero: cot.numero,
         cliente_id: cot.cliente_id,

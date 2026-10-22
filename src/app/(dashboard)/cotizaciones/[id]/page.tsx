@@ -10,6 +10,7 @@ import type {
   Estatus,
 } from "@/lib/cotizacion-types"
 import { CotizacionDetail, type Faltante } from "./cotizacion-detail"
+import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
 
 export default async function CotizacionDetailPage({
   params,
@@ -117,6 +118,8 @@ export default async function CotizacionDetailPage({
   const pedidoPorProducto = new Map<string, Faltante>()
   for (const i of items) {
     if (!i.producto_id) continue
+    // "Cinta por escoger" no tiene stock: se avisa aparte (banner de cintas).
+    if (esCintaPorEscoger(i)) continue
     const cur = pedidoPorProducto.get(i.producto_id) ?? {
       nombre: i.nombre,
       sku: i.sku,

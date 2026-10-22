@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
-import type { Cliente, CotizacionItem, Producto } from "@/lib/cotizacion-types"
+import type { Cliente, CotizacionItem } from "@/lib/cotizacion-types"
+import { cargarProductosCotizables } from "@/lib/productos-cotizables"
 import { fetchCotizacionItems } from "@/lib/cotizacion-items-query"
 import type { TipoDescuento } from "@/lib/descuentos"
 import { CotizacionForm } from "../../nueva/cotizacion-form"
@@ -46,16 +47,11 @@ export default async function EditarCotizacionPage({
 
   const imageMap = await buildImageMap()
 
-  const [clientesRes, listaRes, itemsRes] = await Promise.all([
+  const [clientesRes, itemsRes] = await Promise.all([
     supabase
       .from("clientes")
       .select("id, nombre, nombre_negocio, telefono, email, direccion, colonia, codigo_postal, ciudad, estado, rfc, metodo_pago_pref")
       .order("nombre", { ascending: true }),
-    supabase
-      .from("listas_precios")
-      .select("id")
-      .eq("nombre", "Pública MXN")
-      .maybeSingle(),
     // Degrada solo si falta alguna migración de partidas (regalos / descuento
     // por producto) — ver src/lib/cotizacion-items-query.ts.
     fetchCotizacionItems(
@@ -68,57 +64,10 @@ export default async function EditarCotizacionPage({
   const itemsData = itemsRes.rows
 
   const clientes = (clientesRes.data ?? []) as Cliente[]
-  const listaId = listaRes.data?.id as string | undefined
 
-  // Fetch productos con precio (igual que en nueva/page.tsx)
-  let productos: Producto[] = []
-  let productosError: string | null = null
-  if (!listaId) {
-    productosError =
-      'No se encontró la lista de precios "Pública MXN" — los productos se mostrarán sin precio.'
-  }
-  const { data: prodRows, error: prodErr } = await supabase
-    .from("productos")
-    .select(
-      `id, sku, nombre, nombre_display, imagen_url, peso, costo,
-       precios_producto!inner(precio, lista_id)`,
-    )
-    .eq(
-      "precios_producto.lista_id",
-      listaId ?? "00000000-0000-0000-0000-000000000000",
-    )
-    .order("nombre", { ascending: true })
-
-  if (prodErr) {
-    productosError = prodErr.message
-  } else if (prodRows) {
-    type Row = {
-      id: string
-      sku: string | null
-      nombre: string
-      nombre_display: string | null
-      imagen_url: string | null
-      peso: string | null
-      costo: number | null
-      precios_producto: { precio: number }[] | { precio: number } | null
-    }
-    productos = (prodRows as Row[]).map((r) => {
-      const pp = Array.isArray(r.precios_producto)
-        ? r.precios_producto[0]
-        : r.precios_producto
-      const display = r.nombre_display ?? r.nombre
-      return {
-        id: r.id,
-        sku: r.sku,
-        nombre: display,
-        nombre_display: r.nombre_display,
-        imagen_url: findImageFor(display, r.imagen_url, imageMap),
-        peso: r.peso,
-        precio: Number(pp?.precio ?? 0),
-        costo: Number(r.costo ?? 0),
-      }
-    })
-  }
+  // Mismos productos y precios que en nueva/page.tsx
+  const { productos, error: productosError } =
+    await cargarProductosCotizables(supabase, imageMap)
 
   // Build items en el shape que espera CotizacionForm (con imagen, peso, etc.)
   type ItemRow = {

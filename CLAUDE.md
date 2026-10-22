@@ -260,6 +260,13 @@ Son DOS cosas distintas y no se suman en la misma columna:
 - SÍ incluir en: lista de cotizaciones (con badge `🏠 Interno`), descuento de inventario, count total de cotizaciones
 - Usar `getInternalClienteIds()` desde `@/lib/internal-clientes` para fetch del Set y filtrar en server components
 
+## Regla: "Cinta por escoger" y lista de precios
+- `CN-POR-ESCOGER` es un producto comodín (inactivo, $150, categoría CINTAS) para cotizar cintas cuando la clienta aún no elige modelo. Alta: `scripts/add-cinta-por-escoger.sql`. Constante y helpers en `src/lib/cinta-por-escoger.ts`.
+- Es inactivo a propósito: `vista_inventario`, /order, ventas manuales y el buscador global lo ocultan. Los pickers de cotización NO filtran por `activo`, así que sí aparece ahí.
+- Una cotización con cintas por escoger NO se convierte en venta (`marcarVendida`, `saveVenta`, aviso en `/ventas/nueva` y banner en el detalle): no hay modelo ni stock que descontar. Se reemplaza por las cintas reales desde Editar.
+- Lista de precios: `/cotizaciones/lista-precios` (agrupa por familia con `src/lib/lista-precios.ts`; excluye 5 L y Dye Color; las 176 cintas se resumen en una fila). Manda lo marcado a `/cotizaciones/rapida?items=id:cant,…`.
+- Loader único de productos cotizables: `src/lib/productos-cotizables.ts` (nueva, rápida, editar y lista de precios).
+
 ## Regla: nombres de cintas (medida en mm, no cm)
 - `productos.nombre_display` para cintas usa "9mm" y "12mm" (NO "9cm" / "12cm")
 - `productos.nombre` mantiene sufijo `-c9` / `-c12` (identificador SKU-like, no medida)

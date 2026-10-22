@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   CircleDollarSign,
   Zap,
+  Tag,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -1060,6 +1061,9 @@ export default async function DashboardPage() {
           className="pc-quick-action !border-pc-teal/25 !text-pc-teal-ink"
         >
           <Zap className="size-4" /> Cotización rápida
+        </Link>
+        <Link href="/cotizaciones/lista-precios" className="pc-quick-action">
+          <Tag className="size-4" /> Lista de precios
         </Link>
         <Link href="/ventas/nueva" className="pc-quick-action">
           <Plus className="size-4" /> Nueva venta

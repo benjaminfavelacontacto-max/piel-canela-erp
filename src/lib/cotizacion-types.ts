@@ -26,6 +26,10 @@ export type Producto = {
   peso: string | null
   precio: number
   costo: number
+  /** Nombre de la categoría en BD ("ACTIVADORES", "CINTAS"…). */
+  categoria?: string | null
+  /** false = oculto del catálogo (p. ej. el comodín "Cinta por escoger"). */
+  activo?: boolean
 }
 
 export type CotizacionItem = {

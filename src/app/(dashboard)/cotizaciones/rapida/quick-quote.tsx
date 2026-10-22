@@ -24,6 +24,8 @@ import type { Cliente, Producto } from "@/lib/cotizacion-types"
 import { formatMXN2 } from "@/lib/utils"
 import { resumenRegalos } from "@/lib/regalos"
 import { grupoProducto } from "@/lib/grupos-productos"
+import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
+import { seccionesCatalogo } from "@/lib/lista-precios"
 import {
   totalesCotizacion,
   resumenDescuentos,
@@ -73,6 +75,23 @@ type Linea = {
   descuento_valor: number
 }
 
+/** Partida nueva de un producto (precio de catálogo, sin descuento). */
+function lineaDeProducto(p: Producto, cantidad = 1, comoRegalo = false): Linea {
+  return {
+    producto_id: p.id,
+    sku: p.sku,
+    nombre: p.nombre,
+    imagen_url: p.imagen_url,
+    cantidad,
+    precio_unitario: comoRegalo ? 0 : p.precio,
+    costo_unitario: Number(p.costo ?? 0),
+    es_regalo: comoRegalo,
+    precio_lista: comoRegalo ? p.precio : null,
+    descuento_tipo: null,
+    descuento_valor: 0,
+  }
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100
 const lineaKey = (l: { producto_id: string; es_regalo: boolean }) =>
   `${l.producto_id}|${l.es_regalo ? "R" : "N"}`
@@ -97,17 +116,26 @@ export function QuickQuote({
   clientes,
   productos,
   productosError,
+  precarga = [],
 }: {
   clientes: Cliente[]
   productos: Producto[]
   productosError: string | null
+  /** Partidas que llegan ya marcadas (desde la lista de precios). */
+  precarga?: { id: string; cantidad: number }[]
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
   const [clienteId, setClienteId] = useState("")
   const [numero, setNumero] = useState("")
-  const [lineas, setLineas] = useState<Linea[]>([])
+  const [lineas, setLineas] = useState<Linea[]>(() => {
+    const porId = new Map(productos.map((p) => [p.id, p]))
+    return precarga.flatMap(({ id, cantidad }) => {
+      const p = porId.get(id)
+      return p ? [lineaDeProducto(p, cantidad)] : []
+    })
+  })
   const [ivaActivo, setIvaActivo] = useState(true)
   const [descuentoPct, setDescuentoPct] = useState(0)
   const [notas, setNotas] = useState("")
@@ -142,6 +170,7 @@ export function QuickQuote({
   const utilidad = round2(subtotal - descuento - costoProductos)
   const regalos = resumenRegalos(lineas)
   const piezas = lineas.reduce((s, l) => s + l.cantidad, 0)
+  const cintaComodin = productos.find((p) => esCintaPorEscoger(p)) ?? null
 
   function elegirCliente(id: string) {
     setClienteId(id)
@@ -153,19 +182,7 @@ export function QuickQuote({
   }
 
   function agregar(p: Producto, comoRegalo = false) {
-    const nueva: Linea = {
-      producto_id: p.id,
-      sku: p.sku,
-      nombre: p.nombre,
-      imagen_url: p.imagen_url,
-      cantidad: 1,
-      precio_unitario: comoRegalo ? 0 : p.precio,
-      costo_unitario: Number(p.costo ?? 0),
-      es_regalo: comoRegalo,
-      precio_lista: comoRegalo ? p.precio : null,
-      descuento_tipo: null,
-      descuento_valor: 0,
-    }
+    const nueva = lineaDeProducto(p, 1, comoRegalo)
     setLineas((prev) => {
       const i = prev.findIndex((l) => lineaKey(l) === lineaKey(nueva))
       if (i === -1) return [...prev, nueva]
@@ -344,6 +361,12 @@ export function QuickQuote({
             </p>
           </div>
           <Link
+            href="/cotizaciones/lista-precios"
+            className="pc-tap shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-pc-teal-ink active:bg-pc-tint"
+          >
+            Lista de precios
+          </Link>
+          <Link
             href="/cotizaciones/nueva"
             className="pc-tap shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-pc-teal-ink active:bg-pc-tint"
           >
@@ -410,6 +433,24 @@ export function QuickQuote({
           Agregar productos
         </button>
 
+        {/* Cintas cuyo modelo la clienta aún no decide: una partida comodín con
+            la cantidad que pida; se reemplaza al elegir (Editar cotización). */}
+        {cintaComodin && (
+          <button
+            type="button"
+            onClick={() => {
+              agregar(cintaComodin)
+              toast.success("Cinta por escoger agregada", {
+                description: "Ajusta cuántas quiere con − / +",
+              })
+            }}
+            className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3 text-[14px] font-semibold text-amber-800 active:scale-[0.99]"
+          >
+            <Plus className="size-4" />
+            Cinta por escoger
+          </button>
+        )}
+
         {lineas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-pc-line bg-pc-card/60 px-4 py-10 text-center">
             <ShoppingBasket className="mx-auto size-7 text-gray-300" />
@@ -455,6 +496,11 @@ export function QuickQuote({
                     <div className="min-w-0 flex-1">
                       <p className="text-[14px] font-medium leading-tight text-gray-900">
                         {l.nombre}
+                        {esCintaPorEscoger(l) && (
+                          <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-amber-800">
+                            Sin modelo
+                          </span>
+                        )}
                         {l.es_regalo && (
                           <span className="ml-1.5 rounded bg-[oklch(59.1%_0.293_322.896)] px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
                             Regalo
@@ -884,12 +930,25 @@ function ProductoSheet({
     return () => clearTimeout(t)
   }, [])
 
-  const filtrados = useMemo(() => {
+  // Sin búsqueda: el catálogo completo por familias (sin 5 L ni Dye Color; las
+  // cintas se resumen en "Cinta por escoger"). Con búsqueda: cualquier producto,
+  // incluidos los 176 modelos de cinta.
+  const filas = useMemo(() => {
     const s = norm(q.trim())
-    if (!s) return productos.slice(0, 40)
+    if (!s) {
+      return seccionesCatalogo(productos).flatMap((sec) => [
+        { kind: "head" as const, key: sec.key, label: sec.label, nota: sec.nota },
+        ...sec.productos.map((p) => ({ kind: "prod" as const, p })),
+      ])
+    }
     return productos
-      .filter((p) => norm(`${p.nombre} ${p.sku ?? ""}`).includes(s))
-      .slice(0, 40)
+      .filter(
+        (p) =>
+          (p.activo !== false || esCintaPorEscoger(p)) &&
+          norm(`${p.nombre} ${p.sku ?? ""}`).includes(s),
+      )
+      .slice(0, 60)
+      .map((p) => ({ kind: "prod" as const, p }))
   }, [q, productos])
 
   const piezas = lineas.reduce((s, l) => s + l.cantidad, 0)
@@ -940,12 +999,30 @@ function ProductoSheet({
         </button>
       </div>
       <ul className="divide-y divide-gray-100 px-4">
-        {filtrados.length === 0 ? (
+        {filas.length === 0 ? (
           <li className="py-10 text-center text-[13px] text-gray-400">
             Sin resultados.
           </li>
         ) : (
-          filtrados.map((p) => {
+          filas.map((fila) => {
+            if (fila.kind === "head") {
+              return (
+                <li
+                  key={`h-${fila.key}`}
+                  className="sticky top-[116px] z-[5] -mx-4 bg-pc-app px-4 py-1.5"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    {fila.label}
+                  </span>
+                  {fila.nota && (
+                    <span className="ml-2 text-[11px] text-gray-400">
+                      {fila.nota}
+                    </span>
+                  )}
+                </li>
+              )
+            }
+            const p = fila.p
             // Partida de ESTE producto en el modo actual (normal o regalo).
             const linea = lineas.find(
               (l) => l.producto_id === p.id && l.es_regalo === modoRegalo,
@@ -985,6 +1062,11 @@ function ProductoSheet({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium text-gray-900">
                         {p.nombre}
+                        {esCintaPorEscoger(p) && (
+                          <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-amber-800">
+                            Sin modelo
+                          </span>
+                        )}
                         {conDesc && (
                           <span className="ml-1.5 rounded bg-[oklch(59.6%_0.145_163.225)] px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-white">
                             −{etiquetaDescuento(linea!)}

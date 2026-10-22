@@ -104,7 +104,10 @@ export function VentaForm({
   const [numero, setNumero] = useState<string>(cotizacion?.numero ?? "")
   const [fecha, setFecha] = useState<string>(todayISO())
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia")
-  const [cantidadPagada, setCantidadPagada] = useState<number>(0)
+  // Lo que el cliente ya pagó. "Pago completo" lo ata al total: si luego cambia
+  // el IVA o el descuento, el pagado sigue al total en vez de quedar desfasado.
+  const [pagoManual, setPagoManual] = useState<number>(0)
+  const [pagoCompleto, setPagoCompleto] = useState<boolean>(false)
   const [notas, setNotas] = useState<string>("")
 
   // Manual totals (only used when no cotizacion is loaded)
@@ -238,6 +241,7 @@ export function VentaForm({
   )
 
   const ganancia = totals.total - totals.iva - totals.costo_productos - totals.costo_envio
+  const cantidadPagada = pagoCompleto ? totals.total : pagoManual
   const saldoPendiente = Math.max(0, totals.total - cantidadPagada)
   const estatus = estatusFor(totals.total, cantidadPagada)
 
@@ -720,9 +724,44 @@ export function VentaForm({
               <Field label="Cantidad pagada">
                 <NumberInput
                   value={cantidadPagada}
-                  onChange={setCantidadPagada}
+                  onChange={(n) => {
+                    setPagoCompleto(false)
+                    setPagoManual(n)
+                  }}
                   max={totals.total || undefined}
                 />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <PagoChip
+                    activo={pagoCompleto}
+                    disabled={totals.total <= 0}
+                    onClick={() => setPagoCompleto(true)}
+                  >
+                    Pago completo
+                  </PagoChip>
+                  <PagoChip
+                    activo={
+                      !pagoCompleto &&
+                      totals.total > 0 &&
+                      Math.abs(cantidadPagada - totals.total / 2) < 0.005
+                    }
+                    disabled={totals.total <= 0}
+                    onClick={() => {
+                      setPagoCompleto(false)
+                      setPagoManual(Number((totals.total / 2).toFixed(2)))
+                    }}
+                  >
+                    50% anticipo
+                  </PagoChip>
+                  <PagoChip
+                    activo={!pagoCompleto && cantidadPagada === 0}
+                    onClick={() => {
+                      setPagoCompleto(false)
+                      setPagoManual(0)
+                    }}
+                  >
+                    Sin pago
+                  </PagoChip>
+                </div>
               </Field>
               <div className="md:col-span-2 grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
@@ -850,6 +889,12 @@ function Field({
   )
 }
 
+/**
+ * Input numérico que NO deja un "0" pegado al frente: el 0 se muestra vacío
+ * (placeholder "0"), se selecciona todo al enfocar y se acepta coma decimal.
+ * Mantiene su propio texto para que "12." o "0.5" no se reformateen a media
+ * captura; solo se re-sincroniza si el valor cambia desde afuera.
+ */
 function NumberInput({
   value,
   onChange,
@@ -859,19 +904,61 @@ function NumberInput({
   onChange: (n: number) => void
   max?: number
 }) {
+  const [texto, setTexto] = useState<string>(value ? String(value) : "")
+  const [prev, setPrev] = useState<number>(value)
+  // Cambio externo (p. ej. "Pago completo"): reflejarlo en el texto.
+  if (value !== prev) {
+    setPrev(value)
+    if ((Number(texto.replace(",", ".")) || 0) !== value) {
+      setTexto(value ? String(value) : "")
+    }
+  }
   return (
     <input
-      type="number" inputMode="decimal"
-      min={0}
-      step="0.01"
-      max={max}
-      value={value}
+      type="text"
+      inputMode="decimal"
+      placeholder="0"
+      value={texto}
+      onFocus={(e) => e.currentTarget.select()}
       onChange={(e) => {
-        const v = parseFloat(e.target.value)
-        onChange(Number.isNaN(v) ? 0 : v)
+        const raw = e.target.value.replace(",", ".")
+        if (raw !== "" && !/^\d*\.?\d{0,2}$/.test(raw)) return
+        let v = raw === "" || raw === "." ? 0 : parseFloat(raw)
+        if (max !== undefined && v > max) v = max
+        setTexto(v === parseFloat(raw) || raw === "" ? raw : String(v))
+        setPrev(v)
+        onChange(v)
       }}
       className="w-full rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm tabular-nums focus:border-pc-teal focus:outline-none focus:ring-1 focus:ring-pc-teal"
     />
+  )
+}
+
+function PagoChip({
+  activo,
+  disabled,
+  onClick,
+  children,
+}: {
+  activo: boolean
+  disabled?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={activo}
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+        activo
+          ? "border-pc-teal bg-pc-teal-soft text-pc-teal-ink"
+          : "border-gray-200 bg-pc-card text-gray-600 hover:border-pc-teal hover:text-pc-teal-ink"
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

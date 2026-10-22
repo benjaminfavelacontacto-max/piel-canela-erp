@@ -48,6 +48,7 @@ import {
   type TipoDescuento,
 } from "@/lib/descuentos"
 import { grupoProducto } from "@/lib/grupos-productos"
+import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
 
 /**
  * Identidad de una partida en el editor. NO basta `producto_id`: el mismo SKU
@@ -173,6 +174,11 @@ export function CotizacionForm({
       .slice(0, 20)
   }, [search, productos])
 
+  const cintaComodin = useMemo(
+    () => productos.find((p) => esCintaPorEscoger(p)) ?? null,
+    [productos],
+  )
+
   const selectedProduct = useMemo(
     () => productos.find((p) => p.id === selectedProductId) ?? null,
     [selectedProductId, productos],
@@ -287,24 +293,24 @@ export function CotizacionForm({
     return () => ro.disconnect()
   }, [])
 
-  function addItem() {
+  function addItem(producto: Producto | null = selectedProduct) {
     const qty = typeof cantidad === "number" && cantidad >= 1 ? cantidad : 1
-    if (!selectedProduct) return
+    if (!producto) return
     // Regalo: precio $0 (no lo paga el cliente) pero se congela el precio de
     // catálogo en `precio_lista` para poder mostrar cuánto se obsequió.
-    const precio = comoRegalo ? 0 : selectedProduct.precio
+    const precio = comoRegalo ? 0 : producto.precio
     const newItem: CotizacionItem = {
-      producto_id: selectedProduct.id,
-      sku: selectedProduct.sku,
-      nombre: selectedProduct.nombre,
-      imagen_url: selectedProduct.imagen_url,
-      peso: selectedProduct.peso,
+      producto_id: producto.id,
+      sku: producto.sku,
+      nombre: producto.nombre,
+      imagen_url: producto.imagen_url,
+      peso: producto.peso,
       cantidad: qty,
       precio_unitario: precio,
-      costo_unitario: Number(selectedProduct.costo ?? 0),
+      costo_unitario: Number(producto.costo ?? 0),
       subtotal: precio * qty,
       es_regalo: comoRegalo,
-      precio_lista: comoRegalo ? selectedProduct.precio : null,
+      precio_lista: comoRegalo ? producto.precio : null,
       descuento_tipo: null,
       descuento_valor: 0,
     }
@@ -654,7 +660,7 @@ export function CotizacionForm({
             />
             <button
               type="button"
-              onClick={addItem}
+              onClick={() => addItem()}
               disabled={!selectedProduct}
               className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white shadow-sm disabled:cursor-not-allowed disabled:bg-gray-300 ${
                 comoRegalo
@@ -666,6 +672,25 @@ export function CotizacionForm({
               {comoRegalo ? "Agregar regalo" : "Agregar"}
             </button>
           </div>
+
+          {/* Cintas sin modelo definido: entra una partida comodín con la
+              cantidad de arriba; se reemplaza por las reales al elegir. */}
+          {cintaComodin && (
+            <button
+              type="button"
+              onClick={() => {
+                addItem(cintaComodin)
+                toast.success("Cinta por escoger agregada")
+              }}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50"
+            >
+              <Plus className="size-4" />
+              Cinta por escoger
+              <span className="text-xs font-normal text-amber-700">
+                (usa la cantidad de arriba)
+              </span>
+            </button>
+          )}
 
           {/* Modo regalo: la siguiente partida entra con precio $0 */}
           <label
@@ -722,6 +747,11 @@ export function CotizacionForm({
                           <Gift className="size-3 shrink-0 text-fuchsia-500" />
                         )}
                         <span className="truncate">{it.nombre}</span>
+                        {esCintaPorEscoger(it) && (
+                          <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800">
+                            Sin modelo
+                          </span>
+                        )}
                       </span>
                       {/* Descuento por producto — deshabilitado en regalos:
                           una cortesía ya es 100% de rebaja. */}
