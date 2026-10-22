@@ -14,6 +14,10 @@ const STORAGE_URL =
 //  - Aerografía Rosa Baruk.
 //  - Toda la línea Dye Color.
 //  - Jabón líquido (Sabonete Liquido).
+//  - Categorías completas retiradas POR EL MOMENTO (Exfoliantes y Humectantes):
+//    para volver a mostrarlas basta quitarlas de esta lista.
+const CATEGORIAS_OCULTAS = new Set(["EXFOLIANTS", "HUMECTANTES"])
+
 function ocultoEnCatalogoPublico(p: {
   peso: string | null
   sku: string
@@ -22,6 +26,7 @@ function ocultoEnCatalogoPublico(p: {
   categoria: string
 }): boolean {
   const nombre = p.nombres.join(" ")
+  if (CATEGORIAS_OCULTAS.has(p.categoria.toUpperCase())) return true
   const peso = (p.peso ?? "").toLowerCase().replace(/[\s.]/g, "")
   if (peso.startsWith("5l") || /(^|[-_])5l([-_]|$)/i.test(p.sku)) return true
   if (/baru?k/i.test(nombre) || /(^|[-_])bar($|[-_])/i.test(p.sku)) return true
