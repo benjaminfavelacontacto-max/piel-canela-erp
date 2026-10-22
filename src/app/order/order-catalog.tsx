@@ -111,6 +111,32 @@ function nombreCategoria(cat: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
+// ─── Pares polvo ⇄ emulsión (mismo aroma) ───────────────────────────
+// Se compran juntos: al agregar uno ofrecemos el otro del mismo aroma. El
+// aroma es el último segmento del SKU (PB-500-CAM ⇄ OX20-900-CAM).
+const CAT_EMULSION = "EMULSIÓN REVELADORA"
+const CAT_POLVO = "POLVO DE BLANQUEAR"
+
+function aromaDeSku(sku: string): string {
+  return (sku.split("-").pop() ?? "").toUpperCase()
+}
+
+function complementosDe(producto: Producto, todos: Producto[]): Producto[] {
+  const buscada =
+    producto.categoria === CAT_POLVO
+      ? CAT_EMULSION
+      : producto.categoria === CAT_EMULSION
+        ? CAT_POLVO
+        : null
+  if (!buscada) return []
+  const aroma = aromaDeSku(producto.sku)
+  if (!aroma) return []
+  return todos.filter(
+    (p) =>
+      p.categoria === buscada && p.stock > 0 && aromaDeSku(p.sku) === aroma,
+  )
+}
+
 // Con 3 piezas o menos avisamos "últimas piezas" (sin revelar el número).
 const STOCK_BAJO = 3
 
@@ -125,6 +151,11 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const [categoriaActiva, setCategoriaActiva] = useState("TODOS")
   const [busqueda, setBusqueda] = useState("")
   const [catSheet, setCatSheet] = useState(false)
+  // Producto recién agregado + su pareja (polvo ⇄ emulsión) para ofrecer
+  const [pareja, setPareja] = useState<{
+    origen: Producto
+    candidatos: Producto[]
+  } | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
   const [step, setStepRaw] = useState<"catalog" | "checkout">("catalog")
   const [submitting, setSubmitting] = useState(false)
@@ -285,6 +316,18 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
         prev.map((i) => (i.producto.id === id ? { ...i, cantidad } : i)),
       )
     }
+  }
+
+  // Agregar desde la tarjeta: si es la primera pieza de un polvo/emulsión y
+  // su pareja del mismo aroma no está en el pedido, la ofrecemos.
+  const agregarProducto = (producto: Producto) => {
+    const yaEstaba = cart.some((i) => i.producto.id === producto.id)
+    addToCart(producto)
+    if (yaEstaba || producto.stock <= 0) return
+    const candidatos = complementosDe(producto, productos).filter(
+      (c) => !cart.some((i) => i.producto.id === c.id),
+    )
+    if (candidatos.length > 0) setPareja({ origen: producto, candidatos })
   }
 
   const totalCarrito = cart.reduce(
@@ -523,7 +566,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                           cart.find((i) => i.producto.id === producto.id)
                             ?.cantidad ?? 0
                         }
-                        onAdd={() => addToCart(producto)}
+                        onAdd={() => agregarProducto(producto)}
                         onChange={(n) => updateCantidad(producto.id, n)}
                       />
                     )
@@ -649,6 +692,18 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
                 </ul>
               </div>
             </div>
+          )}
+
+          {/* Sugerencia: la pareja del mismo aroma (polvo ⇄ emulsión) */}
+          {pareja && (
+            <ParejaSheet
+              origen={pareja.origen}
+              candidatos={pareja.candidatos}
+              cart={cart}
+              addToCart={addToCart}
+              updateCantidad={updateCantidad}
+              onClose={() => setPareja(null)}
+            />
           )}
 
           {/* Selector de medida para un tipo de cinta */}
@@ -1176,6 +1231,109 @@ function CintaGroupCard({
         </span>
       </div>
     </button>
+  )
+}
+
+// ─── Sugerencia de pareja (polvo ⇄ emulsión del mismo aroma) ────────
+function ParejaSheet({
+  origen,
+  candidatos,
+  cart,
+  addToCart,
+  updateCantidad,
+  onClose,
+}: {
+  origen: Producto
+  candidatos: Producto[]
+  cart: CartItem[]
+  addToCart: (p: Producto) => void
+  updateCantidad: (id: string, cantidad: number) => void
+  onClose: () => void
+}) {
+  const buscaEmulsion = origen.categoria === CAT_POLVO
+  const agregados = candidatos.filter((c) =>
+    cart.some((i) => i.producto.id === c.id),
+  ).length
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Agregar el producto que va con este"
+    >
+      <div
+        className="w-full overflow-hidden rounded-t-3xl border border-pc-line bg-pc-card shadow-2xl sm:max-w-md sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="border-b border-pc-line px-5 py-4">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-pc-green-ink">
+            <Check className="size-4" aria-hidden />
+            {origen.nombre} agregado
+          </p>
+          <h3 className="mt-1 text-lg font-semibold tracking-tight text-pc-ink">
+            {buscaEmulsion
+              ? "¿Agregas también la emulsión reveladora?"
+              : "¿Agregas también el polvo para blanquear?"}
+          </h3>
+          <p className="mt-0.5 text-sm text-pc-ink-3">
+            Es del mismo aroma y normalmente se lleva en pareja.
+          </p>
+        </header>
+
+        <ul className="max-h-[45vh] divide-y divide-pc-line-soft overflow-y-auto">
+          {candidatos.map((c) => {
+            const enCarrito = cart.find((i) => i.producto.id === c.id)
+            return (
+              <li key={c.id} className="flex items-center gap-3 px-5 py-3.5">
+                <Miniatura producto={c} />
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-sm font-semibold leading-snug text-pc-ink">
+                    {c.nombre}
+                  </p>
+                  <p className="mt-0.5 text-sm text-pc-ink-3">
+                    {c.peso ? `${c.peso} · ` : ""}
+                    <span className="font-semibold text-pc-teal-ink">
+                      {formatMXN(c.precio)}
+                    </span>
+                  </p>
+                </div>
+                {enCarrito ? (
+                  <Stepper
+                    cantidad={enCarrito.cantidad}
+                    onChange={(n) => updateCantidad(c.id, n)}
+                    compact
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => addToCart(c)}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl bg-pc-teal px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-pc-teal-hover active:scale-95"
+                  >
+                    <Plus className="size-4" aria-hidden />
+                    Agregar
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+
+        <footer className="border-t border-pc-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`w-full rounded-xl py-3 text-sm font-bold transition-colors ${
+              agregados > 0
+                ? "bg-pc-teal text-white hover:bg-pc-teal-hover"
+                : "bg-pc-hover text-pc-ink hover:bg-pc-line-soft"
+            }`}
+          >
+            {agregados > 0 ? "Listo, seguir comprando" : "No, gracias"}
+          </button>
+        </footer>
+      </div>
+    </div>
   )
 }
 
