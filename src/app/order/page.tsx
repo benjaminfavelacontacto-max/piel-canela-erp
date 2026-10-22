@@ -17,19 +17,21 @@ const STORAGE_URL =
 function ocultoEnCatalogoPublico(p: {
   peso: string | null
   sku: string
-  nombre: string
+  /** Nombre interno + nombre editado en inventario (se revisan los dos). */
+  nombres: string[]
   categoria: string
 }): boolean {
+  const nombre = p.nombres.join(" ")
   const peso = (p.peso ?? "").toLowerCase().replace(/[\s.]/g, "")
   if (peso.startsWith("5l") || /(^|[-_])5l([-_]|$)/i.test(p.sku)) return true
-  if (/baru?k/i.test(p.nombre) || /(^|[-_])bar($|[-_])/i.test(p.sku)) return true
+  if (/baru?k/i.test(nombre) || /(^|[-_])bar($|[-_])/i.test(p.sku)) return true
   if (
     /dye/i.test(p.categoria) ||
     /^dy[-_]/i.test(p.sku) ||
-    /dye\s*color/i.test(p.nombre)
+    /dye\s*color/i.test(nombre)
   )
     return true
-  if (/sabonete|jab[oó]n/i.test(p.nombre) || /(^|[-_])sab($|[-_])/i.test(p.sku))
+  if (/sabonete|jab[oó]n/i.test(nombre) || /(^|[-_])sab($|[-_])/i.test(p.sku))
     return true
   return false
 }
@@ -40,6 +42,11 @@ function ocultoEnCatalogoPublico(p: {
  * El catálogo + stock se leen aquí con el service role (createAdminClient),
  * NO desde el navegador. Así el anon key deja de enviarse en la página
  * pública y, con RLS activado, nadie puede leer las tablas internas con él.
+ *
+ * Es "en vivo": cada carga lee la BD (force-dynamic) y el cliente vuelve a
+ * pedirla cada ~20 s mientras la pestaña está abierta (router.refresh), así que
+ * lo que cambies en Inventario (nombre, precio, surtido, agotado) se refleja
+ * solo. Al navegador NUNCA viaja la cantidad: solo si está agotado o no.
  */
 export default async function OrderPage() {
   const supabase = createAdminClient()
@@ -48,7 +55,7 @@ export default async function OrderPage() {
     supabase
       .from("productos")
       .select(
-        `id, sku, nombre, peso, imagen_url,
+        `id, sku, nombre, nombre_display, peso, imagen_url,
          categorias(nombre),
          precios_producto(precio, listas_precios(nombre))`,
       )
@@ -69,6 +76,7 @@ export default async function OrderPage() {
     id: string
     sku: string | null
     nombre: string
+    nombre_display: string | null
     peso: string | null
     imagen_url: string | null
     categorias: { nombre: string } | null
@@ -78,7 +86,10 @@ export default async function OrderPage() {
     }[]
   }
 
-  const productos: Producto[] = ((prodData ?? []) as unknown as Row[])
+  const filas = (prodData ?? []) as unknown as Row[]
+  const nombreInterno = new Map(filas.map((r) => [r.id, r.nombre]))
+
+  const productos: Producto[] = filas
     .map((p): Producto => {
       const precio =
         p.precios_producto?.find(
@@ -88,7 +99,8 @@ export default async function OrderPage() {
       return {
         id: p.id,
         sku: p.sku ?? "",
-        nombre: p.nombre,
+        // El nombre que editas en Inventario (nombre_display) manda sobre el interno.
+        nombre: p.nombre_display?.trim() || p.nombre,
         peso: p.peso,
         imagen_url: p.imagen_url
           ? `${STORAGE_URL}${encodeURIComponent(p.imagen_url)}`
@@ -98,10 +110,19 @@ export default async function OrderPage() {
         precio: promo?.precio ?? Number(precio),
         precioLista: promo ? promo.precioLista : null,
         descuentoPct: promo ? promo.descuentoPct : null,
-        stock: stockMap.get(p.id) ?? 0,
+        agotado: (stockMap.get(p.id) ?? 0) <= 0,
       }
     })
-    .filter((p) => p.precio > 0 && !ocultoEnCatalogoPublico(p))
+        .filter(
+      (p) =>
+        p.precio > 0 &&
+        !ocultoEnCatalogoPublico({
+          peso: p.peso,
+          sku: p.sku,
+          categoria: p.categoria,
+          nombres: [p.nombre, nombreInterno.get(p.id) ?? ""],
+        }),
+    )
 
   return <OrderCatalog productos={productos} />
 }

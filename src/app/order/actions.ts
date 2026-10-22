@@ -225,6 +225,26 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
         "Uno o más productos ya no están disponibles. Actualiza el catálogo e inténtalo de nuevo.",
     }
   }
+  // Lo agotado no se puede pedir (el catálogo ya lo bloquea; aquí se vuelve a
+  // validar con el inventario real por si el pedido se armó antes del cambio).
+  // No se revela cuántas piezas hay: solo si ya está agotado.
+  const { data: invRows } = await supabase
+    .from("vista_inventario")
+    .select("id, stock_actual")
+    .in("id", productoIds)
+  const stockPorId = new Map(
+    ((invRows ?? []) as { id: string; stock_actual: number | null }[]).map(
+      (r) => [r.id, Number(r.stock_actual) || 0],
+    ),
+  )
+  const agotados = input.items.filter((i) => (stockPorId.get(i.producto_id) ?? 0) <= 0)
+  if (agotados.length > 0) {
+    return {
+      success: false,
+      error: `Se agotó: ${[...new Set(agotados.map((i) => i.nombre))].join(", ")}. Quítalo de tu pedido e inténtalo de nuevo.`,
+    }
+  }
+
   const pricedItems = input.items.map((i) => {
     const p = priceMap.get(i.producto_id)!
     return {

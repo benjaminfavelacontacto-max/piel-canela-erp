@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
   Check,
@@ -35,7 +36,8 @@ export interface Producto {
   precioLista?: number | null
   /** % de descuento de la promoción (para la etiqueta). */
   descuentoPct?: number | null
-  stock: number
+  /** Solo se sabe si está agotado: la cantidad disponible nunca llega al navegador. */
+  agotado: boolean
 }
 
 interface CartItem {
@@ -140,12 +142,9 @@ function complementosDe(producto: Producto, todos: Producto[]): Producto[] {
   if (!aroma) return []
   return todos.filter(
     (p) =>
-      p.categoria === buscada && p.stock > 0 && aromaDeSku(p.sku) === aroma,
+      p.categoria === buscada && !p.agotado && aromaDeSku(p.sku) === aroma,
   )
 }
-
-// Con 3 piezas o menos avisamos "últimas piezas" (sin revelar el número).
-const STOCK_BAJO = 3
 
 const inputCls =
   "w-full rounded-xl border border-pc-line bg-pc-card px-3.5 py-3 text-sm text-pc-ink placeholder:text-pc-ink-4 transition-colors focus:border-pc-teal focus:outline-none focus:ring-4 focus:ring-pc-teal/15"
@@ -163,7 +162,9 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
     origen: Producto
     candidatos: Producto[]
   } | null>(null)
-  const [cart, setCart] = useState<CartItem[]>([])
+  // Lo que el cliente fue agregando; `cart` (abajo) es esa lista puesta al día
+  // con el catálogo vivo (nombre/precio nuevos, y sin lo que se agotó).
+  const [cartRaw, setCart] = useState<CartItem[]>([])
   const [step, setStepRaw] = useState<"catalog" | "checkout">("catalog")
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -182,6 +183,44 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   // Match cliente por teléfono (anti-duplicados + auto-fill)
   const [buscandoCliente, setBuscandoCliente] = useState(false)
   const [clienteMatch, setClienteMatch] = useState<ClienteMatch | null>(null)
+
+  // ─── Catálogo en vivo ───
+  // Lo que cambies en Inventario (nombre, precio, surtido, agotado) llega solo:
+  // se vuelve a pedir la página al servidor cada 20 s mientras la pestaña está
+  // visible y al volver a ella. El carrito y los filtros se conservan.
+  const router = useRouter()
+  const ultimoRefresco = useRef(0)
+  useEffect(() => {
+    const refrescar = () => {
+      if (document.visibilityState !== "visible") return
+      if (Date.now() - ultimoRefresco.current < 5000) return
+      ultimoRefresco.current = Date.now()
+      router.refresh()
+    }
+    const id = setInterval(refrescar, 20000)
+    document.addEventListener("visibilitychange", refrescar)
+    window.addEventListener("focus", refrescar)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener("visibilitychange", refrescar)
+      window.removeEventListener("focus", refrescar)
+    }
+  }, [router])
+
+  const productoVivo = useMemo(
+    () => new Map(productos.map((p) => [p.id, p])),
+    [productos],
+  )
+  const { cart, agotadosEnPedido } = useMemo(() => {
+    const vivos: CartItem[] = []
+    const agotados: string[] = []
+    for (const i of cartRaw) {
+      const actual = productoVivo.get(i.producto.id)
+      if (!actual || actual.agotado) agotados.push(i.producto.nombre)
+      else vivos.push({ ...i, producto: actual })
+    }
+    return { cart: vivos, agotadosEnPedido: agotados }
+  }, [cartRaw, productoVivo])
 
   const setStep = (s: "catalog" | "checkout") => {
     setStepRaw(s)
@@ -301,7 +340,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const hayResultados = secciones.length > 0
 
   const addToCart = (producto: Producto) => {
-    if (producto.stock <= 0) return // agotado: no se puede cotizar
+    if (producto.agotado) return // agotado: no se puede cotizar
     setCart((prev) => {
       const existing = prev.find((i) => i.producto.id === producto.id)
       if (existing) {
@@ -330,12 +369,46 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
   const agregarProducto = (producto: Producto) => {
     const yaEstaba = cart.some((i) => i.producto.id === producto.id)
     addToCart(producto)
-    if (yaEstaba || producto.stock <= 0) return
+    if (yaEstaba || producto.agotado) return
     const candidatos = complementosDe(producto, productos).filter(
       (c) => !cart.some((i) => i.producto.id === c.id),
     )
     if (candidatos.length > 0) setPareja({ origen: producto, candidatos })
   }
+
+  const descartarAgotados = () =>
+    setCart((prev) =>
+      prev.filter((i) => productoVivo.get(i.producto.id)?.agotado === false),
+    )
+
+  const avisoAgotados =
+    agotadosEnPedido.length > 0 ? (
+      <div
+        role="alert"
+        className="flex items-start gap-3 rounded-2xl border border-pc-amber-line bg-pc-amber-soft p-4 text-pc-amber-ink"
+      >
+        <div className="min-w-0 flex-1 text-sm">
+          <p className="font-semibold">
+            {agotadosEnPedido.length === 1
+              ? "Se agotó un producto de tu pedido"
+              : "Se agotaron productos de tu pedido"}
+          </p>
+          <p className="mt-0.5">
+            {agotadosEnPedido.join(", ")} ya no está
+            {agotadosEnPedido.length === 1 ? "" : "n"} disponible
+            {agotadosEnPedido.length === 1 ? "" : "s"}, así que no se incluye
+            {agotadosEnPedido.length === 1 ? "" : "n"} en tu pedido.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={descartarAgotados}
+          className="shrink-0 rounded-lg bg-pc-card px-3 py-1.5 text-xs font-semibold text-pc-ink shadow-sm hover:bg-pc-hover"
+        >
+          Entendido
+        </button>
+      </div>
+    ) : null
 
   const totalCarrito = cart.reduce(
     (s, i) => s + i.producto.precio * i.cantidad,
@@ -542,6 +615,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
 
           {/* Catálogo por secciones */}
           <div className="space-y-8 px-4 pt-5">
+            {avisoAgotados}
             {secciones.map(({ cat, items }) => (
               <section key={cat} aria-labelledby={`cat-${cat}`}>
                 <div className="mb-3 flex items-baseline gap-2">
@@ -750,6 +824,7 @@ export function OrderCatalog({ productos }: { productos: Producto[] }) {
           <h2 className="mb-5 text-2xl font-semibold tracking-tight text-pc-ink">
             Revisa tu pedido
           </h2>
+          {avisoAgotados && <div className="mb-5">{avisoAgotados}</div>}
 
           {cart.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-pc-line-strong bg-pc-card px-6 py-14 text-center">
@@ -1122,17 +1197,6 @@ function Miniatura({ producto }: { producto: Producto }) {
   )
 }
 
-function StockTag({ stock }: { stock: number }) {
-  if (stock <= 0) return null
-  if (stock <= STOCK_BAJO)
-    return (
-      <span className="rounded-md bg-pc-amber-soft px-1.5 py-0.5 text-[11px] font-semibold text-pc-amber-ink">
-        Últimas piezas
-      </span>
-    )
-  return null
-}
-
 // ─── Sello de oferta sobre la foto (siempre rojo: se lee en claro y oscuro) ───
 function PromoSello({ pct }: { pct: number }) {
   return (
@@ -1162,7 +1226,7 @@ function ProductCard({
   onAdd: () => void
   onChange: (n: number) => void
 }) {
-  const agotado = producto.stock <= 0
+  const agotado = producto.agotado
   const enCarrito = cantidad > 0
   return (
     <div
@@ -1209,7 +1273,6 @@ function ProductCard({
               {formatMXN(producto.precioLista)}
             </p>
           ) : null}
-          <StockTag stock={producto.stock} />
         </div>
 
         <div className="mt-3 flex-1" />
@@ -1250,7 +1313,7 @@ function CintaGroupCard({
   unidadesEnCarrito: number
   onElegir: () => void
 }) {
-  const agotado = grupo.variantes.every((v) => v.producto.stock <= 0)
+  const agotado = grupo.variantes.every((v) => v.producto.agotado)
   const precios = grupo.variantes.map((v) => v.producto.precio)
   const precioMin = Math.min(...precios)
   const variosPrecios = new Set(precios).size > 1
@@ -1315,7 +1378,7 @@ function CintaGroupCard({
             <span
               key={v.producto.id}
               className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${
-                v.producto.stock > 0
+                !v.producto.agotado
                   ? "bg-pc-teal-soft text-pc-teal-ink"
                   : "bg-pc-hover text-pc-ink-4 line-through"
               }`}
@@ -1511,7 +1574,7 @@ function MedidaPicker({
           {grupo.variantes.map((v) => {
             const p = v.producto
             const enCarrito = cart.find((i) => i.producto.id === p.id)
-            const agotado = p.stock <= 0
+            const agotado = p.agotado
             return (
               <li
                 key={p.id}
