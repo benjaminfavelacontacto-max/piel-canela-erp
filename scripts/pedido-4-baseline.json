@@ -1,0 +1,146 @@
+{
+  "AC-900-AM1": {
+    "stock_before": 1,
+    "old_mxn": 519.078,
+    "old_precio_usd": 24.15,
+    "old_envio_usd": 2.24494,
+    "rollback": {
+      "precio_usd": 24.15,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 550.44
+    }
+  },
+  "PO-900-AM2": {
+    "stock_before": 15,
+    "old_mxn": 333.9361971830986,
+    "old_precio_usd": 15.48732394366197,
+    "old_envio_usd": 2.5122985915492957,
+    "rollback": {
+      "precio_usd": 16.04,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 329.19
+    }
+  },
+  "AC-1000-PU": {
+    "stock_before": 0,
+    "old_mxn": 385.34444444444443,
+    "old_precio_usd": 17.35,
+    "old_envio_usd": 2.279188888888889,
+    "rollback": {
+      "precio_usd": 17.35,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 409.68
+    }
+  },
+  "PO-850-PM3.0": {
+    "stock_before": 17,
+    "old_mxn": 497.50727272727266,
+    "old_precio_usd": 23.05,
+    "old_envio_usd": 2.2169181818181816,
+    "rollback": {
+      "precio_usd": 23.05,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 527.67
+    }
+  },
+  "PO-850-PM2.0": {
+    "stock_before": 0,
+    "old_mxn": 464.85,
+    "old_precio_usd": 23.15714285714286,
+    "old_envio_usd": 2.8965428571428573,
+    "rollback": {
+      "precio_usd": 25.24,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 491.11
+    }
+  },
+  "AC-850-PES": {
+    "stock_before": 2,
+    "old_mxn": 329.025,
+    "old_precio_usd": 14.38,
+    "old_envio_usd": 2.7073,
+    "rollback": {
+      "precio_usd": 14.38,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 348.2
+    }
+  },
+  "HI-850-MOR": {
+    "stock_before": 2,
+    "old_mxn": 308.47,
+    "old_precio_usd": 13.08,
+    "old_envio_usd": 3.4779,
+    "rollback": {
+      "precio_usd": 13.08,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 321.29
+    }
+  },
+  "OLE-450": {
+    "stock_before": 13,
+    "old_mxn": 255.388,
+    "old_precio_usd": 10.75,
+    "old_envio_usd": 2.24494,
+    "rollback": {
+      "precio_usd": 10.75,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 273.06
+    }
+  },
+  "DOL-500": {
+    "stock_before": 4,
+    "old_mxn": 158.87,
+    "old_precio_usd": 5.05,
+    "old_envio_usd": 3.4778999999999995,
+    "rollback": {
+      "precio_usd": 5.05,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 155.07
+    }
+  },
+  "OX30-900-MOR": {
+    "stock_before": 5,
+    "old_mxn": 242.70999999999998,
+    "old_precio_usd": 9.55,
+    "old_envio_usd": 3.4778999999999995,
+    "rollback": {
+      "precio_usd": 9.55,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 248.22
+    }
+  },
+  "OX40-900-CHO": {
+    "stock_before": 5,
+    "old_mxn": 242.70999999999998,
+    "old_precio_usd": 9.55,
+    "old_envio_usd": 3.4778999999999995,
+    "rollback": {
+      "precio_usd": 9.55,
+      "costo_envio_usd": 2.44,
+      "tipo_cambio": 20.7,
+      "costo": 248.22
+    }
+  },
+  "AE-1L-SEM": {
+    "stock_before": 2,
+    "old_mxn": 1558.73,
+    "old_precio_usd": 85.9,
+    "old_envio_usd": 2.664,
+    "rollback": {
+      "precio_usd": 85.9,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 1558.73
+    }
+  }
+}
