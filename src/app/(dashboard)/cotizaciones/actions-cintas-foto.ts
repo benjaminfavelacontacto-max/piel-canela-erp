@@ -1,6 +1,7 @@
 "use server"
 
 import { identificarCintas, ErrorConfig, type GrupoIdentificado } from "@/lib/cintas-foto-ia"
+import { identificarProductos, type GrupoProducto } from "@/lib/productos-foto-ia"
 import type { Presentacion } from "@/lib/cintas-modelos"
 
 const PRES_VALIDAS: Presentacion[] = ["entera", "9-9", "6-12"]
@@ -46,5 +47,39 @@ export async function identificarCintasDesdeFotos(
     console.error("[cintas-foto] error", e)
     const msg = e instanceof Error ? e.message : "Error desconocido"
     return { ok: false, error: "No se pudo identificar las cintas: " + msg.slice(0, 180) }
+  }
+}
+
+export type ResultadoFotoProductos =
+  | { ok: true; grupos: GrupoProducto[] }
+  | { ok: false; error: string }
+
+/**
+ * Identifica los productos (no cintas) de 1 a 3 fotos generales del mostrador para
+ * precargarlos en una cotización. Las fotos llegan ya comprimidas a JPEG (base64 sin
+ * el prefijo `data:`); nada se guarda.
+ */
+export async function identificarProductosDesdeFotos(
+  fotos: { base64: string }[],
+): Promise<ResultadoFotoProductos> {
+  if (!Array.isArray(fotos) || fotos.length < 1 || fotos.length > 3) {
+    return { ok: false, error: "Sube de 1 a 3 fotos." }
+  }
+  for (const f of fotos) {
+    if (typeof f.base64 !== "string" || f.base64.length < 100 || f.base64.length > MAX_BASE64) {
+      return { ok: false, error: "Una de las fotos es demasiado grande o está vacía." }
+    }
+    if (!/^[A-Za-z0-9+/=]+$/.test(f.base64)) {
+      return { ok: false, error: "Formato de foto inválido." }
+    }
+  }
+  try {
+    const { grupos } = await identificarProductos(fotos.map((f) => ({ base64: f.base64 })))
+    return { ok: true, grupos }
+  } catch (e) {
+    if (e instanceof ErrorConfig) return { ok: false, error: e.message }
+    console.error("[productos-foto] error", e)
+    const msg = e instanceof Error ? e.message : "Error desconocido"
+    return { ok: false, error: "No se pudo identificar los productos: " + msg.slice(0, 180) }
   }
 }

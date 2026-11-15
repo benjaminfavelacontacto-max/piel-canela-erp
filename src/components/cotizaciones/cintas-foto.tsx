@@ -14,6 +14,8 @@ import {
   type Presentacion,
 } from "@/lib/cintas-modelos"
 import { formatMXN2 } from "@/lib/utils"
+import { comprimir, type Foto } from "@/lib/foto-cliente"
+import { ProductosFotoPanel } from "@/components/cotizaciones/productos-foto-panel"
 import {
   identificarCintasDesdeFotos,
   type ResultadoFotoCintas,
@@ -28,7 +30,6 @@ import {
  * Mismo componente para la cotización rápida (móvil) y el formulario completo.
  */
 
-type Foto = { base64: string; preview: string }
 type Fila = {
   id: number
   presentacion: Presentacion
@@ -38,27 +39,6 @@ type Fila = {
   incluir: boolean
   descripcion: string
   confianza: "alta" | "media" | "baja"
-}
-
-const MAX_LADO = 1600
-
-/** Redimensiona y recomprime a JPEG en el navegador (las fotos de celular pesan 4–10 MB). */
-async function comprimir(file: File): Promise<Foto> {
-  const bmp = await createImageBitmap(file)
-  const escala = Math.min(1, MAX_LADO / Math.max(bmp.width, bmp.height))
-  const w = Math.max(1, Math.round(bmp.width * escala))
-  const h = Math.max(1, Math.round(bmp.height * escala))
-  const canvas = document.createElement("canvas")
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("No se pudo procesar la imagen")
-  ctx.fillStyle = "#fff"
-  ctx.fillRect(0, 0, w, h)
-  ctx.drawImage(bmp, 0, 0, w, h)
-  bmp.close?.()
-  const url = canvas.toDataURL("image/jpeg", 0.8)
-  return { base64: url.split(",")[1] ?? "", preview: url }
 }
 
 export function CintasFotoBoton({
@@ -72,6 +52,7 @@ export function CintasFotoBoton({
   variante?: "movil" | "escritorio"
 }) {
   const [abierto, setAbierto] = useState(false)
+  const [modo, setModo] = useState<"productos" | "cintas">("productos")
 
   const modelos = useMemo(() => agruparModelos(productos), [productos])
   const porClave = useMemo(() => new Map(modelos.map((m) => [m.clave, m])), [modelos])
@@ -181,7 +162,7 @@ export function CintasFotoBoton({
         className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl border border-pc-line bg-pc-card px-4 py-3.5 text-[14px] font-semibold text-pc-ink active:scale-[0.99]"
       >
         <Camera className="size-5 text-pc-teal-ink" />
-        Agregar cintas desde foto
+        Agregar desde foto
       </button>
     ) : (
       <button
@@ -190,7 +171,7 @@ export function CintasFotoBoton({
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-pc-card px-3 py-2 text-sm font-medium text-pc-ink hover:bg-pc-hover"
       >
         <Camera className="size-4 text-pc-teal-ink" />
-        Agregar cintas desde foto
+        Agregar desde foto
       </button>
     )
 
@@ -205,7 +186,7 @@ export function CintasFotoBoton({
         <div className="flex items-center justify-between gap-3 border-b border-pc-line px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-pc-teal-ink" />
-            <h2 className="text-[15px] font-semibold text-pc-ink">Cintas desde foto</h2>
+            <h2 className="text-[15px] font-semibold text-pc-ink">Agregar desde foto</h2>
           </div>
           <button
             type="button"
@@ -218,6 +199,33 @@ export function CintasFotoBoton({
           </button>
         </div>
 
+        <div className="flex gap-1.5 border-b border-pc-line px-4 py-2" role="tablist">
+          {(
+            [
+              ["productos", "Productos"],
+              ["cintas", "Cintas por presentación"],
+            ] as const
+          ).map(([id, etiqueta]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={modo === id}
+              onClick={() => setModo(id)}
+              className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold ${
+                modo === id ? "bg-pc-teal text-white" : "bg-pc-subtle text-pc-ink-2 hover:bg-pc-hover"
+              }`}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+
+        <div className={modo === "productos" ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
+          <ProductosFotoPanel productos={productos} onAgregar={onAgregar} onTerminado={cerrar} />
+        </div>
+
+        <div className={modo === "cintas" ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {fase !== "revisar" ? (
             <>
@@ -444,6 +452,7 @@ export function CintasFotoBoton({
               </button>
             </>
           )}
+        </div>
         </div>
       </div>
     </div>,
