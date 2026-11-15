@@ -75,7 +75,8 @@ Recibirás:
 Reglas:
 - Agrupa las cintas de la foto por diseño/color y reporta cada grupo con la herramienta "reportar_cintas".
 - Compara por COLOR y ESTAMPADO. La foto real se ve distinta a la del catálogo (luz, ángulo, rollos apilados, tamaño), así que busca el parecido del diseño, no del encuadre. Colores sólidos parecidos (rosa bebé / rosa fucsia / palo de rosa, azul rey / azul claro, morada / violeta) se distinguen por el tono: si dudas, da la mejor opción en "numero" y las siguientes en "alternativas" y baja la confianza.
-- "cantidad" = número de rollos de ese diseño que alcanzas a ver (cuenta cada rollo de las pilas, incluidos los parcialmente visibles). Si no se puede contar con seguridad, da tu mejor estimación y confianza "baja".
+- "piezas_visibles" = número de PEDAZOS FÍSICOS de ese diseño que alcanzas a ver, contando cada pedazo por separado (cada rollo de las pilas, incluidos los parcialmente visibles). NO conviertas ni dividas nada: el sistema lo hace. Si no se puede contar con seguridad, da tu mejor estimación y confianza "baja".
+- Cómo vienen las presentaciones: una ENTERA es un rollo completo (1 pedazo = 1 unidad). Una unidad "9/9" viene cortada por la mitad en DOS pedazos iguales de 9 mm; una unidad "6/12" viene cortada en DOS pedazos, uno angosto (6 mm) y uno ancho (12 mm). Por eso en las fotos de 9/9 y 6/12 cada unidad se ve como 2 pedazos (a veces pegados uno junto al otro o apilados): cuéntalos todos como pedazos.
 - Si un diseño NO aparece en las hojas, pon numero = null y descríbelo en "descripcion".
 - No inventes: ignora cualquier objeto que no sea cinta (manos, mesa, cajas, otros productos).
 - "descripcion": color y estampado en pocas palabras (ej. "leopardo rosa con negro sobre blanco").`
@@ -94,11 +95,11 @@ const TOOL = {
             foto: { type: "integer", description: "Número de la foto del usuario (1, 2 o 3) donde está este grupo." },
             numero: { type: ["integer", "null"], description: "Número del mosaico del catálogo que más se parece; null si no está en el catálogo." },
             alternativas: { type: "array", items: { type: "integer" }, description: "Hasta 2 números de mosaico alternativos." },
-            cantidad: { type: "integer", description: "Rollos de este diseño visibles en la foto." },
+            piezas_visibles: { type: "integer", description: "Pedazos físicos de este diseño visibles en la foto, contando cada pedazo por separado (sin dividir entre 2)." },
             descripcion: { type: "string" },
             confianza: { type: "string", enum: ["alta", "media", "baja"] },
           },
-          required: ["foto", "numero", "alternativas", "cantidad", "descripcion", "confianza"],
+          required: ["foto", "numero", "alternativas", "piezas_visibles", "descripcion", "confianza"],
         },
       },
     },
@@ -183,7 +184,10 @@ export async function identificarCintas(
       .map(claveDe)
       .filter((c): c is string => !!c && c !== clave)
       .slice(0, 2)
-    const cantidad = Math.max(1, Math.min(500, Math.round(Number(g.cantidad) || 1)))
+    // En 9/9 y 6/12 cada unidad son 2 pedazos (cortada en dos): unidades = pedazos / 2.
+    // Un pedazo suelto sobrante (cuenta impar) cuenta como una unidad más.
+    const piezas = Math.max(1, Math.min(1000, Math.round(Number(g.piezas_visibles ?? g.cantidad) || 1)))
+    const cantidad = foto.presentacion === "entera" ? piezas : Math.max(1, Math.ceil(piezas / 2))
     const conf = g.confianza === "alta" || g.confianza === "media" || g.confianza === "baja" ? g.confianza : "media"
     grupos.push({
       presentacion: foto.presentacion,
