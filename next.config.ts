@@ -20,6 +20,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // «Cintas desde foto»: hasta 3 fotos JPEG (~0.5 MB c/u) viajan como base64 a una server action.
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   images: {
     // Fotos de producto (Supabase Storage). Los archivos pesan ~290 KB c/u y se
     // muestran en miniaturas de 32–200 px → next/image las sirve en WebP y al tamaño real.

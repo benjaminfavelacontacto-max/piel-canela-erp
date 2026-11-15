@@ -40,6 +40,7 @@ import {
   type TipoDescuento,
 } from "@/lib/descuentos"
 import { saveCotizacion, siguienteNumeroCotizacion } from "../actions"
+import { CintasFotoBoton } from "@/components/cotizaciones/cintas-foto"
 
 /**
  * Cotización rápida — flujo pensado para el iPhone, con el cliente enfrente.
@@ -190,6 +191,20 @@ export function QuickQuote({
       // Conserva el descuento de la partida y recalcula el precio unitario.
       copy[i] = conCantidad(copy[i], copy[i].cantidad + 1)
       return copy
+    })
+  }
+
+  /** Suma varias partidas de golpe (cintas identificadas desde foto). */
+  function agregarVarias(items: { producto: Producto; cantidad: number }[]) {
+    setLineas((prev) => {
+      const out = [...prev]
+      for (const { producto, cantidad } of items) {
+        const nueva = lineaDeProducto(producto, cantidad)
+        const i = out.findIndex((l) => lineaKey(l) === lineaKey(nueva))
+        if (i === -1) out.push(nueva)
+        else out[i] = conCantidad(out[i], out[i].cantidad + cantidad)
+      }
+      return out
     })
   }
 
@@ -432,6 +447,8 @@ export function QuickQuote({
           <Plus className="size-5" />
           Agregar productos
         </button>
+
+        <CintasFotoBoton productos={productos} onAgregar={agregarVarias} variante="movil" />
 
         {/* Cintas cuyo modelo la clienta aún no decide: una partida comodín con
             la cantidad que pida; se reemplaza al elegir (Editar cotización). */}

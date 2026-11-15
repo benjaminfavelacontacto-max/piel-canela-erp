@@ -22,6 +22,7 @@ import type {
   Producto,
 } from "@/lib/cotizacion-types"
 import { CotizacionPreview } from "@/components/cotizaciones/CotizacionPreview"
+import { CintasFotoBoton } from "@/components/cotizaciones/cintas-foto"
 import {
   saveCotizacion,
   updateCotizacion,
@@ -292,6 +293,39 @@ export function CotizacionForm({
     ro.observe(doc)
     return () => ro.disconnect()
   }, [])
+
+  /** Suma varias partidas de golpe (cintas identificadas desde foto). */
+  function addItems(lista: { producto: Producto; cantidad: number }[]) {
+    setItems((prev) => {
+      const out = [...prev]
+      for (const { producto, cantidad: qty } of lista) {
+        const nuevo: CotizacionItem = {
+          producto_id: producto.id,
+          sku: producto.sku,
+          nombre: producto.nombre,
+          imagen_url: producto.imagen_url,
+          peso: producto.peso,
+          cantidad: qty,
+          precio_unitario: producto.precio,
+          costo_unitario: Number(producto.costo ?? 0),
+          subtotal: producto.precio * qty,
+          es_regalo: false,
+          precio_lista: null,
+          descuento_tipo: null,
+          descuento_valor: 0,
+        }
+        const i = out.findIndex((x) => lineaKey(x) === lineaKey(nuevo))
+        if (i === -1) {
+          out.push(nuevo)
+        } else {
+          const total = out[i].cantidad + qty
+          const actualizada = conCantidad(out[i], total)
+          out[i] = { ...actualizada, subtotal: round2(actualizada.precio_unitario * total) }
+        }
+      }
+      return out
+    })
+  }
 
   function addItem(producto: Producto | null = selectedProduct) {
     const qty = typeof cantidad === "number" && cantidad >= 1 ? cantidad : 1
@@ -672,6 +706,8 @@ export function CotizacionForm({
               {comoRegalo ? "Agregar regalo" : "Agregar"}
             </button>
           </div>
+
+          <CintasFotoBoton productos={productos} onAgregar={addItems} variante="escritorio" />
 
           {/* Cintas sin modelo definido: entra una partida comodín con la
               cantidad de arriba; se reemplaza por las reales al elegir. */}
