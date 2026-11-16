@@ -109,6 +109,7 @@ const TOOL = {
 
 export async function identificarCintas(
   fotos: FotoEntrada[],
+  opts?: { maxTokens?: number },
 ): Promise<{ grupos: GrupoIdentificado[] }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) throw new ErrorConfig()
@@ -146,7 +147,8 @@ export async function identificarCintas(
     // Claude Sonnet 5.5 rechaza (400) forzar la herramienta con tool_choice any/tool:
     // se usa "auto" y el prompt pide llamarla. El razonamiento adaptativo (siempre
     // activo) cuenta dentro de max_tokens, de ahí el margen; effort medio basta.
-    max_tokens: 8000,
+    // El cotejo de inventario puede reportar decenas de modelos en una sola foto → más margen.
+    max_tokens: opts?.maxTokens ?? 8000,
     output_config: { effort: "medium" },
     system: SISTEMA,
     tools: [TOOL],

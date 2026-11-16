@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useEffect, useMemo, useRef, useState, useTransition, useDeferredValue } from "react"
 import {
   Search,
@@ -12,6 +13,7 @@ import {
   Plus,
   SlidersHorizontal,
   LayoutGrid,
+  ClipboardCheck,
 } from "lucide-react"
 import { ProductDrawer } from "./product-drawer"
 import { ProductEditModal } from "./product-edit-modal"
@@ -483,6 +485,13 @@ export function InventarioView({
           <>
             <TipoCambioChip tc={tcVigente} />
             <ExportInventarioButton productos={productos} />
+            <Link
+              href="/inventario/cotejar"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-pc-line bg-pc-card px-3.5 py-2 text-sm font-semibold text-pc-ink-2 shadow-sm transition-colors hover:bg-pc-hover"
+            >
+              <ClipboardCheck className="size-4" />
+              Cotejar inventario
+            </Link>
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
