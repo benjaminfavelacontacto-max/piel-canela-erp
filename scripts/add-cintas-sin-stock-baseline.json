@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-11-16T18:32:33.902711",
+  "productos_creados": [
+    "2ff64c96-5f43-4bc5-9e58-8336fd6f60f2",
+    "44683acb-fe49-4d13-b821-9dc72946e998",
+    "040da0f7-1e92-4e9e-bbbf-15fad56d7ef8",
+    "7e6bc8ef-fb73-4a70-bbe3-cad683422624",
+    "376eaf81-2775-44e0-b5d3-baf8db04f389",
+    "cb867ee1-de40-4c4e-b938-7128cca26d06",
+    "8e811aa7-6666-4bcf-a750-ea5ad21906b5"
+  ],
+  "precios_creados": [
+    "9fd306c2-3b6b-4aa7-b4e0-0c46b275324f",
+    "830713e8-3649-4474-8d90-4a95d70a1fc0",
+    "9806a753-19c1-491b-980e-1cadeadeba5e",
+    "2d09c730-0c75-408a-8193-347d18480b13",
+    "da89a3cc-e3e6-435c-83e1-54a53fdfc229",
+    "fb69b1a2-bdf0-4411-9568-32a9465878c3",
+    "699c49b5-aa35-4f10-b44d-ba74b8927ad0"
+  ],
+  "inventario_creado": [
+    "4871cdb6-c8df-40ea-bb26-dd353319b8dc",
+    "eeff1c90-58b9-4e0a-9b9a-0da05a0972a6",
+    "c1519552-dcb2-46b0-a690-ed7bc14fd32e",
+    "c9a07a1c-ecf6-4e87-af56-abd2e7560f8f",
+    "7cca8b71-3de5-4413-b285-cfa3dc874f71",
+    "5e20acb5-a0f3-412f-9166-d1432bbdebfe",
+    "3f0b786b-d001-4fef-bf71-88c6c432e643"
+  ],
+  "costos_asignados": {
+    "CN-MORC-CE": {
+      "precio_usd": 1.18,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 62.4
+    },
+    "CN-MORC-C9": {
+      "precio_usd": 1.37,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 65.67
+    },
+    "CN-MORC-C12": {
+      "precio_usd": 1.37,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 65.67
+    },
+    "CN-APBM-CE": {
+      "precio_usd": 1.37,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 65.67
+    },
+    "CN-APBM-C9": {
+      "precio_usd": 1.57,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 69.1
+    },
+    "CN-APBM-C12": {
+      "precio_usd": 1.57,
+      "costo_envio_usd": 2.45,
+      "tipo_cambio": 17.19,
+      "costo": 69.1
+    }
+  }
+}
