@@ -223,7 +223,7 @@ export default async function DashboardPage() {
         "id, numero, total, created_at, clientes(nombre, nombre_negocio, telefono)",
       )
       .eq("estatus", "borrador")
-      .ilike("numero", "%-P-Portal")
+      .ilike("numero", "%-P-Portal%")
       .order("created_at", { ascending: false })
       .limit(20),
     // Índice del buscador global (compacto, filtrado en el cliente)

@@ -6,6 +6,7 @@ import { checkRateLimit, clientIp } from "@/lib/rate-limit"
 import {
   cambiarTipoNumero,
   construirNumeroOrden,
+  fechaDDMMYY,
   nombreCorto,
 } from "@/lib/numero-orden"
 import { formatMXN } from "@/lib/utils"
@@ -54,6 +55,36 @@ export type ClienteMatch = {
   telefono: string | null
   /** Cliente VIP: envío gratis (la lista vive en el servidor). */
   vip: boolean
+}
+
+/**
+ * Número de una cotización del portal para un cliente NUEVO / no identificado:
+ * PC-DDMMYY-NNN-P-Portal-NombreCorto (ej. PC-161126001-P-Portal-24k).
+ * Conserva el marcador `-P-Portal` (el listado pone la etiqueta "Portal" y el
+ * dashboard lista los pedidos por revisar con él) y suma el nombre del cliente
+ * para que se identifique de un vistazo, igual que las cotizaciones estándar.
+ */
+async function generarNumeroPortal(
+  supabase: ReturnType<typeof createAdminClient>,
+  clienteId: string,
+  fecha: Date | string,
+  cli: { nombre_negocio: string | null; nombre: string },
+): Promise<string> {
+  const { count } = await supabase
+    .from("cotizaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("cliente_id", clienteId)
+  const corto = nombreCorto(cli)
+  const ddmmyy = fechaDDMMYY(fecha)
+  let consecutivo = (count ?? 0) + 1
+  let numero = ""
+  for (let i = 0; i < 50; i++) {
+    const nnn = String(consecutivo).padStart(3, "0")
+    numero = `PC-${ddmmyy}${nnn}-P-Portal-${corto}`
+    if (!(await numeroOrdenExiste(supabase, numero))) return numero
+    consecutivo++
+  }
+  return numero
 }
 
 /**
@@ -141,7 +172,8 @@ async function generarNumeroEstandar(
  * Crea una cotización en estatus "borrador" desde el portal público.
  * - Reusa cliente existente si telefono coincide (match exacto)
  * - Si no, crea cliente nuevo con tipo 'particular' (lowercase = enum DB)
- * - Numero de cotización con sufijo `-P-Portal` para distinguir en el ERP
+ * - Numero de cotización con `-P-Portal-NombreCorto` para distinguirla en el ERP
+ *   y ver de quién es
  *
  * Usa admin client (service role) para bypassear RLS si llegara a activarse.
  */
@@ -337,11 +369,10 @@ export async function submitOrder(input: OrderInput): Promise<OrderResult> {
         .filter(Boolean)
         .join("\n") || null
   } else {
-    const dd = String(fecha.getDate()).padStart(2, "0")
-    const mm = String(fecha.getMonth() + 1).padStart(2, "0")
-    const yy = String(fecha.getFullYear()).slice(2)
-    const rand = Math.floor(Math.random() * 900) + 100
-    numero = `PC-${dd}${mm}${yy}${rand}-P-Portal`
+    numero = await generarNumeroPortal(supabase, clienteId as string, fecha, {
+      nombre_negocio: input.cliente.negocio.trim() || null,
+      nombre: input.cliente.nombre.trim(),
+    })
     notas = [
       "Pedido desde portal web.",
       `Cliente: ${input.cliente.nombre}`,
