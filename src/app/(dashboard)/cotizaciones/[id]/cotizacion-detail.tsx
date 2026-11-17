@@ -26,7 +26,11 @@ import { usePdfDownload } from "@/lib/use-pdf-download"
 import { whatsappUrl } from "@/lib/whatsapp"
 import { resumenRegalos } from "@/lib/regalos"
 import { resumenDescuentos } from "@/lib/descuentos"
-import { mensajePorEscoger, piezasPorEscoger } from "@/lib/cinta-por-escoger"
+import {
+  avisoPorEscoger,
+  desglosePorEscoger,
+  piezasPorEscoger,
+} from "@/lib/cinta-por-escoger"
 import { formatMXN2 } from "@/lib/utils"
 import { CotizacionKpis } from "./cotizacion-kpis"
 import {
@@ -102,9 +106,10 @@ export function CotizacionDetail({
   // Sólo bloquea mientras la venta no exista: si ya se vendió, el inventario ya
   // se descontó y los faltantes de ahora son consecuencia, no impedimento.
   const bloqueadoPorStock = !yaVendida && faltantes.length > 0
-  // Cintas cotizadas sin modelo: no hay qué descontar, hay que elegirlas antes.
+  // Cintas cotizadas sin modelo: se venden y cobran normal, pero no descuentan
+  // inventario hasta elegir los modelos (no bloquean la venta).
   const porEscoger = piezasPorEscoger(preview.items)
-  const bloqueadoPorEscoger = !yaVendida && porEscoger > 0
+  const hayPorEscoger = porEscoger > 0
   // Cortesías incluidas: cuánto costaron (pérdida) y cuánto valían.
   const regalos = resumenRegalos(preview.items)
   // Descuentos por producto: a qué partida se le rebajó y cuánto.
@@ -144,10 +149,6 @@ export function CotizacionDetail({
       toast.info(
         `Esta cotización ya generó la venta ${ventaAsociada?.numero ?? ""}`.trim(),
       )
-      return
-    }
-    if (bloqueadoPorEscoger) {
-      toast.error(mensajePorEscoger(porEscoger))
       return
     }
     if (bloqueadoPorStock) {
@@ -296,17 +297,7 @@ export function CotizacionDetail({
             </>
           ) : (
             <>
-              {currentEstatus === "aceptada" && bloqueadoPorEscoger && (
-                <Link
-                  href={`/cotizaciones/${cotizacionId}/editar`}
-                  title={mensajePorEscoger(porEscoger)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 shadow-sm hover:bg-amber-100"
-                >
-                  <ShoppingBag className="size-4" />
-                  Elegir cintas para vender
-                </Link>
-              )}
-              {currentEstatus === "aceptada" && !bloqueadoPorEscoger && (
+              {currentEstatus === "aceptada" && (
                 <Link
                   href={`/ventas/nueva?cotizacion=${cotizacionId}`}
                   className="inline-flex items-center gap-2 rounded-lg bg-pc-teal px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pc-teal-hover"
@@ -318,31 +309,24 @@ export function CotizacionDetail({
               <button
                 type="button"
                 onClick={handleMarkSold}
-                disabled={
-                  pending ||
-                  ventaCreada != null ||
-                  bloqueadoPorStock ||
-                  bloqueadoPorEscoger
-                }
+                disabled={pending || ventaCreada != null || bloqueadoPorStock}
                 title={
-                  bloqueadoPorEscoger
-                    ? mensajePorEscoger(porEscoger)
-                    : bloqueadoPorStock
+                  bloqueadoPorStock
                     ? `Sin existencias para: ${faltantes
                         .map((f) => `${f.nombre} (pide ${f.cantidad}, hay ${f.stock})`)
                         .join(", ")}`
-                    : undefined
+                    : hayPorEscoger
+                      ? avisoPorEscoger(porEscoger)
+                      : undefined
                 }
                 className="inline-flex items-center gap-2 rounded-lg bg-[oklch(60%_0.118_184.704)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[oklch(51.1%_0.096_186.391)] disabled:cursor-not-allowed disabled:bg-teal-300"
               >
                 <CheckCircle2 className="size-4" />
                 {pending
                   ? "Procesando…"
-                  : bloqueadoPorEscoger
-                    ? "Cintas por escoger"
-                    : bloqueadoPorStock
-                      ? "Falta inventario"
-                      : "Marcar como Vendida"}
+                  : bloqueadoPorStock
+                    ? "Falta inventario"
+                    : "Marcar como Vendida"}
               </button>
             </>
           )}
@@ -394,25 +378,34 @@ export function CotizacionDetail({
         </div>
       </div>
 
-      {bloqueadoPorEscoger && (
+      {hayPorEscoger && (
         <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-amber-900">
-                {porEscoger} cinta{porEscoger === 1 ? "" : "s"} por escoger
+                Cintas por escoger: {desglosePorEscoger(preview.items)}
               </p>
               <p className="mt-0.5 text-xs text-amber-800">
-                La clienta aún no elige modelo, así que no hay inventario que
-                descontar. Cuando decida, entra a{" "}
-                <Link
-                  href={`/cotizaciones/${cotizacionId}/editar`}
-                  className="font-semibold underline"
-                >
-                  Editar
-                </Link>
-                , quita &quot;Cinta por escoger&quot; y agrega los modelos
-                elegidos. Después ya podrás convertir a venta.
+                {yaVendida
+                  ? "La venta ya se cobra normal, pero estas piezas todavía no descuentan inventario."
+                  : "Se puede vender y cobrar así: estas piezas no descuentan inventario hasta elegir los modelos."}{" "}
+                Cuando la clienta decida, dime los modelos para reemplazarlas por
+                las cintas reales
+                {!yaVendida && (
+                  <>
+                    {" "}
+                    (o entra a{" "}
+                    <Link
+                      href={`/cotizaciones/${cotizacionId}/editar`}
+                      className="font-semibold underline"
+                    >
+                      Editar
+                    </Link>
+                    )
+                  </>
+                )}
+                .
               </p>
             </div>
           </div>

@@ -4,10 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getInternalClienteIds } from "@/lib/internal-clientes"
 import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
-import {
-  mensajePorEscoger,
-  piezasPorEscogerEnCotizacion,
-} from "@/lib/cinta-por-escoger"
+import { idsComodinCintas } from "@/lib/cinta-por-escoger"
 import { errorSinColumnasRegalo, sinCamposRegalo } from "@/lib/regalos"
 import { revalidatePath } from "next/cache"
 import { parseNotas } from "./notas-util"
@@ -106,14 +103,8 @@ export async function saveVenta(input: SaveVentaInput) {
   // crear la venta siquiera. Ver auditoría de inventario 2026-07-25.
   let itemsParaStock: { producto_id: string | null; cantidad: number }[] = []
   if (input.cotizacion_id) {
-    // "Cinta por escoger" no es un modelo real: sin elegir no hay qué descontar.
-    const porEscoger = await piezasPorEscogerEnCotizacion(
-      supabase,
-      input.cotizacion_id,
-    )
-    if (porEscoger > 0) {
-      return { ok: false as const, error: mensajePorEscoger(porEscoger) }
-    }
+    // "Cinta por escoger" se vende y cobra normal, pero no tiene stock:
+    // `faltantesDeStock` la ignora y más abajo se aparta del descuento.
     const { data: cotItems } = await supabase
       .from("cotizacion_items")
       .select("producto_id, cantidad")
@@ -160,6 +151,9 @@ export async function saveVenta(input: SaveVentaInput) {
 
   // ¿La venta lleva partidas? (para decidir si se descuenta inventario)
   let hasItems = false
+  // Cintas por escoger: se registran DESPUÉS del descuento de inventario
+  // (no tienen fila de stock; la RPC truena con 23502 si las encuentra).
+  let itemsPorEscoger: Record<string, unknown>[] = []
 
   if (input.cotizacion_id) {
     // Las cortesías de la cotización viajan a la venta tal cual: si no, el
@@ -206,15 +200,21 @@ export async function saveVenta(input: SaveVentaInput) {
         precio_lista: it.precio_lista ?? null,
       }))
 
-      const { error: itemsErr } = await insertarVentaItems(supabase, ventaItems)
-      if (itemsErr) {
-        await rollbackVenta(supabase, venta.id)
-        return {
-          ok: false as const,
-          error: `No se pudo crear la venta (items): ${itemsErr.message}`,
+      const comodines = await idsComodinCintas(supabase)
+      const reales = ventaItems.filter((it) => !comodines.has(it.producto_id))
+      itemsPorEscoger = ventaItems.filter((it) => comodines.has(it.producto_id))
+
+      if (reales.length > 0) {
+        const { error: itemsErr } = await insertarVentaItems(supabase, reales)
+        if (itemsErr) {
+          await rollbackVenta(supabase, venta.id)
+          return {
+            ok: false as const,
+            error: `No se pudo crear la venta (items): ${itemsErr.message}`,
+          }
         }
+        hasItems = true
       }
-      hasItems = true
     }
   } else if (input.items && input.items.length > 0) {
     // Venta MANUAL con partidas: crear venta_items desde el editor del formulario.
@@ -282,6 +282,22 @@ export async function saveVenta(input: SaveVentaInput) {
       return {
         ok: false as const,
         error: `No se pudo crear la venta (inventario): ${rpcErr.message}`,
+      }
+    }
+  }
+
+  // Ya con el inventario descontado, se registran las cintas por escoger como
+  // partidas de la venta: marcan "cintas pendientes" hasta elegir los modelos.
+  if (itemsPorEscoger.length > 0) {
+    const { error: pendErr } = await insertarVentaItems(supabase, itemsPorEscoger)
+    if (pendErr) {
+      // El inventario real ya se descontó: no se borra la venta (cobraría
+      // doble al reintentar). Se avisa para completarla a mano.
+      return {
+        ok: false as const,
+        error:
+          `La venta ${input.numero} se creó, pero no se pudieron registrar las ` +
+          `cintas por escoger: ${pendErr.message}. Revísala en /ventas.`,
       }
     }
   }

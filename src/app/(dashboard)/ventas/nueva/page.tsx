@@ -1,9 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { VentaForm, type ProductoOpcion } from "../venta-form"
-import {
-  mensajePorEscoger,
-  piezasPorEscogerEnCotizacion,
-} from "@/lib/cinta-por-escoger"
 
 type Cliente = {
   id: string
@@ -111,9 +107,8 @@ export default async function NuevaVentaPage({
     } else if (!cot) {
       cotizacionError = `Cotización ${cotizacionId} no encontrada.`
     } else {
-      // Aviso desde que se abre el formulario, no hasta que falle al guardar.
-      const porEscoger = await piezasPorEscogerEnCotizacion(supabase, cot.id)
-      if (porEscoger > 0) cotizacionError = mensajePorEscoger(porEscoger)
+      // Las cintas por escoger NO bloquean: se cobran normal y quedan como
+      // pendientes en la venta (no descuentan inventario hasta elegir modelos).
       const { count } = await supabase
         .from("cotizacion_items")
         .select("*", { count: "exact", head: true })

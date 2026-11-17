@@ -18,9 +18,14 @@ Decisiones (sesión 2026-10-20):
   vista_inventario muestra el promedio sin tocar la vista.
   ⚠️ El botón "Actualizar TC" pisa productos.tipo_cambio → rompería este truco.
 - PRECIOS existentes NO se tocan. Productos nuevos: precio fijo (constantes abajo).
-- PENDIENTE: detalle de las cintas 2M ($601.10 USD). Mientras CINTAS_ITEMS esté vacío se usa
-  CINTAS_UNITS_EST (estimado) solo para el envío por unidad. Al llenar CINTAS_ITEMS y
-  re-correr, se recalcula todo desde el baseline (scripts/pedido-4-baseline.json).
+- Cintas (2M + Decorbronze): factura 2M BRASIL #132716 del 08/09/2026, $3,076.50 BRL pagados por
+  PIX = los $601.10 USD enviados como "cintas". Detalle abajo en FACTURA_CINTAS (precio por pieza en
+  BRL); el USD por pieza = BRL × (601.10 / BRL recibido) → el costo en USD absorbe la pieza que
+  faltó (1 entera Âncora pagada, 3 llegaron). Los precios se prorratean, no se usa un factor fijo.
+  Las cintas YA tenían su stock cargado a mano (scripts/cintas-*-lote1.py): aquí solo se
+  registran los ítems y el costo PROMEDIO MÓVIL; NO se vuelve a sumar stock (stock_before sale de
+  los baselines de esos scripts).
+  Fuera de esta factura (vienen de otra): Mariposas azul marino (CN-MAZ) y 8 enteras Blanca.
 
 IDEMPOTENTE: ítems y costos se recalculan desde el baseline; el stock solo suma el DELTA
 contra los ítems que el pedido ya tenía. Conversiones/pagos solo se insertan si no existen.
@@ -46,9 +51,40 @@ ENVIO_BR_USD = 1325.00             # 50 pallet + 25 transporte cintas + 1250.00 
 USA_MX_USD = 340.10
 USA_MX_MXN = 6319.47
 ENVIO_TOTAL_USD = round(ENVIO_BR_USD + USA_MX_USD, 2)   # 1,665.10
-CINTAS_USD = 601.10                # cintas 2M (detalle pendiente)
-CINTAS_UNITS_EST = 490             # ESTIMADO (≈ 601.10 / 1.22) — solo para envío/u provisional
-CINTAS_ITEMS = []                  # [(sku, cantidad, precio_usd), ...] ← llenar con el detalle 2M
+CINTAS_USD = 601.10                # cintas (2M + Decorbronze) = 3,076.50 BRL de la factura #132716
+PROV_2M, PROV_DX = "2M-Fortaleza", "Decorbronze"
+# (sku, cantidad RECIBIDA, precio BRL por pieza, proveedor). "Cortada" = 9/9 + 6/12 al mismo precio.
+FACTURA_CINTAS = [
+    # ── 2M ──
+    ("CN-FUC-CE", 10, 6, PROV_2M), ("CN-FUC-C9", 12, 7, PROV_2M), ("CN-FUC-C12", 4, 7, PROV_2M),      # Rosa Pink
+    ("CN-RMO-CE", 10, 6, PROV_2M), ("CN-RMO-C9", 6, 7, PROV_2M), ("CN-RMO-C12", 4, 7, PROV_2M),      # Roxa
+    ("CN-ROS-CE", 10, 6, PROV_2M), ("CN-ROS-C9", 15, 7, PROV_2M), ("CN-ROS-C12", 5, 7, PROV_2M),     # Rosa Bebe
+    ("CN-NAR-CE", 10, 6, PROV_2M), ("CN-NAR-C9", 6, 7, PROV_2M), ("CN-NAR-C12", 2, 7, PROV_2M),      # Laranja
+    ("CN-RNB-CE", 4, 7, PROV_2M), ("CN-RNB-C9", 12, 8, PROV_2M), ("CN-RNB-C12", 3, 8, PROV_2M),      # Xadrez (rombos B/N)
+    ("CN-RNR-CE", 5, 7, PROV_2M), ("CN-RNR-C9", 3, 8, PROV_2M), ("CN-RNR-C12", 3, 8, PROV_2M),       # Xadrez Junina
+    ("CN-RCO-CE", 4, 7, PROV_2M), ("CN-RCO-C9", 6, 8, PROV_2M), ("CN-RCO-C12", 2, 8, PROV_2M),       # Natal
+    ("CN-ACO-CE", 5, 13, PROV_2M), ("CN-ACO-C9", 8, 14, PROV_2M), ("CN-ACO-C12", 2, 14, PROV_2M),    # Colômbia
+    ("CN-HOJ-CE", 5, 7, PROV_2M), ("CN-HOJ-C9", 8, 8, PROV_2M), ("CN-HOJ-C12", 3, 8, PROV_2M),       # Jamaica
+    ("CN-AP-C9", 15, 8, PROV_2M), ("CN-AP-C12", 4, 8, PROV_2M),                                       # Onça amarela (sin entera)
+    ("CN-APAZ-CE", 10, 7, PROV_2M), ("CN-APAZ-C9", 13, 8, PROV_2M), ("CN-APAZ-C12", 4, 8, PROV_2M),  # Onça azul
+    ("CN-APRB-CE", 10, 7, PROV_2M), ("CN-APRB-C9", 15, 8, PROV_2M), ("CN-APRB-C12", 4, 8, PROV_2M),  # Onça branca
+    ("CN-APV-CE", 10, 7, PROV_2M), ("CN-APV-C9", 13, 8, PROV_2M), ("CN-APV-C12", 4, 8, PROV_2M),     # Onça verde
+    # ── Decorbronze (DX) ──
+    ("CN-ANC-CE", 3, 9, PROV_DX), ("CN-ANC-C9", 7, 10, PROV_DX), ("CN-ANC-C12", 2, 10, PROV_DX),     # Âncora (pagadas 4 enteras, llegaron 3)
+    ("CN-AZR-CE", 10, 5, PROV_DX), ("CN-AZR-C9", 12, 5.5, PROV_DX), ("CN-AZR-C12", 4, 5.5, PROV_DX), # Azul
+    ("CN-BLAN-C9", 15, 5.5, PROV_DX), ("CN-BLAN-C12", 5, 5.5, PROV_DX),                               # Branca (solo cortada)
+    ("CN-FDM-CE", 10, 9, PROV_DX), ("CN-FDM-C9", 15, 10, PROV_DX), ("CN-FDM-C12", 4, 10, PROV_DX),   # Fundo do mar
+    ("CN-ACEB-CE", 10, 9, PROV_DX), ("CN-ACEB-C12", 4, 9, PROV_DX),                                   # Onda tropical
+    ("CN-AZJ-CE", 3, 9, PROV_DX), ("CN-AZJ-C9", 5, 10, PROV_DX), ("CN-AZJ-C12", 2, 10, PROV_DX),     # Portuguesa
+    ("CN-PRE-CE", 8, 5, PROV_DX), ("CN-PRE-C9", 15, 5.5, PROV_DX), ("CN-PRE-C12", 4, 5.5, PROV_DX),  # Preta
+]
+BRL_FACTURA = 3076.50
+BRL_FALTANTE = 9.00                # 1 entera Âncora pagada que no llegó
+BRL_RECIBIDO = sum(q * b for _, q, b, _ in FACTURA_CINTAS)
+assert abs(BRL_RECIBIDO - (BRL_FACTURA - BRL_FALTANTE)) < 0.005, "Factura cintas no cuadra: %.2f" % BRL_RECIBIDO
+USD_POR_BRL = CINTAS_USD / BRL_RECIBIDO     # ≈ 0.1960 (BRL/USD ≈ 5.10)
+CINTAS_PROV = {sku: pv for sku, _, _, pv in FACTURA_CINTAS}
+CINTAS_ITEMS = [(sku, q, round(b * USD_POR_BRL, 4)) for sku, q, b, _ in FACTURA_CINTAS]
 PL_PROV = "Patricia Lobo"
 
 # Conversiones MXN→USDT (Bitso). (fecha local CST UTC-6, usdt, mxn)
@@ -174,6 +210,8 @@ assert total_pl == PROFORMA_TOTAL, "La suma de líneas %.2f ≠ proforma %.2f" %
 assert abs(CINTAS_USD + ENVIO_BR_USD + PROFORMA_TOTAL - USDT_ENVIADO) < 0.005, "No cuadra con USDT enviados"
 for _, _, sku in LINEAS:
     assert sku in NUEVOS or sku in productos, "SKU inexistente: " + sku
+for sku, _, _ in CINTAS_ITEMS:
+    assert sku in productos, "SKU de cinta inexistente: " + sku
 for sku in NUEVOS:
     if sku in productos:
         print("ℹ️  %s ya existe (se reutiliza)" % sku)
@@ -211,11 +249,55 @@ else:
         json.dump(baseline, open(BASELINE_PATH, "w"), indent=2, ensure_ascii=False)
         print("Baseline guardado en", BASELINE_PATH)
 
+# Baseline de las cintas (stock ANTES de cargarlas a mano = de los baselines de los scripts de lote)
+def _stock_previo_cintas():
+    out = {}
+    for fn, keys in (("cintas-2m-pedido4-lote1-baseline.json", ("stock_previo",)),
+                     ("cintas-decorbronze-lote1-baseline.json", ("stock_previo",))):
+        path = os.path.join(ROOT, "scripts", fn)
+        if not os.path.exists(path):
+            continue
+        b = json.load(open(path))
+        for k in keys:
+            for sku, v in b.get(k, {}).items():
+                out[sku] = int(v["stock_actual"])
+        for fk, sk in (("fusion_rosa_palo", "stock_previo_ros"), ("fusion_morado_oscuro", "stock_previo_rmo"),
+                       ("fusion_vino", "stock_previo_fuc")):
+            for sku, v in b.get(fk, {}).get(sk, {}).items():
+                out[sku] = int(v)
+    return out
+
+_nuevos_cintas = [sku for sku, _, _ in CINTAS_ITEMS if sku not in baseline]
+if _nuevos_cintas:
+    _sp = _stock_previo_cintas()
+    for sku in _nuevos_cintas:
+        p = productos[sku]
+        its = get("pedido_compra_items?select=cantidad,precio_unitario_usd,envio_unitario_usd,costo_total_unitario_mxn,pedido_id&producto_id=eq." + p["id"])
+        if ped:
+            its = [i for i in its if i["pedido_id"] != ped["id"]]
+        tq = sum(i["cantidad"] for i in its)
+        if tq:
+            old_mxn = sum(i["cantidad"] * i["costo_total_unitario_mxn"] for i in its) / tq
+            old_prec = sum(i["cantidad"] * i["precio_unitario_usd"] for i in its) / tq
+            old_env = sum(i["cantidad"] * i["envio_unitario_usd"] for i in its) / tq
+        else:
+            old_prec = float(p.get("precio_usd") or 0); old_env = float(p.get("costo_envio_usd") or 0)
+            old_mxn = float(p.get("costo") or 0)
+        sb = _sp.get(sku)
+        if sb is None:   # sin baseline de lote: no se tocó en las cargas → stock actual
+            sb = int((inv.get(p["id"]) or {}).get("stock_actual") or 0)
+        baseline[sku] = {"stock_before": sb, "old_mxn": old_mxn, "old_precio_usd": old_prec,
+                         "old_envio_usd": old_env, "cinta": True,
+                         "rollback": {k: p.get(k) for k in ("precio_usd", "costo_envio_usd", "tipo_cambio", "costo")}}
+    if not DRY:
+        json.dump(baseline, open(BASELINE_PATH, "w"), indent=2, ensure_ascii=False)
+        print("Baseline ampliado con %d cintas" % len(_nuevos_cintas))
+
 # ───────────────────────── Cálculo ─────────────────────────
 units_pl = sum(q for q, _, _ in LINEAS)
-units_cintas = sum(q for _, q, _ in CINTAS_ITEMS) if CINTAS_ITEMS else CINTAS_UNITS_EST
+units_cintas = sum(q for _, q, _ in CINTAS_ITEMS)
 envio_u = ENVIO_TOTAL_USD / (units_pl + units_cintas)
-prov_flag = "" if CINTAS_ITEMS else "  ⚠️ PROVISIONAL (cintas estimadas: %d u)" % CINTAS_UNITS_EST
+prov_flag = ""
 
 print("\n=== PEDIDO %d ===" % NUMERO)
 print("MXN gastado %.2f · USDT comprado %.2f · enviado %.2f · sobrante %.2f" % (MXN_GASTADO, USDT_COMPRADO, USDT_ENVIADO, SOBRANTE))
@@ -224,12 +306,15 @@ print("Envío %.2f USD / %d u (%d PL + %d cintas) = %.4f USD/u%s" % (ENVIO_TOTAL
 
 calc = []
 print("\n%-13s %5s %6s %8s %9s %9s %9s %7s" % ("SKU", "stock", "+ent", "costoNvo", "PROMEDIO", "precio", "margen", ""))
-for q, usd, sku in LINEAS:
+TODAS = [(q, usd, sku, False) for q, usd, sku in LINEAS] + [(q, usd, sku, True) for sku, q, usd in CINTAS_ITEMS]
+for q, usd, sku, es_cinta in TODAS:
     nuevo_mxn = (usd + envio_u) * TC
     if sku in NUEVOS and sku not in baseline:  # producto creado por este pedido: stock previo 0
         sb, avg_mxn, avg_prec, avg_env = 0, nuevo_mxn, usd, envio_u
     else:
         b = baseline[sku]; sb = b["stock_before"]
+        if es_cinta and b["old_mxn"] <= 0:
+            sb = 0   # el stock previo no tenía costo registrado: no diluir el promedio con ceros
         w = sb + q
         avg_mxn = (sb * b["old_mxn"] + q * nuevo_mxn) / w
         avg_prec = (sb * b["old_precio_usd"] + q * usd) / w
@@ -237,7 +322,7 @@ for q, usd, sku in LINEAS:
     tc_mix = avg_mxn / (avg_prec + avg_env)
     pub = precio_publico(sku) if (sku in productos or sku in NUEVOS) else None
     calc.append(dict(sku=sku, q=q, usd=usd, nuevo_mxn=nuevo_mxn, avg_mxn=avg_mxn, avg_prec=avg_prec,
-                     avg_env=avg_env, tc_mix=tc_mix, pub=pub, sb=sb))
+                     avg_env=avg_env, tc_mix=tc_mix, pub=pub, sb=sb, cinta=es_cinta))
     m = ("%.1f%%" % ((pub - avg_mxn) / pub * 100)) if pub else "s/precio"
     print("%-13s %5d %6d %8.1f %9.1f %9s %9s" % (sku, sb, q, nuevo_mxn, avg_mxn, ("%.0f" % pub) if pub else "-", m))
 
@@ -249,13 +334,14 @@ header = dict(
     costo_envio_mxn=r2(ENVIO_TOTAL_USD * TC), total_usd=r2(total_usd), total_mxn=r2(total_usd * TC),
     inversion_sandra_usd=r2(total_usd / 2), inversion_benjamin_usd=r2(total_usd / 2),
     inversion_sandra_mxn=r2(total_usd * TC / 2), inversion_benjamin_mxn=r2(total_usd * TC / 2),
-    notas=("Pedido 4 Brasil · Proforma Patricia Lobo #0504 (04/09/2026) $4,887.85 USD · 18 líneas / %d u + cintas 2M $601.10 USD%s · "
+    notas=("Pedido 4 Brasil · Proforma Patricia Lobo #0504 (04/09/2026) $4,887.85 USD · 18 líneas / %d u + cintas 2M/Decorbronze $601.10 USD (factura 2M Brasil #132716 del 08/09/2026: $3,076.50 BRL por PIX; %d u, "
+           "1 entera Âncora pagada no llegó)%s · "
            "Envío $%.2f USD (pallet 50 + transporte cintas 25 + Brasil→Texas 1,250.00 + EE.UU.→México 340.10 La casita deli, "
            "pagado con TDC por $6,319.47 MXN) · "
            "TC %.4f = costo REAL todo-incluido (comisión Bitso y de tarjeta adentro; conversiones con comision_mxn=0) · "
            "Enviado %.2f USDT a Julio Ayarza Delgado; sobrante %.2f USDT fuera del costo · "
            "Retiro Nu $59,500 c/u. Costos por producto = promedio móvil sobre stock." %
-           (units_pl, " (DETALLE CINTAS PENDIENTE)" if not CINTAS_ITEMS else "", ENVIO_TOTAL_USD, TC, USDT_ENVIADO, SOBRANTE)),
+           (units_pl, units_cintas, "", ENVIO_TOTAL_USD, TC, USDT_ENVIADO, SOBRANTE)),
 )
 print("\nHEADER subtotal %.2f envío %.2f total %.2f USD / %.2f MXN · inversión c/u %.2f MXN" %
       (subtotal_usd, ENVIO_TOTAL_USD, total_usd, header["total_mxn"], header["inversion_sandra_mxn"]))
@@ -312,13 +398,13 @@ for n, x in enumerate(calc):
         "total_con_envio_usd": r2(nuevo_total_usd * x["q"]), "total_con_envio_mxn": r2(nuevo_total_usd * TC * x["q"]),
         "precio_publico_mxn": pub, "profit_unitario": r2(profit_u) if profit_u is not None else None,
         "profit_total": r2(profit_u * x["q"]) if profit_u is not None else None,
-        "proveedor_id": prov[PL_PROV], "sort_order": n,
+        "proveedor_id": prov[CINTAS_PROV[x["sku"]]] if x["cinta"] else prov[PL_PROV], "sort_order": n,
     })
     rest("PATCH", "productos?id=eq." + p["id"], {
         "precio_usd": r4(x["avg_prec"]), "costo_envio_usd": r4(x["avg_env"]),
         "tipo_cambio": round(x["tc_mix"], 6), "costo": r2(x["avg_mxn"]),
     })
-    delta = x["q"] - prev_q.get(p["id"], 0)
+    delta = 0 if x["cinta"] else x["q"] - prev_q.get(p["id"], 0)   # cintas: stock ya cargado a mano
     if delta:
         row = inv.get(p["id"])
         if row:

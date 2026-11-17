@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
 
 type Admin = ReturnType<typeof createAdminClient>
 
@@ -53,9 +54,11 @@ export async function faltantesDeStock(
 
   const out: FaltanteStock[] = []
   for (const [pid, pide] of porProducto) {
+    const p = prodBy.get(pid)
+    // "Cinta por escoger" no tiene existencias: no hay modelo que descontar.
+    if (esCintaPorEscoger(p)) continue
     const hay = stockBy.get(pid) ?? 0
     if (hay >= pide) continue
-    const p = prodBy.get(pid)
     out.push({
       producto_id: pid,
       nombre: p?.nombre_display ?? p?.nombre ?? "Producto",

@@ -142,5 +142,746 @@
       "tipo_cambio": 17.6,
       "costo": 1558.73
     }
+  },
+  "CN-FUC-CE": {
+    "stock_before": 0,
+    "old_mxn": 65.37,
+    "old_precio_usd": 1.05,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.05,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 65.37
+    }
+  },
+  "CN-FUC-C9": {
+    "stock_before": 0,
+    "old_mxn": 68.36,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 68.36
+    }
+  },
+  "CN-FUC-C12": {
+    "stock_before": 8,
+    "old_mxn": 68.36,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.66,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 68.36
+    }
+  },
+  "CN-RMO-CE": {
+    "stock_before": 8,
+    "old_mxn": 65.37,
+    "old_precio_usd": 1.05,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.05,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 65.37
+    }
+  },
+  "CN-RMO-C9": {
+    "stock_before": 12,
+    "old_mxn": 68.36,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 68.36
+    }
+  },
+  "CN-RMO-C12": {
+    "stock_before": 3,
+    "old_mxn": 0.0,
+    "old_precio_usd": 0.0,
+    "old_envio_usd": 0.0,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": null,
+      "costo_envio_usd": null,
+      "tipo_cambio": 20.7,
+      "costo": 0.0
+    }
+  },
+  "CN-ROS-CE": {
+    "stock_before": 2,
+    "old_mxn": 61.38,
+    "old_precio_usd": 0.72,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.72,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 61.38
+    }
+  },
+  "CN-ROS-C9": {
+    "stock_before": 1,
+    "old_mxn": 65.75,
+    "old_precio_usd": 0.93,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.93,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 65.75
+    }
+  },
+  "CN-ROS-C12": {
+    "stock_before": 2,
+    "old_mxn": 65.75,
+    "old_precio_usd": 0.93,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.93,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 65.75
+    }
+  },
+  "CN-NAR-CE": {
+    "stock_before": 5,
+    "old_mxn": 65.37,
+    "old_precio_usd": 1.05,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.05,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 65.37
+    }
+  },
+  "CN-NAR-C9": {
+    "stock_before": 7,
+    "old_mxn": 68.36,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.664,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.66,
+      "tipo_cambio": 17.6,
+      "costo": 68.36
+    }
+  },
+  "CN-NAR-C12": {
+    "stock_before": 4,
+    "old_mxn": 0.0,
+    "old_precio_usd": 0.0,
+    "old_envio_usd": 0.0,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": null,
+      "costo_envio_usd": null,
+      "tipo_cambio": 20.7,
+      "costo": 0.0
+    }
+  },
+  "CN-RNB-CE": {
+    "stock_before": 2,
+    "old_mxn": 63.0,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 63.0
+    }
+  },
+  "CN-RNB-C9": {
+    "stock_before": 0,
+    "old_mxn": 75.37,
+    "old_precio_usd": 1.4,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.4,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 75.37
+    }
+  },
+  "CN-RNB-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-RNR-CE": {
+    "stock_before": 1,
+    "old_mxn": 71.75,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 71.75
+    }
+  },
+  "CN-RNR-C9": {
+    "stock_before": 0,
+    "old_mxn": 66.49,
+    "old_precio_usd": 1.4,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.4,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 66.49
+    }
+  },
+  "CN-RNR-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-RCO-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-RCO-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-RCO-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ACO-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ACO-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ACO-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-HOJ-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-HOJ-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-HOJ-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AP-C9": {
+    "stock_before": 0,
+    "old_mxn": 75.37,
+    "old_precio_usd": 1.4,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.4,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 75.37
+    }
+  },
+  "CN-AP-C12": {
+    "stock_before": 2,
+    "old_mxn": 75.37,
+    "old_precio_usd": 1.4,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.4,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 75.37
+    }
+  },
+  "CN-APAZ-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APAZ-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APAZ-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APRB-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APRB-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APRB-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APV-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APV-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-APV-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ANC-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ANC-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ANC-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZR-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZR-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZR-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-BLAN-C9": {
+    "stock_before": 2,
+    "old_mxn": 57.22,
+    "old_precio_usd": 0.93,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.93,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 57.22
+    }
+  },
+  "CN-BLAN-C12": {
+    "stock_before": 4,
+    "old_mxn": 0.0,
+    "old_precio_usd": 0.0,
+    "old_envio_usd": 0.0,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": null,
+      "costo_envio_usd": null,
+      "tipo_cambio": 20.7,
+      "costo": 0.0
+    }
+  },
+  "CN-FDM-CE": {
+    "stock_before": 0,
+    "old_mxn": 75.37,
+    "old_precio_usd": 1.4,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.4,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 75.37
+    }
+  },
+  "CN-FDM-C9": {
+    "stock_before": 0,
+    "old_mxn": 79.49,
+    "old_precio_usd": 1.6,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.6,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 79.49
+    }
+  },
+  "CN-FDM-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ACEB-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-ACEB-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZJ-CE": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZJ-C9": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-AZJ-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
+  },
+  "CN-PRE-CE": {
+    "stock_before": 4,
+    "old_mxn": 61.38,
+    "old_precio_usd": 0.72,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.72,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 61.38
+    }
+  },
+  "CN-PRE-C9": {
+    "stock_before": 0,
+    "old_mxn": 65.75,
+    "old_precio_usd": 0.93,
+    "old_envio_usd": 0.44,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 0.93,
+      "costo_envio_usd": 0.44,
+      "tipo_cambio": 20.7,
+      "costo": 65.75
+    }
+  },
+  "CN-PRE-C12": {
+    "stock_before": 0,
+    "old_mxn": 58.45,
+    "old_precio_usd": 1.22,
+    "old_envio_usd": 2.18,
+    "cinta": true,
+    "rollback": {
+      "precio_usd": 1.22,
+      "costo_envio_usd": 2.18,
+      "tipo_cambio": 17.19,
+      "costo": 58.45
+    }
   }
 }

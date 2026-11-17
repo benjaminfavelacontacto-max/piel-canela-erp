@@ -49,7 +49,11 @@ import {
   type TipoDescuento,
 } from "@/lib/descuentos"
 import { grupoProducto } from "@/lib/grupos-productos"
-import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
+import {
+  MEDIDAS_POR_ESCOGER,
+  SKU_CINTA_POR_ESCOGER,
+  esCintaPorEscoger,
+} from "@/lib/cinta-por-escoger"
 
 /**
  * Identidad de una partida en el editor. NO basta `producto_id`: el mismo SKU
@@ -175,10 +179,21 @@ export function CotizacionForm({
       .slice(0, 20)
   }, [search, productos])
 
-  const cintaComodin = useMemo(
-    () => productos.find((p) => esCintaPorEscoger(p)) ?? null,
-    [productos],
-  )
+  // Comodines "Cinta por escoger" por medida (9mm, 12mm…). Si el SQL de medidas
+  // aún no se corre, queda el genérico de antes.
+  const comodinesCinta = useMemo(() => {
+    const porMedida = MEDIDAS_POR_ESCOGER.flatMap((m) => {
+      const producto = productos.find(
+        (p) => (p.sku ?? "").toUpperCase() === m.sku,
+      )
+      return producto ? [{ etiqueta: m.etiqueta, producto }] : []
+    })
+    if (porMedida.length > 0) return porMedida
+    const generico = productos.find(
+      (p) => (p.sku ?? "").toUpperCase() === SKU_CINTA_POR_ESCOGER,
+    )
+    return generico ? [{ etiqueta: "Cualquier medida", producto: generico }] : []
+  }, [productos])
 
   const selectedProduct = useMemo(
     () => productos.find((p) => p.id === selectedProductId) ?? null,
@@ -709,23 +724,34 @@ export function CotizacionForm({
 
           <CintasFotoBoton productos={productos} onAgregar={addItems} variante="escritorio" />
 
-          {/* Cintas sin modelo definido: entra una partida comodín con la
-              cantidad de arriba; se reemplaza por las reales al elegir. */}
-          {cintaComodin && (
-            <button
-              type="button"
-              onClick={() => {
-                addItem(cintaComodin)
-                toast.success("Cinta por escoger agregada")
-              }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50"
-            >
-              <Plus className="size-4" />
-              Cinta por escoger
-              <span className="text-xs font-normal text-amber-700">
-                (usa la cantidad de arriba)
-              </span>
-            </button>
+          {/* Cintas sin modelo definido: se cotizan por MEDIDA con la cantidad de
+              arriba (todas cuestan lo mismo). Quedan "pendientes de escoger": se
+              pueden vender y cobrar así, y se reemplazan por las reales al elegir. */}
+          {comodinesCinta.length > 0 && (
+            <div className="mt-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-2.5">
+              <p className="text-xs font-semibold text-amber-900">
+                Cintas por escoger
+                <span className="ml-1 font-normal text-amber-700">
+                  (usa la cantidad de arriba)
+                </span>
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {comodinesCinta.map(({ etiqueta, producto }) => (
+                  <button
+                    key={producto.id}
+                    type="button"
+                    onClick={() => {
+                      addItem(producto)
+                      toast.success(`Cinta por escoger · ${etiqueta} agregada`)
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-pc-card px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-50"
+                  >
+                    <Plus className="size-4" />
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Modo regalo: la siguiente partida entra con precio $0 */}
@@ -785,7 +811,7 @@ export function CotizacionForm({
                         <span className="truncate">{it.nombre}</span>
                         {esCintaPorEscoger(it) && (
                           <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800">
-                            Sin modelo
+                            Pendiente de escoger
                           </span>
                         )}
                       </span>

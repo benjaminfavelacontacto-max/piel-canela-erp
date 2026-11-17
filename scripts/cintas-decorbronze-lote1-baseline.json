@@ -1,0 +1,178 @@
+{
+  "fecha": "2026-11-15T13:53:32.152327",
+  "stock_previo": {
+    "CN-FDM-CE": {
+      "inventario_id": "95c9f02b-60c6-4dec-9135-4413d07aa3cd",
+      "stock_actual": 0
+    },
+    "CN-FDM-C9": {
+      "inventario_id": "ba2094d3-861c-4805-bded-475235928384",
+      "stock_actual": 0
+    },
+    "CN-FDM-C12": {
+      "inventario_id": "848d83ab-8c58-4e8d-8413-2004c9fa7bf2",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-ACEB-CE": {
+      "inventario_id": "4e32a405-1a54-4d6b-9bce-4d42f1904b1a",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-ACEB-C12": {
+      "inventario_id": "d16307db-06a1-48e3-8807-b44a37d94b40",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-BLAN-CE": {
+      "inventario_id": "fab027d1-7acc-491f-8708-2d2be8464e66",
+      "stock_actual": 3
+    },
+    "CN-BLAN-C9": {
+      "inventario_id": "b77e4fe1-4dd7-4866-b525-0abe0f59940f",
+      "stock_actual": 2
+    },
+    "CN-BLAN-C12": {
+      "inventario_id": "8ab96414-6563-4e41-a768-40cca9693c1c",
+      "stock_actual": 4
+    },
+    "CN-PRE-CE": {
+      "inventario_id": "815aa654-3936-4f0c-aabd-413c71f0a82a",
+      "stock_actual": 4
+    },
+    "CN-PRE-C9": {
+      "inventario_id": "f557509f-2c0f-47af-a548-ef016820acb6",
+      "stock_actual": 0
+    },
+    "CN-PRE-C12": {
+      "inventario_id": "51057536-5095-4ff8-879e-2037c0eb6514",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZR-CE": {
+      "inventario_id": "471359b5-e4fc-49fe-a16a-15b5abcf73f3",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZR-C9": {
+      "inventario_id": "f00431a4-6d25-44d7-9e01-8208b4eff658",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZR-C12": {
+      "inventario_id": "c42155d3-e7ee-4af6-9d5f-e2401e46999d",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-ANC-CE": {
+      "inventario_id": "3128b76a-a484-4e32-8dda-20d069c9d414",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-ANC-C9": {
+      "inventario_id": "2fc56146-8ef4-42ff-8555-9b31d0c7d844",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-ANC-C12": {
+      "inventario_id": "4b83da06-8a1e-4a8e-8a60-4778ce3e4f9d",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-MAZ-CE": {
+      "inventario_id": "215ee89b-1dab-405c-8b15-f2b54be8f641",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-MAZ-C9": {
+      "inventario_id": "639a344a-c1e7-4eb4-8151-5132a4035596",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-MAZ-C12": {
+      "inventario_id": "81b4b883-1a77-4410-9dca-0354ea4688bb",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZJ-CE": {
+      "inventario_id": "138275fa-4857-4183-bb2a-91a46657428c",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZJ-C9": {
+      "inventario_id": "59e908bf-bdb6-439a-a4a0-6d2db99c0839",
+      "stock_actual": 0,
+      "creada": true
+    },
+    "CN-AZJ-C12": {
+      "inventario_id": "1e8e7885-5e61-46f6-8ff6-49a99c1fad22",
+      "stock_actual": 0,
+      "creada": true
+    }
+  },
+  "productos_creados": [
+    "5481f9b2-ca45-4695-bada-0b031fa12121",
+    "8d0a9837-3551-4f3a-9cbb-d03da1f178a8",
+    "c016f78c-c342-485f-b767-2c87413e7a62",
+    "5322a923-7644-4882-95d1-c10693ccaa55",
+    "7bf8ad9e-8232-4872-b2d0-d0334ca81c5d",
+    "ba8ef0c1-9dc3-4505-ab72-7e03e8050bd6",
+    "1205f456-7be7-42d4-b300-67c00b4f03e8",
+    "4a1b29e9-e14f-44a0-b208-ef042a6a7d9d",
+    "03559ab5-8cf5-4dcb-8bcb-fba15a8447e0",
+    "dc30836b-be3b-4808-ba05-5b429648d270",
+    "4d3e70a8-7aa3-4fc4-a32a-f490e83ae81d",
+    "67a23d14-b384-45ca-8091-a8c21d2aab45",
+    "a5d6b3e7-feb5-484e-9954-34b2fa6fafc9",
+    "00882757-d299-4586-8efd-8b9bd7f483eb",
+    "c3f36149-58ac-48c8-af46-aca920d0031a",
+    "3abec418-a9ec-42df-a550-a5812cd44bf7"
+  ],
+  "inventario_creado": [
+    "848d83ab-8c58-4e8d-8413-2004c9fa7bf2",
+    "4e32a405-1a54-4d6b-9bce-4d42f1904b1a",
+    "d16307db-06a1-48e3-8807-b44a37d94b40",
+    "51057536-5095-4ff8-879e-2037c0eb6514",
+    "471359b5-e4fc-49fe-a16a-15b5abcf73f3",
+    "f00431a4-6d25-44d7-9e01-8208b4eff658",
+    "c42155d3-e7ee-4af6-9d5f-e2401e46999d",
+    "3128b76a-a484-4e32-8dda-20d069c9d414",
+    "2fc56146-8ef4-42ff-8555-9b31d0c7d844",
+    "4b83da06-8a1e-4a8e-8a60-4778ce3e4f9d",
+    "215ee89b-1dab-405c-8b15-f2b54be8f641",
+    "639a344a-c1e7-4eb4-8151-5132a4035596",
+    "81b4b883-1a77-4410-9dca-0354ea4688bb",
+    "138275fa-4857-4183-bb2a-91a46657428c",
+    "59e908bf-bdb6-439a-a4a0-6d2db99c0839",
+    "1e8e7885-5e61-46f6-8ff6-49a99c1fad22"
+  ],
+  "precios_creados": [
+    "35af427b-9ae6-487e-8c4b-d6db7a98bf08",
+    "8f135d63-0737-4305-8b0b-b502b3fb5b4f",
+    "c6ce7764-a645-4fdc-b2a5-c8d113599287",
+    "62427df7-8fd9-4512-9cd6-6e1572bd9e87",
+    "6e2cfebc-1465-4d50-b535-ce4a18e3069c",
+    "1b79c69a-09b2-46d6-9300-b747710efe13",
+    "078fc315-1b66-4909-873c-6ecd728158da",
+    "d47562ad-063c-4f9e-ad83-29df783d6ff7",
+    "a134ad33-190c-470f-8585-40341521fc25",
+    "48515ea7-1e95-4425-86a3-4900abfd9238",
+    "f0827843-2336-4b94-8403-ced7a81244cf",
+    "14b6581d-a7fb-4240-9c7f-8e417e535264",
+    "48bcc3cd-9264-455d-b4f8-2060ec83c2fd",
+    "abb9a059-43f0-42d5-a917-de77e7e3a357",
+    "2e6aeed1-1188-49b4-a975-0d884bee45fc",
+    "e6522484-8a86-4cc8-aa11-713fb8477fd8"
+  ],
+  "imagenes": [
+    "cinta-blanca-db.jpg",
+    "cinta-anclas-db.jpg",
+    "cinta-mariposas-azules-db.jpg",
+    "cinta-azulejo-db.jpg"
+  ],
+  "imagen_asignada": [
+    "3c87e7b2-b654-4111-bd72-979a39f22139",
+    "b1a3ade7-597f-409a-9481-a33a6c4250d6",
+    "1642585f-ba95-4653-bb23-7cbdd92a466b"
+  ]
+}

@@ -97,12 +97,14 @@ const ORDEN_CATEGORIAS = [
   "EXFOLIANTS",
   "HUMECTANTES",
   "AEROGRAFÍA",
+  "ACEITE CORPORAL",
   "CINTAS",
   "OTROS",
 ]
 
 // Categorías de 1-2 productos se juntan en "Otros" para que el filtro quede corto.
-const CATEGORIAS_EN_OTROS = new Set(["ACEITE CORPORAL", "SOMBRILLA"])
+// (Aceite corporal tiene su propio botón: "Aceites".)
+const CATEGORIAS_EN_OTROS = new Set(["SOMBRILLA"])
 
 function grupoCategoria(cat: string): string {
   return CATEGORIAS_EN_OTROS.has(cat) ? "OTROS" : cat
@@ -116,6 +118,7 @@ function ordenCategoria(cat: string): number {
 function nombreCategoria(cat: string): string {
   if (cat === "TODOS") return "Todos"
   if (cat === "EXFOLIANTS") return "Exfoliantes"
+  if (cat === "ACEITE CORPORAL") return "Aceites"
   const t = cat.toLowerCase()
   return t.charAt(0).toUpperCase() + t.slice(1)
 }

@@ -122,7 +122,9 @@ export function PortalBadge({
               maxWidth: "calc(100vw - 24px)",
               maxHeight: 400,
               overflowY: "auto",
-              background: "var(--pc-text)",
+              // Panel SIEMPRE oscuro (texto blanco fijo): no usar --pc-text,
+              // que en tema oscuro es casi blanco y deja el texto ilegible.
+              background: "#0F172A",
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 14,
               boxShadow: "0 16px 48px rgba(0,0,0,0.6)",

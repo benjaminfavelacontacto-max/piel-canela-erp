@@ -24,7 +24,11 @@ import type { Cliente, Producto } from "@/lib/cotizacion-types"
 import { formatMXN2 } from "@/lib/utils"
 import { resumenRegalos } from "@/lib/regalos"
 import { grupoProducto } from "@/lib/grupos-productos"
-import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
+import {
+  MEDIDAS_POR_ESCOGER,
+  SKU_CINTA_POR_ESCOGER,
+  esCintaPorEscoger,
+} from "@/lib/cinta-por-escoger"
 import { seccionesCatalogo } from "@/lib/lista-precios"
 import {
   totalesCotizacion,
@@ -171,7 +175,17 @@ export function QuickQuote({
   const utilidad = round2(subtotal - descuento - costoProductos)
   const regalos = resumenRegalos(lineas)
   const piezas = lineas.reduce((s, l) => s + l.cantidad, 0)
-  const cintaComodin = productos.find((p) => esCintaPorEscoger(p)) ?? null
+  // Comodines "Cinta por escoger" por medida (9mm, 12mm…). Si el SQL de medidas
+  // aún no se corre, queda el genérico de antes.
+  const comodinesMedida = MEDIDAS_POR_ESCOGER.flatMap((m) => {
+    const producto = productos.find(
+      (p) => (p.sku ?? "").toUpperCase() === m.sku,
+    )
+    return producto ? [{ etiqueta: m.etiqueta, producto }] : []
+  })
+  const cintaGenerica =
+    productos.find((p) => (p.sku ?? "").toUpperCase() === SKU_CINTA_POR_ESCOGER) ??
+    null
 
   function elegirCliente(id: string) {
     setClienteId(id)
@@ -450,22 +464,45 @@ export function QuickQuote({
 
         <CintasFotoBoton productos={productos} onAgregar={agregarVarias} variante="movil" />
 
-        {/* Cintas cuyo modelo la clienta aún no decide: una partida comodín con
-            la cantidad que pida; se reemplaza al elegir (Editar cotización). */}
-        {cintaComodin && (
-          <button
-            type="button"
-            onClick={() => {
-              agregar(cintaComodin)
-              toast.success("Cinta por escoger agregada", {
-                description: "Ajusta cuántas quiere con − / +",
-              })
-            }}
-            className="pc-tap flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3 text-[14px] font-semibold text-amber-800 active:scale-[0.99]"
-          >
-            <Plus className="size-4" />
-            Cinta por escoger
-          </button>
+        {/* Cintas cuyo modelo la clienta aún no decide: se cotizan por MEDIDA y
+            cantidad (todas cuestan lo mismo) y quedan "pendientes de escoger";
+            se pueden vender y cobrar así, y se reemplazan por los modelos reales
+            cuando ella elija. Cada toque suma 1; el − / + de la partida ajusta. */}
+        {(comodinesMedida.length > 0 || cintaGenerica) && (
+          <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 p-3">
+            <p className="text-[12px] font-semibold text-amber-900">
+              Cintas por escoger
+              <span className="ml-1.5 font-normal text-amber-700">
+                · toca una medida por cada pieza
+              </span>
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(comodinesMedida.length > 0
+                ? comodinesMedida
+                : [{ etiqueta: "Cualquier medida", producto: cintaGenerica! }]
+              ).map(({ etiqueta, producto }) => {
+                const n = lineas
+                  .filter((l) => l.producto_id === producto.id && !l.es_regalo)
+                  .reduce((sum, l) => sum + l.cantidad, 0)
+                return (
+                  <button
+                    key={producto.id}
+                    type="button"
+                    onClick={() => agregar(producto)}
+                    className="pc-tap flex items-center gap-1.5 rounded-xl border border-amber-300 bg-pc-card px-3.5 py-2 text-[14px] font-semibold text-amber-800 active:scale-[0.97]"
+                  >
+                    <Plus className="size-4" />
+                    {etiqueta}
+                    {n > 0 && (
+                      <span className="rounded-full bg-amber-200 px-1.5 text-[11px] font-bold text-amber-900">
+                        ×{n}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         )}
 
         {lineas.length === 0 ? (
@@ -515,7 +552,7 @@ export function QuickQuote({
                         {l.nombre}
                         {esCintaPorEscoger(l) && (
                           <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-amber-800">
-                            Sin modelo
+                            Pendiente de escoger
                           </span>
                         )}
                         {l.es_regalo && (

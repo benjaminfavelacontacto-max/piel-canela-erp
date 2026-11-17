@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { faltantesDeStock, describirFaltantes } from "@/lib/stock"
 import {
-  mensajePorEscoger,
+  idsComodinCintas,
   piezasPorEscogerEnCotizacion,
 } from "@/lib/cinta-por-escoger"
 import { revalidatePath } from "next/cache"
@@ -290,11 +290,10 @@ export async function marcarVendida(
 ) {
   const supabase = createAdminClient()
 
-  // "Cinta por escoger" no es un modelo real: sin elegir no hay qué descontar.
+  // "Cinta por escoger" SÍ se vende y se cobra, pero no es un modelo real: la
+  // RPC (scripts/add-cintas-por-escoger-medidas.sql) las copia a la venta sin
+  // descontarlas. `faltantesDeStock` también las ignora.
   const porEscoger = await piezasPorEscogerEnCotizacion(supabase, cotizacionId)
-  if (porEscoger > 0) {
-    return { ok: false as const, error: mensajePorEscoger(porEscoger) }
-  }
 
   // Validación de existencias EN EL SERVIDOR. La RPC de descuento no valida
   // (deja el stock en negativo), y el aviso del detalle de cotización es sólo
@@ -328,6 +327,16 @@ export async function marcarVendida(
   )
 
   if (error) {
+    // Con la RPC vieja el comodín (sin fila de stock) truena en el descuento:
+    // la transacción se revierte completa, pero el mensaje crudo no ayuda.
+    if (porEscoger > 0 && error.code === "23502") {
+      return {
+        ok: false as const,
+        error:
+          "Falta correr scripts/add-cintas-por-escoger-medidas.sql en Supabase " +
+          "para poder vender cintas por escoger. No se creó ninguna venta.",
+      }
+    }
     return { ok: false as const, error: error.message }
   }
 
@@ -676,10 +685,12 @@ export async function revertirCotizacion(cotizacionId: string) {
     if (itemsErr) {
       return { ok: false as const, error: `Items: ${itemsErr.message}` }
     }
+    // Las cintas por escoger nunca descontaron stock: no hay nada que devolver.
+    const comodines = await idsComodinCintas(supabase)
     const byProd = new Map<string, number>()
     for (const it of items ?? []) {
       const pid = it.producto_id as string | null
-      if (!pid) continue
+      if (!pid || comodines.has(pid)) continue
       byProd.set(pid, (byProd.get(pid) ?? 0) + Number(it.cantidad ?? 0))
     }
     for (const [productoId, cant] of byProd) {

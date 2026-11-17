@@ -127,6 +127,9 @@ export default async function OrderPage() {
         .filter(
       (p) =>
         p.precio > 0 &&
+        // Cintas: en el portal solo se ofrecen las disponibles. Una cinta
+        // agotada ni siquiera viaja al navegador (no aparece como "Agotado").
+        !(p.categoria.toUpperCase() === "CINTAS" && p.agotado) &&
         !ocultoEnCatalogoPublico({
           peso: p.peso,
           sku: p.sku,

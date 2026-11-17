@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Pencil, Gift } from "lucide-react"
+import { AlertTriangle, ArrowLeft, Pencil, Gift } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buildImageMap, findImageFor } from "@/lib/storage-images"
 import { parseNotas } from "../notas-util"
@@ -9,6 +9,11 @@ import { formatMXN2 } from "@/lib/utils"
 import { RegistrarPagoButton } from "./registrar-pago-button"
 import { resumenRegalos, precioReferencia } from "@/lib/regalos"
 import { VentaKpis } from "./venta-kpis"
+import {
+  desglosePorEscoger,
+  esCintaPorEscoger,
+  piezasPorEscoger,
+} from "@/lib/cinta-por-escoger"
 
 import { parseFecha } from "@/lib/fecha"
 
@@ -130,6 +135,11 @@ export default async function VentaDetailPage({
 
   const items = (itemRows ?? []) as unknown as ItemRow[]
   const socios = (socioRows ?? []) as unknown as SocioRow[]
+  // Cintas vendidas sin modelo: se cobraron, pero no descontaron inventario.
+  const itemsPorEscoger = items
+    .filter((it) => esCintaPorEscoger(it.productos))
+    .map((it) => ({ sku: it.productos?.sku ?? null, cantidad: it.cantidad }))
+  const cintasPendientes = piezasPorEscoger(itemsPorEscoger)
 
   type Cliente = {
     id: string
@@ -279,6 +289,24 @@ export default async function VentaDetailPage({
         itemsCount={items.length}
         regalos={regalos}
       />
+
+      {cintasPendientes > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-900">
+                Cintas pendientes de escoger: {desglosePorEscoger(itemsPorEscoger)}
+              </p>
+              <p className="mt-0.5 text-xs text-amber-800">
+                La venta se cobra normal, pero estas piezas todavía no
+                descuentan inventario. Cuando la clienta elija, hay que
+                reemplazarlas por los modelos reales y descontarlos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-xl border border-gray-200 bg-pc-card">

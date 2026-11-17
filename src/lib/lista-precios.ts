@@ -1,5 +1,5 @@
 import type { Producto } from "@/lib/cotizacion-types"
-import { esCintaPorEscoger } from "@/lib/cinta-por-escoger"
+import { esCintaPorEscoger, medidaPorEscoger, nombrePorEscoger } from "@/lib/cinta-por-escoger"
 
 /**
  * LISTA DE PRECIOS / catálogo rápido de cotización.
@@ -65,8 +65,11 @@ export function excluidoDeLista(p: Producto): boolean {
  */
 export function seccionesCatalogo(productos: readonly Producto[]): SeccionCatalogo[] {
   const porFamilia = new Map<string, Producto[]>()
+  // Con comodines por medida, el genérico (sin medida) sobra en la lista.
+  const hayComodinesMedida = productos.some((p) => medidaPorEscoger(p))
   for (const p of productos) {
     if (p.precio <= 0) continue
+    if (hayComodinesMedida && esCintaPorEscoger(p) && !medidaPorEscoger(p)) continue
     if (excluidoDeLista(p)) continue
     const cat = (p.categoria ?? "OTROS").toUpperCase()
     const key = FAMILIAS.some((f) => f.key === cat) ? cat : "OTROS"
@@ -87,7 +90,8 @@ export function seccionesCatalogo(productos: readonly Producto[]): SeccionCatalo
 
 /** Nombre comercial a mostrar (el comodín se llama distinto en la lista). */
 export function nombreEnLista(p: Producto): string {
-  return esCintaPorEscoger(p) ? "Cinta (cualquier modelo)" : p.nombre
+  if (!esCintaPorEscoger(p)) return p.nombre
+  return nombrePorEscoger(p) ?? "Cinta (cualquier modelo)"
 }
 
 /** Presentación a mostrar (peso/volumen), salvo que el nombre ya la traiga. */
