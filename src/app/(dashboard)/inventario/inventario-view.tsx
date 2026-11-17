@@ -369,6 +369,7 @@ export function InventarioView({
   // Sumatorias para tfoot (basadas en filas filtradas+ordenadas)
   const totals = useMemo(() => {
     let stock = 0,
+      cintas = 0,
       ventas = 0,
       costoUSD = 0,
       costoMXN = 0,
@@ -380,6 +381,7 @@ export function InventarioView({
       const tc = p.tipo_cambio ?? 20.7
       const pUsd = p.precio_usd ?? 0
       stock += s
+      if (p.categoria.toUpperCase() === "CINTAS") cintas += s
       ventas += p.unidades_vendidas ?? 0
       costoUSD += pUsd * s
       costoMXN += pUsd * tc * s
@@ -387,8 +389,12 @@ export function InventarioView({
       costoEnvMXN += (p.costo_total_mxn ?? 0) * s
       profitTotal += (p.profit_unitario ?? 0) * s
     }
-    return { stock, ventas, costoUSD, costoMXN, costoEnvUSD, costoEnvMXN, profitTotal }
+    return { stock, cintas, ventas, costoUSD, costoMXN, costoEnvUSD, costoEnvMXN, profitTotal }
   }, [filtered])
+  // Piezas en existencia: si todo lo visible son cintas se dice "cintas";
+  // si hay mezcla se dice "piezas" y se aclara cuántas son cintas.
+  const soloCintas = totals.stock === totals.cintas
+  const nf = (n: number) => n.toLocaleString("es-MX")
 
   // Categorías con conteo de SKUs (top primero)
   const categoriasConteo = useMemo(() => {
@@ -939,13 +945,21 @@ export function InventarioView({
               <tfoot>
                 <tr className="border-t-2 border-pc-line-soft bg-pc-subtle">
                   <td colSpan={5} className="py-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
-                    Totales · {filtered.length} SKUs
+                    Totales · {filtered.length} SKUs ·{" "}
+                    <span className="text-gray-900">
+                      {soloCintas
+                        ? `${nf(totals.stock)} cintas en existencia`
+                        : `${nf(totals.stock)} piezas en existencia (${nf(totals.cintas)} cintas)`}
+                    </span>
                   </td>
                   <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
                   <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
                   <td className="py-3 px-2 text-right text-[10px] text-gray-400">—</td>
                   <td className="py-3 px-2 text-center text-xs font-bold text-gray-900 tabular-nums">
                     {totals.stock.toLocaleString("es-MX")}
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-gray-500">
+                      {soloCintas ? "cintas" : "piezas"}
+                    </div>
                   </td>
                   <td className="py-3 px-2 text-right text-xs font-semibold text-gray-700 tabular-nums whitespace-nowrap">
                     ${totals.costoUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}
