@@ -267,6 +267,14 @@ Son DOS cosas distintas y no se suman en la misma columna:
 - Lista de precios: `/cotizaciones/lista-precios` (agrupa por familia con `src/lib/lista-precios.ts`; excluye 5 L y Dye Color; las 176 cintas se resumen en una fila). Manda lo marcado a `/cotizaciones/rapida?items=id:cant,…`.
 - Loader único de productos cotizables: `src/lib/productos-cotizables.ts` (nueva, rápida, editar y lista de precios).
 
+## Regla: Asistente con IA (chat + voz)
+- Botón flotante (orbe) en todo el dashboard y atajo ⌘J. UI: `src/components/asistente/` (`asistente.tsx`, `grafica.tsx`, `asistente.css`). Evento global `pc:open-asistente`.
+- Servidor: `POST /api/asistente` (NDJSON en streaming, exige cookie de sesión + rate-limit) → `src/lib/asistente/agente.ts` (Claude con herramientas) → `src/lib/asistente/datos.ts` (motor de consultas).
+- SOLO LECTURA. La IA no escribe SQL: pide un "conjunto" aplanado (`ventas`, `venta_items`, `inventario`, `clientes`…) y `consultar()` filtra/agrupa/suma en memoria (tablas cacheadas 30 s). Excluye por defecto el cliente interno y las ventas canceladas. Para exponer datos nuevos: agregar un conjunto en `CONJUNTOS` (el diccionario del prompt se genera solo).
+- Costo: modelo por defecto `claude-haiku-5-5` (~$0.001 USD por pregunta). Se cambia con la variable `ASISTENTE_MODELO` (p. ej. `claude-sonnet-5-5`). Usa la misma `ANTHROPIC_API_KEY` que «desde foto».
+- Voz: dictado y lectura con las APIs del navegador (gratis). Por eso `Permissions-Policy` permite `microphone=(self)` en `next.config.ts`.
+- Herramientas de salida: `mostrar_grafica` (Recharts en el chat) y `mostrar_productos` (fichas con foto). Las preguntas de seguimiento salen de la última línea `>> a | b | c` de la respuesta.
+
 ## Regla: nombres de cintas (medida en mm, no cm)
 - `productos.nombre_display` para cintas usa "9mm" y "12mm" (NO "9cm" / "12cm")
 - `productos.nombre` mantiene sufijo `-c9` / `-c12` (identificador SKU-like, no medida)

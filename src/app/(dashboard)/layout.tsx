@@ -9,6 +9,7 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { CommandPalette, OPEN_PALETTE_EVENT } from "@/components/command-palette"
+import { Asistente } from "@/components/asistente/asistente"
 
 export default function DashboardLayout({
   children,
@@ -167,6 +168,8 @@ export default function DashboardLayout({
 
       {!flujoConBarraPropia && <MobileBottomNav onMore={() => setMobileOpen(true)} />}
       <CommandPalette />
+      {/* Asistente con IA (botón flotante + panel). Se oculta donde hay barra de acciones propia. */}
+      <Asistente oculto={flujoConBarraPropia} />
     </div>
   )
 }

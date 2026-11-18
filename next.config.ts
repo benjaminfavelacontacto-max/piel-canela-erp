@@ -15,7 +15,8 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // microphone=(self): el asistente con IA usa el dictado por voz del navegador.
+    value: "camera=(), microphone=(self), geolocation=()",
   },
 ];
 

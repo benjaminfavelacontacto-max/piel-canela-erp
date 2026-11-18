@@ -1,0 +1,50 @@
+/* ─── Asistente IA: orbe animado + texto con brillo (decorativo, igual en claro y oscuro) ─── */
+@keyframes pc-ai-spin { to { transform: rotate(360deg); } }
+@keyframes pc-ai-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes pc-ai-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+.pc-ai-orb {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #0b1220;
+}
+.pc-ai-orb::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: -1;
+  background: conic-gradient(from 0deg, #14b8a6, #8b5cf6, #c5a47e, #38bdf8, #14b8a6);
+  filter: blur(5px) saturate(1.35);
+  animation: pc-ai-spin 7s linear infinite;
+}
+.pc-ai-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.6), transparent 46%);
+}
+.pc-ai-orb[data-activo="true"]::before { animation-duration: 1.8s; }
+.pc-ai-shimmer {
+  background: linear-gradient(90deg, var(--pc-text-muted) 0%, #14b8a6 45%, #8b5cf6 55%, var(--pc-text-muted) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: pc-ai-shimmer 2.2s linear infinite;
+}
+.pc-ai-caret::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 3px;
+  border-radius: 9999px;
+  background: #14b8a6;
+  animation: pc-ai-caret 0.9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-ai-orb::before, .pc-ai-shimmer, .pc-ai-caret::after { animation: none; }
+}
