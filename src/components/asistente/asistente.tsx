@@ -430,8 +430,20 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     rec.onerror = (e) => {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setAviso("Permite el uso del micrófono en tu navegador para dictar.")
-      } else if (e.error !== "aborted" && e.error !== "no-speech") {
-        setAviso("No pude escucharte. Intenta de nuevo.")
+      } else if (e.error === "network") {
+        // Chrome/Edge mandan el audio a un servicio en línea; Brave, Arc, Opera y navegadores
+        // integrados en otras apps no lo tienen, y también falla sin internet.
+        setAviso(
+          "Este navegador no pudo conectar con su servicio de dictado. Funciona en Chrome, Edge y Safari. Mientras tanto puedes usar el dictado del teclado (en Mac: tecla 🎤 o Fn dos veces).",
+        )
+      } else if (e.error === "audio-capture") {
+        setAviso("No encontré un micrófono. Revisa que esté conectado y que el navegador tenga permiso en Ajustes del sistema → Privacidad → Micrófono.")
+      } else if (e.error === "language-not-supported") {
+        setAviso("Tu navegador no tiene dictado en español. Usa el dictado del teclado o prueba en Chrome.")
+      } else if (e.error === "no-speech") {
+        setAviso("No escuché nada. Toca el micrófono y habla enseguida.")
+      } else if (e.error !== "aborted") {
+        setAviso("No pude escucharte (" + e.error + "). Intenta de nuevo.")
       }
     }
     rec.onend = () => {
