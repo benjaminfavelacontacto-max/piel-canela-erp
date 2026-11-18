@@ -1,7 +1,10 @@
 "use client"
 
+import { Fragment } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Sparkles } from "lucide-react"
+import { OPEN_ASISTENTE_EVENT } from "@/lib/asistente/eventos"
 import {
   FileText,
   MoreHorizontal,
@@ -41,14 +44,35 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
       }}
     >
       <ul className="mx-auto flex h-[var(--pc-nav-h)] max-w-xl items-stretch">
-        {TABS.map(({ href, label, icon: Icon }) => {
+        {TABS.map(({ href, label, icon: Icon }, i) => {
           const active = pathname.startsWith(href)
           return (
-            <li key={href} className="flex-1">
+            <Fragment key={href}>
+            {i === 2 && (
+              // Asistente con IA: botón central, entre Cotizaciones e Inventario, sobresale de la barra.
+              <li className="relative w-[52px] shrink-0">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event(OPEN_ASISTENTE_EVENT))}
+                  aria-label="Abrir asistente con IA"
+                  className="absolute left-1/2 top-0 size-[56px] -translate-x-1/2 -translate-y-[16px] rounded-full outline-none transition-transform active:scale-90"
+                  style={{
+                    border: "4px solid var(--pc-bg-card)",
+                    boxShadow: "0 6px 20px rgba(20,184,166,0.4), 0 2px 8px rgba(139,92,246,0.35)",
+                    background: "var(--pc-bg-card)",
+                  }}
+                >
+                  <span className="pc-ai-orb flex size-full items-center justify-center text-white" aria-hidden>
+                    <Sparkles className="size-[22px] drop-shadow" strokeWidth={2} />
+                  </span>
+                </button>
+              </li>
+            )}
+            <li className="min-w-0 flex-1">
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className="relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-black/[0.03]"
+                className="relative flex h-full flex-col items-center justify-center gap-0.5 whitespace-nowrap text-[10.5px] font-medium transition-colors active:bg-black/[0.03]"
                 style={{ color: active ? "var(--pc-accent-ink)" : "var(--pc-text-secondary)" }}
               >
                 {active && (
@@ -66,9 +90,10 @@ export function MobileBottomNav({ onMore }: { onMore: () => void }) {
                 <span className={active ? "font-semibold" : ""}>{label}</span>
               </Link>
             </li>
+            </Fragment>
           )
         })}
-        <li className="flex-1">
+        <li className="min-w-0 flex-1">
           <button
             type="button"
             onClick={onMore}

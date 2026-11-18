@@ -52,6 +52,9 @@ export function GraficaAsistente({ grafica }: { grafica: Grafica }) {
   })
   const fmt = (v: unknown) => formatear(Number(v), formato)
   const variasSeries = series.length > 1
+  // Muestra a lo más ~6 etiquetas en el eje X y las recorta: así nunca se montan unas con otras.
+  const paso = Math.max(0, Math.ceil(etiquetas.length / 6) - 1)
+  const recortar = (v: string) => (String(v).length > 9 ? String(v).slice(0, 8) + "…" : String(v))
 
   let cuerpo: React.ReactNode
   let alto = 220
@@ -137,7 +140,7 @@ export function GraficaAsistente({ grafica }: { grafica: Grafica }) {
       cuerpo = (
         <BarChart data={datos} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
           <CartesianGrid vertical={false} stroke={CHART.grid} />
-          <XAxis dataKey="etiqueta" {...ejes} interval="preserveStartEnd" />
+          <XAxis dataKey="etiqueta" {...ejes} interval={paso} tickFormatter={recortar} />
           <YAxis {...ejes} width={48} tickFormatter={(v) => corto(v, formato)} />
           <Tooltip formatter={fmt} cursor={{ fill: CHART.cursor }} contentStyle={tooltipStyle} />
           {series.map((s, j) => (
@@ -158,7 +161,7 @@ export function GraficaAsistente({ grafica }: { grafica: Grafica }) {
           ))}
         </defs>
         <CartesianGrid vertical={false} stroke={CHART.grid} />
-        <XAxis dataKey="etiqueta" {...ejes} interval="preserveStartEnd" />
+        <XAxis dataKey="etiqueta" {...ejes} interval={paso} tickFormatter={recortar} />
         <YAxis {...ejes} width={48} tickFormatter={(v) => corto(v, formato)} />
         <Tooltip formatter={fmt} contentStyle={tooltipStyle} />
         {series.map((s, j) => (
@@ -170,7 +173,7 @@ export function GraficaAsistente({ grafica }: { grafica: Grafica }) {
     cuerpo = (
       <LineChart data={datos} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
         <CartesianGrid vertical={false} stroke={CHART.grid} />
-        <XAxis dataKey="etiqueta" {...ejes} interval="preserveStartEnd" />
+        <XAxis dataKey="etiqueta" {...ejes} interval={paso} tickFormatter={recortar} />
         <YAxis {...ejes} width={48} tickFormatter={(v) => corto(v, formato)} />
         <Tooltip formatter={fmt} contentStyle={tooltipStyle} />
         {series.map((s, j) => (

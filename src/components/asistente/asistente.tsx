@@ -21,19 +21,22 @@ import {
   Wallet,
   X,
 } from "lucide-react"
-import type { EventoAsistente, Grafica, MensajeEntrada, ProductoFicha, Uso } from "@/lib/asistente/tipos"
+import type { EventoAsistente, Grafica, Kpi, MensajeEntrada, ProductoFicha, Tabla, Uso } from "@/lib/asistente/tipos"
 import { GraficaAsistente } from "./grafica"
+import { TablaAsistente, TarjetasKpi } from "./bloques"
 import { SiriOnda } from "./siri-onda"
+import { OPEN_ASISTENTE_EVENT } from "@/lib/asistente/eventos"
 import { grabar, transcribir, type Grabacion } from "@/lib/asistente/dictado-local"
 import "./asistente.css"
 
-/** Evento global para abrir el asistente desde cualquier parte (p. ej. ⌘K). */
-export const OPEN_ASISTENTE_EVENT = "pc:open-asistente"
+export { OPEN_ASISTENTE_EVENT }
 
 type Parte =
   | { tipo: "texto"; texto: string }
   | { tipo: "grafica"; grafica: Grafica }
   | { tipo: "productos"; productos: ProductoFicha[] }
+  | { tipo: "kpis"; kpis: Kpi[] }
+  | { tipo: "tabla"; tabla: Tabla }
 
 type Mensaje = {
   id: string
@@ -86,7 +89,11 @@ function aEntrada(m: Mensaje): MensajeEntrada {
         ? p.texto
         : p.tipo === "grafica"
           ? "[Gráfica mostrada: " + p.grafica.titulo + "]"
-          : "[Fotos mostradas: " + p.productos.map((x) => x.sku).join(", ") + "]",
+          : p.tipo === "kpis"
+            ? "[Tarjetas mostradas: " + p.kpis.map((k) => k.etiqueta + " = " + k.valor).join("; ") + "]"
+            : p.tipo === "tabla"
+              ? "[Tabla mostrada: " + p.tabla.titulo + "]"
+              : "[Fotos mostradas: " + p.productos.map((x) => x.sku).join(", ") + "]",
     )
     .join("\n")
     .trim()
@@ -127,7 +134,13 @@ function crearReconocedor(): Reconocedor | null {
 const md: Components = {
   p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
   strong: ({ children }) => <strong className="font-semibold text-pc-ink">{children}</strong>,
-  ul: ({ children }) => <ul className="my-2 list-disc space-y-1 pl-5 marker:text-pc-ink-4">{children}</ul>,
+  ul: ({ children }) => <ul className="my-2 list-disc space-y-1.5 pl-5 marker:text-pc-teal">{children}</ul>,
+  blockquote: ({ children }) => (
+    <blockquote className="my-2.5 rounded-xl border border-pc-line-soft border-l-[3px] border-l-pc-teal bg-pc-subtle px-3 py-2 text-[13px] leading-snug text-pc-ink-2 [&_p]:my-0">
+      {children}
+    </blockquote>
+  ),
+  em: ({ children }) => <em className="text-pc-ink-2">{children}</em>,
   ol: ({ children }) => <ol className="my-2 list-decimal space-y-1 pl-5 marker:text-pc-ink-3">{children}</ol>,
   h1: ({ children }) => <h3 className="mb-1 mt-3 text-[15px] font-semibold tracking-tight text-pc-ink">{children}</h3>,
   h2: ({ children }) => <h3 className="mb-1 mt-3 text-[15px] font-semibold tracking-tight text-pc-ink">{children}</h3>,
@@ -177,6 +190,7 @@ function Orbe({ size, activo, children }: { size: number; activo?: boolean; chil
 
 export function Asistente({ oculto = false }: { oculto?: boolean }) {
   const [abierto, setAbierto] = useState(false)
+  const [vv, setVv] = useState<{ h: number; top: number; teclado: boolean } | null>(null)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [texto, setTexto] = useState("")
   const [ocupado, setOcupado] = useState(false)
@@ -261,10 +275,55 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     }
   }, [abierto])
 
+  // Móvil: el panel sigue a la parte VISIBLE de la pantalla (sin quedar tapado por el teclado)
+  // y la página de atrás no se desliza mientras escribes.
+  useEffect(() => {
+    if (!abierto || window.innerWidth >= 768) return
+    const v = window.visualViewport
+    const medir = () => {
+      if (!v) return
+      setVv({ h: Math.round(v.height), top: Math.round(v.offsetTop), teclado: window.innerHeight - v.height > 120 })
+    }
+    medir()
+    v?.addEventListener("resize", medir)
+    v?.addEventListener("scroll", medir)
+    const previo = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      v?.removeEventListener("resize", medir)
+      v?.removeEventListener("scroll", medir)
+      document.body.style.overflow = previo
+      setVv(null)
+    }
+  }, [abierto])
+
+  // Se queda al final mientras llega la respuesta, pero solo si ya estabas abajo
+  // (si subes a releer, no te jala). Sin animación "smooth": peleaba con el streaming y temblaba.
+  const pegadoRef = useRef(true)
+  // Al terminar la respuesta, se muestra DESDE EL PRINCIPIO (tarjetas y tabla primero),
+  // no por la última línea: así se lee en orden en vez de caer a la mitad.
+  const ocupadoAntesRef = useRef(false)
+  useEffect(() => {
+    if (ocupadoAntesRef.current && !ocupado) {
+      const lista = listaRef.current
+      const id = mensajesRef.current[mensajesRef.current.length - 1]?.id
+      const nodo = id ? lista?.querySelector<HTMLElement>('[data-respuesta="' + id + '"]') : null
+      if (lista && nodo) {
+        pegadoRef.current = false
+        const arriba = lista.scrollTop + nodo.getBoundingClientRect().top - lista.getBoundingClientRect().top - 12
+        lista.scrollTo({ top: Math.max(0, arriba), behavior: "smooth" })
+      }
+    }
+    ocupadoAntesRef.current = ocupado
+  }, [ocupado])
   useEffect(() => {
     const el = listaRef.current
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
-  }, [mensajes, abierto])
+    if (!el || !pegadoRef.current) return
+    const f = requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight
+    })
+    return () => cancelAnimationFrame(f)
+  }, [mensajes, abierto, vv?.h])
 
   const hablar = useCallback((contenido: string) => {
     const synth = window.speechSynthesis
@@ -289,6 +348,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
       const previo = mensajesRef.current
       const user: Mensaje = { id: nuevoId(), rol: "user", partes: [{ tipo: "texto", texto: limpio }] }
       const asis: Mensaje = { id: nuevoId(), rol: "assistant", partes: [], pendiente: true, estado: "Pensando…" }
+      pegadoRef.current = true
       setMensajes([...previo, user, asis])
       setTexto("")
       setOcupado(true)
@@ -324,6 +384,12 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             break
           case "productos":
             editar((m) => ({ ...m, partes: [...m.partes, { tipo: "productos", productos: ev.d }] }))
+            break
+          case "kpis":
+            editar((m) => ({ ...m, partes: [...m.partes, { tipo: "kpis", kpis: ev.d }] }))
+            break
+          case "tabla":
+            editar((m) => ({ ...m, partes: [...m.partes, { tipo: "tabla", tabla: ev.d }] }))
             break
           case "error":
             editar((m) => ({ ...m, error: ev.d, estado: undefined }))
@@ -581,7 +647,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.93 }}
             transition={RESORTE}
-            className="fixed bottom-[calc(var(--pc-nav-h)+var(--pc-safe-bottom)+0.875rem)] left-3.5 z-40 rounded-full outline-none focus-visible:ring-4 focus-visible:ring-pc-teal/30 md:bottom-6 md:left-auto md:right-6 print:hidden"
+            className="fixed bottom-[calc(var(--pc-nav-h)+var(--pc-safe-bottom)+0.875rem)] left-3.5 z-40 max-md:hidden rounded-full outline-none focus-visible:ring-4 focus-visible:ring-pc-teal/30 md:bottom-6 md:left-auto md:right-6 print:hidden"
           >
             <Orbe size={54}>
               <Sparkles className="size-[22px] drop-shadow" strokeWidth={2} />
@@ -597,13 +663,16 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             key="panel"
             role="dialog"
             aria-label="Asistente con inteligencia artificial"
-            initial={{ opacity: 0, y: 28, scale: 0.94, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: 20, scale: 0.96, filter: "blur(6px)" }}
+            initial={{ opacity: 0, y: 28, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={RESORTE}
             style={{
               transformOrigin: "bottom right",
-              background: "color-mix(in srgb, var(--pc-bg-card) 84%, transparent)",
+              // Opaco casi del todo: el contenido de la página de atrás no debe verse a través del texto.
+              background: "color-mix(in srgb, var(--pc-bg-card) 95%, transparent)",
+              // En iPhone el teclado recorta la pantalla: el panel mide solo la parte visible.
+              ...(vv ? { top: vv.top, bottom: "auto", height: vv.h } : {}),
               backdropFilter: "blur(30px) saturate(1.7)",
               WebkitBackdropFilter: "blur(30px) saturate(1.7)",
             }}
@@ -632,7 +701,14 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             </header>
 
             {/* Conversación */}
-            <div ref={listaRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+            <div
+              ref={listaRef}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                pegadoRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+              }}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+            >
               {vacio ? (
                 <div className="flex min-h-full flex-col items-center justify-center pb-4 text-center">
                   <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...RESORTE, delay: 0.08 }}>
@@ -685,7 +761,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                         initial={{ opacity: 0, y: 10, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={RESORTE}
-                        className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-[20px] rounded-br-md bg-pc-teal px-3.5 py-2 text-[14px] leading-relaxed text-white"
+                        className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[20px] rounded-br-md bg-pc-teal px-3.5 py-2 text-[14px] leading-relaxed text-white"
                       >
                         {m.partes[0]?.tipo === "texto" ? m.partes[0].texto : ""}
                       </motion.div>
@@ -705,22 +781,33 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             </div>
 
             {/* Redacción */}
-            <div className="shrink-0 px-3 pb-[calc(var(--pc-safe-bottom)+0.75rem)] pt-1">
-              {vozEstado && (
-                <p className="pc-ai-shimmer mb-1.5 w-fit px-2 text-[12.5px] font-medium" role="status">
-                  {vozEstado}
-                </p>
-              )}
-              <AnimatePresence>
-                {aviso && (
-                  <motion.p
+            <div className={"shrink-0 px-3 pt-1 " + (vv?.teclado ? "pb-2" : "pb-[calc(var(--pc-safe-bottom)+0.75rem)]")}>
+              <AnimatePresence initial={false}>
+                {vozEstado && (
+                  <motion.div
+                    key="voz"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="px-2 pb-1.5 text-[11.5px] text-pc-amber-ink"
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
                   >
-                    {aviso}
-                  </motion.p>
+                    <p className="pc-ai-shimmer mb-1.5 w-fit max-w-full px-2 text-[12.5px] font-medium" role="status">
+                      {vozEstado}
+                    </p>
+                  </motion.div>
+                )}
+                {aviso && (
+                  <motion.div
+                    key="aviso"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-2 pb-1.5 text-[11.5px] leading-snug text-pc-amber-ink">{aviso}</p>
+                  </motion.div>
                 )}
               </AnimatePresence>
               <AnimatePresence initial={false}>
@@ -772,7 +859,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                     }}
                     placeholder="Pregunta algo…"
                     aria-label="Mensaje para el asistente"
-                    className="max-h-[132px] min-h-9 flex-1 resize-none bg-transparent py-2 text-[15px] leading-snug text-pc-ink outline-none placeholder:text-pc-ink-4 md:text-[14px]"
+                    className="max-h-[132px] min-h-9 flex-1 resize-none bg-transparent py-2 text-[16px] leading-snug text-pc-ink outline-none placeholder:text-pc-ink-4 md:text-[14px]"
                   />
                 )}
                 {soportaDictado && !ocupado && !vozEstado && (
@@ -872,13 +959,13 @@ function RespuestaIA({
   const hayTexto = m.partes.some((p) => p.tipo === "texto")
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={RESORTE} className="space-y-3">
+    <motion.div data-respuesta={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={RESORTE} className="space-y-3">
       {m.partes.map((p, i) => {
         if (p.tipo === "texto") {
           const s = separar(p.texto)
           if (!s.cuerpo) return null
           return (
-            <div key={i} className="text-[14px] leading-relaxed text-pc-ink-2">
+            <div key={i} className="min-w-0 text-[14px] leading-relaxed text-pc-ink-2 [overflow-wrap:anywhere]">
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={md}>
                 {s.cuerpo}
               </ReactMarkdown>
@@ -889,6 +976,16 @@ function RespuestaIA({
           return (
             <motion.div key={i} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={RESORTE}>
               <GraficaAsistente grafica={p.grafica} />
+            </motion.div>
+          )
+        }
+        if (p.tipo === "kpis") {
+          return <TarjetasKpi key={i} kpis={p.kpis} />
+        }
+        if (p.tipo === "tabla") {
+          return (
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={RESORTE}>
+              <TablaAsistente tabla={p.tabla} />
             </motion.div>
           )
         }
@@ -935,7 +1032,7 @@ function RespuestaIA({
       )}
 
       {!m.pendiente && hayTexto && (
-        <div className="flex items-center gap-2 text-[11px] text-pc-ink-4">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-pc-ink-4">
           <button
             type="button"
             onClick={onCopiar}

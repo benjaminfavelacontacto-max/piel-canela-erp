@@ -13,6 +13,27 @@ export type Grafica = {
   formato: FormatoValor
 }
 
+export type Kpi = {
+  etiqueta: string
+  valor: string | number
+  formato?: FormatoValor | "texto"
+  /** Cambio frente a otro periodo, ya escrito: "+12%", "−$3,200". */
+  cambio?: string
+  /** bueno = verde, malo = rojo, neutro = gris. */
+  tono?: "bueno" | "malo" | "neutro"
+  nota?: string
+}
+
+export type TipoColumna = "texto" | "moneda" | "numero" | "porcentaje" | "fecha"
+
+export type Tabla = {
+  titulo: string
+  columnas: { nombre: string; tipo: TipoColumna }[]
+  filas: (string | number | null)[][]
+  /** Fila de totales opcional (misma cantidad de celdas que columnas). */
+  total?: (string | number | null)[]
+}
+
 export type ProductoFicha = {
   sku: string
   nombre: string
@@ -36,6 +57,8 @@ export type EventoAsistente =
   | { t: "estado"; d: string }
   | { t: "grafica"; d: Grafica }
   | { t: "productos"; d: ProductoFicha[] }
+  | { t: "kpis"; d: Kpi[] }
+  | { t: "tabla"; d: Tabla }
   | { t: "error"; d: string }
   | { t: "fin"; d: Uso }
 
