@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  SlidersHorizontal,
   Search,
   Send,
   Sparkles,
@@ -48,6 +49,7 @@ import dynamic from "next/dynamic"
 import { PageHeader } from "@/components/page-header"
 import { ChartSkeleton, LazyOnView } from "@/components/lazy-on-view"
 import { ListCard, ListCardGroup } from "@/components/list-card"
+import { NuevaCotizacionFab } from "./nueva-cotizacion-fab"
 import { posicionMenuFlotante } from "@/lib/floating-menu"
 
 // Recharts se descarga solo cuando las gráficas se acercan al viewport
@@ -887,6 +889,16 @@ export function CotizacionesList({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   // Filtros plegables solo en móvil (el buscador siempre visible)
   const [filtersOpenM, setFiltersOpenM] = useState(false)
+  const limpiarFiltros = () => {
+    setGlobalFilter("")
+    setEstatusFiltro("todos")
+    setClienteFiltro("todos")
+    setProductoQuery("")
+    setFechaDesde("")
+    setFechaHasta("")
+    setMontoMin("")
+    setMontoMax("")
+  }
 
   const columns: ColumnDef<EnrichedCot>[] = useMemo(
     () => [
@@ -1259,8 +1271,9 @@ export function CotizacionesList({
   const dTicket = pct(ticketCurr, ticketPrev)
 
   return (
-    <div className="flex flex-col gap-4 p-4 pb-24 md:gap-8 md:p-8 md:pb-8">
+    <div className="flex flex-col gap-3 p-4 pb-[calc(3rem+1.5rem)] md:gap-8 md:p-8 md:pb-8">
       <PageHeader
+        compactMobile
         title="Cotizaciones"
         subtitle={`${kpis.totalCotizaciones} cotizaciones · ${kpis.convertidas} convertidas · ${kpis.activas} activas · ${kpis.perdidas} perdidas`}
         kpis={[
@@ -1271,6 +1284,7 @@ export function CotizacionesList({
             trend: {
               value: `${dValor >= 0 ? "+" : ""}${dValor.toFixed(1)}%`,
               positive: dValor >= 0,
+              label: "vs mes anterior",
             },
             sparkline: monthlySeries.map((m) => m.valorConvertido),
           },
@@ -1281,6 +1295,7 @@ export function CotizacionesList({
             trend: {
               value: `${dConv >= 0 ? "+" : ""}${dConv.toFixed(1)}%`,
               positive: dConv >= 0,
+              label: "vs mes anterior",
             },
             sparkline: monthlySeries.map((m) => m.conversiones),
           },
@@ -1288,14 +1303,17 @@ export function CotizacionesList({
             label: "Tiempo cierre",
             value: `${Math.round(kpis.tiempoPromCierreDias)}d`,
             sub: "promedio",
+            secondary: true,
           },
           {
             label: "Ticket promedio",
             value: formatMXN(kpis.ticketProm),
             sub: "por cotización convertida",
+            secondary: true,
             trend: {
               value: `${dTicket >= 0 ? "+" : ""}${dTicket.toFixed(1)}%`,
               positive: dTicket >= 0,
+              label: "vs mes anterior",
             },
             sparkline: monthlySeries.map((m) =>
               m.conversiones > 0 ? m.valorConvertido / m.conversiones : 0,
@@ -1308,7 +1326,7 @@ export function CotizacionesList({
                 enfrente); el formulario completo queda un toque más lejos. */}
             <Link
               href="/cotizaciones/rapida"
-              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] bg-pc-teal px-[18px] text-sm font-semibold text-white shadow-sm transition hover:bg-pc-teal-hover active:scale-[0.98]"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] bg-pc-teal px-[18px] max-md:hidden text-sm font-semibold text-white shadow-sm transition hover:bg-pc-teal-hover active:scale-[0.98]"
             >
               <Zap className="size-4" />
               <span className="sm:hidden">Cotización rápida</span>
@@ -1316,14 +1334,15 @@ export function CotizacionesList({
             </Link>
             <Link
               href="/cotizaciones/lista-precios"
-              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 max-md:h-10 max-md:px-3.5"
             >
               <Tag className="size-4" />
-              Lista de precios
+              <span className="max-md:hidden">Lista de precios</span>
+              <span className="md:hidden">Precios</span>
             </Link>
             <Link
               href="/cotizaciones/nueva"
-              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50"
+              className="pc-tap inline-flex h-11 items-center gap-2 rounded-[14px] border border-pc-line bg-pc-card px-[18px] text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 max-md:hidden"
             >
               <Plus className="size-4" />
               <span className="hidden sm:inline">Nueva cotización</span>
@@ -1376,8 +1395,8 @@ export function CotizacionesList({
       </div>
 
       {/* Filtros */}
-      <section className="rounded-2xl border border-gray-200 bg-pc-card shadow-sm max-md:order-1">
-        <div className="flex items-center justify-between px-4 py-1 md:border-b md:border-pc-line-soft md:px-5 md:py-3">
+      <section className="rounded-2xl border border-gray-200 bg-pc-card shadow-sm max-md:order-1 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
+        <div className="flex items-center justify-between px-4 py-1 max-md:hidden md:border-b md:border-pc-line-soft md:px-5 md:py-3">
           <button
             type="button"
             onClick={() => setFiltersOpenM((o) => !o)}
@@ -1414,16 +1433,7 @@ export function CotizacionesList({
             {activeFilters > 0 && (
               <button
                 type="button"
-                onClick={() => {
-                  setGlobalFilter("")
-                  setEstatusFiltro("todos")
-                  setClienteFiltro("todos")
-                  setProductoQuery("")
-                  setFechaDesde("")
-                  setFechaHasta("")
-                  setMontoMin("")
-                  setMontoMax("")
-                }}
+                onClick={limpiarFiltros}
                 className="min-h-11 text-xs font-medium text-pc-red-ink hover:text-rose-800 md:min-h-0 md:text-[11px]"
               >
                 Limpiar
@@ -1431,9 +1441,10 @@ export function CotizacionesList({
             )}
           </div>
         </div>
-        <div className="space-y-3 px-4 pb-4 pt-1 md:px-5 md:py-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="relative sm:col-span-1">
+        <div className="space-y-3 md:px-5 md:py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 md:gap-3">
+            <div className="flex items-center gap-2 md:col-span-1">
+              <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 value={globalFilter}
@@ -1441,15 +1452,42 @@ export function CotizacionesList({
                 placeholder="Buscar número, cliente, RFC, ciudad, producto…"
                 type="search"
                 enterKeyHint="search"
-                className="h-11 w-full rounded-lg border border-gray-200 bg-pc-card pl-8 pr-3 text-xs md:h-9 text-gray-700 placeholder:text-gray-400 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft"
+                className="h-11 w-full rounded-lg border border-gray-200 bg-pc-card pl-8 pr-3 text-[16px] md:h-9 md:text-xs text-gray-700 placeholder:text-gray-400 transition-[border-color,box-shadow] duration-150 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft"
               />
+              </div>
+              <button
+                type="button"
+                onClick={() => setFiltersOpenM((o) => !o)}
+                aria-expanded={filtersOpenM}
+                aria-label={activeFilters > 0 ? `Filtros (${activeFilters} activos)` : "Filtros"}
+                className={`relative flex size-11 shrink-0 items-center justify-center rounded-lg border transition-[background-color,border-color,color,transform] duration-150 active:scale-95 motion-reduce:transition-none md:hidden ${
+                  filtersOpenM || activeFilters > 0
+                    ? "border-pc-teal/40 bg-pc-teal-soft text-pc-teal-ink"
+                    : "border-gray-200 bg-pc-card text-gray-600"
+                }`}
+              >
+                <SlidersHorizontal className="size-[18px]" strokeWidth={2} />
+                {activeFilters > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-pc-teal px-1 text-[10px] font-bold leading-4 text-white">
+                    {activeFilters}
+                  </span>
+                )}
+              </button>
             </div>
+            {/* Móvil: los filtros se despliegan con una transición de altura; escritorio los muestra siempre en línea */}
+            <div
+              className={`grid transition-[grid-template-rows,opacity,visibility] duration-200 ease-out motion-reduce:transition-none md:contents ${
+                filtersOpenM ? "grid-rows-[1fr] opacity-100" : "max-md:invisible grid-rows-[0fr] opacity-0 md:visible md:opacity-100"
+              }`}
+            >
+              <div className="min-h-0 overflow-hidden md:contents">
+                <div className="grid gap-2 pt-2 md:contents md:pt-0">
             <select
               value={estatusFiltro}
               onChange={(e) =>
                 setEstatusFiltro(e.target.value as "todos" | Estatus)
               }
-              className={`h-11 rounded-lg border border-gray-200 bg-pc-card px-3 text-xs text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-9 ${filtersOpenM ? "" : "max-md:hidden"}`}
+              className={`h-11 rounded-lg border border-gray-200 bg-pc-card px-3 text-xs text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-9`}
             >
               <option value="todos">Todos los estatus</option>
               {ESTATUS_OPTIONS.map((o) => (
@@ -1461,7 +1499,7 @@ export function CotizacionesList({
             <select
               value={clienteFiltro}
               onChange={(e) => setClienteFiltro(e.target.value)}
-              className={`h-11 rounded-lg border border-gray-200 bg-pc-card px-3 text-xs text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-9 ${filtersOpenM ? "" : "max-md:hidden"}`}
+              className={`h-11 rounded-lg border border-gray-200 bg-pc-card px-3 text-xs text-gray-700 focus:border-pc-teal focus:outline-none focus:ring-2 focus:ring-pc-teal-soft md:h-9`}
             >
               <option value="todos">Todos los clientes</option>
               {clientes.map((c) => (
@@ -1470,10 +1508,31 @@ export function CotizacionesList({
                 </option>
               ))}
             </select>
+                <div className="flex items-center justify-between md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedFilters((x) => !x)}
+                    className="min-h-11 text-xs font-medium text-teal-700 transition-colors duration-150 active:text-teal-900"
+                  >
+                    {showAdvancedFilters ? "Ocultar avanzados" : "Filtros avanzados"}
+                  </button>
+                  {activeFilters > 0 && (
+                    <button
+                      type="button"
+                      onClick={limpiarFiltros}
+                      className="min-h-11 text-xs font-medium text-pc-red-ink"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {showAdvancedFilters && (
-            <div className={`${filtersOpenM ? "grid" : "max-md:hidden"} md:grid grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-5`}>
+            <div className={`${filtersOpenM ? "" : "max-md:hidden"} grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 animate-in fade-in-0 slide-in-from-top-1 duration-200 motion-reduce:animate-none sm:grid-cols-2 lg:grid-cols-5`}>
               <div className="lg:col-span-2">
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                   Producto contiene
@@ -1536,9 +1595,9 @@ export function CotizacionesList({
 
       {/* Tabla */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-pc-card shadow-sm max-md:order-2">
-        <header className="flex items-center justify-between gap-2 border-b border-pc-line-soft bg-gradient-to-r from-pc-card to-gray-50/50 px-4 py-3 md:px-5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-teal-600" />
+        <header className="flex items-center justify-between gap-2 border-b border-pc-line-soft bg-gradient-to-r from-pc-card to-gray-50/50 px-4 py-2 md:px-5 md:py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Sparkles className="size-4 shrink-0 text-teal-600" />
             <h2 className="text-sm font-semibold text-gray-900">
               Cotizaciones
             </h2>
@@ -1553,7 +1612,7 @@ export function CotizacionesList({
               const [id, dir] = e.target.value.split(":")
               setSorting([{ id, desc: dir === "desc" }])
             }}
-            className="h-11 shrink-0 rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:outline-none md:hidden"
+            className="h-11 min-w-0 max-w-[52%] rounded-lg border border-gray-200 bg-pc-card px-2 text-xs text-gray-700 focus:outline-none md:hidden"
           >
             <option value="fecha:desc">Más recientes</option>
             <option value="fecha:asc">Más antiguas</option>
@@ -1743,15 +1802,8 @@ export function CotizacionesList({
         </footer>
       </section>
 
-      {/* FAB móvil: el flujo rápido (una mano) siempre al alcance del pulgar */}
-      <Link
-        href="/cotizaciones/rapida"
-        aria-label="Cotización rápida"
-        className="pc-bottom-safe fixed right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-pc-teal pl-4 pr-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,118,110,0.35)] transition-transform active:scale-95 md:hidden"
-      >
-        <Zap className="size-5" strokeWidth={2.25} />
-        Cotización rápida
-      </Link>
+      {/* FAB móvil único: «+ Nueva cotización» con menú (rápida / completa) */}
+      <NuevaCotizacionFab />
     </div>
   )
 }
@@ -1779,12 +1831,12 @@ function CotCard({ cot, onOpen }: { cot: EnrichedCot; onOpen: () => void }) {
       amount={formatMXN(Number(cot.total ?? 0))}
       meta={
         <>
-          <span className="whitespace-nowrap tabular-nums">
-            {fechaFmt.format(new Date(cot.fecha))}
-          </span>
-          <span aria-hidden>·</span>
-          <span className="truncate font-mono text-[11px] text-pc-teal-ink">
+          <span className="min-w-0 truncate font-mono text-[11px] font-medium text-pc-teal-ink">
             {cot.numero}
+          </span>
+          <span aria-hidden className="text-gray-300">·</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">
+            {fechaFmt.format(new Date(cot.fecha))}
           </span>
         </>
       }

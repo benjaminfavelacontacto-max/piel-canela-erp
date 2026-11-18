@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { Fragment, type ReactNode } from "react"
 import Link from "next/link"
 
 export interface PageHeaderKpi {
@@ -8,9 +8,11 @@ export interface PageHeaderKpi {
   /** Color del valor para casos especiales. Default: text-gray-900 */
   color?: string
   /** Tendencia con flecha (ej. "+18%") */
-  trend?: { value: string; positive: boolean }
+  trend?: { value: string; positive: boolean; /** Con qué se compara, p. ej. "vs mes anterior" */ label?: string }
   /** Sparkline opcional — array de puntos normalizados (cualquier escala) */
   sparkline?: number[]
+  /** Móvil (con `compactMobile`): se muestra en la fila secundaria, más baja y de una sola línea */
+  secondary?: boolean
   /** Hero KPI dominante — span 2 columnas + número más grande */
   featured?: boolean
   /** Mini-insights: chips tonales con label + value, renderizados debajo del número */
@@ -38,6 +40,8 @@ interface PageHeaderProps {
   kpis?: PageHeaderKpi[]
   actions?: ReactNode
   breadcrumb?: { label: string; href: string }[]
+  /** Móvil: tarjetas bajas y compactas (las `secondary` en una fila aparte). Escritorio no cambia. */
+  compactMobile?: boolean
 }
 
 const COLS_CLASS: Record<number, string> = {
@@ -60,6 +64,7 @@ export function PageHeader({
   kpis,
   actions,
   breadcrumb,
+  compactMobile = false,
 }: PageHeaderProps) {
   const hasFeatured = kpis?.some((k) => k.featured) ?? false
   const kpisGrid = hasFeatured
@@ -69,7 +74,7 @@ export function PageHeader({
       : ""
 
   return (
-    <header className="mb-6">
+    <header className={compactMobile ? "mb-6 max-md:mb-0" : "mb-6"}>
       {/* Breadcrumb */}
       {breadcrumb && breadcrumb.length > 0 && (
         <nav className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
@@ -88,8 +93,8 @@ export function PageHeader({
       )}
 
       {/* Title row */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
+      <div className={"flex flex-wrap items-end justify-between " + (compactMobile ? "gap-x-4 gap-y-2 max-md:flex-nowrap max-md:items-start" : "gap-4")}>
+        <div className={"min-w-0 " + (compactMobile ? "max-md:flex-1" : "")}>
           <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-gray-900">
             {title}
           </h1>
@@ -104,13 +109,74 @@ export function PageHeader({
 
       {/* KPIs (cards blancas, denso premium) */}
       {kpis && kpis.length > 0 && (
-        <div className={`pc-stagger mt-4 grid gap-3 ${kpisGrid}`}>
-          {kpis.map((kpi, i) => (
-            <KpiCard key={`${kpi.label}-${i}`} kpi={kpi} />
-          ))}
+        <div className={`pc-stagger mt-4 grid gap-3 ${compactMobile ? "max-md:mt-3 max-md:grid-cols-2 max-md:gap-2" : ""} ${kpisGrid}`}>
+          {kpis.map((kpi, i) =>
+            compactMobile ? (
+              <Fragment key={`${kpi.label}-${i}`}>
+                <KpiCardCompacta kpi={kpi} />
+                <div className="hidden md:contents">
+                  <KpiCard kpi={kpi} />
+                </div>
+              </Fragment>
+            ) : (
+              <KpiCard key={`${kpi.label}-${i}`} kpi={kpi} />
+            ),
+          )}
         </div>
       )}
     </header>
+  )
+}
+
+/**
+ * Versión móvil baja de un KPI (solo < md). La principal: etiqueta, número, variación con su periodo
+ * de comparación y la nota. La `secondary`: una fila de una línea para que ocupe poco alto.
+ */
+function KpiCardCompacta({ kpi }: { kpi: PageHeaderKpi }) {
+  const trend = kpi.trend && (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-[10.5px] tabular-nums">
+      <span
+        className={`inline-flex items-center gap-0.5 font-semibold ${kpi.trend.positive ? "text-emerald-600" : "text-rose-600"}`}
+      >
+        <span aria-hidden className="text-[8px]">
+          {kpi.trend.positive ? "▲" : "▼"}
+        </span>
+        {kpi.trend.value}
+      </span>
+      {kpi.trend.label && <span className="text-pc-ink-3">{kpi.trend.label}</span>}
+    </span>
+  )
+
+  if (kpi.secondary) {
+    // Fila secundaria: tres líneas muy cortas (etiqueta · número · variación o nota), alto uniforme entre tarjetas.
+    return (
+      <div
+        title={kpi.sub}
+        className="flex min-w-0 flex-col justify-center gap-[3px] rounded-xl border border-pc-line bg-pc-card px-3 py-2 md:hidden"
+      >
+        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.07em] text-pc-ink-3">{kpi.label}</p>
+        <p className={`text-[16px] font-bold leading-none tabular-nums tracking-tight ${kpi.color ?? "text-pc-ink"}`}>
+          {kpi.value}
+        </p>
+        <div className="min-h-[14px] text-[10.5px] leading-tight text-pc-ink-3">
+          {trend ?? <span className="truncate">{kpi.sub}</span>}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-1 rounded-2xl border border-pc-line bg-pc-card p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:hidden">
+      <p className="text-[10px] font-semibold uppercase leading-tight tracking-[0.07em] text-pc-ink-3">{kpi.label}</p>
+      <p
+        title={kpi.value}
+        className={`break-words text-[clamp(19px,5.6vw,23px)] font-bold leading-none tracking-[-0.03em] tabular-nums ${kpi.color ?? "text-pc-ink"}`}
+      >
+        {kpi.value}
+      </p>
+      {trend}
+      {kpi.sub && <p className="text-[10.5px] leading-tight text-pc-ink-3">{kpi.sub}</p>}
+    </div>
   )
 }
 

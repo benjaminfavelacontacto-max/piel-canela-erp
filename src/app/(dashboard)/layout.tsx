@@ -153,13 +153,13 @@ export default function DashboardLayout({
       <main
         // tabIndex=0: la región con scroll debe poder enfocarse con teclado (WCAG 2.1.1)
         tabIndex={0}
-        className="min-w-0 flex-1 scroll-smooth overflow-y-auto overflow-x-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-pc-teal/40 print:overflow-visible"
+        className="min-w-0 flex-1 scroll-smooth overflow-y-auto overflow-x-hidden max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-pc-teal/40 print:overflow-visible"
         style={{ background: "transparent" }}
       >
         {/* Móvil: respeta notch arriba y deja espacio para la barra inferior */}
         <div
           className={`pt-[var(--pc-safe-top)] md:pb-0 md:pt-0 ${
-            flujoConBarraPropia ? "" : "pb-[calc(var(--pc-nav-h)+var(--pc-safe-bottom))]"
+            flujoConBarraPropia ? "" : "pb-[var(--pc-nav-total)]"
           }`}
         >
           {children}

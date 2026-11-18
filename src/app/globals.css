@@ -1117,6 +1117,9 @@
   --pc-safe-left: env(safe-area-inset-left, 0px);
   /* Alto de la barra de navegación inferior móvil */
   --pc-nav-h: 3.5rem;
+  /* Alto REAL ocupado por la barra inferior (contenido + área segura del iPhone). Todo lo que flota o se rellena
+     por encima de la barra parte de esta medida. */
+  --pc-nav-total: calc(var(--pc-nav-h) + var(--pc-safe-bottom));
 }
 
 /* Padding inferior que respeta la barra de gestos del iPhone */
@@ -1125,7 +1128,7 @@
 }
 /* Offset inferior para elementos flotantes (FAB): queda POR ENCIMA de la barra inferior */
 .pc-bottom-safe {
-  bottom: calc(var(--pc-nav-h) + max(0.75rem, var(--pc-safe-bottom)));
+  bottom: calc(var(--pc-nav-total) + 0.75rem);
 }
 /* Área táctil mínima de 44px */
 .pc-tap-target {
