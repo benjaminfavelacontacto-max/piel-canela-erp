@@ -24,6 +24,7 @@ import {
 import type { EventoAsistente, Grafica, MensajeEntrada, ProductoFicha, Uso } from "@/lib/asistente/tipos"
 import { GraficaAsistente } from "./grafica"
 import { SiriOnda } from "./siri-onda"
+import { grabar, transcribir, type Grabacion } from "@/lib/asistente/dictado-local"
 import "./asistente.css"
 
 /** Evento global para abrir el asistente desde cualquier parte (p. ej. ⌘K). */
@@ -46,6 +47,7 @@ type Mensaje = {
 
 const STORAGE_CHAT = "pc-asistente-chat-v1"
 const STORAGE_VOZ = "pc-asistente-voz"
+const STORAGE_LOCAL = "pc-dictado-local"
 
 const SUGERENCIAS = [
   { icono: TrendingUp, titulo: "Ventas del mes", pregunta: "¿Cuánto vendimos este mes y cuánta ganancia dejó? Compáralo con el mes pasado." },
@@ -182,12 +184,16 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
   const [soportaDictado, setSoportaDictado] = useState(false)
   const [escuchando, setEscuchando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [vozEstado, setVozEstado] = useState<string | null>(null)
   const [copiado, setCopiado] = useState<string | null>(null)
 
   const mensajesRef = useRef<Mensaje[]>([])
   const abortRef = useRef<AbortController | null>(null)
   const recRef = useRef<Reconocedor | null>(null)
   const dictadoRef = useRef("")
+  const grabRef = useRef<Grabacion | null>(null)
+  const modoLocalRef = useRef(false)
+  const respaldoRef = useRef(false)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const medidorRef = useRef<{ stream: MediaStream; ctx: AudioContext } | null>(null)
   const listaRef = useRef<HTMLDivElement>(null)
@@ -205,10 +211,11 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
         const guardado = sessionStorage.getItem(STORAGE_CHAT)
         if (guardado) setMensajes(JSON.parse(guardado) as Mensaje[])
         setVoz(localStorage.getItem(STORAGE_VOZ) === "1")
+        modoLocalRef.current = localStorage.getItem(STORAGE_LOCAL) === "1"
       } catch {
         // almacenamiento bloqueado: se sigue sin persistencia
       }
-      setSoportaDictado(crearReconocedor() !== null)
+      setSoportaDictado(crearReconocedor() !== null || typeof MediaRecorder !== "undefined")
     }, 0)
     return () => clearTimeout(t)
   }, [])
@@ -248,6 +255,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     }
     if (!abierto) {
       recRef.current?.abort()
+      grabRef.current?.cancelar()
       detenerMedidor()
       window.speechSynthesis?.cancel()
     }
@@ -408,13 +416,64 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     }
   }
 
-  const alternarDictado = () => {
-    if (escuchando) {
-      recRef.current?.stop()
+  /** Respaldo gratis: graba, detecta el silencio y transcribe con Whisper dentro del navegador. */
+  const dictarLocal = async () => {
+    window.speechSynthesis?.cancel()
+    setAviso(null)
+    setTexto("")
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch {
+      setAviso("Permite el uso del micrófono en tu navegador para dictar.")
       return
     }
-    const rec = crearReconocedor()
-    if (!rec) return
+    const ctx = new AudioContext()
+    const an = ctx.createAnalyser()
+    an.fftSize = 512
+    ctx.createMediaStreamSource(stream).connect(an)
+    medidorRef.current = { stream, ctx }
+    analyserRef.current = an
+    const g = grabar(stream, an)
+    grabRef.current = g
+    setEscuchando(true)
+    const audio = await g.resultado
+    grabRef.current = null
+    detenerMedidor()
+    setEscuchando(false)
+    if (!audio) {
+      setAviso("No escuché nada. Toca el micrófono y habla enseguida.")
+      return
+    }
+    setVozEstado("Preparando el dictado…")
+    try {
+      const t = await transcribir(audio, (e) =>
+        setVozEstado(
+          e.fase === "descargando"
+            ? "Descargando el modelo de voz (solo la primera vez) " + e.pct + "%"
+            : "Transcribiendo…",
+        ),
+      )
+      setVozEstado(null)
+      if (t) enviarRef.current(t, true)
+      else setAviso("No entendí lo que dijiste. Intenta de nuevo.")
+    } catch {
+      setVozEstado(null)
+      setAviso("No pude transcribir tu voz en este navegador. Usa el dictado del teclado (en Mac: tecla 🎤 o Fn dos veces).")
+    }
+  }
+
+  const alternarDictado = () => {
+    if (escuchando) {
+      if (grabRef.current) grabRef.current.detener()
+      else recRef.current?.stop()
+      return
+    }
+    const rec = modoLocalRef.current ? null : crearReconocedor()
+    if (!rec) {
+      void dictarLocal()
+      return
+    }
     window.speechSynthesis?.cancel()
     setAviso(null)
     dictadoRef.current = ""
@@ -431,11 +490,15 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setAviso("Permite el uso del micrófono en tu navegador para dictar.")
       } else if (e.error === "network") {
-        // Chrome/Edge mandan el audio a un servicio en línea; Brave, Arc, Opera y navegadores
-        // integrados en otras apps no lo tienen, y también falla sin internet.
-        setAviso(
-          "Este navegador no pudo conectar con su servicio de dictado. Funciona en Chrome, Edge y Safari. Mientras tanto puedes usar el dictado del teclado (en Mac: tecla 🎤 o Fn dos veces).",
-        )
+        // El navegador no alcanza su servicio de dictado (bloqueado, sin API de Google, VPN…):
+        // se pasa solo al dictado local y se recuerda para las próximas veces.
+        respaldoRef.current = true
+        modoLocalRef.current = true
+        try {
+          localStorage.setItem(STORAGE_LOCAL, "1")
+        } catch {
+          // sin persistencia
+        }
       } else if (e.error === "audio-capture") {
         setAviso("No encontré un micrófono. Revisa que esté conectado y que el navegador tenga permiso en Ajustes del sistema → Privacidad → Micrófono.")
       } else if (e.error === "language-not-supported") {
@@ -450,6 +513,11 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
       detenerMedidor()
       setEscuchando(false)
       recRef.current = null
+      if (respaldoRef.current) {
+        respaldoRef.current = false
+        void dictarLocal()
+        return
+      }
       const dicho = dictadoRef.current.trim()
       dictadoRef.current = ""
       if (dicho) enviarRef.current(dicho, true)
@@ -513,7 +581,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.93 }}
             transition={RESORTE}
-            className="fixed bottom-[calc(var(--pc-nav-h)+var(--pc-safe-bottom)+0.875rem)] right-3.5 z-40 rounded-full outline-none focus-visible:ring-4 focus-visible:ring-pc-teal/30 md:bottom-6 md:right-6 print:hidden"
+            className="fixed bottom-[calc(var(--pc-nav-h)+var(--pc-safe-bottom)+0.875rem)] left-3.5 z-40 rounded-full outline-none focus-visible:ring-4 focus-visible:ring-pc-teal/30 md:bottom-6 md:left-auto md:right-6 print:hidden"
           >
             <Orbe size={54}>
               <Sparkles className="size-[22px] drop-shadow" strokeWidth={2} />
@@ -638,6 +706,11 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
 
             {/* Redacción */}
             <div className="shrink-0 px-3 pb-[calc(var(--pc-safe-bottom)+0.75rem)] pt-1">
+              {vozEstado && (
+                <p className="pc-ai-shimmer mb-1.5 w-fit px-2 text-[12.5px] font-medium" role="status">
+                  {vozEstado}
+                </p>
+              )}
               <AnimatePresence>
                 {aviso && (
                   <motion.p
@@ -702,7 +775,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                     className="max-h-[132px] min-h-9 flex-1 resize-none bg-transparent py-2 text-[15px] leading-snug text-pc-ink outline-none placeholder:text-pc-ink-4 md:text-[14px]"
                   />
                 )}
-                {soportaDictado && !ocupado && (
+                {soportaDictado && !ocupado && !vozEstado && (
                   <motion.button
                     type="button"
                     onClick={alternarDictado}
