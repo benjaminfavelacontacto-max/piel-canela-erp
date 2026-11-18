@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import type { EventoAsistente, Grafica, MensajeEntrada, ProductoFicha, Uso } from "@/lib/asistente/tipos"
 import { GraficaAsistente } from "./grafica"
+import { SiriOnda } from "./siri-onda"
 import "./asistente.css"
 
 /** Evento global para abrir el asistente desde cualquier parte (p. ej. ⌘K). */
@@ -172,21 +173,6 @@ function Orbe({ size, activo, children }: { size: number; activo?: boolean; chil
   )
 }
 
-function Onda() {
-  return (
-    <span className="flex h-6 items-center gap-[3px]" aria-hidden>
-      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-        <motion.span
-          key={i}
-          className="w-[3px] rounded-full bg-pc-teal"
-          animate={{ height: [5, 20 - (i % 3) * 5, 7, 16, 5] }}
-          transition={{ duration: 0.9 + (i % 4) * 0.13, repeat: Infinity, ease: "easeInOut", delay: i * 0.07 }}
-        />
-      ))}
-    </span>
-  )
-}
-
 export function Asistente({ oculto = false }: { oculto?: boolean }) {
   const [abierto, setAbierto] = useState(false)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
@@ -202,6 +188,8 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
   const abortRef = useRef<AbortController | null>(null)
   const recRef = useRef<Reconocedor | null>(null)
   const dictadoRef = useRef("")
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const medidorRef = useRef<{ stream: MediaStream; ctx: AudioContext } | null>(null)
   const listaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const enviarRef = useRef<(p: string, porVoz?: boolean) => void>(() => {})
@@ -260,6 +248,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     }
     if (!abierto) {
       recRef.current?.abort()
+      detenerMedidor()
       window.speechSynthesis?.cancel()
     }
   }, [abierto])
@@ -408,6 +397,17 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     })
   }
 
+  /** Libera el micrófono usado solo para medir el volumen de la animación. */
+  const detenerMedidor = () => {
+    analyserRef.current = null
+    const m = medidorRef.current
+    medidorRef.current = null
+    if (m) {
+      m.stream.getTracks().forEach((t) => t.stop())
+      void m.ctx.close().catch(() => {})
+    }
+  }
+
   const alternarDictado = () => {
     if (escuchando) {
       recRef.current?.stop()
@@ -447,6 +447,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
       }
     }
     rec.onend = () => {
+      detenerMedidor()
       setEscuchando(false)
       recRef.current = null
       const dicho = dictadoRef.current.trim()
@@ -457,6 +458,22 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
     try {
       rec.start()
       setEscuchando(true)
+      // Medidor de volumen para la animación (opcional: si falla, la onda se mueve sola).
+      navigator.mediaDevices
+        ?.getUserMedia({ audio: true })
+        .then((stream) => {
+          if (recRef.current !== rec) {
+            stream.getTracks().forEach((t) => t.stop())
+            return
+          }
+          const ctx = new AudioContext()
+          const an = ctx.createAnalyser()
+          an.fftSize = 512
+          ctx.createMediaStreamSource(stream).connect(an)
+          medidorRef.current = { stream, ctx }
+          analyserRef.current = an
+        })
+        .catch(() => {})
     } catch {
       setAviso("No pude activar el micrófono.")
     }
@@ -633,6 +650,23 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                   </motion.p>
                 )}
               </AnimatePresence>
+              <AnimatePresence initial={false}>
+                {escuchando && (
+                  <motion.div
+                    key="siri"
+                    initial={{ opacity: 0, height: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, height: 128, scale: 1 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.9 }}
+                    transition={RESORTE}
+                    className="mb-2 overflow-hidden rounded-[26px] shadow-[0_10px_40px_-8px_rgba(139,92,246,0.55)]"
+                    style={{ background: "linear-gradient(180deg, #0b1220, #14122b)" }}
+                    role="status"
+                    aria-label="Escuchando"
+                  >
+                    <SiriOnda analyserRef={analyserRef} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
@@ -644,8 +678,7 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                 }
               >
                 {escuchando ? (
-                  <div className="flex min-h-9 flex-1 items-center gap-3 py-1">
-                    <Onda />
+                  <div className="flex min-h-9 flex-1 items-center py-1">
                     <span className="min-w-0 flex-1 truncate text-[14px] text-pc-ink-2">{texto || "Te escucho…"}</span>
                   </div>
                 ) : (
