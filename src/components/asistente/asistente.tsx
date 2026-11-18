@@ -833,13 +833,15 @@ export function Asistente({ oculto = false }: { oculto?: boolean }) {
                   enviar(texto)
                 }}
                 className={
-                  "flex items-end gap-1.5 rounded-[26px] border bg-pc-card p-1.5 pl-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-[border-color,box-shadow] focus-within:border-pc-teal/50 focus-within:shadow-[0_0_0_4px_color-mix(in_srgb,var(--pc-chart-real)_12%,transparent)] " +
+                  "flex min-w-0 items-end gap-1.5 rounded-[26px] border bg-pc-card p-1.5 pl-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.05)] transition-[border-color,box-shadow] focus-within:border-pc-teal/50 focus-within:shadow-[0_0_0_4px_color-mix(in_srgb,var(--pc-chart-real)_12%,transparent)] " +
                   (escuchando ? "border-pc-teal/60" : "border-pc-line")
                 }
               >
                 {escuchando ? (
-                  <div className="flex min-h-9 flex-1 items-center py-1">
-                    <span className="min-w-0 flex-1 truncate text-[14px] text-pc-ink-2">{texto || "Te escucho…"}</span>
+                  <div className="flex min-h-9 min-w-0 flex-1 items-center overflow-hidden py-1 pr-1">
+                    <span className="line-clamp-3 min-w-0 flex-1 text-[15px] leading-snug text-pc-ink-2 [overflow-wrap:anywhere] md:text-[14px]">
+                      {texto || "Te escucho…"}
+                    </span>
                   </div>
                 ) : (
                   <textarea
